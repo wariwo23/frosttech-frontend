@@ -15,6 +15,7 @@
 <body>
 
 <header class="topbar">
+
   <div class="container nav">
 
     <div class="logo">
@@ -29,7 +30,9 @@
     </nav>
 
   </div>
+
 </header>
+
 
 <main>
 
@@ -55,27 +58,46 @@
 
 </main>
 
+
 <footer>
 
   <div class="container footer-content">
 
     <div>
+
       <h2>❄ FrostTech</h2>
-      <p>HVAC and Refrigeration Marketplace</p>
+
+      <p>
+        HVAC and Refrigeration Marketplace
+      </p>
+
     </div>
 
+
     <div>
-      <p>Website: frosttechonline.com</p>
-      <p>WhatsApp: +234 803 200 8635</p>
+
+      <p>
+        Website: frosttechonline.com
+      </p>
+
+      <p>
+        WhatsApp: +234 803 200 8635
+      </p>
+
     </div>
 
   </div>
 
+
   <div class="copyright">
-    © 2026 FrostTech HVAC and Refrigeration. All rights reserved.
+
+    © 2026 FrostTech HVAC and Refrigeration.
+    All rights reserved.
+
   </div>
 
 </footer>
+
 
 <script>
 
@@ -87,11 +109,13 @@ async function loadProduct() {
   const productStatus =
     document.getElementById("product-status");
 
+
   const params =
     new URLSearchParams(window.location.search);
 
   const productId =
     params.get("id");
+
 
   if (!productId) {
 
@@ -99,7 +123,9 @@ async function loadProduct() {
       "No product was selected.";
 
     return;
+
   }
+
 
   const { data, error } =
     await supabaseClient
@@ -119,16 +145,21 @@ async function loadProduct() {
       .eq("is_active", true)
       .single();
 
+
   if (error) {
 
+    console.error(error);
+
     productStatus.textContent =
-      "Unable to load product: " +
-      error.message;
+      "Unable to load product.";
 
     return;
+
   }
 
+
   productStatus.remove();
+
 
   productDetails.innerHTML = `
 
@@ -138,11 +169,14 @@ async function loadProduct() {
 
         ${
           data.image_url
-            ? `<img src="${data.image_url}" alt="${data.name}">`
+            ? `<img
+                 src="${data.image_url}"
+                 alt="${data.name}">`
             : "❄"
         }
 
       </div>
+
 
       <div class="product-detail-info">
 
@@ -150,29 +184,35 @@ async function loadProduct() {
           ${data.category || "HVAC PRODUCT"}
         </p>
 
+
         <h1>
           ${data.name}
         </h1>
+
 
         <p>
           <strong>Brand:</strong>
           ${data.brand || "Not specified"}
         </p>
 
+
         <p>
           <strong>Model:</strong>
           ${data.model || "Not specified"}
         </p>
 
+
         <p>
           ${data.description || "No description available."}
         </p>
+
 
         <h2>
           ₦${Number(
             data.selling_price || 0
           ).toLocaleString()}
         </h2>
+
 
         <p>
           ${
@@ -182,17 +222,21 @@ async function loadProduct() {
           }
         </p>
 
+
         <div class="hero-buttons">
 
           <button
-  type="button"
-  class="primary-btn"
-  onclick="requestQuote('${data.id}')">
-  Request a Quote
-</button>
+            type="button"
+            class="primary-btn"
+            id="request-quote-button">
+            Request a Quote
+          </button>
+
+
           <button
+            type="button"
             class="secondary-btn"
-            onclick="contactWhatsApp('${data.name}')">
+            id="whatsapp-button">
             WhatsApp
           </button>
 
@@ -203,82 +247,143 @@ async function loadProduct() {
     </div>
 
   `;
+
+
+  document
+    .getElementById("request-quote-button")
+    .addEventListener("click", function() {
+
+      showQuoteForm(data);
+
+    });
+
+
+  document
+    .getElementById("whatsapp-button")
+    .addEventListener("click", function() {
+
+      contactWhatsApp(data.name);
+
+    });
+
 }
 
 
-function requestQuote(productId) {
+function showQuoteForm(product) {
 
   const productDetails =
     document.getElementById("product-details");
 
-  productDetails.innerHTML += `
 
-    <div class="quote-form-box">
+  const existingForm =
+    document.getElementById("quote-form-box");
 
-      <h2>Request a Quote</h2>
 
-      <p>
-        Please provide your details and requirements.
-      </p>
+  if (existingForm) {
 
-      <form id="quote-form">
+    existingForm.scrollIntoView({
+      behavior: "smooth"
+    });
 
-        <input
-          type="text"
-          id="customer-name"
-          placeholder="Your full name"
-          required
-        >
+    return;
 
-        <input
-          type="tel"
-          id="customer-phone"
-          placeholder="Phone / WhatsApp number"
-          required
-        >
+  }
 
-        <input
-          type="number"
-          id="quantity"
-          placeholder="Quantity"
-          min="1"
-          value="1"
-          required
-        >
 
-        <input
-          type="number"
-          id="budget"
-          placeholder="Your budget (₦)"
-          min="0"
-        >
+  const formBox =
+    document.createElement("div");
 
-        <input
-          type="text"
-          id="delivery-address"
-          placeholder="Delivery address"
-          required
-        >
 
-        <textarea
-          id="description"
-          placeholder="Additional requirements"
-          rows="5">
-        </textarea>
+  formBox.id =
+    "quote-form-box";
 
-        <button
-          type="submit"
-          class="primary-btn">
-          Submit Quote Request
-        </button>
 
-      </form>
+  formBox.className =
+    "quote-form-box";
 
-      <p id="quote-message"></p>
 
-    </div>
+  formBox.innerHTML = `
+
+    <h2>
+      Request a Quote
+    </h2>
+
+
+    <p>
+      Request a quotation for
+      <strong>${product.name}</strong>
+    </p>
+
+
+    <form id="quote-form">
+
+      <input
+        type="text"
+        id="customer-name"
+        placeholder="Your full name"
+        required
+      >
+
+
+      <input
+        type="tel"
+        id="customer-phone"
+        placeholder="Phone / WhatsApp number"
+        required
+      >
+
+
+      <input
+        type="number"
+        id="quantity"
+        placeholder="Quantity"
+        min="1"
+        value="1"
+        required
+      >
+
+
+      <input
+        type="number"
+        id="budget"
+        placeholder="Your budget (₦)"
+        min="0"
+      >
+
+
+      <input
+        type="text"
+        id="delivery-address"
+        placeholder="Delivery address"
+        required
+      >
+
+
+      <textarea
+        id="description"
+        placeholder="Additional requirements"
+        rows="5">
+      </textarea>
+
+
+      <button
+        type="submit"
+        class="primary-btn">
+
+        Submit Quote Request
+
+      </button>
+
+    </form>
+
+
+    <p id="quote-message"></p>
 
   `;
+
+
+  productDetails.appendChild(formBox);
+
 
   document
     .getElementById("quote-form")
@@ -286,62 +391,78 @@ function requestQuote(productId) {
 
       event.preventDefault();
 
-      submitQuoteRequest(productId);
+      submitQuoteRequest(product);
 
     });
 
+
+  formBox.scrollIntoView({
+    behavior: "smooth"
+  });
+
 }
-async function submitQuoteRequest(productId) {
+
+
+async function submitQuoteRequest(product) {
 
   const message =
     document.getElementById("quote-message");
 
+
   const name =
-    document.getElementById("customer-name").value.trim();
+    document
+      .getElementById("customer-name")
+      .value
+      .trim();
+
 
   const phone =
-    document.getElementById("customer-phone").value.trim();
+    document
+      .getElementById("customer-phone")
+      .value
+      .trim();
+
 
   const quantity =
-    Number(document.getElementById("quantity").value);
+    Number(
+      document
+        .getElementById("quantity")
+        .value
+    );
+
 
   const budgetValue =
-    document.getElementById("budget").value;
+    document
+      .getElementById("budget")
+      .value;
+
 
   const budget =
-    budgetValue ? Number(budgetValue) : null;
+    budgetValue
+      ? Number(budgetValue)
+      : null;
+
 
   const deliveryAddress =
-    document.getElementById("delivery-address").value.trim();
+    document
+      .getElementById("delivery-address")
+      .value
+      .trim();
+
 
   const description =
-    document.getElementById("description").value.trim();
+    document
+      .getElementById("description")
+      .value
+      .trim();
 
 
   message.textContent =
     "Submitting your request...";
 
 
-  const { data: product, error: productError } =
-    await supabaseClient
-      .from("products")
-      .select("name, brand")
-      .eq("id", productId)
-      .single();
-
-
-  if (productError) {
-
-    message.textContent =
-      "Unable to find the selected product.";
-
-    return;
-  }
-
-
   const requestNumber =
-    "FT-" +
-    Date.now();
+    "FT-" + Date.now();
 
 
   const { error } =
@@ -349,7 +470,8 @@ async function submitQuoteRequest(productId) {
       .from("quote_requests")
       .insert({
 
-        request_number: requestNumber,
+        request_number:
+          requestNumber,
 
         title:
           "Quote Request - " +
@@ -362,35 +484,45 @@ async function submitQuoteRequest(productId) {
           phone +
           "\nProduct: " +
           product.name +
-          "\n" +
+          "\nRequirements: " +
           description,
 
-        product_id: productId,
+        product_id:
+          product.id,
 
-        quantity: quantity,
+        quantity:
+          quantity,
 
         preferred_brand:
           product.brand || null,
 
-        budget: budget,
+        budget:
+          budget,
 
         delivery_address:
           deliveryAddress,
 
-        status: "pending"
+        status:
+          "pending"
 
       });
 
 
   if (error) {
 
-    console.error(error);
+    console.error(
+      "Quote request error:",
+      error
+    );
+
 
     message.textContent =
       "Unable to submit request: " +
       error.message;
 
+
     return;
+
   }
 
 
@@ -399,11 +531,11 @@ async function submitQuoteRequest(productId) {
     "Reference: " +
     requestNumber;
 
+
   document
     .getElementById("quote-form")
     .reset();
 
-}
 }
 
 
@@ -413,11 +545,16 @@ function contactWhatsApp(productName) {
     "Hello FrostTech, I am interested in: " +
     productName;
 
+
   const url =
     "https://wa.me/2348032008635?text=" +
     encodeURIComponent(message);
 
-  window.open(url, "_blank");
+
+  window.open(
+    url,
+    "_blank"
+  );
 
 }
 
