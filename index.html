@@ -1,45 +1,165 @@
 <!DOCTYPE html>
 <html lang="en">
-  <link rel="stylesheet" href="style.css">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>FrostTech HVAC and Refrigeration</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
-  <header>
-    <h1>FrostTech HVAC and Refrigeration</h1>
-    <p>Your trusted HVAC & Refrigeration marketplace in Nigeria.</p>
+
+  <!-- Navigation -->
+  <header class="topbar">
+    <div class="container nav">
+      <div class="logo">
+        <span>❄</span> FrostTech
+      </div>
+
+      <nav>
+        <a href="#home">Home</a>
+        <a href="#categories">Categories</a>
+        <a href="#products">Products</a>
+        <a href="#quote">Request Quote</a>
+      </nav>
+
+      <div class="nav-buttons">
+        <button class="login-btn">Login</button>
+        <button class="quote-btn">Get a Quote</button>
+      </div>
+    </div>
   </header>
 
+  <!-- Hero -->
   <main>
-    <section>
-      <h2>Welcome to FrostTech</h2>
-      <p>
-        Find air-conditioners, refrigeration parts, accessories and
-        professional HVAC services.
-      </p>
 
-      <button>Browse Products</button>
-      <button>Request a Quote</button>
+    <section id="home" class="hero">
+      <div class="container hero-content">
+
+        <div class="hero-text">
+          <p class="small-title">FROSTTECH HVAC & REFRIGERATION</p>
+
+          <h1>
+            Your HVAC & Refrigeration
+            <span>Marketplace</span>
+          </h1>
+
+          <p>
+            Find air-conditioners, refrigeration parts, accessories
+            and professional HVAC services from trusted suppliers.
+          </p>
+
+          <div class="hero-buttons">
+            <button class="primary-btn">Browse Products</button>
+            <button class="secondary-btn">Request a Quote</button>
+          </div>
+        </div>
+
+        <div class="hero-card">
+          <div class="snow-icon">❄</div>
+          <h2>FrostTech</h2>
+          <p>Cooling solutions made easier.</p>
+        </div>
+
+      </div>
     </section>
 
-    <section>
-      <h2>What We Offer</h2>
-      <ul>
-        <li>Air Conditioning Products</li>
-        <li>Refrigeration Parts</li>
-        <li>HVAC Accessories</li>
-        <li>Supplier Marketplace</li>
-        <li>Professional HVAC Services</li>
-      </ul>
+    <!-- Search -->
+    <section class="search-section">
+      <div class="container">
+        <div class="search-box">
+          <input
+            type="text"
+            placeholder="Search AC units, compressors, copper pipes, parts..."
+          >
+          <button>Search</button>
+        </div>
+      </div>
     </section>
-  </main>
 
-  <footer>
-    <p>FrostTech HVAC and Refrigeration</p>
-    <p>frosttechonline.com</p>
-  </footer>
-</body>
-  </html>
+    <!-- Categories -->
+    <section id="categories" class="section">
+      <div class="container">
+
+        <div class="section-heading">
+          <p>SHOP BY CATEGORY</p>
+          <h2>HVAC & Refrigeration Solutions</h2>
+        </div>
+
+        <div class="category-grid">
+
+          <div class="category-card">
+            <div class="category-icon">❄️</div>
+            <h3>Air Conditioners</h3>
+            <p>Split AC, inverter AC and cooling units.</p>
+          </div>
+
+          <div class="category-card">
+            <div class="category-icon">⚙️</div>
+            <h3>Refrigeration Parts</h3>
+            <p>Compressors, controls and replacement parts.</p>
+          </div>
+
+          <div class="category-card">
+            <div class="category-icon">🔧</div>
+            <h3>HVAC Accessories</h3>
+            <p>Copper pipes, brackets, tools and accessories.</p>
+          </div>
+
+          <div class="category-card">
+            <div class="category-icon">🛠️</div>
+            <h3>HVAC Services</h3>
+            <p>Installation, maintenance and repair services.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Products -->
+    <section id="products" class="section products-section">
+      <div class="container">
+
+        <div class="section-heading">
+          <p>FEATURED PRODUCTS</p>
+          <h2>Popular HVAC Products</h2>
+        </div>
+
+        <div class="product-grid">
+
+          <div class="product-card">
+            <div class="product-image">AC</div>
+            <div class="product-info">
+              <h3>Split Air Conditioner</h3>
+              <p>Reliable residential cooling solution.</p>
+              <strong>Request Price</strong>
+              <button>View Product</button>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image">CP</div>
+            <div class="product-info">
+              <h3>Copper Refrigeration Pipe</h3>
+              <p>Quality copper tubing for HVAC systems.</p>
+              <strong>Request Price</strong>
+              <button>View Product</button>
+            </div>
+          </div>
+
+          <div class="product-card">
+            <div class="product-image">CM</div>
+            <div class="product-info">
+              <h3>Refrigeration Compressor</h3>
+              <p>Compressors for refrigeration applications.</p>
+              <strong>Request Price</strong>
+              <button>View Product</button>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Quote -->
+    <section id
