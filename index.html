@@ -3,17 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>FrostTech HVAC and Refrigeration</title>
+
   <link rel="stylesheet" href="style.css">
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
+  <script src="supabase.js"></script>
 </head>
 
 <body>
 
-  <!-- Navigation -->
   <header class="topbar">
     <div class="container nav">
+
       <div class="logo">
         <span>❄</span> FrostTech
       </div>
@@ -29,17 +32,22 @@
         <button class="login-btn">Login</button>
         <button class="quote-btn">Get a Quote</button>
       </div>
+
     </div>
   </header>
 
-  <!-- Hero -->
+
   <main>
 
     <section id="home" class="hero">
+
       <div class="container hero-content">
 
         <div class="hero-text">
-          <p class="small-title">FROSTTECH HVAC & REFRIGERATION</p>
+
+          <p class="small-title">
+            FROSTTECH HVAC & REFRIGERATION
+          </p>
 
           <h1>
             Your HVAC & Refrigeration
@@ -52,116 +60,391 @@
           </p>
 
           <div class="hero-buttons">
-            <button class="primary-btn">Browse Products</button>
-            <button class="secondary-btn">Request a Quote</button>
+
+            <button class="primary-btn">
+              Browse Products
+            </button>
+
+            <button class="secondary-btn">
+              Request a Quote
+            </button>
+
           </div>
+
         </div>
 
+
         <div class="hero-card">
-          <div class="snow-icon">❄</div>
-          <h2>FrostTech</h2>
-          <p>Cooling solutions made easier.</p>
+
+          <div class="snow-icon">
+            ❄
+          </div>
+
+          <h2>
+            FrostTech
+          </h2>
+
+          <p>
+            Cooling solutions made easier.
+          </p>
+
         </div>
 
       </div>
+
     </section>
 
-    <!-- Search -->
+
     <section class="search-section">
+
       <div class="container">
+
         <div class="search-box">
+
           <input
             type="text"
             placeholder="Search AC units, compressors, copper pipes, parts..."
           >
-          <button>Search</button>
+
+          <button>
+            Search
+          </button>
+
         </div>
+
       </div>
+
     </section>
 
-    <!-- Categories -->
+
     <section id="categories" class="section">
+
       <div class="container">
 
         <div class="section-heading">
-          <p>SHOP BY CATEGORY</p>
-          <h2>HVAC & Refrigeration Solutions</h2>
+
+          <p>
+            SHOP BY CATEGORY
+          </p>
+
+          <h2>
+            HVAC & Refrigeration Solutions
+          </h2>
+
         </div>
+
 
         <div class="category-grid">
 
           <div class="category-card">
-            <div class="category-icon">❄️</div>
-            <h3>Air Conditioners</h3>
-            <p>Split AC, inverter AC and cooling units.</p>
+
+            <div class="category-icon">
+              ❄️
+            </div>
+
+            <h3>
+              Air Conditioners
+            </h3>
+
+            <p>
+              Split AC, inverter AC and cooling units.
+            </p>
+
           </div>
 
-          <div class="category-card">
-            <div class="category-icon">⚙️</div>
-            <h3>Refrigeration Parts</h3>
-            <p>Compressors, controls and replacement parts.</p>
-          </div>
 
           <div class="category-card">
-            <div class="category-icon">🔧</div>
-            <h3>HVAC Accessories</h3>
-            <p>Copper pipes, brackets, tools and accessories.</p>
+
+            <div class="category-icon">
+              ⚙️
+            </div>
+
+            <h3>
+              Refrigeration Parts
+            </h3>
+
+            <p>
+              Compressors, controls and replacement parts.
+            </p>
+
           </div>
 
+
           <div class="category-card">
-            <div class="category-icon">🛠️</div>
-            <h3>HVAC Services</h3>
-            <p>Installation, maintenance and repair services.</p>
+
+            <div class="category-icon">
+              🔧
+            </div>
+
+            <h3>
+              HVAC Accessories
+            </h3>
+
+            <p>
+              Copper pipes, brackets, tools and accessories.
+            </p>
+
+          </div>
+
+
+          <div class="category-card">
+
+            <div class="category-icon">
+              🛠️
+            </div>
+
+            <h3>
+              HVAC Services
+            </h3>
+
+            <p>
+              Installation, maintenance and repair services.
+            </p>
+
           </div>
 
         </div>
+
       </div>
+
     </section>
 
-    <!-- Products -->
+
     <section id="products" class="section products-section">
+
       <div class="container">
 
         <div class="section-heading">
-          <p>FEATURED PRODUCTS</p>
-          <h2>Popular HVAC Products</h2>
-        </div>
 
-        <div class="product-grid">
+          <p>
+            FEATURED PRODUCTS
+          </p>
 
-          <div class="product-card">
-            <div class="product-image">AC</div>
-            <div class="product-info">
-              <h3>Split Air Conditioner</h3>
-              <p>Reliable residential cooling solution.</p>
-              <strong>Request Price</strong>
-              <button>View Product</button>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image">CP</div>
-            <div class="product-info">
-              <h3>Copper Refrigeration Pipe</h3>
-              <p>Quality copper tubing for HVAC systems.</p>
-              <strong>Request Price</strong>
-              <button>View Product</button>
-            </div>
-          </div>
-
-          <div class="product-card">
-            <div class="product-image">CM</div>
-            <div class="product-info">
-              <h3>Refrigeration Compressor</h3>
-              <p>Compressors for refrigeration applications.</p>
-              <strong>Request Price</strong>
-              <button>View Product</button>
-            </div>
-          </div>
+          <h2>
+            Popular HVAC Products
+          </h2>
 
         </div>
+
+
+        <div
+          class="product-grid"
+          id="product-grid"
+        >
+
+          <p id="product-status">
+            Loading products...
+          </p>
+
+        </div>
+
       </div>
+
     </section>
 
-    <!-- Quote -->
-    <section id
+
+    <section id="quote" class="quote-section">
+
+      <div class="container quote-box">
+
+        <div>
+
+          <p class="small-title">
+            NEED SOMETHING SPECIFIC?
+          </p>
+
+          <h2>
+            Request a Quote from FrostTech
+          </h2>
+
+          <p>
+            Tell us what you need and we can connect your request
+            with available suppliers.
+          </p>
+
+        </div>
+
+        <button class="primary-btn">
+          Request a Quote
+        </button>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+  <footer>
+
+    <div class="container footer-content">
+
+      <div>
+
+        <h2>
+          ❄ FrostTech
+        </h2>
+
+        <p>
+          HVAC and Refrigeration Marketplace
+        </p>
+
+      </div>
+
+
+      <div>
+
+        <p>
+          Website: frosttechonline.com
+        </p>
+
+        <p>
+          WhatsApp: +234 803 200 8635
+        </p>
+
+      </div>
+
+    </div>
+
+
+    <div class="copyright">
+
+      © 2026 FrostTech HVAC and Refrigeration.
+      All rights reserved.
+
+    </div>
+
+  </footer>
+
+
+  <script>
+
+    async function loadProducts() {
+
+      const productGrid =
+        document.getElementById("product-grid");
+
+      const productStatus =
+        document.getElementById("product-status");
+
+
+      const { data, error } =
+        await supabaseClient
+
+          .from("products")
+
+          .select(
+            "id, name, category, brand, model, description, selling_price, image_url"
+          )
+
+          .eq("is_active", true)
+
+          .limit(6);
+
+
+      if (error) {
+
+        productStatus.textContent =
+          "Unable to load products: " +
+          error.message;
+
+        return;
+
+      }
+
+
+      productStatus.remove();
+
+
+      if (!data || data.length === 0) {
+
+        productGrid.innerHTML =
+          "<p>No products available at the moment.</p>";
+
+        return;
+
+      }
+
+
+      data.forEach(product => {
+
+        const card =
+          document.createElement("div");
+
+        card.className =
+          "product-card";
+
+
+        card.innerHTML = `
+
+          <div class="product-image">
+
+            ${
+              product.image_url
+
+                ? `<img
+                    src="${product.image_url}"
+                    alt="${product.name}"
+                  >`
+
+                : "❄"
+
+            }
+
+          </div>
+
+
+          <div class="product-info">
+
+            <h3>
+              ${product.name}
+            </h3>
+
+
+            <p>
+
+              ${product.brand || ""}
+
+              ${
+                product.model
+                  ? " • " + product.model
+                  : ""
+              }
+
+            </p>
+
+
+            <strong>
+
+              ₦${
+                Number(
+                  product.selling_price || 0
+                ).toLocaleString()
+              }
+
+            </strong>
+
+
+            <button>
+              View Product
+            </button>
+
+          </div>
+
+        `;
+
+
+        productGrid.appendChild(card);
+
+      });
+
+    }
+
+
+    loadProducts();
+
+  </script>
+
+</body>
+
+  </html>
