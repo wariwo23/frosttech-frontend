@@ -1,18 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
 
   <title>Request a Quote | FrostTech</title>
 
   <link rel="stylesheet" href="style.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
   <script src="supabase.js"></script>
+
 </head>
 
+
 <body>
+
 
 <header class="topbar">
 
@@ -23,14 +31,25 @@
     </div>
 
     <nav>
-      <a href="index.html">Home</a>
-      <a href="index.html#categories">Categories</a>
-      <a href="index.html#products">Products</a>
+
+      <a href="index.html">
+        Home
+      </a>
+
+      <a href="index.html#categories">
+        Categories
+      </a>
+
+      <a href="index.html#products">
+        Products
+      </a>
+
     </nav>
 
   </div>
 
 </header>
+
 
 
 <main>
@@ -39,23 +58,31 @@
 
   <div class="container">
 
+
     <div class="section-heading">
 
-      <p>FROSTTECH HVAC & REFRIGERATION</p>
+      <p>
+        FROSTTECH HVAC & REFRIGERATION
+      </p>
 
-      <h1>Request a Quote</h1>
+      <h1>
+        Request a Quote
+      </h1>
 
       <p>
-        Tell us what HVAC or refrigeration product
-        or service you need.
+        Tell us what HVAC or refrigeration
+        product or service you need.
       </p>
 
     </div>
 
 
+
     <div class="quote-form-card">
 
+
       <form id="quote-form">
+
 
         <label for="title">
           What do you need?
@@ -65,7 +92,9 @@
           type="text"
           id="title"
           placeholder="e.g. 1.5HP Split AC"
-          required>
+          required
+        >
+
 
 
         <label for="description">
@@ -76,7 +105,9 @@
           id="description"
           rows="5"
           placeholder="Describe the product or service you need..."
-          required></textarea>
+          required
+        ></textarea>
+
 
 
         <label for="category">
@@ -108,6 +139,7 @@
         </select>
 
 
+
         <label for="quantity">
           Quantity
         </label>
@@ -117,7 +149,9 @@
           id="quantity"
           min="1"
           value="1"
-          required>
+          required
+        >
+
 
 
         <label for="preferred_brand">
@@ -127,7 +161,9 @@
         <input
           type="text"
           id="preferred_brand"
-          placeholder="e.g. LG, Samsung, Daikin">
+          placeholder="e.g. LG, Samsung, Daikin"
+        >
+
 
 
         <label for="budget">
@@ -138,7 +174,9 @@
           type="number"
           id="budget"
           min="0"
-          placeholder="Optional">
+          placeholder="Optional"
+        >
+
 
 
         <label for="delivery_address">
@@ -149,12 +187,15 @@
           id="delivery_address"
           rows="3"
           placeholder="Where should the product be delivered?"
-          required></textarea>
+          required
+        ></textarea>
+
 
 
         <button
           type="submit"
-          class="primary-btn">
+          class="primary-btn"
+        >
 
           Submit Quote Request
 
@@ -163,9 +204,12 @@
 
         <p id="form-status"></p>
 
+
       </form>
 
+
     </div>
+
 
   </div>
 
@@ -174,19 +218,25 @@
 </main>
 
 
+
 <footer>
+
 
   <div class="container footer-content">
 
+
     <div>
 
-      <h2>❄ FrostTech</h2>
+      <h2>
+        ❄ FrostTech
+      </h2>
 
       <p>
         HVAC and Refrigeration Marketplace
       </p>
 
     </div>
+
 
 
     <div>
@@ -201,7 +251,9 @@
 
     </div>
 
+
   </div>
+
 
 
   <div class="copyright">
@@ -211,116 +263,238 @@
 
   </div>
 
+
 </footer>
 
 
+
 <script>
+
 
 async function submitQuote(event) {
 
   event.preventDefault();
 
+
   const status =
     document.getElementById("form-status");
+
 
   status.textContent =
     "Submitting your quote request...";
 
 
-  const title =
-    document.getElementById("title").value.trim();
-
-  const description =
-    document.getElementById("description").value.trim();
-
-  const category =
-    document.getElementById("category").value;
-
-  const quantity =
-    Number(document.getElementById("quantity").value);
-
-  const preferredBrand =
-    document.getElementById("preferred_brand").value.trim();
-
-  const budgetValue =
-    document.getElementById("budget").value;
-
-  const deliveryAddress =
-    document.getElementById("delivery_address").value.trim();
+  try {
 
 
-  const budget =
-    budgetValue === ""
-      ? null
-      : Number(budgetValue);
+    /* Check logged-in customer */
+
+    const {
+
+      data: { user },
+
+      error: userError
+
+    } =
+      await supabaseClient.auth.getUser();
 
 
-  const requestNumber =
-    "FT-" +
-    Date.now();
+
+    if (userError || !user) {
+
+      status.textContent =
+        "Please log in before submitting a quote request.";
+
+      return;
+
+    }
 
 
-  const { data, error } =
-    await supabaseClient
-      .from("customer-requests")
-      .insert([{
 
-        request_number: requestNumber,
+    /* Get form values */
 
-        title: title,
-
-        description: description,
-
-        category: category,
-
-        quantity: quantity,
-
-        preferred_brand: preferredBrand || null,
-
-        budget: budget,
-
-        delivery_address: deliveryAddress,
-
-        status: "pending"
-
-      }])
-      .select()
-      .single();
+    const title =
+      document
+        .getElementById("title")
+        .value
+        .trim();
 
 
-  if (error) {
+    const description =
+      document
+        .getElementById("description")
+        .value
+        .trim();
+
+
+    const category =
+      document
+        .getElementById("category")
+        .value;
+
+
+    const quantity =
+      Number(
+        document
+          .getElementById("quantity")
+          .value
+      );
+
+
+    const preferredBrand =
+      document
+        .getElementById("preferred_brand")
+        .value
+        .trim();
+
+
+    const budgetValue =
+      document
+        .getElementById("budget")
+        .value;
+
+
+    const deliveryAddress =
+      document
+        .getElementById("delivery_address")
+        .value
+        .trim();
+
+
+
+    const budget =
+      budgetValue === ""
+        ? null
+        : Number(budgetValue);
+
+
+
+    /* Create request number */
+
+    const requestNumber =
+      "FT-" + Date.now();
+
+
+
+    /* Save request to Supabase */
+
+    const {
+
+      data,
+
+      error
+
+    } =
+      await supabaseClient
+
+        .from("customer-requests")
+
+        .insert([{
+
+          customer_id:
+            user.id,
+
+          request_number:
+            requestNumber,
+
+          title:
+            title,
+
+          description:
+            description,
+
+          category:
+            category,
+
+          quantity:
+            quantity,
+
+          preferred_brand:
+            preferredBrand || null,
+
+          budget:
+            budget,
+
+          delivery_address:
+            deliveryAddress,
+
+          status:
+            "pending"
+
+        }])
+
+        .select()
+
+        .single();
+
+
+
+    /* Check for database error */
+
+    if (error) {
+
+      console.error(error);
+
+
+      status.textContent =
+        "Unable to submit request: " +
+        error.message;
+
+
+      return;
+
+    }
+
+
+
+    /* Success */
 
     status.textContent =
-      "Unable to submit request: " +
-      error.message;
+      "Quote request submitted successfully! " +
+      "Request number: " +
+      data.request_number;
 
-    return;
+
+
+    document
+      .getElementById("quote-form")
+      .reset();
+
 
   }
 
-
-  status.textContent =
-    "Quote request submitted successfully! " +
-    "Request number: " +
-    data.request_number;
+  catch (error) {
 
 
-  document
-    .getElementById("quote-form")
-    .reset();
+    console.error(error);
+
+
+    status.textContent =
+      "Something went wrong. Please try again.";
+
+
+  }
 
 }
 
 
+
+/* Form submit event */
+
 document
+
   .getElementById("quote-form")
+
   .addEventListener(
     "submit",
     submitQuote
   );
 
+
 </script>
 
 
+
 </body>
-</html>
+
+          </html>
