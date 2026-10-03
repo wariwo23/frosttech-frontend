@@ -18,9 +18,7 @@ content="width=device-width, initial-scale=1.0"
 
 </div>
 
-  </header>  <main class="container"><h2>
-  Admin Login
-</h2>
+  </header>  <main class="container"><h2>Admin Login</h2>
 
 <p>
   Login to access the FrostTech administration dashboard.
@@ -80,7 +78,7 @@ content="width=device-width, initial-scale=1.0"
         "Logging in...";
 
 
-      const result =
+      const loginResult =
         await supabaseClient.auth.signInWithPassword({
 
           email: email,
@@ -90,62 +88,71 @@ content="width=device-width, initial-scale=1.0"
         });
 
 
-      if (result.error) {
-
-        console.error(result.error);
+      if (loginResult.error) {
 
         message.textContent =
           "Login failed: " +
-          result.error.message;
+          loginResult.error.message;
 
         return;
       }
 
 
       message.textContent =
+        "Login successful. Checking admin profile...";
+
+
+      const userResult =
+        await supabaseClient.auth.getUser();
+
+
+      if (
+        userResult.error ||
+        !userResult.data.user
+      ) {
+
         message.textContent =
-  "Login successful. Checking admin profile...";
+          "Login worked, but user session was not found.";
 
-const userResult =
-  await supabaseClient.auth.getUser();
+        return;
+      }
 
-if (userResult.error || !userResult.data.user) {
 
-  message.textContent =
-    "Login worked, but the user session could not be found.";
+      const userId =
+        userResult.data.user.id;
 
-  return;
-}
 
-const userId =
-  userResult.data.user.id;
+      const profileResult =
+        await supabaseClient
+          .from("profiles")
+          .select(
+            "full_name, role, is_active"
+          )
+          .eq("id", userId)
+          .single();
 
-const profileResult =
-  await supabaseClient
-    .from("profiles")
-    .select("full_name, role, is_active")
-    .eq("id", userId)
-    .single();
 
-if (profileResult.error) {
+      if (profileResult.error) {
 
-  message.textContent =
-    "Profile check failed: " +
-    profileResult.error.message;
+        message.textContent =
+          "Profile check failed: " +
+          profileResult.error.message;
 
-  return;
-}
+        return;
+      }
 
-const profile =
-  profileResult.data;
 
-message.textContent =
-  "Logged in as: " +
-  (profile.full_name || "Admin") +
-  " | Role: " +
-  profile.role +
-  " | Active: " +
-  profile.is_active;
+      const profile =
+        profileResult.data;
+
+
+      message.textContent =
+        "Logged in as: " +
+        (profile.full_name || "Admin") +
+        " | Role: " +
+        profile.role +
+        " | Active: " +
+        profile.is_active;
 
     }
 
