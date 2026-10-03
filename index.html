@@ -8,8 +8,22 @@
 
   <link rel="stylesheet" href="style.css">
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
+
+  <script>
+    const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+    const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
+    const supabaseClient = supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+    console.log("FrostTech Supabase connected");
+  </script>
+
 </head>
 
 <body>
@@ -314,16 +328,19 @@ async function loadProducts() {
 
   if (error) {
 
+    console.error("FrostTech product error:", error);
+
     productStatus.textContent =
-      "Unable to load products: " +
-      error.message;
+      "Unable to load products.";
 
     return;
 
   }
 
 
-  productStatus.remove();
+  if (productStatus) {
+    productStatus.remove();
+  }
 
 
   if (!data || data.length === 0) {
@@ -416,19 +433,5 @@ loadProducts();
 
 </script>
 
-<!-- Supabase -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
-const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
-const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
-const supabaseClient = supabase.createClient(
-  SUPABASE_URL,
-  SUPABASE_PUBLISHABLE_KEY
-);
-
-console.log("FrostTech Supabase connected");
-</script>
 </body>
-</html>
+  </html>
