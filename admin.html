@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>FrostTech Admin</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+
+<body>
+
+  <header class="site-header">
+    <div class="container">
+      <h1>FrostTech HVAC and Refrigeration</h1>
+      <p>Admin Dashboard</p>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <h2>Customer Quote Requests</h2>
+
+    <div id="message">
+      Loading quote requests...
+    </div>
+
+    <div id="quotes-container"></div>
+
+  </main>
+
+  <script>
+
+    async function loadQuoteRequests() {
+
+      const container = document.getElementById("quotes-container");
+      const message = document.getElementById("message");
+
+      const { data, error } = await supabaseClient
+        .from("quote_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error(error);
+
+        message.textContent =
+          "Error loading quote requests: " + error.message;
+
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        message.textContent = "No quote requests found.";
+        return;
+      }
+
+      message.textContent =
+        data.length + " quote request(s) found.";
+
+      container.innerHTML = "";
+
+      data.forEach(function(request) {
+
+        const card = document.createElement("div");
+
+        card.style.border = "1px solid #ddd";
+        card.style.padding = "20px";
+        card.style.marginBottom = "20px";
+        card.style.borderRadius = "10px";
+        card.style.background = "#fff";
+
+        card.innerHTML = `
+          <h3>${request.title || "Quote Request"}</h3>
+
+          <p>
+            <strong>Request Number:</strong>
+            ${request.request_number || ""}
+          </p>
+
+          <p>
+            <strong>Quantity:</strong>
+            ${request.quantity || 1}
+          </p>
+
+          <p>
+            <strong>Preferred Brand:</strong>
+            ${request.preferred_brand || "Not specified"}
+          </p>
+
+          <p>
+            <strong>Budget:</strong>
+            ${request.budget ? "₦" + Number(request.budget).toLocaleString() : "Not specified"}
+          </p>
+
+          <p>
+            <strong>Delivery Address:</strong>
+            ${request.delivery_address || "Not specified"}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            ${request.status || "pending"}
+          </p>
+
+          <p>
+            <strong>Description:</strong><br>
+            ${(request.description || "").replace(/\n/g, "<br>")}
+          </p>
+
+          <p>
+            <strong>Date:</strong>
+            ${request.created_at
+              ? new Date(request.created_at).toLocaleString()
+              : ""}
+          </p>
+        `;
+
+        container.appendChild(card);
+
+      });
+
+    }
+
+    loadQuoteRequests();
+
+  </script>
+
+</body>
+      </html>
