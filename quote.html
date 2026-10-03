@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Request a Quote | FrostTech</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+
+  <div class="container nav">
+
+    <div class="logo">
+      <span>❄</span> FrostTech
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#products">Products</a>
+    </nav>
+
+  </div>
+
+</header>
+
+
+<main>
+
+<section class="section">
+
+  <div class="container">
+
+    <div class="section-heading">
+
+      <p>FROSTTECH HVAC & REFRIGERATION</p>
+
+      <h1>Request a Quote</h1>
+
+      <p>
+        Tell us what HVAC or refrigeration product
+        or service you need.
+      </p>
+
+    </div>
+
+
+    <div class="quote-form-card">
+
+      <form id="quote-form">
+
+
+        <label for="title">
+          What do you need?
+        </label>
+
+        <input
+          type="text"
+          id="title"
+          name="title"
+          placeholder="e.g. 1.5HP Split AC"
+          required>
+
+
+        <label for="description">
+          Description
+        </label>
+
+        <textarea
+          id="description"
+          name="description"
+          rows="5"
+          placeholder="Describe the product or service you need..."
+          required></textarea>
+
+
+        <label for="category">
+          Category
+        </label>
+
+        <select id="category" name="category" required>
+
+          <option value="">
+            Select category
+          </option>
+
+          <option value="Air Conditioners">
+            Air Conditioners
+          </option>
+
+          <option value="Refrigeration Parts">
+            Refrigeration Parts
+          </option>
+
+          <option value="HVAC Accessories">
+            HVAC Accessories
+          </option>
+
+          <option value="HVAC Services">
+            HVAC Services
+          </option>
+
+        </select>
+
+
+        <label for="quantity">
+          Quantity
+        </label>
+
+        <input
+          type="number"
+          id="quantity"
+          name="quantity"
+          min="1"
+          value="1"
+          required>
+
+
+        <label for="preferred_brand">
+          Preferred Brand
+        </label>
+
+        <input
+          type="text"
+          id="preferred_brand"
+          name="preferred_brand"
+          placeholder="e.g. LG, Samsung, Daikin">
+
+
+        <label for="budget">
+          Budget (₦)
+        </label>
+
+        <input
+          type="number"
+          id="budget"
+          name="budget"
+          min="0"
+          placeholder="Optional">
+
+
+        <label for="delivery_address">
+          Delivery Address
+        </label>
+
+        <textarea
+          id="delivery_address"
+          name="delivery_address"
+          rows="3"
+          placeholder="Where should the product be delivered?"
+          required></textarea>
+
+
+        <button
+          type="submit"
+          class="primary-btn">
+
+          Submit Quote Request
+
+        </button>
+
+
+        <p id="form-status"></p>
+
+      </form>
+
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+
+
+<footer>
+
+  <div class="container footer-content">
+
+    <div>
+
+      <h2>❄ FrostTech</h2>
+
+      <p>
+        HVAC and Refrigeration Marketplace
+      </p>
+
+    </div>
+
+
+    <div>
+
+      <p>
+        Website: frosttechonline.com
+      </p>
+
+      <p>
+        WhatsApp: +234 803 200 8635
+      </p>
+
+    </div>
+
+  </div>
+
+
+  <div class="copyright">
+
+    © 2026 FrostTech HVAC and Refrigeration.
+    All rights reserved.
+
+  </div>
+
+</footer>
+
+
+<script>
+
+document
+  .getElementById("quote-form")
+  .addEventListener("submit", function(event) {
+
+    event.preventDefault();
+
+    document
+      .getElementById("form-status")
+      .textContent =
+      "Quote form is ready. Database connection will be added next.";
+
+  });
+
+</script>
+
+
+</body>
+</html>
