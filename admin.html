@@ -75,63 +75,518 @@
         card.style.background = "#fff";
 
         card.innerHTML = `
-          <h3>${request.title || "Quote Request"}</h3>
+
+          <h3>${escapeHtml(request.title || "Quote Request")}</h3>
 
           <p>
-  <strong>Current Status:</strong>
+            <strong>Request ID:</strong>
+            ${escapeHtml(request.id)}
+          </p>
 
-  <select
-    onchange="updateQuoteStatus('${request.id}', this.value)"
-    style="padding:8px; margin-left:8px;"
-  >
-    <option value="pending" ${request.status === "pending" ? "selected" : ""}>
-      Pending
-    </option>
+          <p>
+            <strong>Description:</strong>
+            ${escapeHtml(request.description || "Not provided")}
+          </p>
 
-    <option value="reviewing" ${request.status === "reviewing" ? "selected" : ""}>
-      Reviewing
-    </option>
+          <p>
+            <strong>Category:</strong>
+            ${escapeHtml(request.category || "Not provided")}
+          </p>
 
-    <option value="quoted" ${request.status === "quoted" ? "selected" : ""}>
-      Quoted
-    </option>
+          <p>
+            <strong>Quantity:</strong>
+            ${request.quantity || 1}
+          </p>
 
-    <option value="approved" ${request.status === "approved" ? "selected" : ""}>
-      Approved
-    </option>
+          <p>
+            <strong>Preferred Brand:</strong>
+            ${escapeHtml(request.preferred_brand || "Not specified")}
+          </p>
 
-    <option value="rejected" ${request.status === "rejected" ? "selected" : ""}>
-      Rejected
-    </option>
-  </select>
-</p>
+          <p>
+            <strong>Budget:</strong>
+            ${request.budget || "Not specified"}
+          </p>
+
+          <p>
+            <strong>Delivery Address:</strong>
+            ${escapeHtml(request.delivery_address || "Not provided")}
+          </p>
+
+          <p>
+            <strong>Current Status:</strong>
+
+            <select
+              onchange="updateQuoteStatus('${request.id}', this.value)"
+              style="padding:8px; margin-left:8px;"
+            >
+
+              <option value="pending"
+                ${request.status === "pending" ? "selected" : ""}>
+                Pending
+              </option>
+
+              <option value="reviewing"
+                ${request.status === "reviewing" ? "selected" : ""}>
+                Reviewing
+              </option>
+
+              <option value="quoted"
+                ${request.status === "quoted" ? "selected" : ""}>
+                Quoted
+              </option>
+
+              <option value="approved"
+                ${request.status === "approved" ? "selected" : ""}>
+                Approved
+              </option>
+
+              <option value="rejected"
+                ${request.status === "rejected" ? "selected" : ""}>
+                Rejected
+              </option>
+
+            </select>
+          </p>
+
+          <hr>
+
+          <h3>Supplier Quotation</h3>
+
+          <label>
+            Supplier ID
+          </label>
+
+          <input
+            id="supplier-${request.id}"
+            type="text"
+            placeholder="Enter supplier UUID"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Product ID
+          </label>
+
+          <input
+            id="product-${request.id}"
+            type="text"
+            placeholder="Enter product UUID"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Quantity
+          </label>
+
+          <input
+            id="quantity-${request.id}"
+            type="number"
+            min="1"
+            value="${request.quantity || 1}"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Supplier Unit Price (₦)
+          </label>
+
+          <input
+            id="unit-price-${request.id}"
+            type="number"
+            min="0"
+            step="0.01"
+            placeholder="Enter supplier unit price"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Delivery Cost (₦)
+          </label>
+
+          <input
+            id="delivery-${request.id}"
+            type="number"
+            min="0"
+            step="0.01"
+            value="0"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Valid Until
+          </label>
+
+          <input
+            id="valid-until-${request.id}"
+            type="datetime-local"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          >
+
+          <label>
+            Supplier Notes
+          </label>
+
+          <textarea
+            id="notes-${request.id}"
+            placeholder="Supplier notes"
+            style="width:100%; padding:10px; margin:6px 0 12px;"
+          ></textarea>
+
+          <button
+            onclick="saveSupplierQuote('${request.id}')"
+            style="
+              padding:10px 16px;
+              cursor:pointer;
+              margin-bottom:15px;
+            "
+          >
+            Save Supplier Quotation
+          </button>
+
+          <div id="supplier-quotes-${request.id}">
+            Loading supplier quotations...
+          </div>
+
         `;
 
         container.appendChild(card);
 
+        loadSupplierQuotes(request.id);
+
       });
 
     }
-async function updateQuoteStatus(requestId, newStatus) {
 
-  const { error } = await supabaseClient
-    .from("quote_requests")
-    .update({
-      status: newStatus,
-      updated_at: new Date().toISOString()
-    })
-    .eq("id", requestId);
 
-  if (error) {
-    alert("Could not update status: " + error.message);
-    return;
-  }
+    async function updateQuoteStatus(requestId, newStatus) {
 
-  alert("Quote status updated to: " + newStatus);
-}
+      const { error } = await supabaseClient
+        .from("quote_requests")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", requestId);
+
+      if (error) {
+
+        alert(
+          "Could not update status: " +
+          error.message
+        );
+
+        return;
+      }
+
+      alert(
+        "Quote status updated to: " +
+        newStatus
+      );
+
+    }
+
+
+    async function saveSupplierQuote(requestId) {
+
+      const supplierId =
+        document.getElementById(
+          "supplier-" + requestId
+        ).value.trim();
+
+      const productId =
+        document.getElementById(
+          "product-" + requestId
+        ).value.trim();
+
+      const quantity =
+        Number(
+          document.getElementById(
+            "quantity-" + requestId
+          ).value
+        );
+
+      const unitPrice =
+        Number(
+          document.getElementById(
+            "unit-price-" + requestId
+          ).value
+        );
+
+      const deliveryCost =
+        Number(
+          document.getElementById(
+            "delivery-" + requestId
+          ).value
+        ) || 0;
+
+      const validUntilValue =
+        document.getElementById(
+          "valid-until-" + requestId
+        ).value;
+
+      const notes =
+        document.getElementById(
+          "notes-" + requestId
+        ).value.trim();
+
+
+      if (!supplierId) {
+
+        alert("Please enter the Supplier ID.");
+
+        return;
+      }
+
+
+      if (!productId) {
+
+        alert("Please enter the Product ID.");
+
+        return;
+      }
+
+
+      if (!quantity || quantity < 1) {
+
+        alert("Please enter a valid quantity.");
+
+        return;
+      }
+
+
+      if (!unitPrice || unitPrice < 0) {
+
+        alert("Please enter the supplier unit price.");
+
+        return;
+      }
+
+
+      const supplierTotal =
+        (quantity * unitPrice) + deliveryCost;
+
+
+      const { error } = await supabaseClient
+        .from("supplier_quotes")
+        .insert({
+
+          request_id: requestId,
+
+          supplier_id: supplierId,
+
+          product_id: productId,
+
+          quantity: quantity,
+
+          supplier_unit_price: unitPrice,
+
+          supplier_total: supplierTotal,
+
+          delivery_cost: deliveryCost,
+
+          notes: notes || null,
+
+          valid_until:
+            validUntilValue
+              ? new Date(validUntilValue).toISOString()
+              : null,
+
+          status: "submitted",
+
+          updated_at:
+            new Date().toISOString()
+
+        });
+
+
+      if (error) {
+
+        console.error(error);
+
+        alert(
+          "Could not save supplier quotation: " +
+          error.message
+        );
+
+        return;
+      }
+
+
+      alert(
+        "Supplier quotation saved successfully."
+      );
+
+
+      document.getElementById(
+        "unit-price-" + requestId
+      ).value = "";
+
+      document.getElementById(
+        "delivery-" + requestId
+      ).value = "0";
+
+      document.getElementById(
+        "valid-until-" + requestId
+      ).value = "";
+
+      document.getElementById(
+        "notes-" + requestId
+      ).value = "";
+
+
+      loadSupplierQuotes(requestId);
+
+    }
+
+
+    async function loadSupplierQuotes(requestId) {
+
+      const container =
+        document.getElementById(
+          "supplier-quotes-" + requestId
+        );
+
+      if (!container) {
+        return;
+      }
+
+
+      const { data, error } = await supabaseClient
+        .from("supplier_quotes")
+        .select("*")
+        .eq("request_id", requestId)
+        .order("created_at", {
+          ascending: false
+        });
+
+
+      if (error) {
+
+        console.error(error);
+
+        container.innerHTML =
+          "<p>Could not load supplier quotations.</p>";
+
+        return;
+      }
+
+
+      if (!data || data.length === 0) {
+
+        container.innerHTML =
+          "<p>No supplier quotations submitted yet.</p>";
+
+        return;
+      }
+
+
+      container.innerHTML = `
+
+        <h4>Submitted Supplier Quotations</h4>
+
+        ${data.map(function(quote) {
+
+          return `
+
+            <div
+              style="
+                border:1px solid #ddd;
+                padding:15px;
+                margin-bottom:10px;
+                border-radius:8px;
+              "
+            >
+
+              <p>
+                <strong>Supplier ID:</strong>
+                ${escapeHtml(quote.supplier_id)}
+              </p>
+
+              <p>
+                <strong>Product ID:</strong>
+                ${escapeHtml(quote.product_id)}
+              </p>
+
+              <p>
+                <strong>Quantity:</strong>
+                ${quote.quantity}
+              </p>
+
+              <p>
+                <strong>Unit Price:</strong>
+                ₦${Number(
+                  quote.supplier_unit_price || 0
+                ).toLocaleString()}
+              </p>
+
+              <p>
+                <strong>Delivery Cost:</strong>
+                ₦${Number(
+                  quote.delivery_cost || 0
+                ).toLocaleString()}
+              </p>
+
+              <p>
+                <strong>Total:</strong>
+                ₦${Number(
+                  quote.supplier_total || 0
+                ).toLocaleString()}
+              </p>
+
+              <p>
+                <strong>Status:</strong>
+                ${escapeHtml(
+                  quote.status || "submitted"
+                )}
+              </p>
+
+              <p>
+                <strong>Valid Until:</strong>
+                ${quote.valid_until
+                  ? new Date(
+                      quote.valid_until
+                    ).toLocaleString()
+                  : "Not specified"}
+              </p>
+
+              <p>
+                <strong>Notes:</strong>
+                ${escapeHtml(
+                  quote.notes || "None"
+                )}
+              </p>
+
+            </div>
+
+          `;
+
+        }).join("")}
+
+      `;
+
+    }
+
+
+    function escapeHtml(value) {
+
+      if (value === null || value === undefined) {
+        return "";
+      }
+
+      return String(value)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+
+    }
+
+
     loadQuoteRequests();
 
   </script>
 
 </body>
-      </html>
+  </html>
