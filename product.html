@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Product | FrostTech HVAC and Refrigeration</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="container nav">
+
+    <div class="logo">
+      <span>❄</span> FrostTech
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="index.html#categories">Categories</a>
+      <a href="index.html#products">Products</a>
+      <a href="index.html#quote">Request Quote</a>
+    </nav>
+
+  </div>
+</header>
+
+<main>
+
+  <section class="section">
+
+    <div class="container">
+
+      <p>
+        <a href="index.html#products">← Back to Products</a>
+      </p>
+
+      <div id="product-details">
+
+        <p id="product-status">
+          Loading product...
+        </p>
+
+      </div>
+
+    </div>
+
+  </section>
+
+</main>
+
+<footer>
+
+  <div class="container footer-content">
+
+    <div>
+      <h2>❄ FrostTech</h2>
+      <p>HVAC and Refrigeration Marketplace</p>
+    </div>
+
+    <div>
+      <p>Website: frosttechonline.com</p>
+      <p>WhatsApp: +234 803 200 8635</p>
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    © 2026 FrostTech HVAC and Refrigeration. All rights reserved.
+  </div>
+
+</footer>
+
+<script>
+
+async function loadProduct() {
+
+  const productDetails =
+    document.getElementById("product-details");
+
+  const productStatus =
+    document.getElementById("product-status");
+
+  const params =
+    new URLSearchParams(window.location.search);
+
+  const productId =
+    params.get("id");
+
+  if (!productId) {
+
+    productStatus.textContent =
+      "No product was selected.";
+
+    return;
+  }
+
+  const { data, error } =
+    await supabaseClient
+      .from("products")
+      .select(`
+        id,
+        name,
+        category,
+        brand,
+        model,
+        description,
+        selling_price,
+        stock_quantity,
+        image_url
+      `)
+      .eq("id", productId)
+      .eq("is_active", true)
+      .single();
+
+  if (error) {
+
+    productStatus.textContent =
+      "Unable to load product: " +
+      error.message;
+
+    return;
+  }
+
+  productStatus.remove();
+
+  productDetails.innerHTML = `
+
+    <div class="product-detail-card">
+
+      <div class="product-detail-image">
+
+        ${
+          data.image_url
+            ? `<img src="${data.image_url}" alt="${data.name}">`
+            : "❄"
+        }
+
+      </div>
+
+      <div class="product-detail-info">
+
+        <p class="small-title">
+          ${data.category || "HVAC PRODUCT"}
+        </p>
+
+        <h1>
+          ${data.name}
+        </h1>
+
+        <p>
+          <strong>Brand:</strong>
+          ${data.brand || "Not specified"}
+        </p>
+
+        <p>
+          <strong>Model:</strong>
+          ${data.model || "Not specified"}
+        </p>
+
+        <p>
+          ${data.description || "No description available."}
+        </p>
+
+        <h2>
+          ₦${Number(
+            data.selling_price || 0
+          ).toLocaleString()}
+        </h2>
+
+        <p>
+          ${
+            Number(data.stock_quantity || 0) > 0
+              ? "In Stock"
+              : "Currently unavailable"
+          }
+        </p>
+
+        <div class="hero-buttons">
+
+          <button
+            class="primary-btn"
+            onclick="requestQuote('${data.id}')">
+            Request a Quote
+          </button>
+
+          <button
+            class="secondary-btn"
+            onclick="contactWhatsApp('${data.name}')">
+            WhatsApp
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  `;
+}
+
+
+function requestQuote(productId) {
+
+  window.location.href =
+    "index.html#quote";
+
+}
+
+
+function contactWhatsApp(productName) {
+
+  const message =
+    "Hello FrostTech, I am interested in: " +
+    productName;
+
+  const url =
+    "https://wa.me/2348032008635?text=" +
+    encodeURIComponent(message);
+
+  window.open(url, "_blank");
+
+}
+
+
+loadProduct();
+
+</script>
+
+</body>
+</html>
