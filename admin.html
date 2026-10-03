@@ -1,123 +1,200 @@
-<!DOCTYPE html><html lang="en"><head>  <meta charset="UTF-8"><meta
-name="viewport"
-content="width=device-width, initial-scale=1.0"
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Admin</title>
 
-«»
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <title>FrostTech Admin</title>  <link rel="stylesheet" href="style.css">  <script
-    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2">
-  </script>  <script src="supabase.js"></script></head><body><header class="site-header">  <div class="container"><h1>FrostTech HVAC and Refrigeration</h1>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f4f7f9;
+      color: #222;
+    }
 
-<p>Admin Dashboard</p>
+    .container {
+      max-width: 1100px;
+      margin: auto;
+    }
 
-  </div></header><main class="container">  <!-- LOGIN -->  <div id="login-section"><h2>Admin Login</h2>
+    h1 {
+      margin-bottom: 5px;
+    }
 
-<p>
-  Login to access the FrostTech administration dashboard.
-</p>
+    .card {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
 
+    input,
+    select,
+    textarea,
+    button {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 10px;
+      margin: 6px 0 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 14px;
+    }
 
-<input
-  id="email"
-  type="email"
-  placeholder="Admin email"
-  style="display:block;width:100%;max-width:400px;padding:12px;margin:10px 0;"
->
+    button {
+      background: #0066cc;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
 
+    button:hover {
+      background: #0052a3;
+    }
 
-<input
-  id="password"
-  type="password"
-  placeholder="Password"
-  style="display:block;width:100%;max-width:400px;padding:12px;margin:10px 0;"
->
+    .hidden {
+      display: none;
+    }
 
+    .success {
+      color: green;
+      font-weight: bold;
+    }
 
-<button
-  onclick="login()"
-  style="padding:12px 25px;"
->
-  Login
-</button>
+    .error {
+      color: red;
+      font-weight: bold;
+    }
 
+    .quote {
+      border-top: 1px solid #ddd;
+      padding-top: 20px;
+      margin-top: 20px;
+    }
 
-<p id="login-message"></p>
+    .quote-details {
+      background: #f8fafc;
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
 
-  </div>  <!-- ADMIN DASHBOARD -->  <div
-    id="admin-content"
-    style="display:none;"
-  ><div id="auth-message"></div>
+    .supplier-quotes {
+      background: #eef6ff;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
 
-<hr>
+    label {
+      font-weight: bold;
+      display: block;
+      margin-top: 8px;
+    }
+  </style>
+</head>
 
-<h2>Customer Quote Requests</h2>
+<body>
 
-<div id="message">
-  Loading quote requests...
+<div class="container">
+
+  <h1>FrostTech HVAC and Refrigeration</h1>
+  <h2>Admin Dashboard</h2>
+
+  <!-- LOGIN -->
+  <div id="login-section" class="card">
+    <h3>Admin Login</h3>
+
+    <label>Email</label>
+    <input type="email" id="email" placeholder="Admin email">
+
+    <label>Password</label>
+    <input type="password" id="password" placeholder="Password">
+
+    <button onclick="login()">Login</button>
+
+    <p id="login-message"></p>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard-section" class="hidden">
+
+    <div class="card">
+      <p>
+        <strong>Logged in as:</strong>
+        <span id="admin-name"></span>
+        |
+        <strong>Role:</strong>
+        <span id="admin-role"></span>
+      </p>
+
+      <button onclick="logout()">Logout</button>
+    </div>
+
+    <div class="card">
+      <h2>Customer Quote Requests</h2>
+
+      <div id="quote-requests">
+        Loading quote requests...
+      </div>
+    </div>
+
+  </div>
+
 </div>
 
-<div id="quotes-container"></div>
+<script>
 
-  </div></main><script>
+const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY = "[KEY]";
+
+const supabaseClient = supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
 
 
 /* =========================
-   ADMIN LOGIN
+   LOGIN
 ========================= */
 
 async function login() {
 
-  const email =
-    document.getElementById("email").value.trim();
+  const email = document.getElementById("email").value.trim();
+  const password = document.getElementById("password").value;
 
-  const password =
-    document.getElementById("password").value;
-
-  const message =
-    document.getElementById("login-message");
-
+  const message = document.getElementById("login-message");
 
   if (!email || !password) {
-
-    message.textContent =
-      "Please enter your email and password.";
-
+    message.className = "error";
+    message.textContent = "Please enter your email and password.";
     return;
   }
 
+  message.textContent = "Logging in...";
 
-  message.textContent =
-    "Logging in...";
+  const { error } = await supabaseClient.auth.signInWithPassword({
+    email: email,
+    password: password
+  });
 
-
-  const loginResult =
-    await supabaseClient.auth.signInWithPassword({
-
-      email: email,
-
-      password: password
-
-    });
-
-
-  if (loginResult.error) {
-
-    console.error(loginResult.error);
-
-    message.textContent =
-      "Login failed: " +
-      loginResult.error.message;
-
+  if (error) {
+    message.className = "error";
+    message.textContent = error.message;
     return;
   }
 
-
-  message.textContent =
-    "Login successful. Checking admin access...";
-
+  message.className = "success";
+  message.textContent = "Login successful.";
 
   await checkAdminAccess();
-
 }
 
 
@@ -127,790 +204,439 @@ async function login() {
 
 async function checkAdminAccess() {
 
-  const loginSection =
-    document.getElementById("login-section");
+  const {
+    data: { user },
+    error: userError
+  } = await supabaseClient.auth.getUser();
 
-  const adminContent =
-    document.getElementById("admin-content");
-
-  const authMessage =
-    document.getElementById("auth-message");
-
-
-  const userResult =
-    await supabaseClient.auth.getUser();
-
-
-  if (
-    userResult.error ||
-    !userResult.data.user
-  ) {
-
-    loginSection.style.display = "block";
-
-    adminContent.style.display = "none";
-
+  if (userError || !user) {
+    document.getElementById("login-section").classList.remove("hidden");
+    document.getElementById("dashboard-section").classList.add("hidden");
     return;
   }
 
+  const { data: profile, error } = await supabaseClient
+    .from("profiles")
+    .select("full_name, role, is_active")
+    .eq("id", user.id)
+    .single();
 
-  const user =
-    userResult.data.user;
-
-
-  const profileResult =
-    await supabaseClient
-      .from("profiles")
-      .select(
-        "full_name, role, is_active"
-      )
-      .eq("id", user.id)
-      .single();
-
-
-  if (profileResult.error) {
-
-    console.error(profileResult.error);
-
-    authMessage.textContent =
-      "Profile check failed: " +
-      profileResult.error.message;
-
+  if (error) {
+    document.getElementById("login-message").className = "error";
+    document.getElementById("login-message").textContent =
+      "Profile check failed: " + error.message;
     return;
   }
 
-
-  const profile =
-    profileResult.data;
-
-
-  if (
-    profile.role !== "admin" ||
-    profile.is_active !== true
-  ) {
-
-    authMessage.textContent =
-      "Access denied. This account is not an active administrator.";
-
-    await supabaseClient.auth.signOut();
-
+  if (profile.role !== "admin" || profile.is_active !== true) {
+    document.getElementById("login-message").className = "error";
+    document.getElementById("login-message").textContent =
+      "Access denied.";
     return;
   }
 
+  document.getElementById("admin-name").textContent =
+    profile.full_name || "Admin";
 
-  loginSection.style.display = "none";
+  document.getElementById("admin-role").textContent =
+    profile.role;
 
-  adminContent.style.display = "block";
+  document.getElementById("login-section").classList.add("hidden");
+  document.getElementById("dashboard-section").classList.remove("hidden");
 
-
-  authMessage.innerHTML =
-    "<p><strong>Logged in as:</strong> " +
-    (profile.full_name || "Admin") +
-    " | <strong>Role:</strong> " +
-    profile.role +
-    "</p>";
-
-
-  loadQuoteRequests();
-
+  await loadQuoteRequests();
 }
 
 
 /* =========================
-   LOAD CUSTOMER QUOTES
+   LOAD QUOTE REQUESTS
 ========================= */
 
 async function loadQuoteRequests() {
 
-  const container =
-    document.getElementById("quotes-container");
+  const container = document.getElementById("quote-requests");
 
-  const message =
-    document.getElementById("message");
+  container.innerHTML = "Loading quote requests...";
 
+  const { data, error } = await supabaseClient
+    .from("quote_requests")
+    .select("*")
+    .order("created_at", { ascending: false });
 
-  const result =
-    await supabaseClient
-      .from("quote_requests")
-      .select("*")
-      .order(
-        "created_at",
-        { ascending: false }
-      );
+  if (error) {
 
-
-  if (result.error) {
-
-    console.error(result.error);
-
-    message.textContent =
-      "Error loading quote requests: " +
-      result.error.message;
+    container.innerHTML =
+      '<p class="error">Error loading quote requests: ' +
+      error.message +
+      '</p>';
 
     return;
   }
-
-
-  const data =
-    result.data;
-
 
   if (!data || data.length === 0) {
 
-    message.textContent =
-      "No quote requests found.";
+    container.innerHTML =
+      "<p>No quote requests found.</p>";
 
     return;
   }
 
-
-  message.textContent =
-    data.length +
-    " quote request(s) found.";
-
-
   container.innerHTML = "";
 
+  data.forEach(request => {
 
-  data.forEach(function(request) {
+    const div = document.createElement("div");
 
+    div.className = "quote card";
 
-    const card =
-      document.createElement("div");
+    div.innerHTML = `
 
+      <h3>${escapeHtml(request.title || "Quote Request")}</h3>
 
-    card.style.border =
-      "1px solid #ddd";
+      <div class="quote-details">
 
-    card.style.padding =
-      "20px";
+        <p>
+          <strong>Request Number:</strong>
+          ${escapeHtml(request.request_number || "")}
+        </p>
 
-    card.style.marginBottom =
-      "20px";
+        <p>
+          <strong>Description:</strong>
+          ${escapeHtml(request.description || "")}
+        </p>
 
-    card.style.borderRadius =
-      "10px";
+        <p>
+          <strong>Category:</strong>
+          ${escapeHtml(request.category || "")}
+        </p>
 
-    card.style.background =
-      "#fff";
+        <p>
+          <strong>Quantity:</strong>
+          ${request.quantity ?? ""}
+        </p>
 
+        <p>
+          <strong>Preferred Brand:</strong>
+          ${escapeHtml(request.preferred_brand || "")}
+        </p>
 
-    card.innerHTML = `
+        <p>
+          <strong>Budget:</strong>
+          ${request.budget ?? ""}
+        </p>
 
-      <h3>
-        ${request.title || "Quote Request"}
-      </h3>
+        <p>
+          <strong>Delivery Address:</strong>
+          ${escapeHtml(request.delivery_address || "")}
+        </p>
 
+        <label>Status</label>
 
-      <p>
-        <strong>Request Number:</strong>
-        ${request.request_number || ""}
-      </p>
-
-
-      <p>
-        <strong>Description:</strong>
-        ${request.description || ""}
-      </p>
-
-
-      <p>
-        <strong>Category:</strong>
-        ${request.category || ""}
-      </p>
-
-
-      <p>
-        <strong>Quantity:</strong>
-        ${request.quantity || ""}
-      </p>
-
-
-      <p>
-        <strong>Preferred Brand:</strong>
-        ${request.preferred_brand || ""}
-      </p>
-
-
-      <p>
-        <strong>Budget:</strong>
-        ${
-          request.budget
-            ? "₦" +
-              Number(
-                request.budget
-              ).toLocaleString()
-            : "Not specified"
-        }
-      </p>
-
-
-      <p>
-        <strong>Delivery Address:</strong>
-        ${request.delivery_address || ""}
-      </p>
-
-
-      <p>
-
-        <strong>Status:</strong>
-
-        <select
-          onchange="updateQuoteStatus(
-            '${request.id}',
-            this.value
-          )"
-          style="padding:8px;margin-left:8px;"
-        >
-
-          <option
-            value="pending"
-            ${
-              request.status === "pending"
-                ? "selected"
-                : ""
-            }
-          >
-            Pending
-          </option>
-
-
-          <option
-            value="reviewing"
-            ${
-              request.status === "reviewing"
-                ? "selected"
-                : ""
-            }
-          >
-            Reviewing
-          </option>
-
-
-          <option
-            value="quoted"
-            ${
-              request.status === "quoted"
-                ? "selected"
-                : ""
-            }
-          >
-            Quoted
-          </option>
-
-
-          <option
-            value="approved"
-            ${
-              request.status === "approved"
-                ? "selected"
-                : ""
-            }
-          >
-            Approved
-          </option>
-
-
-          <option
-            value="rejected"
-            ${
-              request.status === "rejected"
-                ? "selected"
-                : ""
-            }
-          >
-            Rejected
-          </option>
-
+        <select id="status-${request.id}">
+          <option value="pending">Pending</option>
+          <option value="reviewing">Reviewing</option>
+          <option value="quoted">Quoted</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
         </select>
 
-      </p>
+        <button onclick="updateQuoteStatus('${request.id}')">
+          Save Status
+        </button>
 
+      </div>
 
-      <hr>
+      <div class="supplier-quotes">
 
+        <h3>Supplier Quotation</h3>
 
-      <h3>
-        Supplier Quotation
-      </h3>
+        <label>Supplier ID</label>
+        <input
+          id="supplier-${request.id}"
+          placeholder="Supplier UUID"
+        >
 
+        <label>Product ID</label>
+        <input
+          id="product-${request.id}"
+          placeholder="Product UUID"
+        >
 
-      <p>
-        Enter the supplier and product IDs for this quotation.
-      </p>
+        <label>Quantity</label>
+        <input
+          id="quantity-${request.id}"
+          type="number"
+          value="${request.quantity || 1}"
+          min="1"
+        >
 
+        <label>Supplier Unit Price</label>
+        <input
+          id="unit-price-${request.id}"
+          type="number"
+          placeholder="Supplier price"
+        >
 
-      <input
-        type="text"
-        id="supplier-${request.id}"
-        placeholder="Supplier ID"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
+        <label>Delivery Cost</label>
+        <input
+          id="delivery-${request.id}"
+          type="number"
+          value="0"
+        >
 
+        <label>Valid Until</label>
+        <input
+          id="valid-${request.id}"
+          type="datetime-local"
+        >
 
-      <input
-        type="text"
-        id="product-${request.id}"
-        placeholder="Product ID"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
+        <label>Supplier Notes</label>
+        <textarea
+          id="notes-${request.id}"
+          placeholder="Supplier notes"
+        ></textarea>
 
+        <button onclick="saveSupplierQuotation('${request.id}')">
+          Save Supplier Quotation
+        </button>
 
-      <input
-        type="number"
-        id="quantity-${request.id}"
-        placeholder="Quantity"
-        value="${request.quantity || 1}"
-        min="1"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
+        <div id="saved-quotes-${request.id}">
+          Loading supplier quotations...
+        </div>
 
+      </div>
+    `;
 
-      <input
-        type="number"
-        id="unit-price-${request.id}"
-        placeholder="Supplier Unit Price"
-        min="0"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
+    container.appendChild(div);
 
+    document.getElementById(`status-${request.id}`).value =
+      request.status || "pending";
 
-      <input
-        type="number"
-        id="delivery-${request.id}"
-        placeholder="Delivery Cost"
-        value="0"
-        min="0"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
-
-
-      <input
-        type="datetime-local"
-        id="valid-${request.id}"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;"
-      >
-
-
-      <textarea
-        id="notes-${request.id}"
-        placeholder="Supplier Notes"
-        style="display:block;width:100%;max-width:600px;padding:10px;margin:8px 0;min-height:80px;"
-      ></textarea>  <button
-    onclick="saveSupplierQuotation(
-      '${request.id}'
-    )"
-    style="padding:12px 20px;cursor:pointer;"
-  >
-    Save Supplier Quotation
-  </button>
-
-
-  <p
-    id="supplier-message-${request.id}"
-  ></p>
-
-
-  <div
-    id="supplier-quotes-${request.id}"
-  ></div>
-
-`;
-
-
-container.appendChild(card);
-
-
-loadSupplierQuotations(
-  request.id
-);
-
-});
-
+    loadSupplierQuotations(request.id);
+  });
 }
 
+
 /* =========================
-UPDATE CUSTOMER STATUS
+   UPDATE REQUEST STATUS
 ========================= */
 
-async function updateQuoteStatus(
-requestId,
-newStatus
-) {
+async function updateQuoteStatus(requestId) {
 
-const result =
-await supabaseClient
-.from("quote_requests")
-.update({
+  const status =
+    document.getElementById(`status-${requestId}`).value;
 
-    status: newStatus,
+  const { error } = await supabaseClient
+    .from("quote_requests")
+    .update({
+      status: status,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", requestId);
 
-    updated_at:
-      new Date().toISOString()
+  if (error) {
+    alert("Could not update status: " + error.message);
+    return;
+  }
 
-  })
-  .eq(
-    "id",
-    requestId
+  alert("Quote request status updated.");
+}
+
+
+/* =========================
+   SAVE SUPPLIER QUOTATION
+========================= */
+
+async function saveSupplierQuotation(requestId) {
+
+  const supplierId =
+    document.getElementById(`supplier-${requestId}`).value.trim();
+
+  const productId =
+    document.getElementById(`product-${requestId}`).value.trim();
+
+  const quantity =
+    Number(document.getElementById(`quantity-${requestId}`).value);
+
+  const unitPrice =
+    Number(document.getElementById(`unit-price-${requestId}`).value);
+
+  const deliveryCost =
+    Number(document.getElementById(`delivery-${requestId}`).value || 0);
+
+  const validUntil =
+    document.getElementById(`valid-${requestId}`).value;
+
+  const notes =
+    document.getElementById(`notes-${requestId}`).value.trim();
+
+  if (!supplierId || !productId || !quantity || !unitPrice) {
+    alert(
+      "Please enter Supplier ID, Product ID, Quantity and Supplier Unit Price."
+    );
+    return;
+  }
+
+  const supplierTotal =
+    (quantity * unitPrice) + deliveryCost;
+
+  const { error } = await supabaseClient
+    .from("supplier_quotes")
+    .insert({
+      request_id: requestId,
+      supplier_id: supplierId,
+      product_id: productId,
+      quantity: quantity,
+      supplier_unit_price: unitPrice,
+      supplier_total: supplierTotal,
+      delivery_cost: deliveryCost,
+      notes: notes || null,
+      valid_until: validUntil
+        ? new Date(validUntil).toISOString()
+        : null,
+      status: "submitted",
+      updated_at: new Date().toISOString()
+    });
+
+  if (error) {
+
+    alert(
+      "Could not save supplier quotation: " +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "Supplier quotation saved. Total: ₦" +
+    supplierTotal.toLocaleString()
   );
 
-if (result.error) {
-
-alert(
-  "Could not update status: " +
-  result.error.message
-);
-
-return;
-
+  await loadSupplierQuotations(requestId);
 }
 
-alert(
-"Quote status updated to: " +
-newStatus
-);
-
-}
 
 /* =========================
-SAVE SUPPLIER QUOTATION
+   LOAD SUPPLIER QUOTATIONS
 ========================= */
 
-async function saveSupplierQuotation(
-requestId
-) {
+async function loadSupplierQuotations(requestId) {
 
-const supplierId =
-document.getElementById(
-"supplier-" + requestId
-).value.trim();
+  const container =
+    document.getElementById(`saved-quotes-${requestId}`);
 
-const productId =
-document.getElementById(
-"product-" + requestId
-).value.trim();
+  if (!container) return;
 
-const quantity =
-Number(
-document.getElementById(
-"quantity-" + requestId
-).value
-);
+  const { data, error } = await supabaseClient
+    .from("supplier_quotes")
+    .select("*")
+    .eq("request_id", requestId)
+    .order("created_at", { ascending: false });
 
-const unitPrice =
-Number(
-document.getElementById(
-"unit-price-" + requestId
-).value
-);
+  if (error) {
 
-const deliveryCost =
-Number(
-document.getElementById(
-"delivery-" + requestId
-).value || 0
-);
+    container.innerHTML =
+      '<p class="error">Could not load supplier quotations: ' +
+      error.message +
+      '</p>';
 
-const validUntil =
-document.getElementById(
-"valid-" + requestId
-).value;
+    return;
+  }
 
-const notes =
-document.getElementById(
-"notes-" + requestId
-).value.trim();
+  if (!data || data.length === 0) {
 
-const message =
-document.getElementById(
-"supplier-message-" + requestId
-);
+    container.innerHTML =
+      "<p>No supplier quotations saved yet.</p>";
 
-if (!supplierId) {
+    return;
+  }
 
-message.textContent =
-  "Please enter the Supplier ID.";
+  container.innerHTML =
+    "<h4>Saved Supplier Quotations</h4>";
 
-return;
+  data.forEach(quote => {
 
-}
+    const div = document.createElement("div");
 
-if (!productId) {
+    div.style.background = "white";
+    div.style.padding = "10px";
+    div.style.marginTop = "10px";
+    div.style.borderRadius = "6px";
 
-message.textContent =
-  "Please enter the Product ID.";
+    div.innerHTML = `
+      <p><strong>Supplier:</strong>
+        ${escapeHtml(quote.supplier_id)}
+      </p>
 
-return;
+      <p><strong>Product:</strong>
+        ${escapeHtml(quote.product_id)}
+      </p>
 
-}
+      <p><strong>Quantity:</strong>
+        ${quote.quantity}
+      </p>
 
-if (!quantity || quantity < 1) {
+      <p><strong>Unit Price:</strong>
+        ₦${Number(quote.supplier_unit_price).toLocaleString()}
+      </p>
 
-message.textContent =
-  "Please enter a valid quantity.";
+      <p><strong>Delivery:</strong>
+        ₦${Number(quote.delivery_cost || 0).toLocaleString()}
+      </p>
 
-return;
+      <p><strong>Total:</strong>
+        ₦${Number(quote.supplier_total).toLocaleString()}
+      </p>
 
-}
+      <p><strong>Status:</strong>
+        ${escapeHtml(quote.status || "")}
+      </p>
 
-if (
-isNaN(unitPrice) ||
-unitPrice < 0
-) {
+      <p><strong>Notes:</strong>
+        ${escapeHtml(quote.notes || "")}
+      </p>
+    `;
 
-message.textContent =
-  "Please enter a valid supplier unit price.";
-
-return;
-
-}
-
-if (
-isNaN(deliveryCost) ||
-deliveryCost < 0
-) {
-
-message.textContent =
-  "Please enter a valid delivery cost.";
-
-return;
-
-}
-
-const supplierTotal =
-(quantity * unitPrice) +
-deliveryCost;
-
-message.textContent =
-"Saving supplier quotation...";
-
-const result =
-await supabaseClient
-.from("supplier_quotes")
-.insert({
-
-    request_id:
-      requestId,
-
-    supplier_id:
-      supplierId,
-
-    product_id:
-      productId,
-
-    quantity:
-      quantity,
-
-    supplier_unit_price:
-      unitPrice,
-
-    supplier_total:
-      supplierTotal,
-
-    delivery_cost:
-      deliveryCost,
-
-    notes:
-      notes || null,
-
-    valid_until:
-      validUntil
-        ? new Date(
-            validUntil
-          ).toISOString()
-        : null,
-
-    status:
-      "submitted",
-
-    updated_at:
-      new Date().toISOString()
-
+    container.appendChild(div);
   });
-
-if (result.error) {
-
-console.error(result.error);
-
-message.textContent =
-  "Could not save supplier quotation: " +
-  result.error.message;
-
-return;
-
 }
 
-message.textContent =
-"Supplier quotation saved successfully. " +
-"Total: ₦" +
-supplierTotal.toLocaleString();
-
-loadSupplierQuotations(
-requestId
-);
-
-}
 
 /* =========================
-LOAD SUPPLIER QUOTATIONS
+   LOGOUT
 ========================= */
 
-async function loadSupplierQuotations(
-requestId
-) {
+async function logout() {
 
-const container =
-document.getElementById(
-"supplier-quotes-" + requestId
-);
+  await supabaseClient.auth.signOut();
 
-if (!container) {
-
-return;
-
+  location.reload();
 }
 
-const result =
-await supabaseClient
-.from("supplier_quotes")
-.select("*")
-.eq(
-"request_id",
-requestId
-)
-.order(
-"created_at",
-{ ascending: false }
-);
-
-if (result.error) {
-
-console.error(result.error);
-
-container.innerHTML =
-  "<p>Could not load supplier quotations.</p>";
-
-return;
-
-}
-
-const data =
-result.data;
-
-if (
-!data ||
-data.length === 0
-) {
-
-container.innerHTML =
-  "<p>No supplier quotations submitted yet.</p>";
-
-return;
-
-}
-
-container.innerHTML =
-"<h4>Submitted Supplier Quotations</h4>";
-
-data.forEach(function(quote) {
-
-const div =
-  document.createElement("div");
-
-
-div.style.border =
-  "1px solid #eee";
-
-div.style.padding =
-  "12px";
-
-div.style.marginTop =
-  "10px";
-
-div.style.borderRadius =
-  "8px";
-
-
-div.innerHTML = `
-
-  <p>
-    <strong>Supplier ID:</strong>
-    ${quote.supplier_id}
-  </p>
-
-
-  <p>
-    <strong>Product ID:</strong>
-    ${quote.product_id}
-  </p>
-
-
-  <p>
-    <strong>Quantity:</strong>
-    ${quote.quantity}
-  </p>
-
-
-  <p>
-    <strong>Unit Price:</strong>
-    ₦${Number(
-      quote.supplier_unit_price || 0
-    ).toLocaleString()}
-  </p>
-
-
-  <p>
-    <strong>Delivery Cost:</strong>
-    ₦${Number(
-      quote.delivery_cost || 0
-    ).toLocaleString()}
-  </p>
-
-
-  <p>
-    <strong>Total:</strong>
-    ₦${Number(
-      quote.supplier_total || 0
-    ).toLocaleString()}
-  </p>
-
-
-  <p>
-    <strong>Status:</strong>
-    ${quote.status || "submitted"}
-  </p>
-
-
-  <p>
-    <strong>Valid Until:</strong>
-    ${
-      quote.valid_until
-        ? new Date(
-            quote.valid_until
-          ).toLocaleString()
-        : "Not specified"
-    }
-  </p>
-
-
-  <p>
-    <strong>Notes:</strong>
-    ${quote.notes || "None"}
-  </p>
-
-`;
-
-
-container.appendChild(div);
-
-});
-
-}
 
 /* =========================
-START
+   HTML ESCAPE
+========================= */
+
+function escapeHtml(value) {
+
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+
+/* =========================
+   START
 ========================= */
 
 checkAdminAccess();
 
-</script></body></html>
+</script>
+
+</body>
+  </html>
