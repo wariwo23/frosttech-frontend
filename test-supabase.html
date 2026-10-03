@@ -31,8 +31,14 @@
         .limit(1);
 
       if (error) {
-        status.textContent = "Database connection error: " + error.message;
-      } else {
+  status.textContent =
+    "Database connection error: " +
+    error.message +
+    " | Code: " +
+    (error.code || "none") +
+    " | Details: " +
+    (error.details || "none");
+} else {
         status.textContent = "FrostTech Supabase database connected successfully!";
       }
     }
