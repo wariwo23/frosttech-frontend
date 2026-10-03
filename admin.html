@@ -103,7 +103,49 @@ content="width=device-width, initial-scale=1.0"
 
 
       message.textContent =
-        "Login successful.";
+        message.textContent =
+  "Login successful. Checking admin profile...";
+
+const userResult =
+  await supabaseClient.auth.getUser();
+
+if (userResult.error || !userResult.data.user) {
+
+  message.textContent =
+    "Login worked, but the user session could not be found.";
+
+  return;
+}
+
+const userId =
+  userResult.data.user.id;
+
+const profileResult =
+  await supabaseClient
+    .from("profiles")
+    .select("full_name, role, is_active")
+    .eq("id", userId)
+    .single();
+
+if (profileResult.error) {
+
+  message.textContent =
+    "Profile check failed: " +
+    profileResult.error.message;
+
+  return;
+}
+
+const profile =
+  profileResult.data;
+
+message.textContent =
+  "Logged in as: " +
+  (profile.full_name || "Admin") +
+  " | Role: " +
+  profile.role +
+  " | Active: " +
+  profile.is_active;
 
     }
 
