@@ -208,9 +208,202 @@ async function loadProduct() {
 
 function requestQuote(productId) {
 
-  window.location.href =
-    "index.html#quote";
+  const productDetails =
+    document.getElementById("product-details");
 
+  productDetails.innerHTML += `
+
+    <div class="quote-form-box">
+
+      <h2>Request a Quote</h2>
+
+      <p>
+        Please provide your details and requirements.
+      </p>
+
+      <form id="quote-form">
+
+        <input
+          type="text"
+          id="customer-name"
+          placeholder="Your full name"
+          required
+        >
+
+        <input
+          type="tel"
+          id="customer-phone"
+          placeholder="Phone / WhatsApp number"
+          required
+        >
+
+        <input
+          type="number"
+          id="quantity"
+          placeholder="Quantity"
+          min="1"
+          value="1"
+          required
+        >
+
+        <input
+          type="number"
+          id="budget"
+          placeholder="Your budget (₦)"
+          min="0"
+        >
+
+        <input
+          type="text"
+          id="delivery-address"
+          placeholder="Delivery address"
+          required
+        >
+
+        <textarea
+          id="description"
+          placeholder="Additional requirements"
+          rows="5">
+        </textarea>
+
+        <button
+          type="submit"
+          class="primary-btn">
+          Submit Quote Request
+        </button>
+
+      </form>
+
+      <p id="quote-message"></p>
+
+    </div>
+
+  `;
+
+  document
+    .getElementById("quote-form")
+    .addEventListener("submit", function(event) {
+
+      event.preventDefault();
+
+      submitQuoteRequest(productId);
+
+    });
+
+}
+async function submitQuoteRequest(productId) {
+
+  const message =
+    document.getElementById("quote-message");
+
+  const name =
+    document.getElementById("customer-name").value.trim();
+
+  const phone =
+    document.getElementById("customer-phone").value.trim();
+
+  const quantity =
+    Number(document.getElementById("quantity").value);
+
+  const budgetValue =
+    document.getElementById("budget").value;
+
+  const budget =
+    budgetValue ? Number(budgetValue) : null;
+
+  const deliveryAddress =
+    document.getElementById("delivery-address").value.trim();
+
+  const description =
+    document.getElementById("description").value.trim();
+
+
+  message.textContent =
+    "Submitting your request...";
+
+
+  const { data: product, error: productError } =
+    await supabaseClient
+      .from("products")
+      .select("name, brand")
+      .eq("id", productId)
+      .single();
+
+
+  if (productError) {
+
+    message.textContent =
+      "Unable to find the selected product.";
+
+    return;
+  }
+
+
+  const requestNumber =
+    "FT-" +
+    Date.now();
+
+
+  const { error } =
+    await supabaseClient
+      .from("quote_requests")
+      .insert({
+
+        request_number: requestNumber,
+
+        title:
+          "Quote Request - " +
+          product.name,
+
+        description:
+          "Customer: " +
+          name +
+          "\nPhone: " +
+          phone +
+          "\nProduct: " +
+          product.name +
+          "\n" +
+          description,
+
+        product_id: productId,
+
+        quantity: quantity,
+
+        preferred_brand:
+          product.brand || null,
+
+        budget: budget,
+
+        delivery_address:
+          deliveryAddress,
+
+        status: "pending"
+
+      });
+
+
+  if (error) {
+
+    console.error(error);
+
+    message.textContent =
+      "Unable to submit request: " +
+      error.message;
+
+    return;
+  }
+
+
+  message.textContent =
+    "Quote request submitted successfully! " +
+    "Reference: " +
+    requestNumber;
+
+  document
+    .getElementById("quote-form")
+    .reset();
+
+}
 }
 
 
