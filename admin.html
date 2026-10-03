@@ -78,49 +78,33 @@
           <h3>${request.title || "Quote Request"}</h3>
 
           <p>
-  <strong>Customer Details:</strong><br>
-  ${(request.description || "").replace(/\n/g, "<br>")}
-</p>
-
-<p>
   <strong>Current Status:</strong>
-  ${request.status || "pending"}
+
+  <select
+    onchange="updateQuoteStatus('${request.id}', this.value)"
+    style="padding:8px; margin-left:8px;"
+  >
+    <option value="pending" ${request.status === "pending" ? "selected" : ""}>
+      Pending
+    </option>
+
+    <option value="reviewing" ${request.status === "reviewing" ? "selected" : ""}>
+      Reviewing
+    </option>
+
+    <option value="quoted" ${request.status === "quoted" ? "selected" : ""}>
+      Quoted
+    </option>
+
+    <option value="approved" ${request.status === "approved" ? "selected" : ""}>
+      Approved
+    </option>
+
+    <option value="rejected" ${request.status === "rejected" ? "selected" : ""}>
+      Rejected
+    </option>
+  </select>
 </p>
-            <strong>Quantity:</strong>
-            ${request.quantity || 1}
-          </p>
-
-          <p>
-            <strong>Preferred Brand:</strong>
-            ${request.preferred_brand || "Not specified"}
-          </p>
-
-          <p>
-            <strong>Budget:</strong>
-            ${request.budget ? "₦" + Number(request.budget).toLocaleString() : "Not specified"}
-          </p>
-
-          <p>
-            <strong>Delivery Address:</strong>
-            ${request.delivery_address || "Not specified"}
-          </p>
-
-          <p>
-            <strong>Status:</strong>
-            ${request.status || "pending"}
-          </p>
-
-          <p>
-            <strong>Description:</strong><br>
-            ${(request.description || "").replace(/\n/g, "<br>")}
-          </p>
-
-          <p>
-            <strong>Date:</strong>
-            ${request.created_at
-              ? new Date(request.created_at).toLocaleString()
-              : ""}
-          </p>
         `;
 
         container.appendChild(card);
@@ -128,7 +112,23 @@
       });
 
     }
+async function updateQuoteStatus(requestId, newStatus) {
 
+  const { error } = await supabaseClient
+    .from("quote_requests")
+    .update({
+      status: newStatus,
+      updated_at: new Date().toISOString()
+    })
+    .eq("id", requestId);
+
+  if (error) {
+    alert("Could not update status: " + error.message);
+    return;
+  }
+
+  alert("Quote status updated to: " + newStatus);
+}
     loadQuoteRequests();
 
   </script>
