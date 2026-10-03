@@ -78,11 +78,14 @@
           <h3>${request.title || "Quote Request"}</h3>
 
           <p>
-            <strong>Request Number:</strong>
-            ${request.request_number || ""}
-          </p>
+  <strong>Customer Details:</strong><br>
+  ${(request.description || "").replace(/\n/g, "<br>")}
+</p>
 
-          <p>
+<p>
+  <strong>Current Status:</strong>
+  ${request.status || "pending"}
+</p>
             <strong>Quantity:</strong>
             ${request.quantity || 1}
           </p>
