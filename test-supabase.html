@@ -13,16 +13,31 @@
 
   <h1>FrostTech Supabase Test</h1>
 
-  <p id="status">Testing connection...</p>
+  <p id="status">Testing database connection...</p>
 
   <script>
     const status = document.getElementById("status");
 
-    if (supabaseClient) {
-      status.textContent = "Supabase client loaded successfully.";
-    } else {
-      status.textContent = "Supabase connection failed.";
+    async function testConnection() {
+
+      if (!supabaseClient) {
+        status.textContent = "Supabase client failed to load.";
+        return;
+      }
+
+      const { data, error } = await supabaseClient
+        .from("products")
+        .select("*")
+        .limit(1);
+
+      if (error) {
+        status.textContent = "Database connection error: " + error.message;
+      } else {
+        status.textContent = "FrostTech Supabase database connected successfully!";
+      }
     }
+
+    testConnection();
   </script>
 
 </body>
