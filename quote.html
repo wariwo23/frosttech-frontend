@@ -57,7 +57,6 @@
 
       <form id="quote-form">
 
-
         <label for="title">
           What do you need?
         </label>
@@ -65,7 +64,6 @@
         <input
           type="text"
           id="title"
-          name="title"
           placeholder="e.g. 1.5HP Split AC"
           required>
 
@@ -76,7 +74,6 @@
 
         <textarea
           id="description"
-          name="description"
           rows="5"
           placeholder="Describe the product or service you need..."
           required></textarea>
@@ -86,7 +83,7 @@
           Category
         </label>
 
-        <select id="category" name="category" required>
+        <select id="category" required>
 
           <option value="">
             Select category
@@ -118,7 +115,6 @@
         <input
           type="number"
           id="quantity"
-          name="quantity"
           min="1"
           value="1"
           required>
@@ -131,7 +127,6 @@
         <input
           type="text"
           id="preferred_brand"
-          name="preferred_brand"
           placeholder="e.g. LG, Samsung, Daikin">
 
 
@@ -142,7 +137,6 @@
         <input
           type="number"
           id="budget"
-          name="budget"
           min="0"
           placeholder="Optional">
 
@@ -153,7 +147,6 @@
 
         <textarea
           id="delivery_address"
-          name="delivery_address"
           rows="3"
           placeholder="Where should the product be delivered?"
           required></textarea>
@@ -223,18 +216,108 @@
 
 <script>
 
+async function submitQuote(event) {
+
+  event.preventDefault();
+
+  const status =
+    document.getElementById("form-status");
+
+  status.textContent =
+    "Submitting your quote request...";
+
+
+  const title =
+    document.getElementById("title").value.trim();
+
+  const description =
+    document.getElementById("description").value.trim();
+
+  const category =
+    document.getElementById("category").value;
+
+  const quantity =
+    Number(document.getElementById("quantity").value);
+
+  const preferredBrand =
+    document.getElementById("preferred_brand").value.trim();
+
+  const budgetValue =
+    document.getElementById("budget").value;
+
+  const deliveryAddress =
+    document.getElementById("delivery_address").value.trim();
+
+
+  const budget =
+    budgetValue === ""
+      ? null
+      : Number(budgetValue);
+
+
+  const requestNumber =
+    "FT-" +
+    Date.now();
+
+
+  const { data, error } =
+    await supabaseClient
+      .from("customer-requests")
+      .insert([{
+
+        request_number: requestNumber,
+
+        title: title,
+
+        description: description,
+
+        category: category,
+
+        quantity: quantity,
+
+        preferred_brand: preferredBrand || null,
+
+        budget: budget,
+
+        delivery_address: deliveryAddress,
+
+        status: "pending"
+
+      }])
+      .select()
+      .single();
+
+
+  if (error) {
+
+    status.textContent =
+      "Unable to submit request: " +
+      error.message;
+
+    return;
+
+  }
+
+
+  status.textContent =
+    "Quote request submitted successfully! " +
+    "Request number: " +
+    data.request_number;
+
+
+  document
+    .getElementById("quote-form")
+    .reset();
+
+}
+
+
 document
   .getElementById("quote-form")
-  .addEventListener("submit", function(event) {
-
-    event.preventDefault();
-
-    document
-      .getElementById("form-status")
-      .textContent =
-      "Quote form is ready. Database connection will be added next.";
-
-  });
+  .addEventListener(
+    "submit",
+    submitQuote
+  );
 
 </script>
 
