@@ -986,43 +986,6 @@ async function saveSupplierQuotation(
 
   const supplierQuote = {
 
-    request_id:
-      requestId,
-
-    supplier_id:
-      supplierId,
-
-    product_id:
-      productId || null,
-
-    quantity:
-      quantity,
-
-    supplier_unit_price:
-      unitPrice,
-
-    supplier_total:
-      supplierTotal,
-
-    delivery_cost:
-      deliveryCost,
-
-    notes:
-      notes || null,
-
-    valid_until:
-      validUntilValue
-        ? new Date(
-            validUntilValue
-          ).toISOString()
-        : null,
-
-    status:
-      supplierStatus
-
-  };
-
-
   console.log(
     "Saving supplier quotation:",
     supplierQuote
