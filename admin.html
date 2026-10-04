@@ -2,196 +2,296 @@
 <html lang="en">
 
 <head>
+
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
 
   <title>FrostTech Admin</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+
     body {
       font-family: Arial, sans-serif;
       margin: 0;
-      padding: 20px;
+      padding: 0;
       background: #f4f7f9;
       color: #222;
+    }
+
+    header {
+      background: #0b5ed7;
+      color: white;
+      padding: 18px;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 5px 0 0;
     }
 
     .container {
       max-width: 1100px;
       margin: auto;
-    }
-
-    h1 {
-      margin-bottom: 5px;
+      padding: 20px;
     }
 
     .card {
       background: white;
+      border-radius: 8px;
       padding: 20px;
-      margin: 20px 0;
-      border-radius: 10px;
+      margin-bottom: 20px;
       box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     input,
     select,
-    textarea,
-    button {
+    textarea {
       width: 100%;
       box-sizing: border-box;
       padding: 10px;
-      margin: 6px 0 12px;
+      margin-top: 5px;
+      margin-bottom: 12px;
       border: 1px solid #ccc;
-      border-radius: 6px;
-      font-size: 14px;
-    }
-
-    textarea {
-      min-height: 80px;
-      resize: vertical;
+      border-radius: 5px;
+      font-size: 15px;
     }
 
     button {
-      background: #0066cc;
-      color: white;
       border: none;
+      border-radius: 5px;
+      padding: 11px 18px;
       cursor: pointer;
       font-weight: bold;
     }
 
-    button:hover {
-      background: #0052a3;
+    .primary {
+      background: #0b5ed7;
+      color: white;
+    }
+
+    .success {
+      background: #198754;
+      color: white;
+    }
+
+    .danger {
+      background: #dc3545;
+      color: white;
+    }
+
+    .secondary {
+      background: #6c757d;
+      color: white;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
     }
 
     .hidden {
       display: none;
     }
 
-    .success {
-      color: green;
+    .request-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 18px;
+      margin-bottom: 20px;
+      background: white;
+    }
+
+    .quotation-box {
+      background: #f8f9fa;
+      border: 1px solid #ddd;
+      padding: 15px;
+      border-radius: 7px;
+      margin-top: 15px;
+    }
+
+    .total {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 10px 0 15px;
+    }
+
+    .saved-quote {
+      border: 1px solid #ddd;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 6px;
+      background: white;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 5px 9px;
+      border-radius: 5px;
+      background: #eee;
+      font-size: 13px;
       font-weight: bold;
     }
 
     .error {
-      color: red;
+      color: #dc3545;
       font-weight: bold;
     }
 
-    .quote {
+    .success-text {
+      color: #198754;
+      font-weight: bold;
+    }
+
+    hr {
+      border: 0;
       border-top: 1px solid #ddd;
-      padding-top: 20px;
-      margin-top: 20px;
+      margin: 20px 0;
     }
 
-    .quote-details {
-      background: #f8fafc;
-      padding: 15px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
-
-    .supplier-quotes {
-      background: #eef6ff;
-      padding: 15px;
-      border-radius: 8px;
-      margin-top: 15px;
-    }
-
-    .saved-quote {
-      background: white;
-      padding: 12px;
-      margin-top: 10px;
-      border-radius: 6px;
-      border: 1px solid #ddd;
-    }
-
-    label {
-      font-weight: bold;
-      display: block;
-      margin-top: 8px;
-    }
-
-    .total-box {
-      background: #e9f7ef;
-      padding: 12px;
-      border-radius: 6px;
-      font-weight: bold;
-      margin: 10px 0;
-    }
   </style>
 
 </head>
 
+
 <body>
 
-<div class="container">
 
-  <h1>FrostTech HVAC and Refrigeration</h1>
+<!-- ======================================
+     LOGIN
+     ====================================== -->
 
-  <h2>Admin Dashboard</h2>
+<div id="login-screen">
 
-
-  <!-- LOGIN -->
-
-  <div id="login-section" class="card">
-
-    <h3>Admin Login</h3>
-
-    <label>Email</label>
-
-    <input
-      type="email"
-      id="email"
-      placeholder="Admin email"
-    >
-
-    <label>Password</label>
-
-    <input
-      type="password"
-      id="password"
-      placeholder="Password"
-    >
-
-    <button onclick="login()">
-      Login
-    </button>
-
-    <p id="login-message"></p>
-
-  </div>
-
-
-  <!-- DASHBOARD -->
-
-  <div id="dashboard-section" class="hidden">
+  <div class="container">
 
     <div class="card">
 
+      <h2>FrostTech Admin Login</h2>
+
       <p>
-        <strong>Logged in as:</strong>
-        <span id="admin-name"></span>
-        |
-        <strong>Role:</strong>
-        <span id="admin-role"></span>
+        Sign in to access the FrostTech administration dashboard.
       </p>
 
-      <button onclick="logout()">
+      <label>Email</label>
+
+      <input
+        type="email"
+        id="login-email"
+        placeholder="Admin email"
+      >
+
+      <label>Password</label>
+
+      <input
+        type="password"
+        id="login-password"
+        placeholder="Password"
+      >
+
+      <button
+        class="primary"
+        onclick="loginAdmin()"
+      >
+        Login
+      </button>
+
+      <p
+        id="login-message"
+      ></p>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+
+<!-- ======================================
+     ADMIN APPLICATION
+     ====================================== -->
+
+<div
+  id="admin-app"
+  class="hidden"
+>
+
+  <header>
+
+    <div class="container">
+
+      <h1>
+        FrostTech HVAC and Refrigeration
+      </h1>
+
+      <p>
+        Admin Dashboard
+      </p>
+
+    </div>
+
+  </header>
+
+
+  <div class="container">
+
+
+    <!-- ==================================
+         ADMIN INFORMATION
+         ================================== -->
+
+    <div class="card">
+
+      <h2>
+        Admin Dashboard
+      </h2>
+
+      <p id="admin-info">
+        Loading admin information...
+      </p>
+
+      <button
+        class="danger"
+        onclick="logoutAdmin()"
+      >
         Logout
       </button>
 
     </div>
 
 
-    <!-- CUSTOMER QUOTE REQUESTS -->
+
+    <!-- ==================================
+         QUOTE REQUESTS
+         ================================== -->
 
     <div class="card">
 
-      <h2>Customer Quote Requests</h2>
+      <h2>
+        Customer Quote Requests
+      </h2>
 
-      <div id="quote-requests">
+      <button
+        class="primary"
+        onclick="loadQuoteRequests()"
+      >
+        Refresh Quote Requests
+      </button>
+
+      <div
+        id="quote-requests-container"
+        style="margin-top:20px;"
+      >
         Loading quote requests...
       </div>
 
@@ -202,19 +302,19 @@
 </div>
 
 
+
 <script>
 
-/* =====================================================
+
+/* =========================================
    SUPABASE CONFIGURATION
-===================================================== */
+   ========================================= */
 
 const SUPABASE_URL =
   "https://nftxptjpgidcsgtaltjn.supabase.co";
 
-
 const SUPABASE_PUBLISHABLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
 
 const supabaseClient =
   supabase.createClient(
@@ -223,222 +323,211 @@ const supabaseClient =
   );
 
 
-/* =====================================================
-   LOGIN
-===================================================== */
 
-async function login() {
+/* =========================================
+   ESCAPE HTML
+   ========================================= */
 
-  const email =
-    document.getElementById("email").value.trim();
+function escapeHtml(value) {
 
-  const password =
-    document.getElementById("password").value;
+  if (value === null ||
+      value === undefined) {
 
-  const message =
-    document.getElementById("login-message");
+    return "";
 
-
-  if (!email || !password) {
-
-    message.className = "error";
-
-    message.textContent =
-      "Please enter your email and password.";
-
-    return;
   }
 
+  return String(value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
-  message.className = "";
+}
+
+
+
+/* =========================================
+   LOGIN
+   ========================================= */
+
+async function loginAdmin() {
+
+  const email =
+    document
+      .getElementById("login-email")
+      .value
+      .trim();
+
+  const password =
+    document
+      .getElementById("login-password")
+      .value;
+
+  const message =
+    document.getElementById(
+      "login-message"
+    );
 
   message.textContent =
     "Logging in...";
 
+  message.className = "";
 
-  try {
 
-    const {
+  const {
+    data,
+    error
+  } =
+    await supabaseClient.auth.signInWithPassword({
+      email: email,
+      password: password
+    });
+
+
+  if (error) {
+
+    console.error(
+      "Login error:",
       error
-    } =
-      await supabaseClient.auth.signInWithPassword({
-
-        email: email,
-
-        password: password
-
-      });
-
-
-    if (error) {
-
-      message.className = "error";
-
-      message.textContent =
-        error.message;
-
-      return;
-    }
-
-
-    await checkAdminAccess();
-
-  }
-
-  catch (error) {
-
-    console.error(error);
-
-    message.className = "error";
+    );
 
     message.textContent =
-      "Login error: " +
       error.message;
 
+    message.className =
+      "error";
+
+    return;
+
   }
+
+
+  await checkAdminAccess();
 
 }
 
 
-/* =====================================================
+
+/* =========================================
    CHECK ADMIN ACCESS
-===================================================== */
+   ========================================= */
 
 async function checkAdminAccess() {
 
-  try {
-
-    const {
-      data: {
-        user
-      },
-      error: userError
-    } =
-      await supabaseClient.auth.getUser();
-
-
-    if (userError || !user) {
-
-      document
-        .getElementById("login-section")
-        .classList.remove("hidden");
-
-      document
-        .getElementById("dashboard-section")
-        .classList.add("hidden");
-
-      return;
+  const {
+    data: {
+      user
     }
+  } =
+    await supabaseClient.auth.getUser();
 
 
-    const {
-      data: profile,
-      error: profileError
-    } =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "full_name, role, is_active"
-        )
-        .eq("id", user.id)
-        .single();
-
-
-    if (profileError) {
-
-      document
-        .getElementById("login-message")
-        .className = "error";
-
-      document
-        .getElementById("login-message")
-        .textContent =
-          "Profile check failed: " +
-          profileError.message;
-
-      return;
-    }
-
-
-    if (
-      profile.role !== "admin" ||
-      profile.is_active !== true
-    ) {
-
-      document
-        .getElementById("login-message")
-        .className = "error";
-
-      document
-        .getElementById("login-message")
-        .textContent =
-          "Access denied.";
-
-      await supabaseClient.auth.signOut();
-
-      return;
-    }
-
+  if (!user) {
 
     document
-      .getElementById("admin-name")
-      .textContent =
-        profile.full_name || "Admin";
-
-
-    document
-      .getElementById("admin-role")
-      .textContent =
-        profile.role;
-
-
-    document
-      .getElementById("login-section")
-      .classList.add("hidden");
-
-
-    document
-      .getElementById("dashboard-section")
+      .getElementById("login-screen")
       .classList.remove("hidden");
 
+    document
+      .getElementById("admin-app")
+      .classList.add("hidden");
 
-    await loadQuoteRequests();
+    return;
 
   }
 
-  catch (error) {
 
-    console.error(error);
+  const {
+    data: profile,
+    error
+  } =
+    await supabaseClient
+      .from("profiles")
+      .select(
+        "id, full_name, phone, role, is_active"
+      )
+      .eq(
+        "id",
+        user.id
+      )
+      .maybeSingle();
 
-    document
-      .getElementById("login-message")
-      .className = "error";
 
-    document
-      .getElementById("login-message")
-      .textContent =
-        "Dashboard error: " +
-        error.message;
+  if (error) {
+
+    console.error(
+      "Profile error:",
+      error
+    );
+
+    alert(
+      "Could not check admin profile:\n\n" +
+      error.message
+    );
+
+    return;
 
   }
+
+
+  if (
+    !profile ||
+    profile.role !== "admin" ||
+    profile.is_active !== true
+  ) {
+
+    alert(
+      "You do not have administrator access."
+    );
+
+    await supabaseClient.auth.signOut();
+
+    return;
+
+  }
+
+
+  document
+    .getElementById("login-screen")
+    .classList.add("hidden");
+
+  document
+    .getElementById("admin-app")
+    .classList.remove("hidden");
+
+
+  document
+    .getElementById("admin-info")
+    .textContent =
+      "Logged in as: " +
+      (
+        profile.full_name ||
+        user.email
+      );
+
+
+  await loadQuoteRequests();
 
 }
 
 
-/* =====================================================
+
+/* =========================================
    LOAD CUSTOMER QUOTE REQUESTS
-===================================================== */
+   ========================================= */
 
 async function loadQuoteRequests() {
 
   const container =
     document.getElementById(
-      "quote-requests"
+      "quote-requests-container"
     );
 
 
   container.innerHTML =
-    "Loading quote requests...";
+    "<p>Loading quote requests...</p>";
 
 
   const {
@@ -447,7 +536,20 @@ async function loadQuoteRequests() {
   } =
     await supabaseClient
       .from("quote_requests")
-      .select("*")
+      .select(`
+        id,
+        customer_id,
+        product_id,
+        request_number,
+        title,
+        description,
+        quantity,
+        preferred_brand,
+        budget,
+        delivery_address,
+        status,
+        created_at
+      `)
       .order(
         "created_at",
         {
@@ -458,392 +560,401 @@ async function loadQuoteRequests() {
 
   if (error) {
 
+    console.error(
+      "Quote request error:",
+      error
+    );
+
     container.innerHTML =
-      '<p class="error">' +
-      "Error loading quote requests: " +
-      escapeHtml(error.message) +
-      "</p>";
+      `<p class="error">
+        Could not load quote requests.<br><br>
+        ${escapeHtml(error.message)}
+      </p>`;
 
     return;
+
   }
 
 
-  if (!data || data.length === 0) {
+  if (
+    !data ||
+    data.length === 0
+  ) {
 
     container.innerHTML =
-      "<p>No quote requests found.</p>";
+      "<p>No customer quote requests found.</p>";
 
     return;
+
   }
 
 
-  container.innerHTML =
-    "<p><strong>" +
-    data.length +
-    " quote request(s) found.</strong></p>";
+  container.innerHTML = "";
 
 
-  data.forEach(
-    request => {
+  for (
+    const request of data
+  ) {
 
-      const div =
-        document.createElement("div");
+    const card =
+      document.createElement(
+        "div"
+      );
+
+    card.className =
+      "request-card";
 
 
-      div.className =
-        "quote card";
+    card.innerHTML = `
+
+      <h3>
+        ${escapeHtml(
+          request.title ||
+          "Customer Quote Request"
+        )}
+      </h3>
+
+      <p>
+        <strong>Request Number:</strong>
+        ${escapeHtml(
+          request.request_number ||
+          request.id
+        )}
+      </p>
+
+      <p>
+        <strong>Description:</strong>
+        ${escapeHtml(
+          request.description ||
+          "—"
+        )}
+      </p>
+
+      <p>
+        <strong>Quantity:</strong>
+        ${Number(
+          request.quantity || 0
+        )}
+      </p>
+
+      <p>
+        <strong>Preferred Brand:</strong>
+        ${escapeHtml(
+          request.preferred_brand ||
+          "Any"
+        )}
+      </p>
+
+      <p>
+        <strong>Budget:</strong>
+        ₦${Number(
+          request.budget || 0
+        ).toLocaleString()}
+      </p>
+
+      <p>
+        <strong>Delivery Address:</strong>
+        ${escapeHtml(
+          request.delivery_address ||
+          "—"
+        )}
+      </p>
+
+      <p>
+        <strong>Status:</strong>
+        <span class="status">
+          ${escapeHtml(
+            request.status ||
+            "pending"
+          )}
+        </span>
+      </p>
 
 
-      div.innerHTML = `
+      <label>
+        Change Request Status
+      </label>
+
+      <select
+        id="request-status-${request.id}"
+      >
+
+        <option
+          value="pending"
+          ${request.status === "pending"
+            ? "selected"
+            : ""}
+        >
+          Pending
+        </option>
+
+        <option
+          value="reviewing"
+          ${request.status === "reviewing"
+            ? "selected"
+            : ""}
+        >
+          Reviewing
+        </option>
+
+        <option
+          value="quoted"
+          ${request.status === "quoted"
+            ? "selected"
+            : ""}
+        >
+          Quoted
+        </option>
+
+        <option
+          value="accepted"
+          ${request.status === "accepted"
+            ? "selected"
+            : ""}
+        >
+          Accepted
+        </option>
+
+        <option
+          value="rejected"
+          ${request.status === "rejected"
+            ? "selected"
+            : ""}
+        >
+          Rejected
+        </option>
+
+        <option
+          value="cancelled"
+          ${request.status === "cancelled"
+            ? "selected"
+            : ""}
+        >
+          Cancelled
+        </option>
+
+      </select>
+
+
+      <button
+        class="primary"
+        onclick="updateQuoteStatus('${request.id}')"
+      >
+        Save Request Status
+      </button>
+
+
+      <hr>
+
+
+      <div class="quotation-box">
 
         <h3>
-          ${escapeHtml(
-            request.title ||
-            "Quote Request"
-          )}
+          Supplier Quotation
         </h3>
 
 
-        <div class="quote-details">
+        <label>
+          Supplier
+        </label>
 
-          <p>
-            <strong>Request Number:</strong>
-            ${escapeHtml(
-              request.request_number || ""
-            )}
-          </p>
+        <select
+          id="supplier-${request.id}"
+        >
 
+          <option value="">
+            Loading suppliers...
+          </option>
 
-          <p>
-            <strong>Description:</strong>
-            ${escapeHtml(
-              request.description || ""
-            )}
-          </p>
+        </select>
 
 
-          <p>
-            <strong>Category:</strong>
-            ${escapeHtml(
-              request.category || ""
-            )}
-          </p>
+        <label>
+          Product
+        </label>
+
+        <select
+          id="product-${request.id}"
+        >
+
+          <option value="">
+            Loading products...
+          </option>
+
+        </select>
 
 
-          <p>
-            <strong>Quantity:</strong>
-            ${request.quantity ?? ""}
-          </p>
+        <label>
+          Quantity
+        </label>
+
+        <input
+          type="number"
+          id="quantity-${request.id}"
+          min="1"
+          value="${Number(
+            request.quantity || 1
+          )}"
+        >
 
 
-          <p>
-            <strong>Preferred Brand:</strong>
-            ${escapeHtml(
-              request.preferred_brand || ""
-            )}
-          </p>
+        <label>
+          Supplier Unit Price (₦)
+        </label>
+
+        <input
+          type="number"
+          id="unit-price-${request.id}"
+          min="0"
+          step="0.01"
+          placeholder="Enter supplier price"
+        >
 
 
-          <p>
-            <strong>Budget:</strong>
+        <label>
+          Delivery Cost (₦)
+        </label>
 
-            ${
-              request.budget !== null &&
-              request.budget !== undefined &&
-              request.budget !== ""
-
-              ? escapeHtml(
-                  request.budget
-                )
-
-              : "Not specified"
-            }
-
-          </p>
+        <input
+          type="number"
+          id="delivery-${request.id}"
+          min="0"
+          step="0.01"
+          value="0"
+        >
 
 
-          <p>
-            <strong>Delivery Address:</strong>
+        <label>
+          Valid Until
+        </label>
 
-            ${escapeHtml(
-              request.delivery_address || ""
-            )}
-
-          </p>
-
-
-          <label>Status</label>
-
-          <select
-            id="status-${request.id}"
-          >
-
-            <option value="pending">
-              Pending
-            </option>
-
-            <option value="reviewing">
-              Reviewing
-            </option>
-
-            <option value="quoted">
-              Quoted
-            </option>
-
-            <option value="approved">
-              Approved
-            </option>
-
-            <option value="rejected">
-              Rejected
-            </option>
-
-          </select>
+        <input
+          type="datetime-local"
+          id="valid-until-${request.id}"
+        >
 
 
-          <button
-            onclick="updateQuoteStatus('${request.id}')">
+        <label>
+          Supplier Quote Status
+        </label>
 
-            Save Status
+        <select
+          id="supplier-status-${request.id}"
+        >
 
-          </button>
+          <option value="submitted">
+            Submitted
+          </option>
 
+          <option value="accepted">
+            Accepted
+          </option>
+
+          <option value="rejected">
+            Rejected
+          </option>
+
+          <option value="expired">
+            Expired
+          </option>
+
+        </select>
+
+
+        <label>
+          Notes
+        </label>
+
+        <textarea
+          id="notes-${request.id}"
+          rows="3"
+          placeholder="Supplier notes..."
+        ></textarea>
+
+
+        <div
+          class="total"
+          id="total-${request.id}"
+        >
+          Supplier Total: ₦0
         </div>
 
 
-        <!-- SUPPLIER QUOTATION -->
-
-        <div class="supplier-quotes">
-
-          <h3>
-            Supplier Quotation
-          </h3>
-
-
-          <p>
-            Enter the supplier quotation
-            details for this customer request.
-          </p>
+        <button
+          type="button"
+          class="success"
+          id="save-button-${request.id}"
+          onclick="saveSupplierQuotation('${request.id}')"
+        >
+          Save Supplier Quotation
+        </button>
 
 
-          <label>
-            Supplier ID
-          </label>
-
-          <input
-            id="supplier-${request.id}"
-            placeholder="Supplier UUID"
-          >
-
-
-          <label>
-            Product ID
-            <small>
-              (Optional)
-            </small>
-          </label>
-
-          <input
-            id="product-${request.id}"
-            placeholder="Product UUID - optional"
-          >
-
-
-          <label>
-            Quantity
-          </label>
-
-          <input
-            id="quantity-${request.id}"
-            type="number"
-            min="1"
-            value="${request.quantity || 1}"
-            oninput="calculateTotal('${request.id}')"
-          >
-
-
-          <label>
-            Supplier Unit Price (₦)
-          </label>
-
-          <input
-            id="unit-price-${request.id}"
-            type="number"
-            min="0"
-            placeholder="Enter supplier unit price"
-            oninput="calculateTotal('${request.id}')"
-          >
-
-
-          <label>
-            Delivery Cost (₦)
-          </label>
-
-          <input
-            id="delivery-${request.id}"
-            type="number"
-            min="0"
-            value="0"
-            oninput="calculateTotal('${request.id}')"
-          >
-
-
-          <div
-            id="total-${request.id}"
-            class="total-box">
-
-            Supplier Total: ₦0
-
-          </div>
-
-
-          <label>
-            Valid Until
-            <small>
-              (Optional)
-            </small>
-          </label>
-
-          <input
-            id="valid-until-${request.id}"
-            type="datetime-local"
-          >
-
-
-          <label>
-            Status
-          </label>
-
-          <select
-            id="supplier-status-${request.id}"
-          >
-
-            <option value="submitted">
-              Submitted
-            </option>
-
-            <option value="accepted">
-              Accepted
-            </option>
-
-            <option value="rejected">
-              Rejected
-            </option>
-
-            <option value="expired">
-              Expired
-            </option>
-
-          </select>
-
-
-          <label>
-            Supplier Notes
-          </label>
-
-          <textarea
-            id="notes-${request.id}"
-            placeholder="Enter supplier notes"
-          ></textarea>
-
-
-          <button
-            onclick="saveSupplierQuotation('${request.id}')">
-
-            Save Supplier Quotation
-
-          </button>
-
-
-          <div
-            id="saved-quotes-${request.id}">
-
-            Loading supplier quotations...
-
-          </div>
-
+        <div
+          id="saved-quotes-${request.id}"
+          style="margin-top:20px;"
+        >
+          Loading saved quotations...
         </div>
 
-      `;
+      </div>
+
+    `;
 
 
-      container.appendChild(div);
+    container.appendChild(
+      card
+    );
 
 
-      document.getElementById(
-        `status-${request.id}`
-      ).value =
-        request.status || "pending";
+    await loadSuppliers(
+      request.id
+    );
 
+    await loadProducts(
+      request.id
+    );
 
-      loadSupplierQuotations(
-        request.id
-      );
+    await loadSupplierQuotations(
+      request.id
+    );
 
-    }
-  );
+    calculateTotal(
+      request.id
+    );
+
+  }
 
 }
 
 
-/* =====================================================
-   CALCULATE SUPPLIER TOTAL
-===================================================== */
 
-function calculateTotal(
-  requestId
-) {
-
-  const quantity =
-    Number(
-      document.getElementById(
-        `quantity-${requestId}`
-      ).value || 0
-    );
-
-
-  const unitPrice =
-    Number(
-      document.getElementById(
-        `unit-price-${requestId}`
-      ).value || 0
-    );
-
-
-  const deliveryCost =
-    Number(
-      document.getElementById(
-        `delivery-${requestId}`
-      ).value || 0
-    );
-
-
-  const total =
-    (quantity * unitPrice) +
-    deliveryCost;
-
-
-  document.getElementById(
-    `total-${requestId}`
-  ).textContent =
-    "Supplier Total: ₦" +
-    total.toLocaleString();
-
-}
-
-
-/* =====================================================
-   UPDATE CUSTOMER QUOTE STATUS
-===================================================== */
+/* =========================================
+   UPDATE CUSTOMER REQUEST STATUS
+   ========================================= */
 
 async function updateQuoteStatus(
   requestId
 ) {
 
-  const status =
+  const select =
     document.getElementById(
-      `status-${requestId}`
-    ).value;
+      `request-status-${requestId}`
+    );
+
+  if (!select) {
+
+    alert(
+      "Status field not found."
+    );
+
+    return;
+
+  }
+
+
+  const newStatus =
+    select.value;
 
 
   const {
@@ -852,12 +963,9 @@ async function updateQuoteStatus(
     await supabaseClient
       .from("quote_requests")
       .update({
-
-        status: status,
-
+        status: newStatus,
         updated_at:
           new Date().toISOString()
-
       })
       .eq(
         "id",
@@ -867,12 +975,18 @@ async function updateQuoteStatus(
 
   if (error) {
 
+    console.error(
+      "Status update error:",
+      error
+    );
+
     alert(
-      "Could not update status: " +
+      "Could not update request status:\n\n" +
       error.message
     );
 
     return;
+
   }
 
 
@@ -880,34 +994,274 @@ async function updateQuoteStatus(
     "Quote request status updated."
   );
 
+
+  await loadQuoteRequests();
+
 }
 
 
-/* =====================================================
-   SAVE SUPPLIER QUOTATION
-===================================================== */
 
-async function saveSupplierQuotation(
+/* =========================================
+   LOAD SUPPLIERS
+   ========================================= */
+
+async function loadSuppliers(
   requestId
 ) {
 
-  const supplierId =
+  const select =
     document.getElementById(
       `supplier-${requestId}`
-    ).value.trim();
+    );
 
 
-  const productId =
+  if (!select) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("suppliers")
+      .select(`
+        id,
+        business_name,
+        contact_name,
+        is_active
+      `)
+      .eq(
+        "is_active",
+        true
+      )
+      .order(
+        "business_name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Supplier loading error:",
+      error
+    );
+
+    select.innerHTML =
+      `<option value="">
+        Could not load suppliers
+      </option>`;
+
+    return;
+
+  }
+
+
+  select.innerHTML =
+    `<option value="">
+      Select Supplier
+    </option>`;
+
+
+  if (
+    !data ||
+    data.length === 0
+  ) {
+
+    select.innerHTML =
+      `<option value="">
+        No active suppliers found
+      </option>`;
+
+    return;
+
+  }
+
+
+  data.forEach(
+    supplier => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        supplier.id;
+
+      option.textContent =
+        supplier.business_name ||
+        supplier.contact_name ||
+        supplier.id;
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+
+/* =========================================
+   LOAD PRODUCTS
+   ========================================= */
+
+async function loadProducts(
+  requestId
+) {
+
+  const select =
     document.getElementById(
       `product-${requestId}`
-    ).value.trim();
+    );
 
+
+  if (!select) return;
+
+
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("products")
+      .select(`
+        id,
+        name,
+        category,
+        brand,
+        model,
+        sku,
+        is_active
+      `)
+      .eq(
+        "is_active",
+        true
+      )
+      .order(
+        "name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (error) {
+
+    console.error(
+      "Product loading error:",
+      error
+    );
+
+    select.innerHTML =
+      `<option value="">
+        Could not load products
+      </option>`;
+
+    return;
+
+  }
+
+
+  select.innerHTML =
+    `<option value="">
+      Select Product
+    </option>`;
+
+
+  if (
+    !data ||
+    data.length === 0
+  ) {
+
+    select.innerHTML =
+      `<option value="">
+        No active products found
+      </option>`;
+
+    return;
+
+  }
+
+
+  data.forEach(
+    product => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+      option.value =
+        product.id;
+
+
+      let label =
+        product.name ||
+        "Unnamed Product";
+
+
+      if (product.brand) {
+
+        label +=
+          " - " +
+          product.brand;
+
+      }
+
+
+      if (product.model) {
+
+        label +=
+          " " +
+          product.model;
+
+      }
+
+
+      if (product.sku) {
+
+        label +=
+          " [" +
+          product.sku +
+          "]";
+
+      }
+
+
+      option.textContent =
+        label;
+
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+
+/* =========================================
+   CALCULATE TOTAL
+   ========================================= */
+
+function calculateTotal(
+  requestId
+) {
 
   const quantity =
     Number(
       document.getElementById(
         `quantity-${requestId}`
-      ).value
+      )?.value || 0
     );
 
 
@@ -915,58 +1269,203 @@ async function saveSupplierQuotation(
     Number(
       document.getElementById(
         `unit-price-${requestId}`
-      ).value
+      )?.value || 0
+    );
+
+
+  const delivery =
+    Number(
+      document.getElementById(
+        `delivery-${requestId}`
+      )?.value || 0
+    );
+
+
+  const total =
+    (quantity * unitPrice) +
+    delivery;
+
+
+  const totalElement =
+    document.getElementById(
+      `total-${requestId}`
+    );
+
+
+  if (totalElement) {
+
+    totalElement.textContent =
+      "Supplier Total: ₦" +
+      total.toLocaleString();
+
+  }
+
+}
+
+
+
+/* =========================================
+   SAVE SUPPLIER QUOTATION
+   ========================================= */
+
+async function saveSupplierQuotation(
+  requestId
+) {
+
+  console.log(
+    "Saving supplier quotation for:",
+    requestId
+  );
+
+
+  const supplierSelect =
+    document.getElementById(
+      `supplier-${requestId}`
+    );
+
+
+  const productSelect =
+    document.getElementById(
+      `product-${requestId}`
+    );
+
+
+  const quantityInput =
+    document.getElementById(
+      `quantity-${requestId}`
+    );
+
+
+  const unitPriceInput =
+    document.getElementById(
+      `unit-price-${requestId}`
+    );
+
+
+  const deliveryInput =
+    document.getElementById(
+      `delivery-${requestId}`
+    );
+
+
+  const validUntilInput =
+    document.getElementById(
+      `valid-until-${requestId}`
+    );
+
+
+  const statusInput =
+    document.getElementById(
+      `supplier-status-${requestId}`
+    );
+
+
+  const notesInput =
+    document.getElementById(
+      `notes-${requestId}`
+    );
+
+
+  const saveButton =
+    document.getElementById(
+      `save-button-${requestId}`
+    );
+
+
+  if (
+    !supplierSelect ||
+    !productSelect ||
+    !quantityInput ||
+    !unitPriceInput ||
+    !deliveryInput ||
+    !statusInput ||
+    !notesInput
+  ) {
+
+    alert(
+      "Supplier quotation form is incomplete."
+    );
+
+    return;
+
+  }
+
+
+  const supplierId =
+    supplierSelect.value;
+
+
+  const productId =
+    productSelect.value;
+
+
+  const quantity =
+    Number(
+      quantityInput.value
+    );
+
+
+  const unitPrice =
+    Number(
+      unitPriceInput.value
     );
 
 
   const deliveryCost =
     Number(
-      document.getElementById(
-        `delivery-${requestId}`
-      ).value || 0
+      deliveryInput.value || 0
     );
 
 
   const notes =
-    document.getElementById(
-      `notes-${requestId}`
-    ).value.trim();
-
-
-  const validUntilValue =
-    document.getElementById(
-      `valid-until-${requestId}`
-    ).value;
+    notesInput.value.trim();
 
 
   const supplierStatus =
-    document.getElementById(
-      `supplier-status-${requestId}`
-    ).value;
+    statusInput.value;
+
+
+  const validUntilValue =
+    validUntilInput.value;
 
 
   if (!supplierId) {
 
     alert(
-      "Please enter Supplier ID."
+      "Please select a supplier."
     );
 
     return;
+
   }
 
 
-  if (!quantity || quantity < 1) {
+  if (!productId) {
+
+    alert(
+      "Please select a product."
+    );
+
+    return;
+
+  }
+
+
+  if (
+    !Number.isInteger(quantity) ||
+    quantity < 1
+  ) {
 
     alert(
       "Please enter a valid quantity."
     );
 
     return;
+
   }
 
 
   if (
-    unitPrice === "" ||
     isNaN(unitPrice) ||
     unitPrice < 0
   ) {
@@ -976,6 +1475,21 @@ async function saveSupplierQuotation(
     );
 
     return;
+
+  }
+
+
+  if (
+    isNaN(deliveryCost) ||
+    deliveryCost < 0
+  ) {
+
+    alert(
+      "Please enter a valid delivery cost."
+    );
+
+    return;
+
   }
 
 
@@ -986,36 +1500,107 @@ async function saveSupplierQuotation(
 
   const supplierQuote = {
 
+    request_id:
+      requestId,
+
+    supplier_id:
+      supplierId,
+
+    product_id:
+      productId,
+
+    quantity:
+      quantity,
+
+    supplier_unit_price:
+      unitPrice,
+
+    supplier_total:
+      supplierTotal,
+
+    delivery_cost:
+      deliveryCost,
+
+    notes:
+      notes || null,
+
+    valid_until:
+      validUntilValue
+        ? new Date(
+            validUntilValue
+          ).toISOString()
+        : null,
+
+    status:
+      supplierStatus
+
+  };
+
+
   console.log(
-    "Saving supplier quotation:",
+    "SUPPLIER QUOTE:",
     supplierQuote
   );
 
 
+  if (saveButton) {
+
+    saveButton.disabled =
+      true;
+
+    saveButton.textContent =
+      "Saving...";
+
+  }
+
+
   const {
+    data,
     error
   } =
     await supabaseClient
       .from("supplier_quotes")
       .insert(
         supplierQuote
-      );
+      )
+      .select()
+      .single();
 
 
   if (error) {
 
     console.error(
-      "Supplier quotation error:",
+      "SUPPLIER QUOTE ERROR:",
       error
     );
 
+
     alert(
-      "Could not save supplier quotation:\n\n" +
+      "Could not save supplier quotation.\n\n" +
+      "Supabase error:\n" +
       error.message
     );
 
+
+    if (saveButton) {
+
+      saveButton.disabled =
+        false;
+
+      saveButton.textContent =
+        "Save Supplier Quotation";
+
+    }
+
     return;
+
   }
+
+
+  console.log(
+    "SUPPLIER QUOTE SAVED:",
+    data
+  );
 
 
   alert(
@@ -1025,38 +1610,23 @@ async function saveSupplierQuotation(
   );
 
 
-  /*
-    Clear fields after successful save.
-  */
+  supplierSelect.value =
+    "";
 
-  document.getElementById(
-    `supplier-${requestId}`
-  ).value = "";
+  productSelect.value =
+    "";
 
+  unitPriceInput.value =
+    "";
 
-  document.getElementById(
-    `product-${requestId}`
-  ).value = "";
+  deliveryInput.value =
+    "0";
 
+  validUntilInput.value =
+    "";
 
-  document.getElementById(
-    `unit-price-${requestId}`
-  ).value = "";
-
-
-  document.getElementById(
-    `delivery-${requestId}`
-  ).value = "0";
-
-
-  document.getElementById(
-    `valid-until-${requestId}`
-  ).value = "";
-
-
-  document.getElementById(
-    `notes-${requestId}`
-  ).value = "";
+  notesInput.value =
+    "";
 
 
   calculateTotal(
@@ -1068,12 +1638,24 @@ async function saveSupplierQuotation(
     requestId
   );
 
+
+  if (saveButton) {
+
+    saveButton.disabled =
+      false;
+
+    saveButton.textContent =
+      "Save Supplier Quotation";
+
+  }
+
 }
 
 
-/* =====================================================
+
+/* =========================================
    LOAD SAVED SUPPLIER QUOTATIONS
-===================================================== */
+   ========================================= */
 
 async function loadSupplierQuotations(
   requestId
@@ -1085,9 +1667,11 @@ async function loadSupplierQuotations(
     );
 
 
-  if (!container) {
-    return;
-  }
+  if (!container) return;
+
+
+  container.innerHTML =
+    "<p>Loading saved quotations...</p>";
 
 
   const {
@@ -1096,7 +1680,19 @@ async function loadSupplierQuotations(
   } =
     await supabaseClient
       .from("supplier_quotes")
-      .select("*")
+      .select(`
+        id,
+        supplier_id,
+        product_id,
+        quantity,
+        supplier_unit_price,
+        supplier_total,
+        delivery_cost,
+        notes,
+        valid_until,
+        status,
+        created_at
+      `)
       .eq(
         "request_id",
         requestId
@@ -1111,15 +1707,21 @@ async function loadSupplierQuotations(
 
   if (error) {
 
+    console.error(
+      "Saved quote error:",
+      error
+    );
+
+
     container.innerHTML =
-      '<p class="error">' +
-      "Could not load supplier quotations: " +
-      escapeHtml(
-        error.message
-      ) +
-      "</p>";
+      `<p class="error">
+        Could not load saved quotations.<br><br>
+        ${escapeHtml(error.message)}
+      </p>`;
+
 
     return;
+
   }
 
 
@@ -1129,9 +1731,10 @@ async function loadSupplierQuotations(
   ) {
 
     container.innerHTML =
-      "<p>No supplier quotations submitted yet.</p>";
+      "<p>No supplier quotations saved yet.</p>";
 
     return;
+
   }
 
 
@@ -1155,94 +1758,71 @@ async function loadSupplierQuotations(
       div.innerHTML = `
 
         <p>
-          <strong>Supplier ID:</strong>
-
+          <strong>Supplier ID:</strong><br>
           ${escapeHtml(
-            quote.supplier_id || ""
+            quote.supplier_id
           )}
-
         </p>
-
 
         <p>
-          <strong>Product ID:</strong>
-
+          <strong>Product ID:</strong><br>
           ${escapeHtml(
-            quote.product_id || "Not specified"
+            quote.product_id ||
+            "—"
           )}
-
         </p>
-
 
         <p>
           <strong>Quantity:</strong>
-
-          ${quote.quantity ?? ""}
-
+          ${Number(
+            quote.quantity || 0
+          )}
         </p>
-
 
         <p>
           <strong>Supplier Unit Price:</strong>
-
           ₦${Number(
             quote.supplier_unit_price || 0
           ).toLocaleString()}
-
         </p>
-
 
         <p>
           <strong>Delivery Cost:</strong>
-
           ₦${Number(
             quote.delivery_cost || 0
           ).toLocaleString()}
-
         </p>
-
 
         <p>
           <strong>Supplier Total:</strong>
-
           ₦${Number(
             quote.supplier_total || 0
           ).toLocaleString()}
-
         </p>
 
+        <p>
+          <strong>Status:</strong>
+          ${escapeHtml(
+            quote.status || "—"
+          )}
+        </p>
 
         <p>
           <strong>Valid Until:</strong>
-
           ${
             quote.valid_until
               ? new Date(
                   quote.valid_until
                 ).toLocaleString()
-              : "Not specified"
+              : "—"
           }
-
         </p>
-
-
-        <p>
-          <strong>Status:</strong>
-
-          ${escapeHtml(
-            quote.status || ""
-          )}
-
-        </p>
-
 
         <p>
           <strong>Notes:</strong>
-
           ${escapeHtml(
-            quote.notes || "None"
+            quote.notes || "—"
           )}
-
         </p>
 
       `;
@@ -1258,64 +1838,93 @@ async function loadSupplierQuotations(
 }
 
 
-/* =====================================================
-   LOGOUT
-===================================================== */
 
-async function logout() {
+/* =========================================
+   AUTOMATIC TOTAL CALCULATION
+   ========================================= */
+
+document.addEventListener(
+  "input",
+  function(event) {
+
+    const id =
+      event.target.id || "";
+
+
+    if (
+      id.startsWith(
+        "quantity-"
+      ) ||
+      id.startsWith(
+        "unit-price-"
+      ) ||
+      id.startsWith(
+        "delivery-"
+      )
+    ) {
+
+      const requestId =
+        id.substring(
+          id.indexOf("-") + 1
+        );
+
+
+      calculateTotal(
+        requestId
+      );
+
+    }
+
+  }
+);
+
+
+
+/* =========================================
+   LOGOUT
+   ========================================= */
+
+async function logoutAdmin() {
 
   await supabaseClient.auth.signOut();
 
-  location.reload();
+  document
+    .getElementById("admin-app")
+    .classList.add("hidden");
+
+  document
+    .getElementById("login-screen")
+    .classList.remove("hidden");
 
 }
 
 
-/* =====================================================
-   HTML ESCAPE
-===================================================== */
 
-function escapeHtml(
-  value
-) {
+/* =========================================
+   CHECK EXISTING SESSION
+   ========================================= */
 
-  return String(value)
+supabaseClient.auth.onAuthStateChange(
+  async function(
+    event,
+    session
+  ) {
 
-    .replace(
-      /&/g,
-      "&amp;"
-    )
+    if (session) {
 
-    .replace(
-      /</g,
-      "&lt;"
-    )
+      await checkAdminAccess();
 
-    .replace(
-      />/g,
-      "&gt;"
-    )
+    }
 
-    .replace(
-      /"/g,
-      "&quot;"
-    )
+  }
+);
 
-    .replace(
-      /'/g,
-      "&#039;"
-    );
-
-}
-
-
-/* =====================================================
-   START
-===================================================== */
 
 checkAdminAccess();
+
 
 </script>
 
 </body>
+
 </html>
