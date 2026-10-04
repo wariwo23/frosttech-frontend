@@ -1,20 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>FrostTech HVAC and Refrigeration</title>  <link rel="stylesheet" href="style.css">  <!-- Supabase -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script>
+    const SUPABASE_URL =
+      "https://nftxptjpgidcsgtaltjn.supabase.co";
 
-  <title>FrostTech HVAC and Refrigeration</title>
-
-  <link rel="stylesheet" href="style.css">
-
-  <!-- Supabase -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <script>
-    const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
-
-    const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+    const SUPABASE_PUBLISHABLE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
 
     const supabaseClient = supabase.createClient(
       SUPABASE_URL,
@@ -22,290 +14,221 @@
     );
 
     console.log("FrostTech Supabase connected");
-  </script>
+  </script></head><body><header class="topbar">
+  <div class="container nav"><div class="logo">
+  <span>❄</span> FrostTech
+</div>
 
-</head>
+<nav>
+  <a href="#home">Home</a>
+  <a href="#categories">Categories</a>
+  <a href="#products">Products</a>
+  <a href="#quote">Request Quote</a>
+</nav>
 
-<body>
+<div class="nav-buttons">
+  <button class="login-btn" type="button">
+    Login
+  </button>
 
-<header class="topbar">
-
-  <div class="container nav">
-
-    <div class="logo">
-      <span>❄</span> FrostTech
-    </div>
-
-    <nav>
-      <a href="#home">Home</a>
-      <a href="#categories">Categories</a>
-      <a href="#products">Products</a>
-      <a href="#quote">Request Quote</a>
-    </nav>
-
-    <div class="nav-buttons">
-      <button class="login-btn">Login</button>
-      <button class="quote-btn">Get a Quote</button>
-    </div>
-
-  </div>
-
-</header>
-
-
-<main>
-
-<section id="home" class="hero">
-
-  <div class="container hero-content">
-
-    <div class="hero-text">
-
-      <p class="small-title">
-        FROSTTECH HVAC & REFRIGERATION
-      </p>
-
-      <h1>
-        Your HVAC & Refrigeration
-        <span>Marketplace</span>
-      </h1>
-
-      <p>
-        Find air-conditioners, refrigeration parts,
-        accessories and professional HVAC services
-        from trusted suppliers.
-      </p>
-
-      <div class="hero-buttons">
-
-        <button
-          class="primary-btn"
-          onclick="document.getElementById('products').scrollIntoView()">
-          Browse Products
-        </button>
-
-        <button
-          class="secondary-btn"
-          onclick="document.getElementById('quote').scrollIntoView()">
-          Request a Quote
-        </button>
-
-      </div>
-
-    </div>
-
-    <div class="hero-card">
-
-      <div class="snow-icon">❄</div>
-
-      <h2>FrostTech</h2>
-
-      <p>
-        Cooling solutions made easier.
-      </p>
-
-    </div>
+  <button
+    class="quote-btn"
+    type="button"
+    onclick="document.getElementById('quote').scrollIntoView({ behavior: 'smooth' })">
+    Get a Quote
+  </button>
+</div>
 
   </div>
-
-</section>
-
-
-<section class="search-section">
-
-  <div class="container">
-
-    <div class="search-box">
-
-      <input
-        type="text"
-        placeholder="Search AC units, compressors, copper pipes, parts...">
-
-      <button>
-        Search
-      </button>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<section id="categories" class="section">
-
-  <div class="container">
-
-    <div class="section-heading">
-
-      <p>SHOP BY CATEGORY</p>
-
-      <h2>HVAC & Refrigeration Solutions</h2>
-
-    </div>
-
-
-    <div class="category-grid">
-
-      <div class="category-card">
-
-        <div class="category-icon">❄️</div>
-
-        <h3>Air Conditioners</h3>
-
-        <p>
-          Split AC, inverter AC and cooling units.
-        </p>
-
-      </div>
-
-
-      <div class="category-card">
-
-        <div class="category-icon">⚙️</div>
-
-        <h3>Refrigeration Parts</h3>
-
-        <p>
-          Compressors, controls and replacement parts.
-        </p>
-
-      </div>
-
-
-      <div class="category-card">
-
-        <div class="category-icon">🔧</div>
-
-        <h3>HVAC Accessories</h3>
-
-        <p>
-          Copper pipes, brackets, tools and accessories.
-        </p>
-
-      </div>
-
-
-      <div class="category-card">
-
-        <div class="category-icon">🛠️</div>
-
-        <h3>HVAC Services</h3>
-
-        <p>
-          Installation, maintenance and repair services.
-        </p>
-
-      </div>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<section id="products" class="section products-section">
-
-  <div class="container">
-
-    <div class="section-heading">
-
-      <p>FEATURED PRODUCTS</p>
-
-      <h2>Popular HVAC Products</h2>
-
-    </div>
-
-
-    <div
-      class="product-grid"
-      id="product-grid">
-
-      <p id="product-status">
-        Loading products...
-      </p>
-
-    </div>
-
-  </div>
-
-</section>
-
-
-<section id="quote" class="quote-section">
-
-  <div class="container quote-box">
-
-    <div>
-
-      <p class="small-title">
-        NEED SOMETHING SPECIFIC?
-      </p>
-
-      <h2>
-        Request a Quote from FrostTech
-      </h2>
-
-      <p>
-        Tell us what you need and we can connect
-        your request with available suppliers.
-      </p>
-
-    </div>
-
-    <button class="primary-btn">
+</header><main><section id="home" class="hero">  <div class="container hero-content"><div class="hero-text">
+
+  <p class="small-title">
+    FROSTTECH HVAC & REFRIGERATION
+  </p>
+
+  <h1>
+    Your HVAC & Refrigeration
+    <span>Marketplace</span>
+  </h1>
+
+  <p>
+    Find air-conditioners, refrigeration parts,
+    accessories and professional HVAC services
+    from trusted suppliers.
+  </p>
+
+  <div class="hero-buttons">
+
+    <button
+      class="primary-btn"
+      type="button"
+      onclick="document.getElementById('products').scrollIntoView({ behavior: 'smooth' })">
+      Browse Products
+    </button>
+
+    <button
+      class="secondary-btn"
+      type="button"
+      onclick="document.getElementById('quote').scrollIntoView({ behavior: 'smooth' })">
       Request a Quote
     </button>
 
   </div>
 
-</section>
+</div>
 
-</main>
+<div class="hero-card">
 
+  <div class="snow-icon">❄</div>
 
-<footer>
+  <h2>FrostTech</h2>
 
-  <div class="container footer-content">
+  <p>
+    Cooling solutions made easier.
+  </p>
 
-    <div>
+</div>
 
-      <h2>❄ FrostTech</h2>
+  </div></section><section class="search-section">  <div class="container"><div class="search-box">
 
-      <p>
-        HVAC and Refrigeration Marketplace
-      </p>
+  <input
+    id="product-search"
+    type="text"
+    placeholder="Search AC units, compressors, copper pipes, parts...">
 
-    </div>
+  <button type="button" onclick="searchProducts()">
+    Search
+  </button>
 
+</div>
 
-    <div>
+  </div></section><section id="categories" class="section">  <div class="container"><div class="section-heading">
 
-      <p>
-        Website: frosttechonline.com
-      </p>
+  <p>SHOP BY CATEGORY</p>
 
-      <p>
-        WhatsApp: +234 803 200 8635
-      </p>
+  <h2>HVAC & Refrigeration Solutions</h2>
 
-    </div>
+</div>
 
+<div class="category-grid">
+
+  <div class="category-card">
+    <div class="category-icon">❄️</div>
+
+    <h3>Air Conditioners</h3>
+
+    <p>
+      Split AC, inverter AC and cooling units.
+    </p>
   </div>
 
 
-  <div class="copyright">
+  <div class="category-card">
+    <div class="category-icon">⚙️</div>
 
-    © 2026 FrostTech HVAC and Refrigeration.
-    All rights reserved.
+    <h3>Refrigeration Parts</h3>
 
+    <p>
+      Compressors, controls and replacement parts.
+    </p>
   </div>
 
-</footer>
+
+  <div class="category-card">
+    <div class="category-icon">🔧</div>
+
+    <h3>HVAC Accessories</h3>
+
+    <p>
+      Copper pipes, brackets, tools and accessories.
+    </p>
+  </div>
 
 
-<script>
+  <div class="category-card">
+    <div class="category-icon">🛠️</div>
+
+    <h3>HVAC Services</h3>
+
+    <p>
+      Installation, maintenance and repair services.
+    </p>
+  </div>
+
+</div>
+
+  </div></section><section id="products" class="section products-section">  <div class="container"><div class="section-heading">
+
+  <p>FEATURED PRODUCTS</p>
+
+  <h2>Popular HVAC Products</h2>
+
+</div>
+
+<div
+  class="product-grid"
+  id="product-grid">
+
+  <p id="product-status">
+    Loading products...
+  </p>
+
+</div>
+
+  </div></section><section id="quote" class="quote-section">  <div class="container quote-box"><div>
+
+  <p class="small-title">
+    NEED SOMETHING SPECIFIC?
+  </p>
+
+  <h2>
+    Request a Quote from FrostTech
+  </h2>
+
+  <p>
+    Tell us what you need and we can connect
+    your request with available suppliers.
+  </p>
+
+</div>
+
+<button
+  class="primary-btn"
+  type="button"
+  onclick="requestQuote()">
+  Request a Quote
+</button>
+
+  </div></section></main><footer>  <div class="container footer-content"><div>
+
+  <h2>❄ FrostTech</h2>
+
+  <p>
+    HVAC and Refrigeration Marketplace
+  </p>
+
+</div>
+
+
+<div>
+
+  <p>
+    Website: frosttechonline.com
+  </p>
+
+  <p>
+    WhatsApp: +234 803 200 8635
+  </p>
+
+</div>
+
+  </div>  <div class="copyright">© 2026 FrostTech HVAC and Refrigeration.
+All rights reserved.
+
+  </div></footer><script>
+
+let allProducts = [];
+
 
 async function loadProducts() {
 
@@ -316,44 +239,78 @@ async function loadProducts() {
     document.getElementById("product-status");
 
 
-  const { data, error } =
-    await supabaseClient
-      .from("products")
-      .select(
-        "id, name, category, brand, model, description, selling_price, image_url"
-      )
-      .eq("is_active", true)
-      .limit(6);
+  try {
+
+    const { data, error } =
+      await supabaseClient
+        .from("products")
+        .select(
+          "id, name, category, brand, model, description, selling_price, image_url"
+        )
+        .eq("is_active", true)
+        .order("created_at", {
+          ascending: false
+        })
+        .limit(6);
 
 
-  if (error) {
+    if (error) {
 
-    console.error("FrostTech product error:", error);
+      console.error(
+        "FrostTech product error:",
+        error
+      );
 
-    productStatus.textContent =
-      "Unable to load products.";
+      productStatus.textContent =
+        "Unable to load products.";
 
-    return;
+      return;
+    }
 
+
+    allProducts = data || [];
+
+
+    if (productStatus) {
+      productStatus.remove();
+    }
+
+
+    displayProducts(allProducts);
+
+  } catch (error) {
+
+    console.error(
+      "Unexpected FrostTech error:",
+      error
+    );
+
+    productGrid.innerHTML =
+      "<p>Unable to load products. Please try again.</p>";
   }
 
-
-  if (productStatus) {
-    productStatus.remove();
-  }
+}
 
 
-  if (!data || data.length === 0) {
+function displayProducts(products) {
+
+  const productGrid =
+    document.getElementById("product-grid");
+
+
+  if (!products || products.length === 0) {
 
     productGrid.innerHTML =
       "<p>No products available at the moment.</p>";
 
     return;
-
   }
 
 
-  data.forEach(product => {
+  productGrid.innerHTML = "";
+
+
+  products.forEach(product => {
 
     const card =
       document.createElement("div");
@@ -362,60 +319,150 @@ async function loadProducts() {
       "product-card";
 
 
-    card.innerHTML = `
+    const imageContainer =
+      document.createElement("div");
 
-      <div class="product-image">
-
-        ${
-          product.image_url
-            ? `<img
-                 src="${product.image_url}"
-                 alt="${product.name}">`
-            : "❄"
-        }
-
-      </div>
+    imageContainer.className =
+      "product-image";
 
 
-      <div class="product-info">
+    if (product.image_url) {
 
-        <h3>
-          ${product.name}
-        </h3>
+      const image =
+        document.createElement("img");
 
-        <p>
-          ${product.brand || ""}
+      image.src =
+        product.image_url;
 
-          ${
-            product.model
-              ? " • " + product.model
-              : ""
-          }
-        </p>
+      image.alt =
+        product.name || "FrostTech product";
+
+      image.loading =
+        "lazy";
+
+      imageContainer.appendChild(image);
+
+    } else {
+
+      imageContainer.textContent =
+        "❄";
+    }
 
 
-        <strong>
-          ₦${Number(
-            product.selling_price || 0
-          ).toLocaleString()}
-        </strong>
+    const info =
+      document.createElement("div");
+
+    info.className =
+      "product-info";
 
 
-        <button
-          onclick="openProduct('${product.id}')">
+    const name =
+      document.createElement("h3");
 
-          View Product
+    name.textContent =
+      product.name || "Product";
 
-        </button>
 
-      </div>
+    const details =
+      document.createElement("p");
 
-    `;
+    details.textContent =
+      (product.brand || "") +
+      (product.model
+        ? " • " + product.model
+        : "");
+
+
+    const price =
+      document.createElement("strong");
+
+    price.textContent =
+      "₦" +
+      Number(
+        product.selling_price || 0
+      ).toLocaleString();
+
+
+    const button =
+      document.createElement("button");
+
+    button.type =
+      "button";
+
+    button.textContent =
+      "View Product";
+
+    button.addEventListener(
+      "click",
+      function () {
+        openProduct(product.id);
+      }
+    );
+
+
+    info.appendChild(name);
+    info.appendChild(details);
+    info.appendChild(price);
+    info.appendChild(button);
+
+
+    card.appendChild(imageContainer);
+    card.appendChild(info);
 
 
     productGrid.appendChild(card);
 
   });
+
+}
+
+
+function searchProducts() {
+
+  const searchInput =
+    document.getElementById("product-search");
+
+  const searchTerm =
+    searchInput.value
+      .trim()
+      .toLowerCase();
+
+
+  if (!searchTerm) {
+
+    displayProducts(allProducts);
+
+    return;
+  }
+
+
+  const filteredProducts =
+    allProducts.filter(product => {
+
+      const searchableText = [
+
+        product.name,
+        product.category,
+        product.brand,
+        product.model,
+        product.description
+
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+
+      return searchableText.includes(
+        searchTerm
+      );
+
+    });
+
+
+  displayProducts(
+    filteredProducts
+  );
 
 }
 
@@ -429,9 +476,29 @@ function openProduct(productId) {
 }
 
 
+function requestQuote() {
+
+  window.location.href =
+    "quote.html";
+
+}
+
+
+document
+  .getElementById("product-search")
+  .addEventListener(
+    "keydown",
+    function(event) {
+
+      if (event.key === "Enter") {
+        searchProducts();
+      }
+
+    }
+  );
+
+
 loadProducts();
 
-</script>
-
-</body>
-  </html>
+</script></body>
+</html>
