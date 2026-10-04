@@ -129,7 +129,9 @@
 <div class="container">
 
   <h1>FrostTech HVAC and Refrigeration</h1>
+
   <h2>Admin Dashboard</h2>
+
 
   <!-- LOGIN -->
 
@@ -210,18 +212,6 @@ const SUPABASE_URL =
   "https://nftxptjpgidcsgtaltjn.supabase.co";
 
 
-/*
- IMPORTANT:
- Replace the text below with your COMPLETE
- Supabase Publishable Key.
-
- It must start with:
-
- sb_publishable_
-
- DO NOT use the secret key.
-*/
-
 const SUPABASE_PUBLISHABLE_KEY =
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
 
@@ -240,20 +230,13 @@ const supabaseClient =
 async function login() {
 
   const email =
-    document
-      .getElementById("email")
-      .value
-      .trim();
+    document.getElementById("email").value.trim();
 
   const password =
-    document
-      .getElementById("password")
-      .value;
+    document.getElementById("password").value;
 
   const message =
-    document.getElementById(
-      "login-message"
-    );
+    document.getElementById("login-message");
 
 
   if (!email || !password) {
@@ -275,7 +258,9 @@ async function login() {
 
   try {
 
-    const result =
+    const {
+      error
+    } =
       await supabaseClient.auth.signInWithPassword({
 
         email: email,
@@ -285,21 +270,15 @@ async function login() {
       });
 
 
-    if (result.error) {
+    if (error) {
 
       message.className = "error";
 
       message.textContent =
-        result.error.message;
+        error.message;
 
       return;
     }
-
-
-    message.className = "success";
-
-    message.textContent =
-      "Login successful. Loading dashboard...";
 
 
     await checkAdminAccess();
@@ -352,10 +331,6 @@ async function checkAdminAccess() {
     }
 
 
-    /*
-      Get admin profile.
-    */
-
     const {
       data: profile,
       error: profileError
@@ -371,11 +346,6 @@ async function checkAdminAccess() {
 
     if (profileError) {
 
-      console.error(
-        "Profile error:",
-        profileError
-      );
-
       document
         .getElementById("login-message")
         .className = "error";
@@ -390,10 +360,6 @@ async function checkAdminAccess() {
     }
 
 
-    /*
-      Check admin role.
-    */
-
     if (
       profile.role !== "admin" ||
       profile.is_active !== true
@@ -406,17 +372,13 @@ async function checkAdminAccess() {
       document
         .getElementById("login-message")
         .textContent =
-          "Access denied. This account is not an active admin.";
+          "Access denied.";
 
       await supabaseClient.auth.signOut();
 
       return;
     }
 
-
-    /*
-      Display admin information.
-    */
 
     document
       .getElementById("admin-name")
@@ -430,27 +392,15 @@ async function checkAdminAccess() {
         profile.role;
 
 
-    /*
-      Hide login.
-    */
-
     document
       .getElementById("login-section")
       .classList.add("hidden");
 
 
-    /*
-      Show dashboard.
-    */
-
     document
       .getElementById("dashboard-section")
       .classList.remove("hidden");
 
-
-    /*
-      Load customer requests.
-    */
 
     await loadQuoteRequests();
 
@@ -458,10 +408,7 @@ async function checkAdminAccess() {
 
   catch (error) {
 
-    console.error(
-      "Admin access error:",
-      error
-    );
+    console.error(error);
 
     document
       .getElementById("login-message")
@@ -494,358 +441,347 @@ async function loadQuoteRequests() {
     "Loading quote requests...";
 
 
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("quote_requests")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-
-    if (error) {
-
-      console.error(
-        "Quote request error:",
-        error
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("quote_requests")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
       );
 
-      container.innerHTML =
-        '<p class="error">' +
-        "Error loading quote requests: " +
-        escapeHtml(
-          error.message
-        ) +
-        "</p>";
 
-      return;
-    }
-
-
-    if (!data || data.length === 0) {
-
-      container.innerHTML =
-        "<p>No quote requests found.</p>";
-
-      return;
-    }
-
-
-    container.innerHTML =
-      "<p><strong>" +
-      data.length +
-      " quote request(s) found.</strong></p>";
-
-
-    data.forEach(
-      request => {
-
-        const div =
-          document.createElement(
-            "div"
-          );
-
-
-        div.className =
-          "quote card";
-
-
-        div.innerHTML = `
-
-          <h3>
-            ${escapeHtml(
-              request.title ||
-              "Quote Request"
-            )}
-          </h3>
-
-          <div class="quote-details">
-
-            <p>
-              <strong>Request Number:</strong>
-              ${escapeHtml(
-                request.request_number || ""
-              )}
-            </p>
-
-            <p>
-              <strong>Description:</strong>
-              ${escapeHtml(
-                request.description || ""
-              )}
-            </p>
-
-            <p>
-              <strong>Category:</strong>
-              ${escapeHtml(
-                request.category || ""
-              )}
-            </p>
-
-            <p>
-              <strong>Quantity:</strong>
-              ${request.quantity ?? ""}
-            </p>
-
-            <p>
-              <strong>Preferred Brand:</strong>
-              ${escapeHtml(
-                request.preferred_brand || ""
-              )}
-            </p>
-
-            <p>
-              <strong>Budget:</strong>
-
-              ${
-                request.budget !== null &&
-                request.budget !== undefined &&
-                request.budget !== ""
-
-                ? escapeHtml(
-                    request.budget
-                  )
-
-                : "Not specified"
-              }
-
-            </p>
-
-            <p>
-              <strong>Delivery Address:</strong>
-
-              ${escapeHtml(
-                request.delivery_address || ""
-              )}
-
-            </p>
-
-
-            <label>Status</label>
-
-            <select
-              id="status-${request.id}"
-            >
-
-              <option value="pending">
-                Pending
-              </option>
-
-              <option value="reviewing">
-                Reviewing
-              </option>
-
-              <option value="quoted">
-                Quoted
-              </option>
-
-              <option value="approved">
-                Approved
-              </option>
-
-              <option value="rejected">
-                Rejected
-              </option>
-
-            </select>
-
-
-            <button
-              onclick="updateQuoteStatus('${request.id}')">
-
-              Save Status
-
-            </button>
-
-          </div>
-
-
-          <!-- SUPPLIER QUOTATION -->
-
-          <div class="supplier-quotes">
-
-            <h3>
-              Supplier Quotation
-            </h3>
-
-            <p>
-              Enter the supplier quotation
-              details for this customer request.
-            </p>
-
-
-            <label>
-              Supplier ID
-            </label>
-
-            <input
-              id="supplier-${request.id}"
-              placeholder="Supplier UUID"
-            >
-
-
-            <label>
-              Quantity
-            </label>
-
-            <input
-              id="quantity-${request.id}"
-              type="number"
-              min="1"
-              value="${request.quantity || 1}"
-              oninput="calculateTotal('${request.id}')"
-            >
-
-
-            <label>
-              Supplier Unit Price (₦)
-            </label>
-
-            <input
-              id="unit-price-${request.id}"
-              type="number"
-              min="0"
-              placeholder="Enter supplier unit price"
-              oninput="calculateTotal('${request.id}')"
-            >
-
-
-            <label>
-              Delivery Cost (₦)
-            </label>
-
-            <input
-              id="delivery-${request.id}"
-              type="number"
-              min="0"
-              value="0"
-              oninput="calculateTotal('${request.id}')"
-            >
-
-
-            <div
-              id="total-${request.id}"
-              class="total-box">
-
-              Supplier Total: ₦0
-
-            </div>
-
-
-            <label>
-              Availability
-            </label>
-
-            <select
-              id="availability-${request.id}"
-            >
-
-              <option value="Available">
-                Available
-              </option>
-
-              <option value="Partially Available">
-                Partially Available
-              </option>
-
-              <option value="Out of Stock">
-                Out of Stock
-              </option>
-
-            </select>
-
-
-            <label>
-              Estimated Delivery (Days)
-            </label>
-
-            <input
-              id="delivery-days-${request.id}"
-              type="number"
-              min="0"
-              placeholder="e.g. 3"
-            >
-
-
-            <label>
-              Supplier Notes
-            </label>
-
-            <textarea
-              id="notes-${request.id}"
-              placeholder="Enter supplier notes"
-            ></textarea>
-
-
-            <button
-              onclick="saveSupplierQuotation('${request.id}')">
-
-              Save Supplier Quotation
-
-            </button>
-
-
-            <div
-              id="saved-quotes-${request.id}">
-
-              Loading supplier quotations...
-
-            </div>
-
-          </div>
-
-        `;
-
-
-        container.appendChild(
-          div
-        );
-
-
-        /*
-          Set current status.
-        */
-
-        document.getElementById(
-          `status-${request.id}`
-        ).value =
-          request.status || "pending";
-
-
-        /*
-          Load supplier quotations.
-        */
-
-        loadSupplierQuotations(
-          request.id
-        );
-
-      }
-    );
-
-  }
-
-  catch (error) {
-
-    console.error(error);
+  if (error) {
 
     container.innerHTML =
       '<p class="error">' +
-      "Unexpected error: " +
-      escapeHtml(
-        error.message
-      ) +
+      "Error loading quote requests: " +
+      escapeHtml(error.message) +
       "</p>";
 
+    return;
   }
+
+
+  if (!data || data.length === 0) {
+
+    container.innerHTML =
+      "<p>No quote requests found.</p>";
+
+    return;
+  }
+
+
+  container.innerHTML =
+    "<p><strong>" +
+    data.length +
+    " quote request(s) found.</strong></p>";
+
+
+  data.forEach(
+    request => {
+
+      const div =
+        document.createElement("div");
+
+
+      div.className =
+        "quote card";
+
+
+      div.innerHTML = `
+
+        <h3>
+          ${escapeHtml(
+            request.title ||
+            "Quote Request"
+          )}
+        </h3>
+
+
+        <div class="quote-details">
+
+          <p>
+            <strong>Request Number:</strong>
+            ${escapeHtml(
+              request.request_number || ""
+            )}
+          </p>
+
+
+          <p>
+            <strong>Description:</strong>
+            ${escapeHtml(
+              request.description || ""
+            )}
+          </p>
+
+
+          <p>
+            <strong>Category:</strong>
+            ${escapeHtml(
+              request.category || ""
+            )}
+          </p>
+
+
+          <p>
+            <strong>Quantity:</strong>
+            ${request.quantity ?? ""}
+          </p>
+
+
+          <p>
+            <strong>Preferred Brand:</strong>
+            ${escapeHtml(
+              request.preferred_brand || ""
+            )}
+          </p>
+
+
+          <p>
+            <strong>Budget:</strong>
+
+            ${
+              request.budget !== null &&
+              request.budget !== undefined &&
+              request.budget !== ""
+
+              ? escapeHtml(
+                  request.budget
+                )
+
+              : "Not specified"
+            }
+
+          </p>
+
+
+          <p>
+            <strong>Delivery Address:</strong>
+
+            ${escapeHtml(
+              request.delivery_address || ""
+            )}
+
+          </p>
+
+
+          <label>Status</label>
+
+          <select
+            id="status-${request.id}"
+          >
+
+            <option value="pending">
+              Pending
+            </option>
+
+            <option value="reviewing">
+              Reviewing
+            </option>
+
+            <option value="quoted">
+              Quoted
+            </option>
+
+            <option value="approved">
+              Approved
+            </option>
+
+            <option value="rejected">
+              Rejected
+            </option>
+
+          </select>
+
+
+          <button
+            onclick="updateQuoteStatus('${request.id}')">
+
+            Save Status
+
+          </button>
+
+        </div>
+
+
+        <!-- SUPPLIER QUOTATION -->
+
+        <div class="supplier-quotes">
+
+          <h3>
+            Supplier Quotation
+          </h3>
+
+
+          <p>
+            Enter the supplier quotation
+            details for this customer request.
+          </p>
+
+
+          <label>
+            Supplier ID
+          </label>
+
+          <input
+            id="supplier-${request.id}"
+            placeholder="Supplier UUID"
+          >
+
+
+          <label>
+            Product ID
+            <small>
+              (Optional)
+            </small>
+          </label>
+
+          <input
+            id="product-${request.id}"
+            placeholder="Product UUID - optional"
+          >
+
+
+          <label>
+            Quantity
+          </label>
+
+          <input
+            id="quantity-${request.id}"
+            type="number"
+            min="1"
+            value="${request.quantity || 1}"
+            oninput="calculateTotal('${request.id}')"
+          >
+
+
+          <label>
+            Supplier Unit Price (₦)
+          </label>
+
+          <input
+            id="unit-price-${request.id}"
+            type="number"
+            min="0"
+            placeholder="Enter supplier unit price"
+            oninput="calculateTotal('${request.id}')"
+          >
+
+
+          <label>
+            Delivery Cost (₦)
+          </label>
+
+          <input
+            id="delivery-${request.id}"
+            type="number"
+            min="0"
+            value="0"
+            oninput="calculateTotal('${request.id}')"
+          >
+
+
+          <div
+            id="total-${request.id}"
+            class="total-box">
+
+            Supplier Total: ₦0
+
+          </div>
+
+
+          <label>
+            Valid Until
+            <small>
+              (Optional)
+            </small>
+          </label>
+
+          <input
+            id="valid-until-${request.id}"
+            type="datetime-local"
+          >
+
+
+          <label>
+            Status
+          </label>
+
+          <select
+            id="supplier-status-${request.id}"
+          >
+
+            <option value="submitted">
+              Submitted
+            </option>
+
+            <option value="accepted">
+              Accepted
+            </option>
+
+            <option value="rejected">
+              Rejected
+            </option>
+
+            <option value="expired">
+              Expired
+            </option>
+
+          </select>
+
+
+          <label>
+            Supplier Notes
+          </label>
+
+          <textarea
+            id="notes-${request.id}"
+            placeholder="Enter supplier notes"
+          ></textarea>
+
+
+          <button
+            onclick="saveSupplierQuotation('${request.id}')">
+
+            Save Supplier Quotation
+
+          </button>
+
+
+          <div
+            id="saved-quotes-${request.id}">
+
+            Loading supplier quotations...
+
+          </div>
+
+        </div>
+
+      `;
+
+
+      container.appendChild(div);
+
+
+      document.getElementById(
+        `status-${request.id}`
+      ).value =
+        request.status || "pending";
+
+
+      loadSupplierQuotations(
+        request.id
+      );
+
+    }
+  );
 
 }
 
@@ -897,7 +833,7 @@ function calculateTotal(
 
 
 /* =====================================================
-   UPDATE QUOTE STATUS
+   UPDATE CUSTOMER QUOTE STATUS
 ===================================================== */
 
 async function updateQuoteStatus(
@@ -936,10 +872,6 @@ async function updateQuoteStatus(
       error.message
     );
 
-    console.error(
-      error
-    );
-
     return;
   }
 
@@ -962,6 +894,12 @@ async function saveSupplierQuotation(
   const supplierId =
     document.getElementById(
       `supplier-${requestId}`
+    ).value.trim();
+
+
+  const productId =
+    document.getElementById(
+      `product-${requestId}`
     ).value.trim();
 
 
@@ -989,49 +927,106 @@ async function saveSupplierQuotation(
     );
 
 
-  const availability =
-    document.getElementById(
-      `availability-${requestId}`
-    ).value;
-
-
-  const deliveryDaysValue =
-    document.getElementById(
-      `delivery-days-${requestId}`
-    ).value;
-
-
-  const estimatedDeliveryDays =
-    deliveryDaysValue === ""
-      ? null
-      : Number(
-          deliveryDaysValue
-        );
-
-
   const notes =
     document.getElementById(
       `notes-${requestId}`
     ).value.trim();
 
 
-  if (
-    !supplierId ||
-    !quantity ||
-    !unitPrice
-  ) {
+  const validUntilValue =
+    document.getElementById(
+      `valid-until-${requestId}`
+    ).value;
+
+
+  const supplierStatus =
+    document.getElementById(
+      `supplier-status-${requestId}`
+    ).value;
+
+
+  if (!supplierId) {
 
     alert(
-      "Please enter Supplier ID, Quantity and Supplier Unit Price."
+      "Please enter Supplier ID."
     );
 
     return;
   }
 
 
-  const totalCost =
+  if (!quantity || quantity < 1) {
+
+    alert(
+      "Please enter a valid quantity."
+    );
+
+    return;
+  }
+
+
+  if (
+    unitPrice === "" ||
+    isNaN(unitPrice) ||
+    unitPrice < 0
+  ) {
+
+    alert(
+      "Please enter a valid supplier unit price."
+    );
+
+    return;
+  }
+
+
+  const supplierTotal =
     (quantity * unitPrice) +
     deliveryCost;
+
+
+  const supplierQuote = {
+
+    request_id:
+      requestId,
+
+    supplier_id:
+      supplierId,
+
+    product_id:
+      productId || null,
+
+    quantity:
+      quantity,
+
+    supplier_unit_price:
+      unitPrice,
+
+    supplier_total:
+      supplierTotal,
+
+    delivery_cost:
+      deliveryCost,
+
+    notes:
+      notes || null,
+
+    valid_until:
+      validUntilValue
+        ? new Date(
+            validUntilValue
+          ).toISOString()
+        : null,
+
+    status:
+      supplierStatus
+
+  };
+
+
+  console.log(
+    "Saving supplier quotation:",
+    supplierQuote
+  );
 
 
   const {
@@ -1039,51 +1034,21 @@ async function saveSupplierQuotation(
   } =
     await supabaseClient
       .from("supplier_quotes")
-      .insert({
-
-        quote_request_id:
-          requestId,
-
-        supplier_id:
-          supplierId,
-
-        unit_cost:
-          unitPrice,
-
-        quantity:
-          quantity,
-
-        delivery_cost:
-          deliveryCost,
-
-        total_cost:
-          totalCost,
-
-        availability:
-          availability,
-
-        estimated_delivery_days:
-          estimatedDeliveryDays,
-
-        notes:
-          notes || null,
-
-        status:
-          "submitted"
-
-      });
+      .insert(
+        supplierQuote
+      );
 
 
   if (error) {
 
-    alert(
-      "Could not save supplier quotation: " +
-      error.message
-    );
-
     console.error(
       "Supplier quotation error:",
       error
+    );
+
+    alert(
+      "Could not save supplier quotation:\n\n" +
+      error.message
     );
 
     return;
@@ -1091,17 +1056,23 @@ async function saveSupplierQuotation(
 
 
   alert(
-    "Supplier quotation saved successfully. Total: ₦" +
-    totalCost.toLocaleString()
+    "Supplier quotation saved successfully.\n\n" +
+    "Supplier Total: ₦" +
+    supplierTotal.toLocaleString()
   );
 
 
   /*
-    Clear form.
+    Clear fields after successful save.
   */
 
   document.getElementById(
     `supplier-${requestId}`
+  ).value = "";
+
+
+  document.getElementById(
+    `product-${requestId}`
   ).value = "";
 
 
@@ -1116,7 +1087,7 @@ async function saveSupplierQuotation(
 
 
   document.getElementById(
-    `delivery-days-${requestId}`
+    `valid-until-${requestId}`
   ).value = "";
 
 
@@ -1138,7 +1109,7 @@ async function saveSupplierQuotation(
 
 
 /* =====================================================
-   LOAD SUPPLIER QUOTATIONS
+   LOAD SAVED SUPPLIER QUOTATIONS
 ===================================================== */
 
 async function loadSupplierQuotations(
@@ -1164,7 +1135,7 @@ async function loadSupplierQuotations(
       .from("supplier_quotes")
       .select("*")
       .eq(
-        "quote_request_id",
+        "request_id",
         requestId
       )
       .order(
@@ -1184,11 +1155,6 @@ async function loadSupplierQuotations(
         error.message
       ) +
       "</p>";
-
-    console.error(
-      "Supplier quotation loading error:",
-      error
-    );
 
     return;
   }
@@ -1236,6 +1202,16 @@ async function loadSupplierQuotations(
 
 
         <p>
+          <strong>Product ID:</strong>
+
+          ${escapeHtml(
+            quote.product_id || "Not specified"
+          )}
+
+        </p>
+
+
+        <p>
           <strong>Quantity:</strong>
 
           ${quote.quantity ?? ""}
@@ -1244,10 +1220,10 @@ async function loadSupplierQuotations(
 
 
         <p>
-          <strong>Supplier Unit Cost:</strong>
+          <strong>Supplier Unit Price:</strong>
 
           ₦${Number(
-            quote.unit_cost || 0
+            quote.supplier_unit_price || 0
           ).toLocaleString()}
 
         </p>
@@ -1264,35 +1240,23 @@ async function loadSupplierQuotations(
 
 
         <p>
-          <strong>Total Cost:</strong>
+          <strong>Supplier Total:</strong>
 
           ₦${Number(
-            quote.total_cost || 0
+            quote.supplier_total || 0
           ).toLocaleString()}
 
         </p>
 
 
         <p>
-          <strong>Availability:</strong>
-
-          ${escapeHtml(
-            quote.availability || ""
-          )}
-
-        </p>
-
-
-        <p>
-          <strong>Estimated Delivery:</strong>
+          <strong>Valid Until:</strong>
 
           ${
-            quote.estimated_delivery_days !== null &&
-            quote.estimated_delivery_days !== undefined
-
-              ? quote.estimated_delivery_days +
-                " day(s)"
-
+            quote.valid_until
+              ? new Date(
+                  quote.valid_until
+                ).toLocaleString()
               : "Not specified"
           }
 
@@ -1383,7 +1347,7 @@ function escapeHtml(
 
 
 /* =====================================================
-   START APPLICATION
+   START
 ===================================================== */
 
 checkAdminAccess();
