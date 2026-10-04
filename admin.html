@@ -614,8 +614,88 @@ async function updateQuoteStatus(requestId) {
    SAVE SUPPLIER QUOTATION
 ========================= */
 
-async function saveSupplierQuotation(requestId) {
+async function async function saveSupplierQuotation(requestId) {
 
+const supplierId =
+document.getElementById("supplier-${requestId}").value.trim();
+
+const quantity =
+Number(
+document.getElementById("quantity-${requestId}").value
+);
+
+const unitPrice =
+Number(
+document.getElementById("unit-price-${requestId}").value
+);
+
+const deliveryCost =
+Number(
+document.getElementById("delivery-${requestId}").value || 0
+);
+
+const notes =
+document.getElementById("notes-${requestId}").value.trim();
+
+if (!supplierId || !quantity || !unitPrice) {
+
+alert(
+  "Please enter Supplier ID, Quantity and Supplier Unit Price."
+);
+
+return;
+
+}
+
+const totalCost =
+(quantity * unitPrice) + deliveryCost;
+
+const { error } =
+await supabaseClient
+.from("supplier_quotes")
+.insert({
+
+    quote_request_id: requestId,
+
+    supplier_id: supplierId,
+
+    quantity: quantity,
+
+    unit_cost: unitPrice,
+
+    delivery_cost: deliveryCost,
+
+    total_cost: totalCost,
+
+    availability: "Available",
+
+    estimated_delivery_days: null,
+
+    notes: notes || null,
+
+    status: "submitted"
+
+  });
+
+if (error) {
+
+alert(
+  "Could not save supplier quotation: " +
+  error.message
+);
+
+console.error(
+  "Supplier quotation error:",
+  error
+);
+
+return;
+
+}
+
+alert("Supplier quotation saved successfully.");
+
+}
   const supplierId =
     document.getElementById(
       `supplier-${requestId}`
