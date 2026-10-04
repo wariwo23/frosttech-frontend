@@ -878,7 +878,24 @@ async function loadQuoteRequests() {
         >
           Supplier Total: ₦0
         </div>
+<label>
+  FrostTech Margin (%)
+</label>
 
+<input
+  type="number"
+  id="margin-${request.id}"
+  min="0"
+  step="0.01"
+  value="15"
+>
+
+<div
+  class="total"
+  id="customer-total-${request.id}"
+>
+  Customer Total: ₦0
+</div>
 
         <button
           type="button"
@@ -1253,9 +1270,99 @@ async function loadProducts(
    CALCULATE TOTAL
    ========================================= */
 
-function calculateTotal(
-  requestId
-) {
+function calculateTotal(requestId) {
+
+  const quantity =
+    Number(
+      document.getElementById(
+        `quantity-${requestId}`
+      )?.value || 0
+    );
+
+  const unitPrice =
+    Number(
+      document.getElementById(
+        `unit-price-${requestId}`
+      )?.value || 0
+    );
+
+  const delivery =
+    Number(
+      document.getElementById(
+        `delivery-${requestId}`
+      )?.value || 0
+    );
+
+  const marginPercent =
+    Number(
+      document.getElementById(
+        `margin-${requestId}`
+      )?.value || 0
+    );
+
+  const supplierTotal =
+  (quantity * unitPrice) +
+  deliveryCost;
+
+const marginPercent =
+  Number(
+    document.getElementById(
+      `margin-${requestId}`
+    )?.value || 0
+  );
+
+const marginAmount =
+  supplierTotal *
+  (marginPercent / 100);
+
+const customerTotal =
+  supplierTotal +
+  marginAmount;
+  const marginAmount =
+    supplierTotal *
+    (marginPercent / 100);
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount;
+
+
+  const supplierTotalElement =
+    document.getElementById(
+      `total-${requestId}`
+    );
+
+  if (supplierTotalElement) {
+
+    supplierTotalElement.textContent =
+      "Supplier Total: ₦" +
+      supplierTotal.toLocaleString();
+
+  }
+
+
+  const customerTotalElement =
+    document.getElementById(
+      `customer-total-${requestId}`
+    );
+
+  if (customerTotalElement) {
+
+    customerTotalElement.textContent =
+      "Customer Total: ₦" +
+      customerTotal.toLocaleString();
+
+  }
+
+
+  return {
+    supplierTotal,
+    marginPercent,
+    marginAmount,
+    customerTotal
+  };
+
+}
 
   const quantity =
     Number(
@@ -1500,42 +1607,53 @@ async function saveSupplierQuotation(
 
   const supplierQuote = {
 
-    request_id:
-      requestId,
+  request_id:
+    requestId,
 
-    supplier_id:
-      supplierId,
+  supplier_id:
+    supplierId,
 
-    product_id:
-      productId,
+  product_id:
+    productId,
 
-    quantity:
-      quantity,
+  quantity:
+    quantity,
 
-    supplier_unit_price:
-      unitPrice,
+  supplier_unit_price:
+    unitPrice,
 
-    supplier_total:
-      supplierTotal,
+  supplier_total:
+    supplierTotal,
 
-    delivery_cost:
-      deliveryCost,
+  delivery_cost:
+    deliveryCost,
 
-    notes:
-      notes || null,
+  frosttech_margin_percent:
+    marginPercent,
 
-    valid_until:
-      validUntilValue
-        ? new Date(
-            validUntilValue
-          ).toISOString()
-        : null,
+  frosttech_margin_amount:
+    marginAmount,
 
-    status:
-      supplierStatus
+  customer_total:
+    customerTotal,
 
-  };
+  customer_quote_status:
+    "draft",
 
+  notes:
+    notes || null,
+
+  valid_until:
+    validUntilValue
+      ? new Date(
+          validUntilValue
+        ).toISOString()
+      : null,
+
+  status:
+    supplierStatus
+
+};
 
   console.log(
     "SUPPLIER QUOTE:",
@@ -1852,16 +1970,19 @@ document.addEventListener(
 
 
     if (
-      id.startsWith(
-        "quantity-"
-      ) ||
-      id.startsWith(
-        "unit-price-"
-      ) ||
-      id.startsWith(
-        "delivery-"
-      )
-    ) {
+  id.startsWith(
+    "quantity-"
+  ) ||
+  id.startsWith(
+    "unit-price-"
+  ) ||
+  id.startsWith(
+    "delivery-"
+  ) ||
+  id.startsWith(
+    "margin-"
+  )
+) {
 
       const requestId =
         id.substring(
