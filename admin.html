@@ -1368,57 +1368,258 @@
             {
               minimumFractionDigits: 2
             }
-          )}
-        </p>
+async function loadSupplierQuotations() {
 
-        <p>
-          <strong>Customer Total:</strong>
-          ₦${Number(
-            quote.customer_total || 0
-          ).toLocaleString(
-            "en-NG",
-            {
-              minimumFractionDigits: 2
-            }
-          )}
-        </p>
+  const container =
+    document.getElementById(
+      "savedSupplierQuotations"
+    );
 
-        <p>
-          <strong>Supplier Status:</strong>
-          ${escapeHtml(
-            quote.status || ""
-          )}
-        </p>
+  if (!container) return;
 
-        <p>
-          <strong>Customer Quote Status:</strong>
-          ${escapeHtml(
-            quote.customer_quote_status || ""
-          )}
-        </p>
+  container.innerHTML =
+    "Loading supplier quotations...";
 
-        <p>
-          <strong>Valid Until:</strong>
-          ${escapeHtml(
-            quote.valid_until || ""
-          )}
-        </p>
+  const {
+    data,
+    error
+  } =
+    await supabaseClient
+      .from("supplier_quotes")
+      .select(`
+        *,
+        suppliers (
+          business_name
+        ),
+        products (
+          name
+        )
+      `)
+      .order("created_at", {
+        ascending: false
+      });
 
-        <p>
-          <strong>Notes:</strong>
-          ${escapeHtml(
-            quote.notes || ""
-          )}
-        </p>
+  if (error) {
 
-      `;
+    container.innerHTML =
+      `<p class="error">
+        ${escapeHtml(error.message)}
+      </p>`;
 
-
-      container.appendChild(box);
-
-    });
-
+    return;
   }
+
+  if (!data || data.length === 0) {
+
+    container.innerHTML =
+      "<p>No supplier quotations found.</p>";
+
+    return;
+  }
+
+  container.innerHTML = "";
+
+  data.forEach(quote => {
+
+    const box =
+      document.createElement("div");
+
+    box.className =
+      "quote-box";
+
+    const supplierName =
+      quote.suppliers?.business_name ||
+      quote.supplier_id ||
+      "";
+
+    const productName =
+      quote.products?.name ||
+      quote.product_id ||
+      "";
+
+    box.innerHTML = `
+
+      <h3>
+        Supplier Quotation
+      </h3>
+
+      <p>
+        <strong>Supplier:</strong>
+        ${escapeHtml(supplierName)}
+      </p>
+
+      <p>
+        <strong>Product:</strong>
+        ${escapeHtml(productName)}
+      </p>
+
+      <p>
+        <strong>Quantity:</strong>
+        ${quote.quantity}
+      </p>
+
+      <p>
+        <strong>Supplier Unit Price:</strong>
+        ₦${Number(
+          quote.supplier_unit_price || 0
+        ).toLocaleString(
+          "en-NG",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+      </p>
+
+      <p>
+        <strong>Delivery Cost:</strong>
+        ₦${Number(
+          quote.delivery_cost || 0
+        ).toLocaleString(
+          "en-NG",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+      </p>
+
+      <p>
+        <strong>Supplier Total:</strong>
+        ₦${Number(
+          quote.supplier_total || 0
+        ).toLocaleString(
+          "en-NG",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+      </p>
+
+      <p>
+        <strong>FrostTech Margin:</strong>
+        ${Number(
+          quote.frosttech_margin_percent || 0
+        )}%
+      </p>
+
+      <p>
+        <strong>FrostTech Margin Amount:</strong>
+        ₦${Number(
+          quote.frosttech_margin_amount || 0
+        ).toLocaleString(
+          "en-NG",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+      </p>
+
+      <p>
+        <strong>Customer Total:</strong>
+        ₦${Number(
+          quote.customer_total || 0
+        ).toLocaleString(
+          "en-NG",
+          {
+            minimumFractionDigits: 2
+          }
+        )}
+      </p>
+
+      <p>
+        <strong>Supplier Status:</strong>
+        ${escapeHtml(
+          quote.status || ""
+        )}
+      </p>
+
+      <p>
+        <strong>Customer Quote Status:</strong>
+        ${escapeHtml(
+          quote.customer_quote_status || ""
+        )}
+      </p>
+
+      <p>
+        <strong>Valid Until:</strong>
+        ${escapeHtml(
+          quote.valid_until || ""
+        )}
+      </p>
+
+      <p>
+        <strong>Notes:</strong>
+        ${escapeHtml(
+          quote.notes || ""
+        )}
+      </p>
+
+      ${
+        quote.status === "submitted"
+          ? `
+            <button
+              type="button"
+              onclick="selectSupplierQuotation('${quote.id}')"
+            >
+              Select Supplier
+            </button>
+          `
+          : ""
+      }
+
+    `;
+
+    container.appendChild(box);
+
+  });
+
+            }
+
+            async function selectSupplierQuotation(
+  quotationId
+) {
+
+  if (!quotationId) return;
+
+  const confirmed =
+    confirm(
+      "Select this supplier quotation?"
+    );
+
+  if (!confirmed) return;
+
+  const {
+    error
+  } =
+    await supabaseClient
+      .from("supplier_quotes")
+      .update({
+        status: "selected"
+      })
+      .eq("id", quotationId);
+
+  if (error) {
+
+    console.error(
+      "Supplier selection error:",
+      error
+    );
+
+    alert(
+      "Could not select supplier quotation: " +
+      error.message
+    );
+
+    return;
+  }
+
+  alert(
+    "Supplier quotation selected successfully."
+  );
+
+  await loadSupplierQuotations();
+
+            }
+            
 
 
   /* ==============================
