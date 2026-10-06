@@ -307,4 +307,918 @@
 
         <input
           type="number"
-          id="
+          id="quantityInput"
+          min="1"
+          value="1"
+        >
+
+
+        <label>Supplier Unit Price</label>
+
+        <input
+          type="number"
+          id="unitPriceInput"
+          min="0"
+          value="0"
+        >
+
+
+        <label>Delivery Cost</label>
+
+        <input
+          type="number"
+          id="deliveryInput"
+          min="0"
+          value="0"
+        >
+
+
+        <label>FrostTech Margin (%)</label>
+
+        <input
+          type="number"
+          id="marginInput"
+          min="0"
+          value="15"
+        >
+
+
+        <label>Status</label>
+
+        <select id="statusInput">
+
+          <option value="submitted">
+            Submitted
+          </option>
+
+          <option value="rejected">
+            Rejected
+          </option>
+
+          <option value="expired">
+            Expired
+          </option>
+
+        </select>
+
+
+        <label>Valid Until</label>
+
+        <input
+          type="date"
+          id="validUntilInput"
+        >
+
+
+        <label>Notes</label>
+
+        <textarea
+          id="notesInput"
+          rows="4"
+          placeholder="Supplier quotation notes"
+        ></textarea>
+
+
+        <div class="total-box">
+
+          <p>
+            Supplier Total:
+            ₦<span id="supplierTotalDisplay">0</span>
+          </p>
+
+          <p>
+            FrostTech Margin:
+            ₦<span id="marginDisplay">0</span>
+          </p>
+
+          <p>
+            Customer Total:
+            ₦<span id="customerTotalDisplay">0</span>
+          </p>
+
+        </div>
+
+
+        <button onclick="calculateQuotation()">
+          Calculate Quotation
+        </button>
+
+
+        <button onclick="saveSupplierQuotation()">
+          Save Supplier Quotation
+        </button>
+
+
+        <p id="quotationMessage"></p>
+
+      </div>
+
+    </main>
+
+  </div>
+
+
+<script>
+
+  /* =========================================================
+     SUPABASE CONFIGURATION
+     ========================================================= */
+
+  const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+  /*
+    IMPORTANT:
+    Keep the SAME sb_publishable... key from your existing
+    admin.html here.
+  */
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
+
+  const supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_PUBLISHABLE_KEY
+    );
+
+
+  /* =========================================================
+     LOGIN
+     ========================================================= */
+
+  async function loginAdmin() {
+
+    const email =
+      document
+        .getElementById("loginEmail")
+        .value
+        .trim();
+
+    const password =
+      document
+        .getElementById("loginPassword")
+        .value;
+
+    const message =
+      document.getElementById("loginMessage");
+
+    message.textContent = "";
+    message.className = "";
+
+
+    if (!email || !password) {
+
+      message.textContent =
+        "Please enter email and password.";
+
+      message.className = "error";
+
+      return;
+    }
+
+
+    message.textContent =
+      "Logging in...";
+
+
+    try {
+
+      const { data, error } =
+        await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+
+      if (error) {
+
+        console.error(
+          "Login error:",
+          error
+        );
+
+        message.textContent =
+          error.message;
+
+        message.className = "error";
+
+        return;
+      }
+
+
+      if (!data || !data.user) {
+
+        message.textContent =
+          "Login completed but no user was returned.";
+
+        message.className = "error";
+
+        return;
+      }
+
+
+      document
+        .getElementById("loginScreen")
+        .style.display = "none";
+
+
+      document
+        .getElementById("adminApp")
+        .style.display = "block";
+
+
+      document
+        .getElementById("loggedInEmail")
+        .textContent =
+          data.user.email || email;
+
+
+      await loadQuoteRequests();
+
+      await loadSuppliers();
+
+      await loadProducts();
+
+      await loadSupplierQuotations();
+
+    } catch (err) {
+
+      console.error(
+        "Unexpected login error:",
+        err
+      );
+
+      message.textContent =
+        "Login error: " + err.message;
+
+      message.className = "error";
+    }
+
+  }
+
+
+  /* =========================================================
+     LOGOUT
+     ========================================================= */
+
+  async function logoutAdmin() {
+
+    await supabaseClient.auth.signOut();
+
+    document
+      .getElementById("adminApp")
+      .style.display = "none";
+
+    document
+      .getElementById("loginScreen")
+      .style.display = "block";
+
+  }
+
+
+  /* =========================================================
+     CHECK EXISTING SESSION
+     ========================================================= */
+
+  async function checkSession() {
+
+    try {
+
+      const {
+        data: {
+          session
+        }
+      } =
+        await supabaseClient.auth.getSession();
+
+
+      if (
+        session &&
+        session.user
+      ) {
+
+        document
+          .getElementById("loginScreen")
+          .style.display = "none";
+
+
+        document
+          .getElementById("adminApp")
+          .style.display = "block";
+
+
+        document
+          .getElementById("loggedInEmail")
+          .textContent =
+            session.user.email;
+
+
+        await loadQuoteRequests();
+
+        await loadSuppliers();
+
+        await loadProducts();
+
+        await loadSupplierQuotations();
+
+      }
+
+    } catch (error) {
+
+      console.error(
+        "Session check error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CUSTOMER QUOTE REQUESTS
+     ========================================================= */
+
+  async function loadQuoteRequests() {
+
+    const container =
+      document.getElementById(
+        "quoteRequestsContainer"
+      );
+
+
+    container.innerHTML =
+      "Loading quote requests...";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("quote_requests")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "Quote request error:",
+          error
+        );
+
+        container.innerHTML =
+          `<p class="error">
+            ${escapeHtml(error.message)}
+          </p>`;
+
+        return;
+      }
+
+
+      if (!data || data.length === 0) {
+
+        container.innerHTML =
+          "<p>No customer quote requests found.</p>";
+
+        return;
+      }
+
+
+      container.innerHTML = "";
+
+
+      data.forEach(
+        request => {
+
+          const box =
+            document.createElement(
+              "div"
+            );
+
+          box.className =
+            "quote-box";
+
+
+          box.innerHTML = `
+
+            <h3>
+              Quote Request -
+              ${escapeHtml(
+                request.product_name ||
+                request.product ||
+                "Product"
+              )}
+            </h3>
+
+            <p>
+              <strong>Request Number:</strong>
+              ${escapeHtml(
+                request.request_number ||
+                "N/A"
+              )}
+            </p>
+
+            <p>
+              <strong>Customer:</strong>
+              ${escapeHtml(
+                request.customer_name ||
+                "N/A"
+              )}
+            </p>
+
+            <p>
+              <strong>Phone:</strong>
+              ${escapeHtml(
+                request.customer_phone ||
+                request.phone ||
+                "N/A"
+              )}
+            </p>
+
+            <p>
+              <strong>Description:</strong>
+              ${escapeHtml(
+                request.description ||
+                "N/A"
+              )}
+            </p>
+
+            <p>
+              <strong>Status:</strong>
+              ${escapeHtml(
+                request.status ||
+                "N/A"
+              )}
+            </p>
+
+            <button
+              onclick="selectQuoteRequest('${request.id}')"
+            >
+              Select Request
+            </button>
+
+          `;
+
+
+          container.appendChild(box);
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+      container.innerHTML =
+        `<p class="error">
+          ${escapeHtml(error.message)}
+        </p>`;
+
+    }
+
+  }
+
+
+  /* =========================================================
+     SELECT CUSTOMER REQUEST
+     ========================================================= */
+
+  async function selectQuoteRequest(
+    requestId
+  ) {
+
+    document
+      .getElementById(
+        "selectedRequestId"
+      )
+      .value =
+        requestId;
+
+
+    document
+      .getElementById(
+        "supplierQuoteForm"
+      )
+      .style.display =
+        "block";
+
+
+    document
+      .getElementById(
+        "supplierQuotationContainer"
+      )
+      .innerHTML = `
+
+        <p class="success">
+          Customer quote request selected.
+        </p>
+
+        <p>
+          Request ID:
+          ${escapeHtml(requestId)}
+        </p>
+
+      `;
+
+
+    window.scrollTo({
+      top:
+        document
+          .getElementById(
+            "supplierQuoteForm"
+          )
+          .offsetTop - 20,
+      behavior: "smooth"
+    });
+
+  }
+
+
+  /* =========================================================
+     LOAD SUPPLIERS
+     ========================================================= */
+
+  async function loadSuppliers() {
+
+    const select =
+      document.getElementById(
+        "supplierSelect"
+      );
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("suppliers")
+          .select("*")
+          .order(
+            "name",
+            {
+              ascending: true
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "Supplier loading error:",
+          error
+        );
+
+        return;
+      }
+
+
+      select.innerHTML = `
+
+        <option value="">
+          Select Supplier
+        </option>
+
+      `;
+
+
+      (data || []).forEach(
+        supplier => {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+          option.value =
+            supplier.id;
+
+          option.textContent =
+            supplier.name ||
+            supplier.company_name ||
+            "Supplier";
+
+
+          select.appendChild(option);
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     LOAD PRODUCTS
+     ========================================================= */
+
+  async function loadProducts() {
+
+    const select =
+      document.getElementById(
+        "productSelect"
+      );
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("products")
+          .select("*")
+          .order(
+            "name",
+            {
+              ascending: true
+            }
+          );
+
+
+      if (error) {
+
+        console.error(
+          "Product loading error:",
+          error
+        );
+
+        return;
+      }
+
+
+      select.innerHTML = `
+
+        <option value="">
+          Select Product
+        </option>
+
+      `;
+
+
+      (data || []).forEach(
+        product => {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+          option.value =
+            product.id;
+
+          option.textContent =
+            product.name ||
+            product.product_name ||
+            "Product";
+
+
+          select.appendChild(option);
+
+        }
+      );
+
+
+    } catch (error) {
+
+      console.error(
+        error
+      );
+
+    }
+
+  }
+
+
+  /* =========================================================
+     CALCULATE SUPPLIER QUOTATION
+     ========================================================= */
+
+  function calculateQuotation() {
+
+    const quantity =
+      Number(
+        document
+          .getElementById(
+            "quantityInput"
+          )
+          .value
+      );
+
+
+    const unitPrice =
+      Number(
+        document
+          .getElementById(
+            "unitPriceInput"
+          )
+          .value
+      );
+
+
+    const delivery =
+      Number(
+        document
+          .getElementById(
+            "deliveryInput"
+          )
+          .value || 0
+      );
+
+
+    const marginPercent =
+      Number(
+        document
+          .getElementById(
+            "marginInput"
+          )
+          .value || 0
+      );
+
+
+    const supplierTotal =
+      quantity * unitPrice;
+
+
+    const marginAmount =
+      supplierTotal *
+      (marginPercent / 100);
+
+
+    const customerTotal =
+      supplierTotal +
+      marginAmount +
+      delivery;
+
+
+    document
+      .getElementById(
+        "supplierTotalDisplay"
+      )
+      .textContent =
+        formatMoney(
+          supplierTotal
+        );
+
+
+    document
+      .getElementById(
+        "marginDisplay"
+      )
+      .textContent =
+        formatMoney(
+          marginAmount
+        );
+
+
+    document
+      .getElementById(
+        "customerTotalDisplay"
+      )
+      .textContent =
+        formatMoney(
+          customerTotal
+        );
+
+
+    return {
+      quantity,
+      unitPrice,
+      delivery,
+      marginPercent,
+      supplierTotal,
+      marginAmount,
+      customerTotal
+    };
+
+  }
+
+
+  /* =========================================================
+     SAVE SUPPLIER QUOTATION
+     ========================================================= */
+
+  async function saveSupplierQuotation() {
+
+    const message =
+      document.getElementById(
+        "quotationMessage"
+      );
+
+
+    message.textContent =
+      "Saving quotation...";
+
+    message.className = "";
+
+
+    const requestId =
+      document
+        .getElementById(
+          "selectedRequestId"
+        )
+        .value;
+
+
+    const supplierId =
+      document
+        .getElementById(
+          "supplierSelect"
+        )
+        .value;
+
+
+    const productId =
+      document
+        .getElementById(
+          "productSelect"
+        )
+        .value;
+
+
+    const status =
+      document
+        .getElementById(
+          "statusInput"
+        )
+        .value;
+
+
+    const notes =
+      document
+        .getElementById(
+          "notesInput"
+        )
+        .value
+        .trim();
+
+
+    const validUntil =
+      document
+        .getElementById(
+          "validUntilInput"
+        )
+        .value || null;
+
+
+    if (!requestId) {
+
+      message.textContent =
+        "Please select a customer quote request.";
+
+      message.className =
+        "error";
+
+      return;
+    }
+
+
+    if (!supplierId) {
+
+      message.textContent =
+        "Please select a supplier.";
+
+      message.className =
+        "error";
+
+      return;
+    }
+
+
+    if (!productId) {
+
+      message.textContent =
+        "Please select a product.";
+
+      message.className =
+        "error";
+
+      return;
+    }
+
+
+ 
