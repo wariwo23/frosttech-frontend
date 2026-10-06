@@ -19,11 +19,9 @@
 <script>
 
   const SUPABASE_URL =
-    "YOUR ACTUAL SUPABASE PROJECT URL";
-
+    "https://nftxptjpgidcsgtaltjn.supabase.co/rest/v1/";
   const SUPABASE_ANON_KEY =
-    "YOUR ACTUAL SUPABASE ANON KEY";
-
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
   const supabaseClient =
     window.supabase.createClient(
       SUPABASE_URL,
@@ -33,7 +31,10 @@
   console.log(
     "FrostTech Supabase initialized successfully."
   );
-
+document.body.insertAdjacentHTML(
+  "beforeend",
+  "<p>Supabase connection section loaded successfully.</p>"
+);
 </script>
 <body>
 
