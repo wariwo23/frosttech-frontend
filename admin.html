@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 
   <meta charset="UTF-8">
@@ -11,6 +12,7 @@
 
   <title>FrostTech Admin</title>
 
+  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -49,7 +51,7 @@
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     input,
@@ -128,25 +130,34 @@
       font-weight: bold;
     }
 
+    #adminApp {
+      display: none;
+    }
+
     @media (max-width: 700px) {
+
       .grid {
         grid-template-columns: 1fr;
       }
-    }
 
-    #adminApp {
-      display: none;
     }
 
   </style>
 
 </head>
 
+
 <body>
 
-  <!-- LOGIN SCREEN -->
 
-  <div id="loginScreen" class="container">
+  <!-- =====================================================
+       LOGIN SCREEN
+       ===================================================== -->
+
+  <div
+    id="loginScreen"
+    class="container"
+  >
 
     <div class="card">
 
@@ -168,9 +179,12 @@
         placeholder="Password"
       >
 
-<button type="button" onclick="loginAdmin()">
-  Login
-</button>
+      <button
+        type="button"
+        onclick="loginAdmin()"
+      >
+        Login
+      </button>
 
       <p id="loginMessage"></p>
 
@@ -179,9 +193,14 @@
   </div>
 
 
-  <!-- ADMIN APPLICATION -->
+  <!-- =====================================================
+       ADMIN APPLICATION
+       ===================================================== -->
 
   <div id="adminApp">
+
+
+    <!-- HEADER -->
 
     <header>
 
@@ -201,6 +220,7 @@
         </p>
 
         <button
+          type="button"
           class="logout-btn"
           onclick="logoutAdmin()"
         >
@@ -214,13 +234,21 @@
 
     <main class="container">
 
-      <!-- CUSTOMER QUOTE REQUESTS -->
+
+      <!-- =================================================
+           CUSTOMER QUOTE REQUESTS
+           ================================================= -->
 
       <div class="card">
 
-        <h2>Customer Quote Requests</h2>
+        <h2>
+          Customer Quote Requests
+        </h2>
 
-        <button onclick="loadQuoteRequests()">
+        <button
+          type="button"
+          onclick="loadQuoteRequests()"
+        >
           Refresh Quote Requests
         </button>
 
@@ -231,11 +259,15 @@
       </div>
 
 
-      <!-- SUPPLIER QUOTATION MANAGEMENT -->
+      <!-- =================================================
+           SUPPLIER QUOTATION MANAGEMENT
+           ================================================= -->
 
       <div class="card">
 
-        <h2>Supplier Quotation Management</h2>
+        <h2>
+          Supplier Quotation Management
+        </h2>
 
         <div id="supplierQuotationContainer">
 
@@ -249,13 +281,20 @@
       </div>
 
 
-      <!-- SAVED SUPPLIER QUOTATIONS -->
+      <!-- =================================================
+           SAVED SUPPLIER QUOTATIONS
+           ================================================= -->
 
       <div class="card">
 
-        <h2>Saved Supplier Quotations</h2>
+        <h2>
+          Saved Supplier Quotations
+        </h2>
 
-        <button onclick="loadSupplierQuotations()">
+        <button
+          type="button"
+          onclick="loadSupplierQuotations()"
+        >
           Refresh Supplier Quotations
         </button>
 
@@ -266,7 +305,9 @@
       </div>
 
 
-      <!-- SUPPLIER QUOTATION FORM -->
+      <!-- =================================================
+           SUPPLIER QUOTATION FORM
+           ================================================= -->
 
       <div
         id="supplierQuoteForm"
@@ -274,14 +315,22 @@
         style="display:none;"
       >
 
-        <h2>Create Supplier Quotation</h2>
+        <h2>
+          Create Supplier Quotation
+        </h2>
+
 
         <input
           type="hidden"
           id="selectedRequestId"
         >
 
-        <label>Supplier</label>
+
+        <!-- SUPPLIER -->
+
+        <label>
+          Supplier
+        </label>
 
         <select id="supplierSelect">
 
@@ -292,7 +341,11 @@
         </select>
 
 
-        <label>Product</label>
+        <!-- PRODUCT -->
+
+        <label>
+          Product
+        </label>
 
         <select id="productSelect">
 
@@ -303,7 +356,11 @@
         </select>
 
 
-        <label>Quantity</label>
+        <!-- QUANTITY -->
+
+        <label>
+          Quantity
+        </label>
 
         <input
           type="number"
@@ -313,7 +370,11 @@
         >
 
 
-        <label>Supplier Unit Price</label>
+        <!-- UNIT PRICE -->
+
+        <label>
+          Supplier Unit Price
+        </label>
 
         <input
           type="number"
@@ -323,7 +384,11 @@
         >
 
 
-        <label>Delivery Cost</label>
+        <!-- DELIVERY -->
+
+        <label>
+          Delivery Cost
+        </label>
 
         <input
           type="number"
@@ -333,7 +398,11 @@
         >
 
 
-        <label>FrostTech Margin (%)</label>
+        <!-- MARGIN -->
+
+        <label>
+          FrostTech Margin (%)
+        </label>
 
         <input
           type="number"
@@ -343,7 +412,11 @@
         >
 
 
-        <label>Status</label>
+        <!-- STATUS -->
+
+        <label>
+          Status
+        </label>
 
         <select id="statusInput">
 
@@ -362,7 +435,11 @@
         </select>
 
 
-        <label>Valid Until</label>
+        <!-- VALID UNTIL -->
+
+        <label>
+          Valid Until
+        </label>
 
         <input
           type="date"
@@ -370,7 +447,11 @@
         >
 
 
-        <label>Notes</label>
+        <!-- NOTES -->
+
+        <label>
+          Notes
+        </label>
 
         <textarea
           id="notesInput"
@@ -379,32 +460,44 @@
         ></textarea>
 
 
+        <!-- TOTALS -->
+
         <div class="total-box">
 
           <p>
             Supplier Total:
-            ₦<span id="supplierTotalDisplay">0</span>
+            ₦<span id="supplierTotalDisplay">0.00</span>
           </p>
 
           <p>
             FrostTech Margin:
-            ₦<span id="marginDisplay">0</span>
+            ₦<span id="marginDisplay">0.00</span>
           </p>
 
           <p>
             Customer Total:
-            ₦<span id="customerTotalDisplay">0</span>
+            ₦<span id="customerTotalDisplay">0.00</span>
           </p>
 
         </div>
 
 
-        <button onclick="calculateQuotation()">
+        <!-- CALCULATE -->
+
+        <button
+          type="button"
+          onclick="calculateQuotation()"
+        >
           Calculate Quotation
         </button>
 
 
-        <button onclick="saveSupplierQuotation()">
+        <!-- SAVE -->
+
+        <button
+          type="button"
+          onclick="saveSupplierQuotation()"
+        >
           Save Supplier Quotation
         </button>
 
@@ -413,209 +506,176 @@
 
       </div>
 
+
     </main>
 
-  
   </div>
 
 
-<script>
+  <!-- =====================================================
+       JAVASCRIPT
+       ===================================================== -->
 
-  /* =========================================================
-     SUPABASE CONFIGURATION
-     ========================================================= */
-
-  const SUPABASE_URL =
-    "https://nftxptjpgidcsgtaltjn.supabase.co";
-
-  /*
-    IMPORTANT:
-    Keep the SAME sb_publishable... key from your existing
-    admin.html here.
-  */
-
-  const SUPABASE_PUBLISHABLE_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+  <script>
 
 
-  const supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+    /* =====================================================
+       SUPABASE CONFIGURATION
+       ===================================================== */
+
+    const SUPABASE_URL =
+      "https://nftxptjpgidcsgtaltjn.supabase.co";
 
 
-  /* =========================================================
-     LOGIN
-     ========================================================= */
-function testLoginButton() {
-  alert("FrostTech Login button is working.");
-  }
-  async function loginAdmin() {
-
-    const email =
-      document
-        .getElementById("loginEmail")
-        .value
-        .trim();
-
-    const password =
-      document
-        .getElementById("loginPassword")
-        .value;
-
-    const message =
-      document.getElementById("loginMessage");
-
-    message.textContent = "";
-    message.className = "";
+    const SUPABASE_PUBLISHABLE_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
 
 
-    if (!email || !password) {
-
-      message.textContent =
-        "Please enter email and password.";
-
-      message.className = "error";
-
-      return;
-    }
-
-
-    message.textContent =
-      "Logging in...";
-
-
-    try {
-
-      const { data, error } =
-        await supabaseClient.auth.signInWithPassword({
-          email: email,
-          password: password
-        });
-
-
-      if (error) {
-
-        console.error(
-          "Login error:",
-          error
-        );
-
-        message.textContent =
-          error.message;
-
-        message.className = "error";
-
-        return;
-      }
-
-
-      if (!data || !data.user) {
-
-        message.textContent =
-          "Login completed but no user was returned.";
-
-        message.className = "error";
-
-        return;
-      }
-
-
-      document
-        .getElementById("loginScreen")
-        .style.display = "none";
-
-
-      document
-        .getElementById("adminApp")
-        .style.display = "block";
-
-
-      document
-        .getElementById("loggedInEmail")
-        .textContent =
-          data.user.email || email;
-
-
-      await loadQuoteRequests();
-
-      await loadSuppliers();
-
-      await loadProducts();
-
-      await loadSupplierQuotations();
-
-    } catch (err) {
-
-      console.error(
-        "Unexpected login error:",
-        err
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
       );
 
-      message.textContent =
-        "Login error: " + err.message;
 
-      message.className = "error";
-    }
+    /* =====================================================
+       LOGIN
+       ===================================================== */
 
-  }
+    async function loginAdmin() {
 
+      const emailInput =
+        document.getElementById(
+          "loginEmail"
+        );
 
-  /* =========================================================
-     LOGOUT
-     ========================================================= */
+      const passwordInput =
+        document.getElementById(
+          "loginPassword"
+        );
 
-  async function logoutAdmin() {
-
-    await supabaseClient.auth.signOut();
-
-    document
-      .getElementById("adminApp")
-      .style.display = "none";
-
-    document
-      .getElementById("loginScreen")
-      .style.display = "block";
-
-  }
-
-
-  /* =========================================================
-     CHECK EXISTING SESSION
-     ========================================================= */
-
-  async function checkSession() {
-
-    try {
-
-      const {
-        data: {
-          session
-        }
-      } =
-        await supabaseClient.auth.getSession();
+      const message =
+        document.getElementById(
+          "loginMessage"
+        );
 
 
       if (
-        session &&
-        session.user
+        !emailInput ||
+        !passwordInput ||
+        !message
       ) {
 
-        document
-          .getElementById("loginScreen")
-          .style.display = "none";
+        alert(
+          "FrostTech login page error."
+        );
+
+        return;
+      }
 
 
-        document
-          .getElementById("adminApp")
-          .style.display = "block";
+      const email =
+        emailInput.value.trim();
 
 
-        document
-          .getElementById("loggedInEmail")
-          .textContent =
-            session.user.email;
+      const password =
+        passwordInput.value;
+
+
+      message.textContent =
+        "";
+
+      message.className =
+        "";
+
+
+      if (
+        !email ||
+        !password
+      ) {
+
+        message.textContent =
+          "Please enter email and password.";
+
+        message.className =
+          "error";
+
+        return;
+      }
+
+
+      message.textContent =
+        "Logging in...";
+
+
+      try {
+
+        const result =
+          await supabaseClient.auth.signInWithPassword({
+
+            email: email,
+
+            password: password
+
+          });
+
+
+        const data =
+          result.data;
+
+        const error =
+          result.error;
+
+
+        if (error) {
+
+          console.error(
+            "Login error:",
+            error
+          );
+
+          message.textContent =
+            error.message;
+
+          message.className =
+            "error";
+
+          return;
+        }
+
+
+        if (
+          !data ||
+          !data.user
+        ) {
+
+          message.textContent =
+            "Login completed but no user was returned.";
+
+          message.className =
+            "error";
+
+          return;
+        }
+
+
+        document.getElementById(
+          "loginScreen"
+        ).style.display =
+          "none";
+
+
+        document.getElementById(
+          "adminApp"
+        ).style.display =
+          "block";
+
+
+        document.getElementById(
+          "loggedInEmail"
+        ).textContent =
+          data.user.email ||
+          email;
 
 
         await loadQuoteRequests();
@@ -628,1062 +688,584 @@ function testLoginButton() {
 
       }
 
-    } catch (error) {
-
-      console.error(
-        "Session check error:",
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =========================================================
-     CUSTOMER QUOTE REQUESTS
-     ========================================================= */
-
-  async function loadQuoteRequests() {
-
-    const container =
-      document.getElementById(
-        "quoteRequestsContainer"
-      );
-
-
-    container.innerHTML =
-      "Loading quote requests...";
-
-
-    try {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("quote_requests")
-          .select("*")
-          .order(
-            "created_at",
-            {
-              ascending: false
-            }
-          );
-
-
-      if (error) {
+      catch (error) {
 
         console.error(
-          "Quote request error:",
+          "Unexpected login error:",
           error
         );
 
-        container.innerHTML =
-          `<p class="error">
-            ${escapeHtml(error.message)}
-          </p>`;
+        message.textContent =
+          "Login error: " +
+          error.message;
 
-        return;
+        message.className =
+          "error";
+
       }
-
-
-      if (!data || data.length === 0) {
-
-        container.innerHTML =
-          "<p>No customer quote requests found.</p>";
-
-        return;
-      }
-
-
-      container.innerHTML = "";
-
-
-      data.forEach(
-        request => {
-
-          const box =
-            document.createElement(
-              "div"
-            );
-
-          box.className =
-            "quote-box";
-
-
-          box.innerHTML = `
-
-            <h3>
-              Quote Request -
-              ${escapeHtml(
-                request.product_name ||
-                request.product ||
-                "Product"
-              )}
-            </h3>
-
-            <p>
-              <strong>Request Number:</strong>
-              ${escapeHtml(
-                request.request_number ||
-                "N/A"
-              )}
-            </p>
-
-            <p>
-              <strong>Customer:</strong>
-              ${escapeHtml(
-                request.customer_name ||
-                "N/A"
-              )}
-            </p>
-
-            <p>
-              <strong>Phone:</strong>
-              ${escapeHtml(
-                request.customer_phone ||
-                request.phone ||
-                "N/A"
-              )}
-            </p>
-
-            <p>
-              <strong>Description:</strong>
-              ${escapeHtml(
-                request.description ||
-                "N/A"
-              )}
-            </p>
-
-            <p>
-              <strong>Status:</strong>
-              ${escapeHtml(
-                request.status ||
-                "N/A"
-              )}
-            </p>
-
-            <button
-              onclick="selectQuoteRequest('${request.id}')"
-            >
-              Select Request
-            </button>
-
-          `;
-
-
-          container.appendChild(box);
-
-        }
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
-
-      container.innerHTML =
-        `<p class="error">
-          ${escapeHtml(error.message)}
-        </p>`;
 
     }
 
-  }
+
+    /* =====================================================
+       LOGOUT
+       ===================================================== */
+
+    async function logoutAdmin() {
+
+      try {
+
+        await supabaseClient.auth.signOut();
+
+      }
+
+      catch (error) {
+
+        console.error(
+          "Logout error:",
+          error
+        );
+
+      }
 
 
-  /* =========================================================
-     SELECT CUSTOMER REQUEST
-     ========================================================= */
-
-  async function selectQuoteRequest(
-    requestId
-  ) {
-
-    document
-      .getElementById(
-        "selectedRequestId"
-      )
-      .value =
-        requestId;
+      document.getElementById(
+        "adminApp"
+      ).style.display =
+        "none";
 
 
-    document
-      .getElementById(
-        "supplierQuoteForm"
-      )
-      .style.display =
+      document.getElementById(
+        "loginScreen"
+      ).style.display =
         "block";
 
 
-    document
-      .getElementById(
-        "supplierQuotationContainer"
-      )
-      .innerHTML = `
-
-        <p class="success">
-          Customer quote request selected.
-        </p>
-
-        <p>
-          Request ID:
-          ${escapeHtml(requestId)}
-        </p>
-
-      `;
-
-
-    window.scrollTo({
-      top:
-        document
-          .getElementById(
-            "supplierQuoteForm"
-          )
-          .offsetTop - 20,
-      behavior: "smooth"
-    });
-
-  }
-
-
-  /* =========================================================
-     LOAD SUPPLIERS
-     ========================================================= */
-
-  async function loadSuppliers() {
-
-    const select =
       document.getElementById(
-        "supplierSelect"
-      );
+        "loginPassword"
+      ).value =
+        "";
+
+    }
 
 
-    try {
+    /* =====================================================
+       CHECK EXISTING SESSION
+       ===================================================== */
 
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("suppliers")
-          .select("*")
-          .order(
-            "name",
-            {
-              ascending: true
-            }
+    async function checkSession() {
+
+      try {
+
+        const result =
+          await supabaseClient.auth.getSession();
+
+
+        const session =
+          result.data.session;
+
+
+        if (
+          session &&
+          session.user
+        ) {
+
+          document.getElementById(
+            "loginScreen"
+          ).style.display =
+            "none";
+
+
+          document.getElementById(
+            "adminApp"
+          ).style.display =
+            "block";
+
+
+          document.getElementById(
+            "loggedInEmail"
+          ).textContent =
+            session.user.email ||
+            "";
+
+
+          await loadQuoteRequests();
+
+          await loadSuppliers();
+
+          await loadProducts();
+
+          await loadSupplierQuotations();
+
+        }
+
+      }
+
+      catch (error) {
+
+        console.error(
+          "Session check error:",
+          error
+        );
+
+      }
+
+    }
+
+
+    /* =====================================================
+       CUSTOMER QUOTE REQUESTS
+       ===================================================== */
+
+    async function loadQuoteRequests() {
+
+      const container =
+        document.getElementById(
+          "quoteRequestsContainer"
+        );
+
+
+      if (!container) {
+        return;
+      }
+
+
+      container.innerHTML =
+        "Loading quote requests...";
+
+
+      try {
+
+        const result =
+          await supabaseClient
+            .from("quote_requests")
+            .select("*")
+            .order(
+              "created_at",
+              {
+                ascending: false
+              }
+            );
+
+
+        const data =
+          result.data;
+
+        const error =
+          result.error;
+
+
+        if (error) {
+
+          console.error(
+            "Quote request error:",
+            error
           );
 
+          container.innerHTML =
+            '<p class="error">' +
+            escapeHtml(
+              error.message
+            ) +
+            "</p>";
 
-      if (error) {
+          return;
+        }
+
+
+        if (
+          !data ||
+          data.length === 0
+        ) {
+
+          container.innerHTML =
+            "<p>No customer quote requests found.</p>";
+
+          return;
+        }
+
+
+        container.innerHTML =
+          "";
+
+
+        data.forEach(
+          function(request) {
+
+            const box =
+              document.createElement(
+                "div"
+              );
+
+
+            box.className =
+              "quote-box";
+
+
+            box.innerHTML =
+
+              "<h3>" +
+
+              "Quote Request - " +
+
+              escapeHtml(
+                request.product_name ||
+                request.product ||
+                "Product"
+              ) +
+
+              "</h3>" +
+
+
+              "<p>" +
+
+              "<strong>Request Number:</strong> " +
+
+              escapeHtml(
+                request.request_number ||
+                "N/A"
+              ) +
+
+              "</p>" +
+
+
+              "<p>" +
+
+              "<strong>Customer:</strong> " +
+
+              escapeHtml(
+                request.customer_name ||
+                "N/A"
+              ) +
+
+              "</p>" +
+
+
+              "<p>" +
+
+              "<strong>Phone:</strong> " +
+
+              escapeHtml(
+                request.customer_phone ||
+                request.phone ||
+                "N/A"
+              ) +
+
+              "</p>" +
+
+
+              "<p>" +
+
+              "<strong>Description:</strong> " +
+
+              escapeHtml(
+                request.description ||
+                "N/A"
+              ) +
+
+              "</p>" +
+
+
+              "<p>" +
+
+              "<strong>Status:</strong> " +
+
+              escapeHtml(
+                request.status ||
+                "N/A"
+              ) +
+
+              "</p>" +
+
+
+              '<button type="button" onclick="selectQuoteRequest(\'' +
+
+              request.id +
+
+              "')\">" +
+
+              "Select Request" +
+
+              "</button>";
+
+
+            container.appendChild(
+              box
+            );
+
+          }
+        );
+
+      }
+
+      catch (error) {
+
+        console.error(
+          "Unexpected quote request error:",
+          error
+        );
+
+
+        container.innerHTML =
+          '<p class="error">' +
+          escapeHtml(
+            error.message
+          ) +
+          "</p>";
+
+      }
+
+    }
+
+
+    /* =====================================================
+       SELECT CUSTOMER REQUEST
+       ===================================================== */
+
+    async function selectQuoteRequest(
+      requestId
+    ) {
+
+      const selectedRequest =
+        document.getElementById(
+          "selectedRequestId"
+        );
+
+
+      const form =
+        document.getElementById(
+          "supplierQuoteForm"
+        );
+
+
+      const container =
+        document.getElementById(
+          "supplierQuotationContainer"
+        );
+
+
+      if (selectedRequest) {
+
+        selectedRequest.value =
+          requestId;
+
+      }
+
+
+      if (form) {
+
+        form.style.display =
+          "block";
+
+      }
+
+
+      if (container) {
+
+        container.innerHTML =
+
+          '<p class="success">' +
+
+          "Customer quote request selected." +
+
+          "</p>" +
+
+
+          "<p>" +
+
+          "<strong>Request ID:</strong> " +
+
+          escapeHtml(
+            requestId
+          ) +
+
+          "</p>";
+
+      }
+
+
+      if (form) {
+
+        window.scrollTo({
+
+          top:
+            form.offsetTop - 20,
+
+          behavior:
+            "smooth"
+
+        });
+
+      }
+
+    }
+
+
+    /* =====================================================
+       LOAD SUPPLIERS
+       ===================================================== */
+
+    async function loadSuppliers() {
+
+      const select =
+        document.getElementById(
+          "supplierSelect"
+        );
+
+
+      if (!select) {
+        return;
+      }
+
+
+      try {
+
+        const result =
+          await supabaseClient
+            .from("suppliers")
+            .select("*")
+            .order(
+              "name",
+              {
+                ascending: true
+              }
+            );
+
+
+        const data =
+          result.data;
+
+        const error =
+          result.error;
+
+
+        if (error) {
+
+          console.error(
+            "Supplier loading error:",
+            error
+          );
+
+          return;
+        }
+
+
+        select.innerHTML =
+          '<option value="">Select Supplier</option>';
+
+
+        (data || []).forEach(
+          function(supplier) {
+
+            const option =
+              document.createElement(
+                "option"
+              );
+
+
+            option.value =
+              supplier.id;
+
+
+            option.textContent =
+              supplier.name ||
+              supplier.company_name ||
+              "Supplier";
+
+
+            select.appendChild(
+              option
+            );
+
+          }
+        );
+
+      }
+
+      catch (error) {
 
         console.error(
           "Supplier loading error:",
           error
         );
 
+      }
+
+    }
+
+
+    /* =====================================================
+       LOAD PRODUCTS
+       ===================================================== */
+
+    async function loadProducts() {
+
+      const select =
+        document.getElementById(
+          "productSelect"
+        );
+
+
+      if (!select) {
         return;
       }
 
 
-      select.innerHTML = `
+      try {
 
-        <option value="">
-          Select Supplier
-        </option>
-
-      `;
-
-
-      (data || []).forEach(
-        supplier => {
-
-          const option =
-            document.createElement(
-              "option"
-            );
-
-          option.value =
-            supplier.id;
-
-          option.textContent =
-            supplier.name ||
-            supplier.company_name ||
-            "Supplier";
-
-
-          select.appendChild(option);
-
-        }
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =========================================================
-     LOAD PRODUCTS
-     ========================================================= */
-
-  async function loadProducts() {
-
-    const select =
-      document.getElementById(
-        "productSelect"
-      );
-
-
-    try {
-
-      const {
-        data,
-        error
-      } =
-        await supabaseClient
-          .from("products")
-          .select("*")
-          .order(
-            "name",
-            {
-              ascending: true
-            }
-          );
-
-
-      if (error) {
-
-        console.error(
-          "Product loading error:",
-          error
-        );
-
-        return;
+        const result =
+          await supabaseClient
+            .from("products")
+            .select("*")
+            .order(
+              "name",
+          const result =
+  await supabaseClient
+    .from("products")
+    .select("*")
+    .order(
+      "name",
+      {
+        ascending: true
       }
+    );
 
-
-      select.innerHTML = `
-
-        <option value="">
-          Select Product
-        </option>
-
-      `;
-
-
-      (data || []).forEach(
-        product => {
-
-          const option =
-            document.createElement(
-              "option"
-            );
-
-          option.value =
-            product.id;
-
-          option.textContent =
-            product.name ||
-            product.product_name ||
-            "Product";
-
-
-          select.appendChild(option);
-
-        }
-      );
-
-
-    } catch (error) {
-
-      console.error(
-        error
-      );
-
-    }
-
-  }
-
-
-  /* =========================================================
-     CALCULATE SUPPLIER QUOTATION
-     ========================================================= */
-
-  function calculateQuotation() {
-
-    const quantity =
-      Number(
-        document
-          .getElementById(
-            "quantityInput"
-          )
-          .value
-      );
-
-
-    const unitPrice =
-      Number(
-        document
-          .getElementById(
-            "unitPriceInput"
-          )
-          .value
-      );
-
-
-    const delivery =
-      Number(
-        document
-          .getElementById(
-            "deliveryInput"
-          )
-          .value || 0
-      );
-
-
-    const marginPercent =
-      Number(
-        document
-          .getElementById(
-            "marginInput"
-          )
-          .value || 0
-      );
-
-
-    const supplierTotal =
-      quantity * unitPrice;
-
-
-    const marginAmount =
-      supplierTotal *
-      (marginPercent / 100);
-
-
-    const customerTotal =
-      supplierTotal +
-      marginAmount +
-      delivery;
-
-
-    document
-      .getElementById(
-        "supplierTotalDisplay"
-      )
-      .textContent =
-        formatMoney(
-          supplierTotal
-        );
-
-
-    document
-      .getElementById(
-        "marginDisplay"
-      )
-      .textContent =
-        formatMoney(
-          marginAmount
-        );
-
-
-    document
-      .getElementById(
-        "customerTotalDisplay"
-      )
-      .textContent =
-        formatMoney(
-          customerTotal
-        );
-
-
-    return {
-      quantity,
-      unitPrice,
-      delivery,
-      marginPercent,
-      supplierTotal,
-      marginAmount,
-      customerTotal
-    };
-
-  }
-
-
-  /* =========================================================
-     SAVE SUPPLIER QUOTATION
-     ========================================================= */
-
-  async function saveSupplierQuotation() {
-
-    const message =
-      document.getElementById(
-        "quotationMessage"
-      );
-
-<script>
-/* =========================================================
-   SUPABASE CONFIGURATION
-   ========================================================= */
-
-const SUPABASE_URL =
-  "https://nftxptjpgidcsgtaltjn.supabase.co";
-
-const SUPABASE_PUBLISHABLE_KEY =
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
+if (result.error) {
+  console.error(
+    "Error loading products:",
+    result.error
   );
 
+  productSelect.innerHTML =
+    '<option value="">Unable to load products</option>';
 
-/* =========================================================
-   LOGIN
-   ========================================================= */
-
-async function loginAdmin() {
-
-  const emailInput =
-    document.getElementById("loginEmail");
-
-  const passwordInput =
-    document.getElementById("loginPassword");
-
-  const message =
-    document.getElementById("loginMessage");
-
-  if (!emailInput || !passwordInput || !message) {
-    alert("FrostTech login page error: required elements not found.");
-    return;
-  }
-
-  const email =
-    emailInput.value.trim();
-
-  const password =
-    passwordInput.value;
-
-  message.textContent = "";
-  message.className = "";
-
-  if (!email || !password) {
-
-    message.textContent =
-      "Please enter email and password.";
-
-    message.className =
-      "error";
-
-    return;
-  }
-
-  message.textContent =
-    "Logging in...";
-
-  try {
-
-    const result =
-      await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-    const data = result.data;
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Login error:",
-        error
-      );
-
-      message.textContent =
-        error.message;
-
-      message.className =
-        "error";
-
-      return;
-    }
-
-    if (!data || !data.user) {
-
-      message.textContent =
-        "Login completed but no user was returned.";
-
-      message.className =
-        "error";
-
-      return;
-    }
-
-    document.getElementById(
-      "loginScreen"
-    ).style.display = "none";
-
-    document.getElementById(
-      "adminApp"
-    ).style.display = "block";
-
-    document.getElementById(
-      "loggedInEmail"
-    ).textContent =
-      data.user.email || email;
-
-    await loadQuoteRequests();
-    await loadSuppliers();
-    await loadProducts();
-    await loadSupplierQuotations();
-
-  } catch (error) {
-
-    console.error(
-      "Unexpected login error:",
-      error
-    );
-
-    message.textContent =
-      "Login error: " + error.message;
-
-    message.className =
-      "error";
-  }
+  return;
 }
 
 
-/* =========================================================
-   LOGOUT
-   ========================================================= */
+productSelect.innerHTML =
+  '<option value="">Select Product</option>';
 
-async function logoutAdmin() {
 
-  try {
-    await supabaseClient.auth.signOut();
-  } catch (error) {
-    console.error(
-      "Logout error:",
-      error
+(result.data || []).forEach(
+  function(product) {
+
+    const option =
+      document.createElement("option");
+
+    option.value =
+      product.id;
+
+    option.textContent =
+      product.name;
+
+    productSelect.appendChild(
+      option
     );
+
   }
+);
 
-  document.getElementById(
-    "adminApp"
-  ).style.display = "none";
-
-  document.getElementById(
-    "loginScreen"
-  ).style.display = "block";
-}
-
-
-/* =========================================================
-   CHECK EXISTING SESSION
-   ========================================================= */
-
-async function checkSession() {
-
-  try {
-
-    const result =
-      await supabaseClient.auth.getSession();
-
-    const session =
-      result.data.session;
-
-    if (
-      session &&
-      session.user
-    ) {
-
-      document.getElementById(
-        "loginScreen"
-      ).style.display = "none";
-
-      document.getElementById(
-        "adminApp"
-      ).style.display = "block";
-
-      document.getElementById(
-        "loggedInEmail"
-      ).textContent =
-        session.user.email || "";
-
-      await loadQuoteRequests();
-      await loadSuppliers();
-      await loadProducts();
-      await loadSupplierQuotations();
-    }
-
-  } catch (error) {
-
-    console.error(
-      "Session check error:",
-      error
-    );
-  }
-}
-
-
-/* =========================================================
-   CUSTOMER QUOTE REQUESTS
-   ========================================================= */
-
-async function loadQuoteRequests() {
-
-  const container =
-    document.getElementById(
-      "quoteRequestsContainer"
-    );
-
-  if (!container) {
-    return;
-  }
-
-  container.innerHTML =
-    "Loading quote requests...";
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("quote_requests")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    const data = result.data;
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Quote request error:",
-        error
-      );
-
-      container.innerHTML =
-        '<p class="error">' +
-        escapeHtml(error.message) +
-        "</p>";
-
-      return;
-    }
-
-    if (!data || data.length === 0) {
-
-      container.innerHTML =
-        "<p>No customer quote requests found.</p>";
-
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.forEach(
-      function(request) {
-
-        const box =
-          document.createElement("div");
-
-        box.className =
-          "quote-box";
-
-        box.innerHTML =
-          "<h3>" +
-          "Quote Request - " +
-          escapeHtml(
-            request.product_name ||
-            request.product ||
-            "Product"
-          ) +
-          "</h3>" +
-
-          "<p>" +
-          "<strong>Request Number:</strong> " +
-          escapeHtml(
-            request.request_number ||
-            "N/A"
-          ) +
-          "</p>" +
-
-          "<p>" +
-          "<strong>Customer:</strong> " +
-          escapeHtml(
-            request.customer_name ||
-            "N/A"
-          ) +
-          "</p>" +
-
-          "<p>" +
-          "<strong>Phone:</strong> " +
-          escapeHtml(
-            request.customer_phone ||
-            request.phone ||
-            "N/A"
-          ) +
-          "</p>" +
-
-          "<p>" +
-          "<strong>Description:</strong> " +
-          escapeHtml(
-            request.description ||
-            "N/A"
-          ) +
-          "</p>" +
-
-          "<p>" +
-          "<strong>Status:</strong> " +
-          escapeHtml(
-            request.status ||
-            "N/A"
-          ) +
-          "</p>" +
-
-          '<button onclick="selectQuoteRequest(\'' +
-          request.id +
-          "')\">" +
-          "Select Request" +
-          "</button>";
-
-        container.appendChild(box);
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Unexpected quote request error:",
-      error
-    );
-
-    container.innerHTML =
-      '<p class="error">' +
-      escapeHtml(error.message) +
-      "</p>";
-  }
-}
-
-
-/* =========================================================
-   SELECT CUSTOMER REQUEST
-   ========================================================= */
-
-async function selectQuoteRequest(
-  requestId
-) {
-
-  const selectedRequest =
-    document.getElementById(
-      "selectedRequestId"
-    );
-
-  const form =
-    document.getElementById(
-      "supplierQuoteForm"
-    );
-
-  const container =
-    document.getElementById(
-      "supplierQuotationContainer"
-    );
-
-  if (selectedRequest) {
-    selectedRequest.value =
-      requestId;
-  }
-
-  if (form) {
-    form.style.display =
-      "block";
-  }
-
-  if (container) {
-
-    container.innerHTML =
-      '<p class="success">' +
-      "Customer quote request selected." +
-      "</p>" +
-
-      "<p>" +
-      "Request ID: " +
-      escapeHtml(requestId) +
-      "</p>";
-  }
-
-  if (form) {
-
-    window.scrollTo({
-      top:
-        form.offsetTop - 20,
-      behavior: "smooth"
-    });
-  }
-}
-
-
-/* =========================================================
-   LOAD SUPPLIERS
-   ========================================================= */
-
-async function loadSuppliers() {
-
-  const select =
-    document.getElementById(
-      "supplierSelect"
-    );
-
-  if (!select) {
-    return;
-  }
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("suppliers")
-        .select("*")
-        .order(
-          "name",
-          {
-            ascending: true
-          }
-        );
-
-    const data = result.data;
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Supplier loading error:",
-        error
-      );
-
-      return;
-    }
-
-    select.innerHTML =
-      '<option value="">Select Supplier</option>';
-
-    (data || []).forEach(
-      function(supplier) {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          supplier.id;
-
-        option.textContent =
-          supplier.name ||
-          supplier.company_name ||
-          "Supplier";
-
-        select.appendChild(option);
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Supplier loading error:",
-      error
-    );
-  }
-}
-
-
-/* =========================================================
-   LOAD PRODUCTS
-   ========================================================= */
-
-async function loadProducts() {
-
-  const select =
-    document.getElementById(
-      "productSelect"
-    );
-
-  if (!select) {
-    return;
-  }
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("products")
-        .select("*")
-        .order(
-          "name",
-          {
-            ascending: true
-          }
-        );
-
-    const data = result.data;
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Product loading error:",
-        error
-      );
-
-      return;
-    }
-
-    select.innerHTML =
-      '<option value="">Select Product</option>';
-
-    (data || []).forEach(
-      function(product) {
-
-        const option =
-          document.createElement(
-            "option"
-          );
-
-        option.value =
-          product.id;
-
-        option.textContent =
-          product.name ||
-          product.product_name ||
-          "Product";
-
-        select.appendChild(option);
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Product loading error:",
-      error
-    );
-  }
 }
 
 
@@ -1693,76 +1275,87 @@ async function loadProducts() {
 
 function calculateQuotation() {
 
+  const quantityInput =
+    document.getElementById(
+      "quotationQuantity"
+    );
+
+  const unitPriceInput =
+    document.getElementById(
+      "supplierUnitPrice"
+    );
+
+  const deliveryInput =
+    document.getElementById(
+      "deliveryCost"
+    );
+
+  const marginInput =
+    document.getElementById(
+      "marginPercent"
+    );
+
+
   const quantity =
     Number(
-      document.getElementById(
-        "quantityInput"
-      ).value
+      quantityInput.value || 0
     );
 
   const unitPrice =
     Number(
-      document.getElementById(
-        "unitPriceInput"
-      ).value
+      unitPriceInput.value || 0
     );
 
   const delivery =
     Number(
-      document.getElementById(
-        "deliveryInput"
-      ).value || 0
+      deliveryInput.value || 0
     );
 
   const marginPercent =
     Number(
-      document.getElementById(
-        "marginInput"
-      ).value || 0
+      marginInput.value || 0
     );
+
 
   const supplierTotal =
     quantity * unitPrice;
 
+
   const marginAmount =
     supplierTotal *
-    (marginPercent / 100);
+    marginPercent /
+    100;
+
 
   const customerTotal =
     supplierTotal +
     marginAmount +
     delivery;
 
+
   document.getElementById(
-    "supplierTotalDisplay"
+    "supplierTotal"
   ).textContent =
     formatMoney(
       supplierTotal
     );
 
+
   document.getElementById(
-    "marginDisplay"
+    "marginAmount"
   ).textContent =
     formatMoney(
       marginAmount
     );
 
+
   document.getElementById(
-    "customerTotalDisplay"
+    "customerTotal"
   ).textContent =
     formatMoney(
       customerTotal
     );
 
-  return {
-    quantity: quantity,
-    unitPrice: unitPrice,
-    delivery: delivery,
-    marginPercent: marginPercent,
-    supplierTotal: supplierTotal,
-    marginAmount: marginAmount,
-    customerTotal: customerTotal
-  };
 }
 
 
@@ -1777,359 +1370,401 @@ async function saveSupplierQuotation() {
       "quotationMessage"
     );
 
-  if (!message) {
-    return;
-  }
-
-  message.textContent =
-    "Saving quotation...";
-
-  message.className = "";
 
   const requestId =
     document.getElementById(
       "selectedRequestId"
     ).value;
 
+
   const supplierId =
     document.getElementById(
       "supplierSelect"
     ).value;
+
 
   const productId =
     document.getElementById(
       "productSelect"
     ).value;
 
+
+  const quantity =
+    Number(
+      document.getElementById(
+        "quotationQuantity"
+      ).value
+    );
+
+
+  const unitPrice =
+    Number(
+      document.getElementById(
+        "supplierUnitPrice"
+      ).value
+    );
+
+
+  const delivery =
+    Number(
+      document.getElementById(
+        "deliveryCost"
+      ).value || 0
+    );
+
+
+  const marginPercent =
+    Number(
+      document.getElementById(
+        "marginPercent"
+      ).value || 0
+    );
+
+
   const status =
     document.getElementById(
-      "statusInput"
+      "quotationStatus"
     ).value;
 
-  const notes =
-    document.getElementById(
-      "notesInput"
-    ).value.trim();
 
   const validUntil =
     document.getElementById(
-      "validUntilInput"
-    ).value || null;
+      "validUntil"
+    ).value;
+
+
+  const notes =
+    document.getElementById(
+      "quotationNotes"
+    ).value.trim();
+
 
   if (!requestId) {
 
     message.textContent =
       "Please select a customer quote request.";
 
-    message.className =
-      "error";
-
     return;
+
   }
+
 
   if (!supplierId) {
 
     message.textContent =
       "Please select a supplier.";
 
-    message.className =
-      "error";
-
     return;
+
   }
+
 
   if (!productId) {
 
     message.textContent =
       "Please select a product.";
 
-    message.className =
-      "error";
-
     return;
+
   }
 
-  const calculation =
-    calculateQuotation();
 
   if (
-    !calculation.quantity ||
-    calculation.quantity <= 0
+    !quantity ||
+    quantity <= 0
   ) {
 
     message.textContent =
       "Please enter a valid quantity.";
 
-    message.className =
-      "error";
-
     return;
+
   }
 
+
   if (
-    !calculation.unitPrice ||
-    calculation.unitPrice <= 0
+    !unitPrice ||
+    unitPrice <= 0
   ) {
 
     message.textContent =
       "Please enter a valid supplier unit price.";
 
-    message.className =
-      "error";
-
     return;
+
   }
 
-  try {
 
-    const result =
-      await supabaseClient
-        .from("supplier_quotes")
-        .insert({
-          request_id: requestId,
-          supplier_id: supplierId,
-          product_id: productId,
-          quantity: calculation.quantity,
-          supplier_unit_price: calculation.unitPrice,
-          supplier_total: calculation.supplierTotal,
-          delivery_cost: calculation.delivery,
+  const supplierTotal =
+    quantity * unitPrice;
+
+
+  const marginAmount =
+    supplierTotal *
+    marginPercent /
+    100;
+
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount +
+    delivery;
+
+
+  message.textContent =
+    "Saving supplier quotation...";
+
+
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .insert([
+        {
+          request_id:
+            requestId,
+
+          supplier_id:
+            supplierId,
+
+          product_id:
+            productId,
+
+          quantity:
+            quantity,
+
+          supplier_unit_price:
+            unitPrice,
+
+          supplier_total:
+            supplierTotal,
+
+          delivery_cost:
+            delivery,
+
           frosttech_margin_percent:
-            calculation.marginPercent,
+            marginPercent,
+
           frosttech_margin_amount:
-            calculation.marginAmount,
+            marginAmount,
+
           customer_total:
-            calculation.customerTotal,
-          status: status,
-          customer_quote_status: "draft",
-          valid_until: validUntil,
-          notes: notes || null
-        })
-        .select()
-        .single();
+            customerTotal,
 
-    const data = result.data;
-    const error = result.error;
+          status:
+            status,
 
-    if (error) {
+          customer_quote_status:
+            "draft",
 
-      console.error(
-        "Save supplier quotation error:",
-        error
-      );
+          valid_until:
+            validUntil || null,
 
-      message.textContent =
-        "Could not save supplier quotation: " +
-        error.message;
+          notes:
+            notes || null
+        }
+      ])
+      .select()
+      .single();
 
-      message.className =
-        "error";
 
-      return;
-    }
-
-    console.log(
-      "Supplier quotation saved:",
-      data
-    );
-
-    message.textContent =
-      "Supplier quotation saved successfully.";
-
-    message.className =
-      "success";
-
-    await loadSupplierQuotations();
-
-  } catch (error) {
+  if (result.error) {
 
     console.error(
-      "Unexpected save error:",
-      error
+      "Supplier quotation save error:",
+      result.error
     );
 
-    message.textContent =
-      "Could not save supplier quotation: " +
-      error.message;
 
-    message.className =
-      "error";
+    message.textContent =
+      "Error saving quotation: " +
+      result.error.message;
+
+    return;
+
   }
+
+
+  message.textContent =
+    "Supplier quotation saved successfully.";
+
+
+  alert(
+    "Supplier quotation saved successfully."
+  );
+
+
+  document.getElementById(
+    "quotationQuantity"
+  ).value = "1";
+
+
+  document.getElementById(
+    "supplierUnitPrice"
+  ).value = "";
+
+
+  document.getElementById(
+    "deliveryCost"
+  ).value = "0";
+
+
+  document.getElementById(
+    "marginPercent"
+  ).value = "15";
+
+
+  document.getElementById(
+    "validUntil"
+  ).value = "";
+
+
+  document.getElementById(
+    "quotationNotes"
+  ).value = "";
+
+
+  calculateQuotation();
+
+
+  loadSupplierQuotations();
+
 }
 
 
 /* =========================================================
-   LOAD SAVED SUPPLIER QUOTATIONS
+   LOAD SUPPLIER QUOTATIONS
    ========================================================= */
 
 async function loadSupplierQuotations() {
 
   const container =
     document.getElementById(
-      "savedSupplierQuotations"
+      "supplierQuotationsList"
     );
 
-  if (!container) {
-    return;
-  }
 
   container.innerHTML =
     "Loading supplier quotations...";
 
-  try {
 
-    const result =
-      await supabaseClient
-        .from("supplier_quotes")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    const data = result.data;
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Supplier quotation loading error:",
-        error
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
       );
 
-      container.innerHTML =
-        '<p class="error">' +
-        escapeHtml(error.message) +
-        "</p>";
 
-      return;
-    }
-
-    if (!data || data.length === 0) {
-
-      container.innerHTML =
-        "<p>No supplier quotations found.</p>";
-
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.forEach(
-      function(quote) {
-
-        const box =
-          document.createElement(
-            "div"
-          );
-
-        box.className =
-          "quote-box";
-
-        let actionHtml = "";
-
-        if (
-          quote.status === "submitted" &&
-          Number(quote.customer_total || 0) > 0
-        ) {
-
-          actionHtml =
-            '<button onclick="selectSupplierQuotation(\'' +
-            quote.id +
-            "')\">" +
-            "Select Supplier" +
-            "</button>";
-
-        } else if (
-          quote.status === "selected"
-        ) {
-
-          actionHtml =
-            '<p class="success">' +
-            "Supplier Selected" +
-            "</p>";
-
-        } else if (
-          quote.status === "submitted" &&
-          Number(quote.customer_total || 0) <= 0
-        ) {
-
-          actionHtml =
-            '<p class="error">' +
-            "Invalid quotation total" +
-            "</p>";
-        }
-
-        box.innerHTML =
-          "<h3>Supplier Quotation</h3>" +
-
-          "<p><strong>ID:</strong> " +
-          escapeHtml(
-            quote.id || ""
-          ) +
-          "</p>" +
-
-          "<p><strong>Request ID:</strong> " +
-          escapeHtml(
-            quote.request_id || ""
-          ) +
-          "</p>" +
-
-          "<p><strong>Quantity:</strong> " +
-          escapeHtml(
-            String(quote.quantity || 0)
-          ) +
-          "</p>" +
-
-          "<p><strong>Supplier Total:</strong> " +
-          formatMoney(
-            Number(
-              quote.supplier_total || 0
-            )
-          ) +
-          "</p>" +
-
-          "<p><strong>FrostTech Margin:</strong> " +
-          formatMoney(
-            Number(
-              quote.frosttech_margin_amount || 0
-            )
-          ) +
-          "</p>" +
-
-          "<p><strong>Customer Total:</strong> " +
-          formatMoney(
-            Number(
-              quote.customer_total || 0
-            )
-          ) +
-          "</p>" +
-
-          "<p><strong>Status:</strong> " +
-          escapeHtml(
-            quote.status || ""
-          ) +
-          "</p>" +
-
-          actionHtml;
-
-        container.appendChild(box);
-      }
-    );
-
-  } catch (error) {
+  if (result.error) {
 
     console.error(
-      "Unexpected quotation loading error:",
-      error
+      "Error loading supplier quotations:",
+      result.error
     );
 
+
     container.innerHTML =
-      '<p class="error">' +
-      escapeHtml(error.message) +
-      "</p>";
+      "Unable to load supplier quotations.";
+
+    return;
+
   }
+
+
+  if (
+    !result.data ||
+    result.data.length === 0
+  ) {
+
+    container.innerHTML =
+      "No supplier quotations found.";
+
+    return;
+
+  }
+
+
+  container.innerHTML = "";
+
+
+  result.data.forEach(
+    function(quote) {
+
+      const card =
+        document.createElement("div");
+
+
+      card.className =
+        "quotation-card";
+
+
+      card.innerHTML = `
+        <strong>Supplier Quotation</strong>
+
+        <p>
+          Quote ID:
+          ${escapeHtml(quote.id)}
+        </p>
+
+        <p>
+          Request ID:
+          ${escapeHtml(quote.request_id)}
+        </p>
+
+        <p>
+          Quantity:
+          ${escapeHtml(quote.quantity)}
+        </p>
+
+        <p>
+          Supplier Total:
+          ${formatMoney(quote.supplier_total)}
+        </p>
+
+        <p>
+          FrostTech Margin:
+          ${formatMoney(quote.frosttech_margin_amount)}
+        </p>
+
+        <p>
+          Customer Total:
+          ${formatMoney(quote.customer_total)}
+        </p>
+
+        <p>
+          Status:
+          ${escapeHtml(quote.status)}
+        </p>
+
+        ${
+          quote.status === "submitted" &&
+          Number(quote.customer_total) > 0
+
+          ? `
+            <button
+              type="button"
+              onclick="selectSupplierQuotation('${quote.id}')"
+            >
+              Select Supplier
+            </button>
+          `
+
+          : ""
+        }
+      `;
+
+
+      container.appendChild(
+        card
+      );
+
+    }
+  );
+
 }
 
 
@@ -2141,67 +1776,54 @@ async function selectSupplierQuotation(
   quoteId
 ) {
 
-  if (!quoteId) {
+  if (
+    !confirm(
+      "Are you sure you want to select this supplier quotation?"
+    )
+  ) {
+
     return;
+
   }
 
-  const confirmed =
-    window.confirm(
-      "Select this supplier quotation?"
-    );
 
-  if (!confirmed) {
-    return;
-  }
-
-  try {
-
-    const result =
-      await supabaseClient
-        .from("supplier_quotes")
-        .update({
-          status: "selected"
-        })
-        .eq(
-          "id",
-          quoteId
-        );
-
-    const error = result.error;
-
-    if (error) {
-
-      console.error(
-        "Supplier selection error:",
-        error
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .update({
+        status: "selected"
+      })
+      .eq(
+        "id",
+        quoteId
       );
 
-      alert(
-        "Could not select supplier: " +
-        error.message
-      );
 
-      return;
-    }
-
-    alert(
-      "Supplier quotation selected successfully."
-    );
-
-    await loadSupplierQuotations();
-
-  } catch (error) {
+  if (result.error) {
 
     console.error(
-      "Unexpected supplier selection error:",
-      error
+      "Error selecting supplier quotation:",
+      result.error
     );
 
+
     alert(
-      "Could not select supplier: " +
-      error.message
+      "Error selecting quotation: " +
+      result.error.message
     );
+
+    return;
+
   }
+
+
+  alert(
+    "Supplier quotation selected successfully."
+  );
+
+
+  loadSupplierQuotations();
+
 }
 
 
@@ -2213,7 +1835,8 @@ function formatMoney(
   amount
 ) {
 
-  return "₦" +
+  return (
+    "₦" +
     Number(
       amount || 0
     ).toLocaleString(
@@ -2222,7 +1845,9 @@ function formatMoney(
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
       }
-    );
+    )
+  );
+
 }
 
 
@@ -2251,13 +1876,15 @@ function escapeHtml(
       />/g,
       "&gt;"
     )
-   /"/g,
+    .replace(
+      /"/g,
       "&quot;"
     )
     .replace(
       /'/g,
       "&#039;"
     );
+
 }
 
 
@@ -2269,9 +1896,17 @@ document.addEventListener(
   "DOMContentLoaded",
   function() {
 
-    alert("ADMIN PAGE JAVASCRIPT IS RUNNING");
+    console.log(
+      "FrostTech Admin JavaScript loaded successfully."
+    );
+
+
+    checkSession();
 
   }
 );
 
 </script>
+
+</body>
+</html>
