@@ -12,7 +12,6 @@
 
   <title>FrostTech Admin</title>
 
-  <!-- Supabase -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -51,7 +50,7 @@
       border-radius: 8px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     input,
@@ -103,12 +102,6 @@
       background: #fafafa;
     }
 
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-    }
-
     .total-box {
       background: #eef6ff;
       padding: 15px;
@@ -116,28 +109,30 @@
       margin-top: 10px;
     }
 
+    .quotation-card {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-top: 15px;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
     .select-supplier-btn {
       background: #198754;
-    }
-
-    .selected-btn {
-      background: #6c757d;
-      cursor: default;
-    }
-
-    .invalid-quote {
-      color: #dc3545;
-      font-weight: bold;
     }
 
     #adminApp {
       display: none;
     }
 
+    #supplierQuoteForm {
+      display: none;
+    }
+
     @media (max-width: 700px) {
 
-      .grid {
-        grid-template-columns: 1fr;
+      .container {
+        padding: 12px;
       }
 
     }
@@ -150,447 +145,1186 @@
 <body>
 
 
-  <!-- =====================================================
-       LOGIN SCREEN
-       ===================================================== -->
+<!-- =====================================================
+     LOGIN SCREEN
+     ===================================================== -->
 
-  <div
-    id="loginScreen"
-    class="container"
-  >
+<div
+  id="loginScreen"
+  class="container"
+>
 
-    <div class="card">
+  <div class="card">
 
-      <h2>FrostTech Admin Login</h2>
+    <h2>FrostTech Admin Login</h2>
 
-      <label>Email</label>
+    <label>Email</label>
 
-      <input
-        type="email"
-        id="loginEmail"
-        placeholder="Admin email"
-      >
+    <input
+      type="email"
+      id="loginEmail"
+      placeholder="Admin email"
+    >
 
-      <label>Password</label>
+    <label>Password</label>
 
-      <input
-        type="password"
-        id="loginPassword"
-        placeholder="Password"
-      >
+    <input
+      type="password"
+      id="loginPassword"
+      placeholder="Password"
+    >
+
+    <button
+      type="button"
+      onclick="loginAdmin()"
+    >
+      Login
+    </button>
+
+    <p id="loginMessage"></p>
+
+  </div>
+
+</div>
+
+
+<!-- =====================================================
+     ADMIN APPLICATION
+     ===================================================== -->
+
+<div id="adminApp">
+
+  <header>
+
+    <div class="container">
+
+      <h1>
+        FrostTech HVAC and Refrigeration
+      </h1>
+
+      <p>
+        Admin Dashboard
+      </p>
+
+      <p>
+        Logged in as:
+        <span id="loggedInEmail"></span>
+      </p>
 
       <button
         type="button"
-        onclick="loginAdmin()"
+        class="logout-btn"
+        onclick="logoutAdmin()"
       >
-        Login
+        Logout
       </button>
-
-      <p id="loginMessage"></p>
 
     </div>
 
-  </div>
+  </header>
 
 
-  <!-- =====================================================
-       ADMIN APPLICATION
-       ===================================================== -->
-
-  <div id="adminApp">
+  <main class="container">
 
 
-    <!-- HEADER -->
+    <!-- =================================================
+         CUSTOMER QUOTE REQUESTS
+         ================================================= -->
 
-    <header>
+    <div class="card">
 
-      <div class="container">
+      <h2>
+        Customer Quote Requests
+      </h2>
 
-        <h1>
-          FrostTech HVAC and Refrigeration
-        </h1>
+      <button
+        type="button"
+        onclick="loadQuoteRequests()"
+      >
+        Refresh Quote Requests
+      </button>
+
+      <div id="quoteRequestsContainer">
+        Loading quote requests...
+      </div>
+
+    </div>
+
+
+    <!-- =================================================
+         SELECTED REQUEST
+         ================================================= -->
+
+    <div class="card">
+
+      <h2>
+        Supplier Quotation Management
+      </h2>
+
+      <div id="supplierQuotationContainer">
 
         <p>
-          Admin Dashboard
+          Select a customer quote request above to create
+          a supplier quotation.
         </p>
 
-        <p>
-          Logged in as:
-          <span id="loggedInEmail"></span>
-        </p>
-
-        <button
-          type="button"
-          class="logout-btn"
-          onclick="logoutAdmin()"
-        >
-          Logout
-        </button>
-
       </div>
 
-    </header>
+    </div>
 
 
-    <main class="container">
+    <!-- =================================================
+         SUPPLIER QUOTATION FORM
+         ================================================= -->
 
+    <div
+      id="supplierQuoteForm"
+      class="card"
+    >
 
-      <!-- =================================================
-           CUSTOMER QUOTE REQUESTS
-           ================================================= -->
+      <h2>
+        Create Supplier Quotation
+      </h2>
 
-      <div class="card">
-
-        <h2>
-          Customer Quote Requests
-        </h2>
-
-        <button
-          type="button"
-          onclick="loadQuoteRequests()"
-        >
-          Refresh Quote Requests
-        </button>
-
-        <div id="quoteRequestsContainer">
-          Loading quote requests...
-        </div>
-
-      </div>
-
-
-      <!-- =================================================
-           SUPPLIER QUOTATION MANAGEMENT
-           ================================================= -->
-
-      <div class="card">
-
-        <h2>
-          Supplier Quotation Management
-        </h2>
-
-        <div id="supplierQuotationContainer">
-
-          <p>
-            Select a customer quote request above to create
-            a supplier quotation.
-          </p>
-
-        </div>
-
-      </div>
-
-
-      <!-- =================================================
-           SAVED SUPPLIER QUOTATIONS
-           ================================================= -->
-
-      <div class="card">
-
-        <h2>
-          Saved Supplier Quotations
-        </h2>
-
-        <button
-          type="button"
-          onclick="loadSupplierQuotations()"
-        >
-          Refresh Supplier Quotations
-        </button>
-
-        <div id="savedSupplierQuotations">
-          Loading supplier quotations...
-        </div>
-
-      </div>
-
-
-      <!-- =================================================
-           SUPPLIER QUOTATION FORM
-           ================================================= -->
-
-      <div
-        id="supplierQuoteForm"
-        class="card"
-        style="display:none;"
+      <input
+        type="hidden"
+        id="selectedRequestId"
       >
 
-        <h2>
-          Create Supplier Quotation
-        </h2>
+
+      <label>
+        Supplier
+      </label>
+
+      <select id="supplierSelect">
+
+        <option value="">
+          Select Supplier
+        </option>
+
+      </select>
 
 
-        <input
-          type="hidden"
-          id="selectedRequestId"
-        >
+      <label>
+        Product
+      </label>
+
+      <select id="productSelect">
+
+        <option value="">
+          Select Product
+        </option>
+
+      </select>
 
 
-        <!-- SUPPLIER -->
+      <label>
+        Quantity
+      </label>
 
-        <label>
-          Supplier
-        </label>
-
-        <select id="supplierSelect">
-
-          <option value="">
-            Select Supplier
-          </option>
-
-        </select>
+      <input
+        type="number"
+        id="quantityInput"
+        min="1"
+        value="1"
+      >
 
 
-        <!-- PRODUCT -->
+      <label>
+        Supplier Unit Price
+      </label>
 
-        <label>
-          Product
-        </label>
-
-        <select id="productSelect">
-
-          <option value="">
-            Select Product
-          </option>
-
-        </select>
+      <input
+        type="number"
+        id="unitPriceInput"
+        min="0"
+        value="0"
+      >
 
 
-        <!-- QUANTITY -->
+      <label>
+        Delivery Cost
+      </label>
 
-        <label>
-          Quantity
-        </label>
-
-        <input
-          type="number"
-          id="quantityInput"
-          min="1"
-          value="1"
-        >
+      <input
+        type="number"
+        id="deliveryInput"
+        min="0"
+        value="0"
+      >
 
 
-        <!-- UNIT PRICE -->
+      <label>
+        FrostTech Margin (%)
+      </label>
 
-        <label>
-          Supplier Unit Price
-        </label>
-
-        <input
-          type="number"
-          id="unitPriceInput"
-          min="0"
-          value="0"
-        >
+      <input
+        type="number"
+        id="marginInput"
+        min="0"
+        value="15"
+      >
 
 
-        <!-- DELIVERY -->
+      <label>
+        Status
+      </label>
 
-        <label>
-          Delivery Cost
-        </label>
+      <select id="statusInput">
 
-        <input
-          type="number"
-          id="deliveryInput"
-          min="0"
-          value="0"
-        >
+        <option value="submitted">
+          Submitted
+        </option>
 
+        <option value="rejected">
+          Rejected
+        </option>
 
-        <!-- MARGIN -->
+        <option value="expired">
+          Expired
+        </option>
 
-        <label>
-          FrostTech Margin (%)
-        </label>
-
-        <input
-          type="number"
-          id="marginInput"
-          min="0"
-          value="15"
-        >
+      </select>
 
 
-        <!-- STATUS -->
+      <label>
+        Valid Until
+      </label>
 
-        <label>
-          Status
-        </label>
-
-        <select id="statusInput">
-
-          <option value="submitted">
-            Submitted
-          </option>
-
-          <option value="rejected">
-            Rejected
-          </option>
-
-          <option value="expired">
-            Expired
-          </option>
-
-        </select>
+      <input
+        type="date"
+        id="validUntilInput"
+      >
 
 
-        <!-- VALID UNTIL -->
+      <label>
+        Notes
+      </label>
 
-        <label>
-          Valid Until
-        </label>
-
-        <input
-          type="date"
-          id="validUntilInput"
-        >
-
-
-        <!-- NOTES -->
-
-        <label>
-          Notes
-        </label>
-
-        <textarea
-          id="notesInput"
-          rows="4"
-          placeholder="Supplier quotation notes"
-        ></textarea>
+      <textarea
+        id="notesInput"
+        rows="4"
+        placeholder="Supplier quotation notes"
+      ></textarea>
 
 
-        <!-- TOTALS -->
+      <div class="total-box">
 
-        <div class="total-box">
+        <p>
+          Supplier Total:
+          ₦<span id="supplierTotalDisplay">0.00</span>
+        </p>
 
-          <p>
-            Supplier Total:
-            ₦<span id="supplierTotalDisplay">0.00</span>
-          </p>
+        <p>
+          FrostTech Margin:
+          ₦<span id="marginDisplay">0.00</span>
+        </p>
 
-          <p>
-            FrostTech Margin:
-            ₦<span id="marginDisplay">0.00</span>
-          </p>
-
-          <p>
-            Customer Total:
-            ₦<span id="customerTotalDisplay">0.00</span>
-          </p>
-
-        </div>
-
-
-        <!-- CALCULATE -->
-
-        <button
-          type="button"
-          onclick="calculateQuotation()"
-        >
-          Calculate Quotation
-        </button>
-
-
-        <!-- SAVE -->
-
-        <button
-          type="button"
-          onclick="saveSupplierQuotation()"
-        >
-          Save Supplier Quotation
-        </button>
-
-
-        <p id="quotationMessage"></p>
+        <p>
+          Customer Total:
+          ₦<span id="customerTotalDisplay">0.00</span>
+        </p>
 
       </div>
 
 
-    </main>
-
-  </div>
-
-
-  <!-- =====================================================
-       JAVASCRIPT
-       ===================================================== -->
-
-  <script>
+      <button
+        type="button"
+        onclick="calculateQuotation()"
+      >
+        Calculate Quotation
+      </button>
 
 
-    /* =====================================================
-       SUPABASE CONFIGURATION
-       ===================================================== */
-
-    const SUPABASE_URL =
-      "https://nftxptjpgidcsgtaltjn.supabase.co";
-
-
-    const SUPABASE_PUBLISHABLE_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+      <button
+        type="button"
+        onclick="saveSupplierQuotation()"
+      >
+        Save Supplier Quotation
+      </button>
 
 
-    const supabaseClient =
-      window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
+      <p id="quotationMessage"></p>
+
+    </div>
+
+
+    <!-- =================================================
+         SAVED SUPPLIER QUOTATIONS
+         ================================================= -->
+
+    <div class="card">
+
+      <h2>
+        Saved Supplier Quotations
+      </h2>
+
+      <button
+        type="button"
+        onclick="loadSupplierQuotations()"
+      >
+        Refresh Supplier Quotations
+      </button>
+
+      <div id="savedSupplierQuotations">
+        Loading supplier quotations...
+      </div>
+
+    </div>
+
+
+  </main>
+
+</div>
+
+
+<!-- =====================================================
+     JAVASCRIPT
+     ===================================================== -->
+
+<script>
+
+
+/* =====================================================
+   SUPABASE CONFIGURATION
+   ===================================================== */
+
+const SUPABASE_URL =
+  "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+
+/* =====================================================
+   LOGIN
+   ===================================================== */
+
+async function loginAdmin() {
+
+  const email =
+    document.getElementById(
+      "loginEmail"
+    ).value.trim();
+
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+
+  const message =
+    document.getElementById(
+      "loginMessage"
+    );
+
+
+  message.textContent = "";
+  message.className = "";
+
+
+  if (!email || !password) {
+
+    message.textContent =
+      "Please enter email and password.";
+
+    message.className =
+      "error";
+
+    return;
+  }
+
+
+  message.textContent =
+    "Logging in...";
+
+
+  try {
+
+    const result =
+      await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+
+    if (result.error) {
+
+      console.error(
+        "Login error:",
+        result.error
+      );
+
+      message.textContent =
+        result.error.message;
+
+      message.className =
+        "error";
+
+      return;
+    }
+
+
+    if (
+      !result.data ||
+      !result.data.user
+    ) {
+
+      message.textContent =
+        "Login failed: no user returned.";
+
+      message.className =
+        "error";
+
+      return;
+    }
+
+
+    document.getElementById(
+      "loginScreen"
+    ).style.display =
+      "none";
+
+
+    document.getElementById(
+      "adminApp"
+    ).style.display =
+      "block";
+
+
+    document.getElementById(
+      "loggedInEmail"
+    ).textContent =
+      result.data.user.email ||
+      email;
+
+
+    await loadQuoteRequests();
+
+    await loadSuppliers();
+
+    await loadProducts();
+
+    await loadSupplierQuotations();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected login error:",
+      error
+    );
+
+    message.textContent =
+      "Login error: " +
+      error.message;
+
+    message.className =
+      "error";
+
+  }
+
+}
+
+
+/* =====================================================
+   LOGOUT
+   ===================================================== */
+
+async function logoutAdmin() {
+
+  await supabaseClient.auth.signOut();
+
+
+  document.getElementById(
+    "adminApp"
+  ).style.display =
+    "none";
+
+
+  document.getElementById(
+    "loginScreen"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "loginPassword"
+  ).value =
+    "";
+
+}
+
+
+/* =====================================================
+   CHECK SESSION
+   ===================================================== */
+
+async function checkSession() {
+
+  try {
+
+    const result =
+      await supabaseClient.auth.getSession();
+
+
+    const session =
+      result.data.session;
+
+
+    if (
+      session &&
+      session.user
+    ) {
+
+      document.getElementById(
+        "loginScreen"
+      ).style.display =
+        "none";
+
+
+      document.getElementById(
+        "adminApp"
+      ).style.display =
+        "block";
+
+
+      document.getElementById(
+        "loggedInEmail"
+      ).textContent =
+        session.user.email ||
+        "";
+
+
+      await loadQuoteRequests();
+
+      await loadSuppliers();
+
+      await loadProducts();
+
+      await loadSupplierQuotations();
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Session error:",
+      error
+    );
+
+  }
+
+}
+
+
+/* =====================================================
+   LOAD CUSTOMER QUOTE REQUESTS
+   ===================================================== */
+
+async function loadQuoteRequests() {
+
+  const container =
+    document.getElementById(
+      "quoteRequestsContainer"
+    );
+
+
+  container.innerHTML =
+    "Loading quote requests...";
+
+
+  try {
+
+    const result =
+      await supabaseClient
+        .from("quote_requests")
+        .select("*")
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
+
+
+    if (result.error) {
+
+      console.error(
+        "Quote request error:",
+        result.error
+      );
+
+      container.innerHTML =
+        '<p class="error">' +
+        escapeHtml(
+          result.error.message
+        ) +
+        "</p>";
+
+      return;
+    }
+
+
+    if (
+      !result.data ||
+      result.data.length === 0
+    ) {
+
+      container.innerHTML =
+        "<p>No customer quote requests found.</p>";
+
+      return;
+    }
+
+
+    container.innerHTML =
+      "";
+
+
+    result.data.forEach(
+      function(request) {
+
+        const box =
+          document.createElement(
+            "div"
+          );
+
+
+        box.className =
+          "quote-box";
+
+
+        box.innerHTML =
+
+          "<h3>" +
+
+          "Quote Request - " +
+
+          escapeHtml(
+            request.product_name ||
+            request.product ||
+            "Product"
+          ) +
+
+          "</h3>" +
+
+
+          "<p>" +
+
+          "<strong>Request Number:</strong> " +
+
+          escapeHtml(
+            request.request_number ||
+            "N/A"
+          ) +
+
+          "</p>" +
+
+
+          "<p>" +
+
+          "<strong>Customer:</strong> " +
+
+          escapeHtml(
+            request.customer_name ||
+            "N/A"
+          ) +
+
+          "</p>" +
+
+
+          "<p>" +
+
+          "<strong>Phone:</strong> " +
+
+          escapeHtml(
+            request.customer_phone ||
+            request.phone ||
+            "N/A"
+          ) +
+
+          "</p>" +
+
+
+          "<p>" +
+
+          "<strong>Description:</strong> " +
+
+          escapeHtml(
+            request.description ||
+            "N/A"
+          ) +
+
+          "</p>" +
+
+
+          "<p>" +
+
+          "<strong>Status:</strong> " +
+
+          escapeHtml(
+            request.status ||
+            "N/A"
+          ) +
+
+          "</p>" +
+
+
+          '<button type="button" onclick="selectQuoteRequest(\'' +
+
+          request.id +
+
+          "')\">" +
+
+          "Select Request" +
+
+          "</button>";
+
+
+        container.appendChild(
+          box
+        );
+
+      }
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Quote request error:",
+      error
+    );
+
+    container.innerHTML =
+      '<p class="error">' +
+      escapeHtml(
+        error.message
+      ) +
+      "</p>";
+
+  }
+
+}
+
+
+/* =====================================================
+   SELECT CUSTOMER REQUEST
+   ===================================================== */
+
+function selectQuoteRequest(
+  requestId
+) {
+
+  document.getElementById(
+    "selectedRequestId"
+  ).value =
+    requestId;
+
+
+  document.getElementById(
+    "supplierQuoteForm"
+  ).style.display =
+    "block";
+
+
+  document.getElementById(
+    "supplierQuotationContainer"
+  ).innerHTML =
+
+    '<p class="success">' +
+    "Customer quote request selected." +
+    "</p>" +
+
+    "<p>" +
+
+    "<strong>Request ID:</strong> " +
+
+    escapeHtml(
+      requestId
+    ) +
+
+    "</p>";
+
+
+  document.getElementById(
+    "supplierQuoteForm"
+  ).scrollIntoView({
+    behavior: "smooth"
+  });
+
+}
+
+
+/* =====================================================
+   LOAD SUPPLIERS
+   ===================================================== */
+
+async function loadSuppliers() {
+
+  const select =
+    document.getElementById(
+      "supplierSelect"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("suppliers")
+      .select("*")
+      .order(
+        "name",
+        {
+          ascending: true
+        }
       );
 
 
-    /* =====================================================
-       LOGIN
-       ===================================================== */
+  if (result.error) {
 
-    async function loginAdmin() {
+    console.error(
+      "Supplier loading error:",
+      result.error
+    );
 
-      const emailInput =
-        document.getElementById(
-          "loginEmail"
+    return;
+  }
+
+
+  select.innerHTML =
+    '<option value="">Select Supplier</option>';
+
+
+  (result.data || []).forEach(
+    function(supplier) {
+
+      const option =
+        document.createElement(
+          "option"
         );
 
-      const passwordInput =
-        document.getElementById(
-          "loginPassword"
+
+      option.value =
+        supplier.id;
+
+
+      option.textContent =
+        supplier.name ||
+        supplier.company_name ||
+        "Supplier";
+
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* =====================================================
+   LOAD PRODUCTS
+   ===================================================== */
+
+async function loadProducts() {
+
+  const select =
+    document.getElementById(
+      "productSelect"
+    );
+
+
+  if (!select) {
+    return;
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("products")
+      .select("*")
+      .order(
+        "name",
+        {
+          ascending: true
+        }
+      );
+
+
+  if (result.error) {
+
+    console.error(
+      "Product loading error:",
+      result.error
+    );
+
+    select.innerHTML =
+      '<option value="">Unable to load products</option>';
+
+    return;
+  }
+
+
+  select.innerHTML =
+    '<option value="">Select Product</option>';
+
+
+  (result.data || []).forEach(
+    function(product) {
+
+      const option =
+        document.createElement(
+          "option"
         );
 
-      const message =
-        document.getElementById(
-          "loginMessage"
-        );
+
+      option.value =
+        product.id;
 
 
-      if (
-        !emailInput ||
-        !passwordInput ||
-        !message
-      ) {
-
-        alert(
-          "FrostTech login page error."
-        );
-
-        return;
-      }
+      option.textContent =
+        product.name ||
+        "Product";
 
 
-      const email =
-        emailInput.value.trim();
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
 
 
-      const password =
-        passwordInput.value;
+/* =====================================================
+   CALCULATE SUPPLIER QUOTATION
+   ===================================================== */
+
+function calculateQuotation() {
+
+  const quantity =
+    Number(
+      document.getElementById(
+        "quantityInput"
+      ).value || 0
+    );
 
 
-      message.textContent =
-        "";
+  const unitPrice =
+    Number(
+      document.getElementById(
+        "unitPriceInput"
+      ).value || 0
+    );
 
-      message.className =
-        "";
+
+  const delivery =
+    Number(
+      document.getElementById(
+        "deliveryInput"
+      ).value || 0
+    );
 
 
-      if (
-        !email ||
+  const marginPercent =
+    Number(
+      document.getElementById(
+        "marginInput"
+      ).value || 0
+    );
+
+
+  const supplierTotal =
+    quantity *
+    unitPrice;
+
+
+  const marginAmount =
+    supplierTotal *
+    marginPercent /
+    100;
+
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount +
+    delivery;
+
+
+  document.getElementById(
+    "supplierTotalDisplay"
+  ).textContent =
+    formatMoneyNumber(
+      supplierTotal
+    );
+
+
+  document.getElementById(
+    "marginDisplay"
+  ).textContent =
+    formatMoneyNumber(
+      marginAmount
+    );
+
+
+  document.getElementById(
+    "customerTotalDisplay"
+  ).textContent =
+    formatMoneyNumber(
+      customerTotal
+    );
+
+}
+
+
+/* =====================================================
+   SAVE SUPPLIER QUOTATION
+   ===================================================== */
+
+async function saveSupplierQuotation() {
+
+  const message =
+    document.getElementById(
+      "quotationMessage"
+    );
+
+
+  const requestId =
+    document.getElementById(
+      "selectedRequestId"
+    ).value;
+
+
+  const supplierId =
+    document.getElementById(
+      "supplierSelect"
+    ).value;
+
+
+  const productId =
+    document.getElementById(
+      "productSelect"
+    ).value;
+
+
+  const quantity =
+    Number(
+      document.getElementById(
+        "quantityInput"
+      ).value
+    );
+
+
+  const unitPrice =
+    Number(
+      document.getElementById(
+        "unitPriceInput"
+      ).value
+    );
+
+
+  const delivery =
+    Number(
+      document.getElementById(
+        "deliveryInput"
+      ).value || 0
+    );
+
+
+  const marginPercent =
+    Number(
+      document.getElementById(
+        "marginInput"
+      ).value || 0
+    );
+
+
+  const status =
+    document.getElementById(
+      "statusInput"
+    ).value;
+
+
+  const validUntil =
+    document.getElementById(
+      "validUntilInput"
+    ).value;
+
+
+  const notes =
+    document.getElementById(
+      "notesInput"
+    ).value.trim();
+
+
+  if (!requestId) {
+
+    message.textContent =
+      "Please select a customer quote request.";
+
+    message.className =
+      "error";
+
+    return;
+  }
+
+
+  if (!supplierId) {
+
+    message.textContent =
+      "Please select a supplier.";
+
+    message.className =
+      "error";
+
+    return;
+  }
+
+
+  if (!productId) {
+
+    message.textContent =
+      "Please select a product.";
+
+    message.className =
+      "error";
+
+    return;
+  }
+
+
+  if (
+    !quantity ||
+    quantity <= 0
+  ) {
+
+    message.textContent =
+      "Please enter a valid quantity.";
+
+    message.className =
+    !email ||
         !password
       ) {
 
