@@ -851,83 +851,101 @@
 
   function calculateTotal() {
 
-    const quantity =
-      Number(
-        document.getElementById(
-          "quantityInput"
-        ).value || 0
-      );
+  const quantity =
+    Number(
+      document.getElementById(
+        "quantityInput"
+      ).value || 0
+    );
 
-    const unitPrice =
-      Number(
-        document.getElementById(
-          "unitPriceInput"
-        ).value || 0
-      );
+  const unitPrice =
+    Number(
+      document.getElementById(
+        "unitPriceInput"
+      ).value || 0
+    );
 
-    const deliveryCost =
-      Number(
-        document.getElementById(
-          "deliveryInput"
-        ).value || 0
-      );
+  const deliveryCost =
+    Number(
+      document.getElementById(
+        "deliveryInput"
+      ).value || 0
+    );
 
-    const marginPercent = 15;
-    const supplierTotal =
-      (quantity * unitPrice) +
-      deliveryCost;
-
-    const marginAmount =
-      supplierTotal *
-      (marginPercent / 100);
-
-    const customerTotal =
-      supplierTotal +
-      marginAmount;
+  const marginPercent =
+    Number(
+      document.getElementById(
+        "marginInput"
+      ).value || 0
+    );
 
 
-    document.getElementById(
-      "supplierTotalDisplay"
-    ).textContent =
-      supplierTotal.toLocaleString(
-        "en-NG",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }
-      );
-
-    document.getElementById(
-      "marginAmountDisplay"
-    ).textContent =
-      marginAmount.toLocaleString(
-        "en-NG",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }
-      );
-
-    document.getElementById(
-      "customerTotalDisplay"
-    ).textContent =
-      customerTotal.toLocaleString(
-        "en-NG",
-        {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2
-        }
-      );
+  const supplierTotal =
+    (quantity * unitPrice) +
+    deliveryCost;
 
 
-    return {
+  const marginAmount =
+    supplierTotal *
+    (marginPercent / 100);
+
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount;
+
+
+  document.getElementById(
+    "supplierTotalDisplay"
+  ).textContent =
+    supplierTotal.toLocaleString(
+      "en-NG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+
+
+  document.getElementById(
+    "marginAmountDisplay"
+  ).textContent =
+    marginAmount.toLocaleString(
+      "en-NG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+
+
+  document.getElementById(
+    "customerTotalDisplay"
+  ).textContent =
+    customerTotal.toLocaleString(
+      "en-NG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    );
+
+
+  return {
+    supplierTotal:
       supplierTotal,
-      marginPercent,
-      marginAmount,
-      customerTotal
-    };
 
-  }
+    marginPercent:
+      marginPercent,
+
+    marginAmount:
+      marginAmount,
+
+    customerTotal:
+      customerTotal
+  };
+
+}
 
 
   /* ==============================
