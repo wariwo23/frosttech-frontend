@@ -1858,6 +1858,625 @@ function formatMoney(
 function escapeHtml(
   value
 ) {
+      {
+        ascending: true
+      }
+    );
+
+  if (result.error) {
+
+    console.error(
+      "Error loading products:",
+      result.error
+    );
+
+    productSelect.innerHTML =
+      '<option value="">Unable to load products</option>';
+
+    return;
+  }
+
+  productSelect.innerHTML =
+    '<option value="">Select Product</option>';
+
+  (result.data || []).forEach(
+    function(product) {
+
+      const option =
+        document.createElement("option");
+
+      option.value =
+        product.id;
+
+      option.textContent =
+        product.name;
+
+      productSelect.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   CALCULATE SUPPLIER QUOTATION
+   ========================================================= */
+
+function calculateQuotation() {
+
+  const quantityInput =
+    document.getElementById(
+      "quotationQuantity"
+    );
+
+  const unitPriceInput =
+    document.getElementById(
+      "supplierUnitPrice"
+    );
+
+  const deliveryInput =
+    document.getElementById(
+      "deliveryCost"
+    );
+
+  const marginInput =
+    document.getElementById(
+      "marginPercent"
+    );
+
+
+  const quantity =
+    Number(
+      quantityInput.value || 0
+    );
+
+  const unitPrice =
+    Number(
+      unitPriceInput.value || 0
+    );
+
+  const delivery =
+    Number(
+      deliveryInput.value || 0
+    );
+
+  const marginPercent =
+    Number(
+      marginInput.value || 0
+    );
+
+
+  const supplierTotal =
+    quantity * unitPrice;
+
+
+  const marginAmount =
+    supplierTotal *
+    marginPercent /
+    100;
+
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount +
+    delivery;
+
+
+  document.getElementById(
+    "supplierTotal"
+  ).textContent =
+    formatMoney(
+      supplierTotal
+    );
+
+
+  document.getElementById(
+    "marginAmount"
+  ).textContent =
+    formatMoney(
+      marginAmount
+    );
+
+
+  document.getElementById(
+    "customerTotal"
+  ).textContent =
+    formatMoney(
+      customerTotal
+    );
+
+}
+
+
+/* =========================================================
+   SAVE SUPPLIER QUOTATION
+   ========================================================= */
+
+async function saveSupplierQuotation() {
+
+  const message =
+    document.getElementById(
+      "quotationMessage"
+    );
+
+
+  const requestId =
+    document.getElementById(
+      "selectedRequestId"
+    ).value;
+
+
+  const supplierId =
+    document.getElementById(
+      "supplierSelect"
+    ).value;
+
+
+  const productId =
+    document.getElementById(
+      "productSelect"
+    ).value;
+
+
+  const quantity =
+    Number(
+      document.getElementById(
+        "quotationQuantity"
+      ).value
+    );
+
+
+  const unitPrice =
+    Number(
+      document.getElementById(
+        "supplierUnitPrice"
+      ).value
+    );
+
+
+  const delivery =
+    Number(
+      document.getElementById(
+        "deliveryCost"
+      ).value || 0
+    );
+
+
+  const marginPercent =
+    Number(
+      document.getElementById(
+        "marginPercent"
+      ).value || 0
+    );
+
+
+  const status =
+    document.getElementById(
+      "quotationStatus"
+    ).value;
+
+
+  const validUntil =
+    document.getElementById(
+      "validUntil"
+    ).value;
+
+
+  const notes =
+    document.getElementById(
+      "quotationNotes"
+    ).value.trim();
+
+
+  if (!requestId) {
+
+    message.textContent =
+      "Please select a customer quote request.";
+
+    return;
+  }
+
+
+  if (!supplierId) {
+
+    message.textContent =
+      "Please select a supplier.";
+
+    return;
+  }
+
+
+  if (!productId) {
+
+    message.textContent =
+      "Please select a product.";
+
+    return;
+  }
+
+
+  if (
+    !quantity ||
+    quantity <= 0
+  ) {
+
+    message.textContent =
+      "Please enter a valid quantity.";
+
+    return;
+  }
+
+
+  if (
+    !unitPrice ||
+    unitPrice <= 0
+  ) {
+
+    message.textContent =
+      "Please enter a valid supplier unit price.";
+
+    return;
+  }
+
+
+  const supplierTotal =
+    quantity * unitPrice;
+
+
+  const marginAmount =
+    supplierTotal *
+    marginPercent /
+    100;
+
+
+  const customerTotal =
+    supplierTotal +
+    marginAmount +
+    delivery;
+
+
+  message.textContent =
+    "Saving supplier quotation...";
+
+
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .insert([
+        {
+          request_id:
+            requestId,
+
+          supplier_id:
+            supplierId,
+
+          product_id:
+            productId,
+
+          quantity:
+            quantity,
+
+          supplier_unit_price:
+            unitPrice,
+
+          supplier_total:
+            supplierTotal,
+
+          delivery_cost:
+            delivery,
+
+          frosttech_margin_percent:
+            marginPercent,
+
+          frosttech_margin_amount:
+            marginAmount,
+
+          customer_total:
+            customerTotal,
+
+          status:
+            status,
+
+          customer_quote_status:
+            "draft",
+
+          valid_until:
+            validUntil || null,
+
+          notes:
+            notes || null
+        }
+      ])
+      .select()
+      .single();
+
+
+  if (result.error) {
+
+    console.error(
+      "Supplier quotation save error:",
+      result.error
+    );
+
+    message.textContent =
+      "Error saving quotation: " +
+      result.error.message;
+
+    return;
+  }
+
+
+  message.textContent =
+    "Supplier quotation saved successfully.";
+
+
+  alert(
+    "Supplier quotation saved successfully."
+  );
+
+
+  document.getElementById(
+    "quotationQuantity"
+  ).value = "1";
+
+
+  document.getElementById(
+    "supplierUnitPrice"
+  ).value = "";
+
+
+  document.getElementById(
+    "deliveryCost"
+  ).value = "0";
+
+
+  document.getElementById(
+    "marginPercent"
+  ).value = "15";
+
+
+  document.getElementById(
+    "validUntil"
+  ).value = "";
+
+
+  document.getElementById(
+    "quotationNotes"
+  ).value = "";
+
+
+  calculateQuotation();
+
+
+  loadSupplierQuotations();
+
+}
+
+
+/* =========================================================
+   LOAD SUPPLIER QUOTATIONS
+   ========================================================= */
+
+async function loadSupplierQuotations() {
+
+  const container =
+    document.getElementById(
+      "supplierQuotationsList"
+    );
+
+
+  container.innerHTML =
+    "Loading supplier quotations...";
+
+
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .select("*")
+      .order(
+        "created_at",
+        {
+          ascending: false
+        }
+      );
+
+
+  if (result.error) {
+
+    console.error(
+      "Error loading supplier quotations:",
+      result.error
+    );
+
+    container.innerHTML =
+      "Unable to load supplier quotations.";
+
+    return;
+  }
+
+
+  if (
+    !result.data ||
+    result.data.length === 0
+  ) {
+
+    container.innerHTML =
+      "No supplier quotations found.";
+
+    return;
+  }
+
+
+  container.innerHTML = "";
+
+
+  result.data.forEach(
+    function(quote) {
+
+      const card =
+        document.createElement("div");
+
+
+      card.className =
+        "quotation-card";
+
+
+      card.innerHTML = `
+        <strong>Supplier Quotation</strong>
+
+        <p>
+          Quote ID:
+          ${escapeHtml(quote.id)}
+        </p>
+
+        <p>
+          Request ID:
+          ${escapeHtml(quote.request_id)}
+        </p>
+
+        <p>
+          Quantity:
+          ${escapeHtml(quote.quantity)}
+        </p>
+
+        <p>
+          Supplier Total:
+          ${formatMoney(quote.supplier_total)}
+        </p>
+
+        <p>
+          FrostTech Margin:
+          ${formatMoney(quote.frosttech_margin_amount)}
+        </p>
+
+        <p>
+          Customer Total:
+          ${formatMoney(quote.customer_total)}
+        </p>
+
+        <p>
+          Status:
+          ${escapeHtml(quote.status)}
+        </p>
+
+        ${
+          quote.status === "submitted" &&
+          Number(quote.customer_total) > 0
+
+          ? `
+            <button
+              type="button"
+              onclick="selectSupplierQuotation('${quote.id}')"
+            >
+              Select Supplier
+            </button>
+          `
+
+          : ""
+        }
+      `;
+
+
+      container.appendChild(
+        card
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   SELECT SUPPLIER QUOTATION
+   ========================================================= */
+
+async function selectSupplierQuotation(
+  quoteId
+) {
+
+  if (
+    !confirm(
+      "Are you sure you want to select this supplier quotation?"
+    )
+  ) {
+
+    return;
+  }
+
+
+  const result =
+    await supabaseClient
+      .from("supplier_quotes")
+      .update({
+        status: "selected"
+      })
+      .eq(
+        "id",
+        quoteId
+      );
+
+
+  if (result.error) {
+
+    console.error(
+      "Error selecting supplier quotation:",
+      result.error
+    );
+
+    alert(
+      "Error selecting quotation: " +
+      result.error.message
+    );
+
+    return;
+  }
+
+
+  alert(
+    "Supplier quotation selected successfully."
+  );
+
+
+  loadSupplierQuotations();
+
+}
+
+
+/* =========================================================
+   FORMAT MONEY
+   ========================================================= */
+
+function formatMoney(
+  amount
+) {
+
+  return (
+    "₦" +
+    Number(
+      amount || 0
+    ).toLocaleString(
+      "en-NG",
+      {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }
+    )
+  );
+
+}
+
+
+/* =========================================================
+   ESCAPE HTML
+   ========================================================= */
+
+function escapeHtml(
+  value
+) {
 
   return String(
     value == null
@@ -1899,7 +2518,6 @@ document.addEventListener(
     console.log(
       "FrostTech Admin JavaScript loaded successfully."
     );
-
 
     checkSession();
 
