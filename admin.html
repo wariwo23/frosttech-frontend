@@ -1,13 +1,645 @@
-if (!ready) {
+<!DOCTYPE html>
+<html lang="en">
 
-      return;
+<head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>FrostTech Admin</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      color: #222;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1100px;
+      margin: 20px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin-top: 0;
+    }
+
+    input,
+    select,
+    textarea,
+    button {
+      width: 100%;
+      padding: 11px;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      font-size: 15px;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      border: none;
+      border-radius: 5px;
+      background: #0b5ed7;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      opacity: 0.9;
+    }
+
+    .danger {
+      background: #dc3545;
+    }
+
+    .success {
+      background: #198754;
+    }
+
+    .secondary {
+      background: #6c757d;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .message {
+      padding: 10px;
+      margin-bottom: 15px;
+      border-radius: 5px;
+      background: #eee;
+    }
+
+    .request,
+    .quotation {
+      border: 1px solid #ddd;
+      padding: 15px;
+      margin-bottom: 12px;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    .selected {
+      border: 2px solid #0b5ed7;
+      background: #eef5ff;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 15px;
+    }
+
+    .total-box {
+      background: #f1f3f5;
+      padding: 15px;
+      margin-top: 10px;
+      border-radius: 6px;
+    }
+
+    .total-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 8px;
+    }
+
+    .grand-total {
+      font-size: 20px;
+      font-weight: bold;
+      border-top: 1px solid #ccc;
+      padding-top: 10px;
+    }
+
+    @media (max-width: 700px) {
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
 
     }
 
+  </style>
 
-    await checkSession();
+</head>
+
+
+<body>
+
+
+<!-- =========================================================
+     LOGIN SCREEN
+     ========================================================= -->
+
+<div
+  id="loginScreen"
+  class="container"
+>
+
+  <div class="card">
+
+    <h1>FrostTech HVAC and Refrigeration</h1>
+
+    <h2>Admin Login</h2>
+
+    <div id="loginMessage"></div>
+
+    <label>Email</label>
+
+    <input
+      type="email"
+      id="loginEmail"
+      placeholder="Admin email"
+    >
+
+    <label>Password</label>
+
+    <input
+      type="password"
+      id="loginPassword"
+      placeholder="Password"
+    >
+
+    <button
+      type="button"
+      onclick="loginAdmin()"
+    >
+      Login
+    </button>
+
+  </div>
+
+</div>
+
+
+
+<!-- =========================================================
+     ADMIN APPLICATION
+     ========================================================= -->
+
+<div
+  id="adminApp"
+  class="container hidden"
+>
+
+  <div class="card">
+
+    <h1>FrostTech Admin Dashboard</h1>
+
+    <p>
+      Logged in as:
+      <strong id="loggedInEmail"></strong>
+    </p>
+
+    <button
+      type="button"
+      class="danger"
+      onclick="logoutAdmin()"
+    >
+      Logout
+    </button>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       CUSTOMER QUOTE REQUESTS
+       ======================================================= -->
+
+  <div class="card">
+
+    <h2>Customer Quote Requests</h2>
+
+    <button
+      type="button"
+      class="secondary"
+      onclick="loadQuoteRequests()"
+    >
+      Refresh Quote Requests
+    </button>
+
+    <div id="quoteRequestsList"></div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       SELECTED REQUEST
+       ======================================================= -->
+
+  <div
+    id="selectedRequestCard"
+    class="card hidden"
+  >
+
+    <h2>Selected Customer Request</h2>
+
+    <div id="selectedRequestDetails"></div>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       SUPPLIER QUOTATION
+       ======================================================= -->
+
+  <div
+    id="supplierQuoteForm"
+    class="card hidden"
+  >
+
+    <h2>Create Supplier Quotation</h2>
+
+    <div id="quotationMessage"></div>
+
+    <div class="grid">
+
+      <div>
+
+        <label>Supplier</label>
+
+        <select id="supplierSelect">
+
+          <option value="">
+            Select Supplier
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div>
+
+        <label>Product</label>
+
+        <select id="productSelect">
+
+          <option value="">
+            Select Product
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div>
+
+        <label>Quantity</label>
+
+        <input
+          type="number"
+          id="quantityInput"
+          value="1"
+          min="1"
+        >
+
+      </div>
+
+
+      <div>
+
+        <label>Supplier Unit Price</label>
+
+        <input
+          type="number"
+          id="unitPriceInput"
+          value="0"
+          min="0"
+          step="0.01"
+        >
+
+      </div>
+
+
+      <div>
+
+        <label>Delivery Cost</label>
+
+        <input
+          type="number"
+          id="deliveryInput"
+          value="0"
+          min="0"
+          step="0.01"
+        >
+
+      </div>
+
+
+      <div>
+
+        <label>FrostTech Margin (%)</label>
+
+        <input
+          type="number"
+          id="marginInput"
+          value="15"
+          min="0"
+          step="0.01"
+        >
+
+      </div>
+
+
+      <div>
+
+        <label>Status</label>
+
+        <select id="statusInput">
+
+          <option value="draft">
+            Draft
+          </option>
+
+          <option value="submitted">
+            Submitted
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div>
+
+        <label>Valid Until</label>
+
+        <input
+          type="date"
+          id="validUntilInput"
+        >
+
+      </div>
+
+    </div>
+
+
+    <label>Notes</label>
+
+    <textarea
+      id="notesInput"
+      placeholder="Supplier quotation notes"
+    ></textarea>
+
+
+
+    <!-- CALCULATION -->
+
+    <div class="total-box">
+
+      <div class="total-row">
+
+        <span>
+          Supplier Total
+        </span>
+
+        <strong>
+          ₦<span id="supplierTotalDisplay">0.00</span>
+        </strong>
+
+      </div>
+
+
+      <div class="total-row">
+
+        <span>
+          FrostTech Margin
+        </span>
+
+        <strong>
+          ₦<span id="marginDisplay">0.00</span>
+        </strong>
+
+      </div>
+
+
+      <div class="total-row">
+
+        <span>
+          Delivery
+        </span>
+
+        <strong>
+          ₦<span id="deliveryDisplay">0.00</span>
+        </strong>
+
+      </div>
+
+
+      <div class="total-row grand-total">
+
+        <span>
+          Customer Total
+        </span>
+
+        <strong>
+          ₦<span id="customerTotalDisplay">0.00</span>
+        </strong>
+
+      </div>
+
+    </div>
+
+
+
+    <button
+      type="button"
+      onclick="calculateQuotation()"
+      class="secondary"
+    >
+      Calculate Quotation
+    </button>
+
+
+    <button
+      type="button"
+      onclick="saveSupplierQuotation()"
+      class="success"
+    >
+      Save Supplier Quotation
+    </button>
+
+  </div>
+
+
+
+  <!-- =======================================================
+       SAVED SUPPLIER QUOTATIONS
+       ======================================================= -->
+
+  <div class="card">
+
+    <h2>Saved Supplier Quotations</h2>
+
+    <button
+      type="button"
+      class="secondary"
+      onclick="loadSupplierQuotations()"
+    >
+      Refresh Supplier Quotations
+    </button>
+
+    <div id="savedSupplierQuotations"></div>
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+/* =========================================================
+   FROSTTECH SUPABASE CONFIGURATION
+   ========================================================= */
+
+const SUPABASE_URL =
+  "PASTE YOUR EXISTING SUPABASE URL HERE";
+
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "PASTE YOUR EXISTING SUPABASE PUBLISHABLE KEY HERE";
+
+
+let supabaseClient = null;
+
+let ready = false;
+
+let selectedRequestId = null;
+
+
+/* =========================================================
+   INITIALIZE SUPABASE
+   ========================================================= */
+
+function initializeSupabase() {
+
+  try {
+
+    if (
+      !SUPABASE_URL ||
+      !SUPABASE_PUBLISHABLE_KEY ||
+      SUPABASE_URL.includes("PASTE YOUR") ||
+      SUPABASE_PUBLISHABLE_KEY.includes("PASTE YOUR")
+    ) {
+
+      console.error(
+        "Supabase URL or publishable key has not been entered."
+      );
+
+      return false;
+    }
+
+
+    if (
+      !window.supabase ||
+      !window.supabase.createClient
+    ) {
+
+      console.error(
+        "Supabase library did not load."
+      );
+
+      return false;
+    }
+
+
+    supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
+
+    ready = true;
+
+    console.log(
+      "FrostTech Supabase initialized successfully."
+    );
+
+
+    return true;
 
   }
+
+  catch (error) {
+
+    console.error(
+      "Supabase initialization error:",
+      error
+    );
+
+    return false;
+  }
+
+}
+
+
+/* =========================================================
+   LOGIN
+   ========================================================= */
+
+async function loginAdmin() {
+
+  const message =
+    document.getElementById(
+      "loginMessage"
+    );
+
+  const email =
+    document.getElementById(
+      "loginEmail"
+    ).value.trim();
+
+  const password =
+    document.getElementById(
+      "loginPassword"
+    ).value;
+
+if (!ready) {
+
+  message.innerHTML =
+    "Supabase is not initialized. Please wait for the system to connect and try again.";
+
+  return;
+
+}
+
+await checkSession();
+
+}
 );
 
 
