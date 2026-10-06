@@ -72,6 +72,79 @@
   </script>
 
 
+  <!-- =====================================================
+       SECTION 3
+       ADMIN LOGIN
+       ===================================================== -->
+
+  <hr>
+
+  <h2>Admin Login</h2>
+
+  <label for="adminEmail">
+    Email
+  </label>
+
+  <br>
+
+  <input
+    type="email"
+    id="adminEmail"
+    placeholder="Enter admin email"
+  >
+
+  <br><br>
+
+
+  <label for="adminPassword">
+    Password
+  </label>
+
+  <br>
+
+  <input
+    type="password"
+    id="adminPassword"
+    placeholder="Enter admin password"
+  >
+
+  <br><br>
+
+
+  <button
+    type="button"
+    id="adminLoginButton"
+  >
+    Login
+  </button>
+
+
+  <p id="loginMessage"></p>
+
+
+  <!-- =====================================================
+       SECTION 3
+       LOGIN BUTTON TEST
+       ===================================================== -->
+
+  <script>
+
+    document
+      .getElementById("adminLoginButton")
+      .addEventListener(
+        "click",
+        function () {
+
+          alert(
+            "FrostTech Admin Login button works!"
+          );
+
+        }
+      );
+
+  </script>
+
+
 </body>
 
 </html>
