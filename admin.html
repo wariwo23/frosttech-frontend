@@ -13,7 +13,9 @@
   <title>FrostTech Admin</title>
 
 
-  <!-- SUPABASE LIBRARY -->
+  <!-- =====================================================
+       SUPABASE LIBRARY
+       ===================================================== -->
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -24,18 +26,51 @@
 <body>
 
 
-  <!-- SECTION 1 -->
+  <!-- =====================================================
+       SECTION 1
+       BASIC ADMIN PAGE
+       ===================================================== -->
 
   <h1>FrostTech Admin</h1>
 
   <p>Admin system loading...</p>
 
 
+  <!-- =====================================================
+       SECTION 2
+       SUPABASE INITIALIZATION
+       ===================================================== -->
+
   <script>
 
-  alert("SECTION 2 JAVASCRIPT IS WORKING");
+    const SUPABASE_URL =
+      "https://nftxptjpgidcsgtaltjn.supabase.co";
 
-</script>
+
+    const SUPABASE_ANON_KEY =
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdy_cyuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
+
+    const supabaseClient =
+      window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+
+    console.log(
+      "FrostTech Supabase initialized successfully."
+    );
+
+
+    document.body.insertAdjacentHTML(
+      "beforeend",
+      "<p>Supabase connection section loaded successfully.</p>"
+    );
+
+
+  </script>
+
 
 </body>
 
