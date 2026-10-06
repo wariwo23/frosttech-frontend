@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+
   <meta charset="UTF-8">
 
   <meta
@@ -11,6 +12,7 @@
 
   <title>FrostTech Admin</title>
 
+  <!-- SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -122,6 +124,7 @@
       background: #f1f3f5;
       padding: 15px;
       margin-top: 10px;
+      margin-bottom: 15px;
       border-radius: 6px;
     }
 
@@ -136,6 +139,20 @@
       font-weight: bold;
       border-top: 1px solid #ccc;
       padding-top: 10px;
+    }
+
+    .loading {
+      color: #666;
+    }
+
+    .error {
+      color: #dc3545;
+      font-weight: bold;
+    }
+
+    .success-message {
+      color: #198754;
+      font-weight: bold;
     }
 
     @media (max-width: 700px) {
@@ -171,24 +188,33 @@
 
     <div id="loginMessage"></div>
 
-    <label>Email</label>
+    <label for="loginEmail">
+      Email
+    </label>
 
     <input
       type="email"
       id="loginEmail"
       placeholder="Admin email"
+      autocomplete="email"
     >
 
-    <label>Password</label>
+
+    <label for="loginPassword">
+      Password
+    </label>
 
     <input
       type="password"
       id="loginPassword"
       placeholder="Password"
+      autocomplete="current-password"
     >
+
 
     <button
       type="button"
+      id="loginButton"
       onclick="loginAdmin()"
     >
       Login
@@ -211,7 +237,9 @@
 
   <div class="card">
 
-    <h1>FrostTech Admin Dashboard</h1>
+    <h1>
+      FrostTech Admin Dashboard
+    </h1>
 
     <p>
       Logged in as:
@@ -236,7 +264,9 @@
 
   <div class="card">
 
-    <h2>Customer Quote Requests</h2>
+    <h2>
+      Customer Quote Requests
+    </h2>
 
     <button
       type="button"
@@ -261,7 +291,9 @@
     class="card hidden"
   >
 
-    <h2>Selected Customer Request</h2>
+    <h2>
+      Selected Customer Request
+    </h2>
 
     <div id="selectedRequestDetails"></div>
 
@@ -278,15 +310,23 @@
     class="card hidden"
   >
 
-    <h2>Create Supplier Quotation</h2>
+    <h2>
+      Create Supplier Quotation
+    </h2>
 
     <div id="quotationMessage"></div>
 
+
     <div class="grid">
+
+
+      <!-- SUPPLIER -->
 
       <div>
 
-        <label>Supplier</label>
+        <label for="supplierSelect">
+          Supplier
+        </label>
 
         <select id="supplierSelect">
 
@@ -299,9 +339,13 @@
       </div>
 
 
+      <!-- PRODUCT -->
+
       <div>
 
-        <label>Product</label>
+        <label for="productSelect">
+          Product
+        </label>
 
         <select id="productSelect">
 
@@ -314,23 +358,32 @@
       </div>
 
 
+      <!-- QUANTITY -->
+
       <div>
 
-        <label>Quantity</label>
+        <label for="quantityInput">
+          Quantity
+        </label>
 
         <input
           type="number"
           id="quantityInput"
           value="1"
           min="1"
+          step="1"
         >
 
       </div>
 
 
+      <!-- UNIT PRICE -->
+
       <div>
 
-        <label>Supplier Unit Price</label>
+        <label for="unitPriceInput">
+          Supplier Unit Price
+        </label>
 
         <input
           type="number"
@@ -343,9 +396,13 @@
       </div>
 
 
+      <!-- DELIVERY -->
+
       <div>
 
-        <label>Delivery Cost</label>
+        <label for="deliveryInput">
+          Delivery Cost
+        </label>
 
         <input
           type="number"
@@ -358,9 +415,13 @@
       </div>
 
 
+      <!-- MARGIN -->
+
       <div>
 
-        <label>FrostTech Margin (%)</label>
+        <label for="marginInput">
+          FrostTech Margin (%)
+        </label>
 
         <input
           type="number"
@@ -373,9 +434,13 @@
       </div>
 
 
+      <!-- STATUS -->
+
       <div>
 
-        <label>Status</label>
+        <label for="statusInput">
+          Status
+        </label>
 
         <select id="statusInput">
 
@@ -392,9 +457,13 @@
       </div>
 
 
+      <!-- VALID UNTIL -->
+
       <div>
 
-        <label>Valid Until</label>
+        <label for="validUntilInput">
+          Valid Until
+        </label>
 
         <input
           type="date"
@@ -406,7 +475,12 @@
     </div>
 
 
-    <label>Notes</label>
+
+    <!-- NOTES -->
+
+    <label for="notesInput">
+      Notes
+    </label>
 
     <textarea
       id="notesInput"
@@ -415,7 +489,9 @@
 
 
 
-    <!-- CALCULATION -->
+    <!-- =====================================================
+         QUOTATION CALCULATION
+         ===================================================== -->
 
     <div class="total-box">
 
@@ -426,7 +502,9 @@
         </span>
 
         <strong>
-          ₦<span id="supplierTotalDisplay">0.00</span>
+          ₦<span id="supplierTotalDisplay">
+            0.00
+          </span>
         </strong>
 
       </div>
@@ -439,7 +517,9 @@
         </span>
 
         <strong>
-          ₦<span id="marginDisplay">0.00</span>
+          ₦<span id="marginDisplay">
+            0.00
+          </span>
         </strong>
 
       </div>
@@ -452,7 +532,9 @@
         </span>
 
         <strong>
-          ₦<span id="deliveryDisplay">0.00</span>
+          ₦<span id="deliveryDisplay">
+            0.00
+          </span>
         </strong>
 
       </div>
@@ -465,7 +547,9 @@
         </span>
 
         <strong>
-          ₦<span id="customerTotalDisplay">0.00</span>
+          ₦<span id="customerTotalDisplay">
+            0.00
+          </span>
         </strong>
 
       </div>
@@ -501,7 +585,9 @@
 
   <div class="card">
 
-    <h2>Saved Supplier Quotations</h2>
+    <h2>
+      Saved Supplier Quotations
+    </h2>
 
     <button
       type="button"
@@ -519,7 +605,12 @@
 
 
 
+<!-- =========================================================
+     JAVASCRIPT
+     ========================================================= -->
+
 <script>
+
 
 /* =========================================================
    FROSTTECH SUPABASE CONFIGURATION
@@ -532,6 +623,10 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
   "PASTE YOUR EXISTING SUPABASE PUBLISHABLE KEY HERE";
 
+
+/* =========================================================
+   GLOBAL VARIABLES
+   ========================================================= */
 
 let supabaseClient = null;
 
@@ -547,6 +642,11 @@ let selectedRequestId = null;
 function initializeSupabase() {
 
   try {
+
+    console.log(
+      "Starting FrostTech Supabase initialization..."
+    );
+
 
     if (
       !SUPABASE_URL ||
@@ -585,6 +685,7 @@ function initializeSupabase() {
 
     ready = true;
 
+
     console.log(
       "FrostTech Supabase initialized successfully."
     );
@@ -607,39 +708,846 @@ function initializeSupabase() {
 }
 
 
+
 /* =========================================================
    LOGIN
    ========================================================= */
 
 async function loginAdmin() {
 
+  console.log(
+    "Login button clicked."
+  );
+
+
   const message =
     document.getElementById(
       "loginMessage"
     );
+
 
   const email =
     document.getElementById(
       "loginEmail"
     ).value.trim();
 
+
   const password =
     document.getElementById(
       "loginPassword"
     ).value;
 
-if (!ready) {
+
+  if (!ready) {
+
+    message.innerHTML =
+      '<div class="error">' +
+      'Supabase is not initialized. Please check your Supabase URL and publishable key.' +
+      '</div>';
+
+    console.error(
+      "Login stopped because Supabase is not ready."
+    );
+
+    return;
+  }
+
+
+  if (!email || !password) {
+
+    message.innerHTML =
+      '<div class="error">' +
+      'Please enter your email and password.' +
+      '</div>';
+
+    return;
+  }
+
 
   message.innerHTML =
-    "Supabase is not initialized. Please wait for the system to connect and try again.";
+    '<div class="loading">' +
+    'Logging in...' +
+    '</div>';
 
-  return;
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.auth.signInWithPassword({
+        email: email,
+        password: password
+      });
+
+
+    if (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+      message.innerHTML =
+        '<div class="error">' +
+        error.message +
+        '</div>';
+
+      return;
+    }
+
+
+    if (!data || !data.user) {
+
+      message.innerHTML =
+        '<div class="error">' +
+        'Login failed. No user session was returned.' +
+        '</div>';
+
+      return;
+    }
+
+
+    console.log(
+      "FrostTech Admin login successful."
+    );
+
+
+    message.innerHTML =
+      '<div class="success-message">' +
+      'Login successful.' +
+      '</div>';
+
+
+    showAdminApp(
+      data.user
+    );
+
+
+    await loadQuoteRequests();
+
+    await loadSuppliers();
+
+    await loadProducts();
+
+    await loadSupplierQuotations();
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected login error:",
+      error
+    );
+
+    message.innerHTML =
+      '<div class="error">' +
+      'An unexpected error occurred during login.' +
+      '</div>';
+
+  }
 
 }
 
-await checkSession();
+
+
+/* =========================================================
+   CHECK EXISTING SESSION
+   ========================================================= */
+
+async function checkSession() {
+
+  console.log(
+    "Checking existing FrostTech session..."
+  );
+
+
+  if (!ready) {
+
+    console.log(
+      "Supabase is not ready. Session check skipped."
+    );
+
+    return;
+  }
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient.auth.getSession();
+
+
+    if (error) {
+
+      console.error(
+        "Session check error:",
+        error
+      );
+
+      return;
+    }
+
+
+    if (
+      data &&
+      data.session &&
+      data.session.user
+    ) {
+
+      console.log(
+        "Existing FrostTech session found."
+      );
+
+
+      showAdminApp(
+        data.session.user
+      );
+
+
+      await loadQuoteRequests();
+
+      await loadSuppliers();
+
+      await loadProducts();
+
+      await loadSupplierQuotations();
+
+    }
+
+    else {
+
+      console.log(
+        "No active FrostTech session."
+      );
+
+      showLoginScreen();
+
+    }
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected session error:",
+      error
+    );
+
+  }
 
 }
+
+
+
+/* =========================================================
+   SHOW LOGIN SCREEN
+   ========================================================= */
+
+function showLoginScreen() {
+
+  document
+    .getElementById("loginScreen")
+    .classList
+    .remove("hidden");
+
+
+  document
+    .getElementById("adminApp")
+    .classList
+    .add("hidden");
+
+}
+
+
+
+/* =========================================================
+   SHOW ADMIN APPLICATION
+   ========================================================= */
+
+function showAdminApp(user) {
+
+  document
+    .getElementById("loginScreen")
+    .classList
+    .add("hidden");
+
+
+  document
+    .getElementById("adminApp")
+    .classList
+    .remove("hidden");
+
+
+  const emailElement =
+    document.getElementById(
+      "loggedInEmail"
+    );
+
+
+  if (emailElement) {
+
+    emailElement.textContent =
+      user.email || "";
+
+  }
+
+}
+
+
+
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
+async function logoutAdmin() {
+
+  if (!ready) {
+
+    return;
+  }
+
+
+  try {
+
+    const {
+      error
+    } =
+      await supabaseClient.auth.signOut();
+
+
+    if (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+      return;
+    }
+
+
+    console.log(
+      "FrostTech Admin logged out."
+    );
+
+
+    selectedRequestId = null;
+
+
+    showLoginScreen();
+
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected logout error:",
+      error
+    );
+
+  }
+
+}
+
+
+
+/* =========================================================
+   LOAD QUOTE REQUESTS
+   ========================================================= */
+
+async function loadQuoteRequests() {
+
+  const list =
+    document.getElementById(
+      "quoteRequestsList"
+    );
+
+
+  if (!ready) {
+
+    list.innerHTML =
+      '<div class="error">' +
+      'Supabase is not ready.' +
+      '</div>';
+
+    return;
+  }
+
+
+  list.innerHTML =
+    '<div class="loading">' +
+    'Loading quote requests...' +
+    '</div>';
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("quote_requests")
+        .select("*")
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
+
+
+    if (error) {
+
+      console.error(
+        "Quote request error:",
+        error
+      );
+
+      list.innerHTML =
+        '<div class="error">' +
+        error.message +
+        '</div>';
+
+      return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+      list.innerHTML =
+        '<p>No customer quote requests found.</p>';
+
+      return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    data.forEach(
+      function(request) {
+
+        const div =
+          document.createElement(
+            "div"
+          );
+
+
+        div.className =
+          "request";
+
+
+        div.innerHTML = `
+
+          <h3>
+            Customer Quote Request
+          </h3>
+
+          <p>
+            <strong>Request ID:</strong>
+            ${request.id || ""}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            ${request.status || ""}
+          </p>
+
+          <p>
+            <strong>Created:</strong>
+            ${request.created_at || ""}
+          </p>
+
+          <button
+            type="button"
+            onclick="selectQuoteRequest('${request.id}')"
+          >
+            Select Request
+          </button>
+
+        `;
+
+
+        list.appendChild(
+          div
+        );
+
+      }
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected quote request error:",
+      error
+    );
+
+    list.innerHTML =
+      '<div class="error">' +
+      'Unable to load quote requests.' +
+      '</div>';
+
+  }
+
+}
+
+
+
+/* =========================================================
+   SELECT QUOTE REQUEST
+   ========================================================= */
+
+async function selectQuoteRequest(
+  requestId
+) {
+
+  selectedRequestId =
+    requestId;
+
+
+  const card =
+    document.getElementById(
+      "selectedRequestCard"
+    );
+
+
+  const details =
+    document.getElementById(
+      "selectedRequestDetails"
+    );
+
+
+  const form =
+    document.getElementById(
+      "supplierQuoteForm"
+    );
+
+
+  card.classList.remove(
+    "hidden"
+  );
+
+
+  form.classList.remove(
+    "hidden"
+  );
+
+
+  details.innerHTML =
+    "<p>Loading request...</p>";
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("quote_requests")
+        .select("*")
+        .eq(
+          "id",
+          requestId
+        )
+        .single();
+
+
+    if (error) {
+
+      console.error(
+        "Selected request error:",
+        error
+      );
+
+      details.innerHTML =
+        '<div class="error">' +
+        error.message +
+        '</div>';
+
+      return;
+    }
+
+
+    details.innerHTML = `
+
+      <p>
+        <strong>Request ID:</strong>
+        ${data.id || ""}
+      </p>
+
+      <p>
+        <strong>Status:</strong>
+        ${data.status || ""}
+      </p>
+
+      <p>
+        <strong>Created:</strong>
+        ${data.created_at || ""}
+      </p>
+
+    `;
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected request selection error:",
+      error
+    );
+
+    details.innerHTML =
+      '<div class="error">' +
+      'Unable to load selected request.' +
+      '</div>';
+
+  }
+
+}
+
+
+
+/* =========================================================
+   LOAD SUPPLIERS
+   ========================================================= */
+
+async function loadSuppliers() {
+
+  const select =
+    document.getElementById(
+      "supplierSelect"
+    );
+
+
+  if (!ready || !select) {
+
+    return;
+  }
+
+
+  try {
+
+    const {
+      data,
+      error
+    } =
+      await supabaseClient
+        .from("suppliers")
+        .select("*")
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
+
+
+    if (error) {
+
+      console.error(
+        "Supplier quotation loading error:",
+        error
+      );
+
+      list.innerHTML =
+        '<div class="error">' +
+        error.message +
+        '</div>';
+
+      return;
+    }
+
+
+    if (!data || data.length === 0) {
+
+      list.innerHTML =
+        '<p>No supplier quotations found.</p>';
+
+      return;
+    }
+
+
+    list.innerHTML = "";
+
+
+    data.forEach(
+      function(quote) {
+
+        const div =
+          document.createElement(
+            "div"
+          );
+
+
+        div.className =
+          "quotation";
+
+
+        div.innerHTML = `
+
+          <h3>
+            Supplier Quotation
+          </h3>
+
+          <p>
+            <strong>Quotation ID:</strong>
+            ${quote.id || ""}
+          </p>
+
+          <p>
+            <strong>Status:</strong>
+            ${quote.status || ""}
+          </p>
+
+          <p>
+            <strong>Quantity:</strong>
+            ${quote.quantity || 0}
+          </p>
+
+          <p>
+            <strong>Supplier Unit Price:</strong>
+            ₦${Number(
+              quote.supplier_unit_price || 0
+            ).toFixed(2)}
+          </p>
+
+          <p>
+            <strong>Supplier Total:</strong>
+            ₦${Number(
+              quote.supplier_total || 0
+            ).toFixed(2)}
+          </p>
+
+          <p>
+            <strong>FrostTech Margin:</strong>
+            ₦${Number(
+              quote.frosttech_margin_amount || 0
+            ).toFixed(2)}
+          </p>
+
+          <p>
+            <strong>Customer Total:</strong>
+            ₦${Number(
+              quote.customer_total || 0
+            ).toFixed(2)}
+          </p>
+
+        `;
+
+
+        list.appendChild(
+          div
+        );
+
+      }
+    );
+
+  }
+
+  catch (error) {
+
+    console.error(
+      "Unexpected quotation loading error:",
+      error
+    );
+
+    list.innerHTML =
+      '<div class="error">' +
+      'Unable to load supplier quotations.' +
+      '</div>';
+
+  }
+
+}
+
+
+
+/* =========================================================
+   AUTO-CALCULATE WHEN VALUES CHANGE
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  function() {
+
+    const calculationInputs = [
+
+      "quantityInput",
+
+      "unitPriceInput",
+
+      "deliveryInput",
+
+      "marginInput"
+
+    ];
+
+
+    calculationInputs.forEach(
+      function(id) {
+
+        const element =
+          document.getElementById(id);
+
+
+        if (element) {
+
+          element.addEventListener(
+            "input",
+            calculateQuotation
+          );
+
+        }
+
+      }
+    );
+
+  }
+);
+
+
+
+/* =========================================================
+   PAGE START
+   ========================================================= */
+
+document.addEventListener(
+  "DOMContentLoaded",
+  async function() {
+
+    console.log(
+      "FrostTech Admin JavaScript loaded successfully."
+    );
+
+
+    const initialized =
+      initializeSupabase();
+
+
+    if (!initialized) {
+
+      console.error(
+        "FrostTech Admin could not initialize Supabase."
+      );
+
+      return;
+    }
+
+
+    await checkSession();
+
+  }
 );
 
 
@@ -649,3 +1557,4 @@ await checkSession();
 </body>
 
 </html>
+  
