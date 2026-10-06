@@ -33,7 +33,9 @@
 
   <h1>FrostTech Admin</h1>
 
-  <p>Admin system loading...</p>
+  <p>
+    Admin system loading...
+  </p>
 
 
   <!-- =====================================================
@@ -68,7 +70,6 @@
       "<p>Supabase connection section loaded successfully.</p>"
     );
 
-
   </script>
 
 
@@ -79,7 +80,12 @@
 
   <hr>
 
-  <h2>Admin Login</h2>
+  <h2>
+    Admin Login
+  </h2>
+
+
+  <!-- EMAIL -->
 
   <label for="adminEmail">
     Email
@@ -91,10 +97,14 @@
     type="email"
     id="adminEmail"
     placeholder="Enter admin email"
+    autocomplete="username"
   >
+
 
   <br><br>
 
+
+  <!-- PASSWORD -->
 
   <label for="adminPassword">
     Password
@@ -106,10 +116,14 @@
     type="password"
     id="adminPassword"
     placeholder="Enter admin password"
+    autocomplete="current-password"
   >
+
 
   <br><br>
 
+
+  <!-- LOGIN BUTTON -->
 
   <button
     type="button"
@@ -119,12 +133,14 @@
   </button>
 
 
+  <!-- LOGIN MESSAGE -->
+
   <p id="loginMessage"></p>
 
 
   <!-- =====================================================
-       SECTION 3
-       LOGIN BUTTON TEST
+       SECTION 3C
+       SUPABASE AUTHENTICATION
        ===================================================== -->
 
   <script>
@@ -133,18 +149,208 @@
       .getElementById("adminLoginButton")
       .addEventListener(
         "click",
-        function () {
+        async function () {
 
-          alert(
-            "FrostTech Admin Login button works!"
+
+          console.log(
+            "FrostTech Admin Login button clicked."
           );
+
+
+          const email =
+            document
+              .getElementById("adminEmail")
+              .value
+              .trim();
+
+
+          const password =
+            document
+              .getElementById("adminPassword")
+              .value;
+
+
+          const loginMessage =
+            document.getElementById(
+              "loginMessage"
+            );
+
+
+          /* =================================================
+             CHECK EMAIL
+             ================================================= */
+
+          if (!email) {
+
+            loginMessage.textContent =
+              "Please enter your admin email.";
+
+            return;
+
+          }
+
+
+          /* =================================================
+             CHECK PASSWORD
+             ================================================= */
+
+          if (!password) {
+
+            loginMessage.textContent =
+              "Please enter your admin password.";
+
+            return;
+
+          }
+
+
+          /* =================================================
+             SHOW LOGIN STATUS
+             ================================================= */
+
+          loginMessage.textContent =
+            "Logging in...";
+
+
+          /* =================================================
+             DISABLE BUTTON WHILE LOGIN IS PROCESSING
+             ================================================= */
+
+          const loginButton =
+            document.getElementById(
+              "adminLoginButton"
+            );
+
+
+          loginButton.disabled = true;
+
+
+          loginButton.textContent =
+            "Logging in...";
+
+
+          try {
+
+
+            /* ===============================================
+               SUPABASE AUTHENTICATION
+               =============================================== */
+
+            const {
+              data,
+              error
+            } =
+              await supabaseClient.auth.signInWithPassword({
+
+                email: email,
+
+                password: password
+
+              });
+
+
+            /* ===============================================
+               LOGIN ERROR
+               =============================================== */
+
+            if (error) {
+
+              console.error(
+                "FrostTech login error:",
+                error
+              );
+
+
+              loginMessage.textContent =
+                "Login failed: " +
+                error.message;
+
+
+              loginButton.disabled = false;
+
+              loginButton.textContent =
+                "Login";
+
+
+              return;
+
+            }
+
+
+            /* ===============================================
+               LOGIN SUCCESS
+               =============================================== */
+
+            console.log(
+              "FrostTech admin login successful.",
+              data
+            );
+
+
+            loginMessage.textContent =
+              "Admin login successful.";
+
+
+            loginButton.textContent =
+              "Logged In";
+
+
+            loginButton.disabled = true;
+
+
+          }
+
+          catch (error) {
+
+
+            console.error(
+              "Unexpected FrostTech login error:",
+              error
+            );
+
+
+            loginMessage.textContent =
+              "An unexpected error occurred. Please try again.";
+
+
+            loginButton.disabled = false;
+
+            loginButton.textContent =
+              "Login";
+
+
+          }
+
 
         }
       );
 
+
   </script>
+
+
+  <!-- =====================================================
+       SECTION 4
+       NOT ACTIVE YET
+       ===================================================== -->
+
+  <!--
+
+    Section 4 will be added only after
+    Section 3 Supabase authentication
+    has been successfully tested.
+
+    Planned Section 4:
+
+    - Check existing admin session
+    - Maintain login session
+    - Admin dashboard
+    - Logout
+    - Customer quote requests
+
+  -->
 
 
 </body>
 
-</html>
+  </html>
