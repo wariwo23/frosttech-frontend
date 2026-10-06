@@ -12,9 +12,29 @@
 
   <title>FrostTech Admin</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 </head>
 
+<script>
 
+  const SUPABASE_URL =
+    "YOUR ACTUAL SUPABASE PROJECT URL";
+
+  const SUPABASE_ANON_KEY =
+    "YOUR ACTUAL SUPABASE ANON KEY";
+
+  const supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+  console.log(
+    "FrostTech Supabase initialized successfully."
+  );
+
+</script>
 <body>
 
   <h1>FrostTech Admin</h1>
