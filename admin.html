@@ -4,22 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>FrostTech Admin</title>
-<style>
-body{font-family:Arial;margin:0;background:#f4f6f8;color:#222}
-header{background:#0b5ed7;color:#fff;text-align:center;padding:18px}
-main{max-width:1000px;margin:20px auto;padding:12px}
-.card{background:#fff;padding:18px;margin-bottom:18px;border-radius:10px;box-shadow:0 2px 7px #ddd}
-input,button{width:100%;padding:12px;margin:7px 0;border-radius:6px;box-sizing:border-box;font-size:16px}
-input{border:1px solid #ccc}button{border:0;background:#0b5ed7;color:#fff;font-weight:bold}
-button:disabled{opacity:.5}.danger{background:#dc3545}.ok{background:#198754}.warn{background:#fd7e14}
-.hidden{display:none}.error{color:#dc3545;font-weight:bold}.success{color:#198754;font-weight:bold}
-.item{border:1px solid #ddd;padding:15px;margin:12px 0;border-radius:8px;background:#fafafa}
-.selected{border:2px solid #198754;background:#f1fff7}
-.status{background:#eee;padding:4px 7px;border-radius:5px;font-size:13px;font-weight:bold}
-.price{font-size:20px;font-weight:bold}.total{font-size:21px;font-weight:bold;color:#198754}
-.small{font-size:12px;color:#666;word-break:break-word}
-@media(max-width:600px){main{padding:8px}}
-</style>
+<link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
@@ -31,448 +16,80 @@ button:disabled{opacity:.5}.danger{background:#dc3545}.ok{background:#198754}.wa
 
 <main>
 
-<div class="card">
+<section class="card">
 <h2>System Status</h2>
-<div id="system">Connecting...</div>
-</div>
+<div id="systemStatus">Connecting...</div>
+</section>
 
-<div id="login" class="card">
+<section id="loginSection" class="card">
 <h2>Admin Login</h2>
-<input id="email" type="email" placeholder="Admin email">
-<input id="password" type="password" placeholder="Password">
-<button id="loginBtn" type="button">Login</button>
-<div id="loginMsg"></div>
-</div>
 
-<div id="dash" class="hidden">
+<input id="email" type="email"
+placeholder="Admin email">
+
+<input id="password" type="password"
+placeholder="Password">
+
+<button id="loginBtn" type="button">
+Login
+</button>
+
+<div id="loginMessage"></div>
+</section>
+
+<section id="dashboard" class="hidden">
 
 <div class="card">
 <h2>Admin Dashboard</h2>
-<p>Logged in as: <b id="adminEmail"></b></p>
-<button id="logoutBtn" class="danger" type="button">Logout</button>
+
+<p>
+Logged in as:
+<strong id="adminEmail"></strong>
+</p>
+
+<button id="logoutBtn"
+class="danger"
+type="button">
+Logout
+</button>
 </div>
 
 <div class="card">
 <h2>Customer Quote Requests</h2>
-<button id="refreshReq" type="button">Refresh Requests</button>
-<div id="reqMsg"></div>
-<div id="requests">Loading...</div>
+
+<button id="refreshRequestsBtn"
+type="button">
+Refresh Requests
+</button>
+
+<div id="requestMessage"></div>
+
+<div id="requests">
+Loading customer requests...
+</div>
 </div>
 
 <div class="card">
 <h2>Supplier Quotations</h2>
-<button id="refreshQuotes" type="button">Refresh Supplier Quotations</button>
-<div id="quoteMsg"></div>
-<div id="quotes">Loading...</div>
+
+<button id="refreshQuotesBtn"
+type="button">
+Refresh Supplier Quotations
+</button>
+
+<div id="quoteMessage"></div>
+
+<div id="quotes">
+Loading supplier quotations...
+</div>
 </div>
 
-</div>
+</section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
+<script src="admin.js"></script>
 
-const URL="https://nftxptjpgidcsgtaltjn.supabase.co";
-const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
-const sb=supabase.createClient(URL,KEY);
-
-const $=id=>document.getElementById(id);
-const money=n=>Number(n||0).toLocaleString("en-NG");
-const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
-
-function status(t,c=""){ $("system").textContent=t;$("system").className=c }
-
-function showLogin(){
-$("login").classList.remove("hidden");
-$("dash").classList.add("hidden")
-}
-
-function showDash(email){
-$("login").classList.add("hidden");
-$("dash").classList.remove("hidden");
-$("adminEmail").textContent=email
-}
-
-async function checkSession(){
-
-try{
-
-const {data,error}=await sb.auth.getSession();
-if(error)throw error;
-
-if(!data.session){
-showLogin();
-return
-}
-
-const user=data.session.user;
-
-const {data:p,error:pe}=await sb
-.from("profiles")
-.select("*")
-.eq("id",user.id)
-.maybeSingle();
-
-if(pe)throw pe;
-
-if(!p){
-await sb.auth.signOut();
-$("loginMsg").textContent="No FrostTech profile found.";
-$("loginMsg").className="error";
-showLogin();
-return
-}
-
-if(p.role!=="admin"){
-await sb.auth.signOut();
-$("loginMsg").textContent="Access denied. Admin account required.";
-$("loginMsg").className="error";
-showLogin();
-return
-}
-
-if(p.is_active===false){
-await sb.auth.signOut();
-$("loginMsg").textContent="Admin account is inactive.";
-$("loginMsg").className="error";
-showLogin();
-return
-}
-
-showDash(user.email);
-status("Admin system connected successfully.","success");
-loadRequests();
-loadQuotes();
-
-}catch(e){
-console.error(e);
-status("Session error: "+e.message,"error")
-}
-
-}
-
-async function login(){
-
-const email=$("email").value.trim();
-const password=$("password").value;
-
-if(!email||!password){
-$("loginMsg").textContent="Enter email and password.";
-$("loginMsg").className="error";
-return
-}
-
-$("loginBtn").disabled=true;
-$("loginBtn").textContent="Logging in...";
-
-try{
-
-const {error}=await sb.auth.signInWithPassword({email,password});
-if(error)throw error;
-
-await checkSession();
-
-}catch(e){
-
-$("loginMsg").textContent="Login failed: "+e.message;
-$("loginMsg").className="error";
-
-}finally{
-
-$("loginBtn").disabled=false;
-$("loginBtn").textContent="Login"
-
-}
-
-}
-
-async function logout(){
-
-await sb.auth.signOut();
-$("email").value="";
-$("password").value="";
-$("requests").innerHTML="";
-$("quotes").innerHTML="";
-showLogin();
-status("Logged out successfully.")
-
-}
-
-async function loadRequests(){
-
-$("requests").textContent="Loading...";
-
-try{
-
-let r=await sb.from("quote_requests")
-.select("*").order("created_at",{ascending:false});
-
-if(r.error)
-r=await sb.from("customer_requests")
-.select("*").order("created_at",{ascending:false});
-
-if(r.error)throw r.error;
-
-if(!r.data.length){
-$("requests").innerHTML="<p>No customer requests found.</p>";
-return
-}
-
-$("requests").innerHTML="";
-
-r.data.forEach(x=>{
-
-let number=x.request_number||x.request_no||x.reference||x.id;
-let customer=x.customer_name||x.name||x.full_name||"N/A";
-let phone=x.phone||x.customer_phone||"N/A";
-let product=x.product_name||x.product||"N/A";
-let qty=x.quantity||1;
-let address=x.delivery_address||x.address||"N/A";
-
-$("requests").innerHTML+=`
-
-<div class="item">
-<h3>Request ${esc(number)}</h3>
-<p><b>Status:</b> <span class="status">${esc(x.status||"pending")}</span></p>
-<p><b>Customer:</b> ${esc(customer)}</p>
-<p><b>Phone:</b> ${esc(phone)}</p>
-<p><b>Product:</b> ${esc(product)}</p>
-<p><b>Quantity:</b> ${esc(qty)}</p>
-<p><b>Delivery:</b> ${esc(address)}</p>
-<p class="small">ID: ${esc(x.id)}</p>
-</div>`
-
-})
-
-}catch(e){
-
-$("requests").innerHTML=
-`<p class="error">Unable to load requests: ${esc(e.message)}</p>`
-
-}
-
-}
-
-async function loadQuotes(){
-
-$("quotes").textContent="Loading...";
-
-try{
-
-const {data,error}=await sb
-.from("supplier_quotes")
-.select("*")
-.order("created_at",{ascending:false});
-
-if(error)throw error;
-
-if(!data.length){
-$("quotes").innerHTML="<p>No supplier quotations found.</p>";
-return
-}
-
-$("quotes").innerHTML="";
-
-data.forEach(q=>{
-
-let st=q.status||"submitted";
-let cq=q.customer_quote_status||"draft";
-let selected=st==="selected";
-
-let card=document.createElement("div");
-card.className="item"+(selected?" selected":"");
-
-card.innerHTML=`
-
-<h3>Supplier Quotation</h3>
-
-<p><b>Status:</b>
-<span class="status">${esc(st)}</span></p>
-
-<p><b>Customer Quote:</b>
-<span class="status">${esc(cq)}</span></p>
-
-<p><b>Request ID:</b> ${esc(q.request_id)}</p>
-
-<p><b>Supplier ID:</b> ${esc(q.supplier_id)}</p>
-
-<p><b>Product ID:</b> ${esc(q.product_id)}</p>
-
-<p><b>Quantity:</b> ${esc(q.quantity||1)}</p>
-
-<p><b>Supplier Total:</b>
-<span class="price">₦${money(q.supplier_total)}</span></p>
-
-<p><b>Delivery:</b>
-₦${money(q.delivery_cost)}</p>
-
-<p><b>FrostTech Margin:</b>
-${money(q.frosttech_margin_percent)}%</p>
-
-<p><b>Margin Amount:</b>
-₦${money(q.frosttech_margin_amount)}</p>
-
-<p><b>Customer Total:</b>
-<span class="total">₦${money(q.customer_total)}</span></p>
-
-<p class="small">Quote ID: ${esc(q.id)}</p>
-
-`;
-
-let row=document.createElement("div");
-
-let select=document.createElement("button");
-select.textContent=selected?"Selected":"Select Quote";
-select.className="ok";
-select.disabled=selected;
-select.onclick=()=>selectQuote(q);
-
-let reject=document.createElement("button");
-reject.textContent=st==="rejected"?"Rejected":"Reject";
-reject.className="danger";
-reject.disabled=st==="rejected";
-reject.onclick=()=>rejectQuote(q);
-
-let prepare=document.createElement("button");
-prepare.textContent=cq==="ready"?"Customer Quote Ready":"Prepare Customer Quote";
-prepare.className="warn";
-prepare.disabled=!selected||cq==="ready";
-prepare.onclick=()=>prepareQuote(q);
-
-row.append(select,reject,prepare);
-card.appendChild(row);
-$("quotes").appendChild(card)
-
-})
-
-}catch(e){
-
-$("quotes").innerHTML=
-`<p class="error">Unable to load quotations: ${esc(e.message)}</p>`
-
-}
-
-}
-
-async function selectQuote(q){
-
-if(!confirm("Select this supplier quotation?"))return;
-
-try{
-
-/*
-Reset any other selected quote for
-the same customer request.
-*/
-
-const {data:others,error:oe}=await sb
-.from("supplier_quotes")
-.select("id")
-.eq("request_id",q.request_id)
-.eq("status","selected")
-.neq("id",q.id);
-
-if(oe)throw oe;
-
-for(const x of others||[]){
-
-const {error}=await sb
-.from("supplier_quotes")
-.update({status:"submitted"})
-.eq("id",x.id);
-
-if(error)throw error
-
-}
-
-const {error}=await sb
-.from("supplier_quotes")
-.update({status:"selected"})
-.eq("id",q.id);
-
-if(error)throw error;
-
-alert("Supplier quotation selected.");
-loadQuotes();
-
-}catch(e){
-
-alert("Unable to select quotation: "+e.message)
-
-}
-
-}
-
-async function rejectQuote(q){
-
-if(!confirm("Reject this supplier quotation?"))return;
-
-try{
-
-const {error}=await sb
-.from("supplier_quotes")
-.update({status:"rejected"})
-.eq("id",q.id);
-
-if(error)throw error;
-
-alert("Supplier quotation rejected.");
-loadQuotes();
-
-}catch(e){
-
-alert("Unable to reject quotation: "+e.message)
-
-}
-
-}
-
-async function prepareQuote(q){
-
-if(q.status!=="selected"){
-alert("Select the supplier quotation first.");
-return
-}
-
-if(!confirm("Prepare this quotation for the customer?"))return;
-
-try{
-
-const {error}=await sb
-.from("supplier_quotes")
-.update({customer_quote_status:"ready"})
-.eq("id",q.id);
-
-if(error)throw error;
-
-alert("Customer quote prepared successfully.");
-loadQuotes();
-
-}catch(e){
-
-alert("Unable to prepare customer quote: "+e.message)
-
-}
-
-}
-
-$("loginBtn").addEventListener("click",login);
-$("logoutBtn").addEventListener("click",logout);
-$("refreshReq").addEventListener("click",loadRequests);
-$("refreshQuotes").addEventListener("click",loadQuotes);
-
-$("password").addEventListener("keydown",e=>{
-if(e.key==="Enter")login()
-});
-
-sb.auth.onAuthStateChange((event,session)=>{
-if(session&&session.user)checkSession();
-else showLogin()
-});
-
-status("Supabase connection initialized successfully.","success");
-checkSession();
-
-</script>
 </body>
-  </html>
+</html> 
