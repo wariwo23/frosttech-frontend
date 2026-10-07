@@ -5,54 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>FrostTech Admin</title>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f4f6f8;
-        }
-
-        .container {
-            max-width: 700px;
-            margin: 40px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-        }
-
-        .status {
-            padding: 15px;
-            margin-top: 20px;
-            background: #eef6ff;
-            border-radius: 6px;
-        }
-    </style>
 </head>
 
 <body>
 
-<div class="container">
+<h1>FrostTech Admin</h1>
 
-    <h1>FrostTech Admin</h1>
+<p>HVAC and Refrigeration Marketplace</p>
 
-    <p>HVAC and Refrigeration Marketplace</p>
+<p id="status">
+    Checking Supabase library...
+</p>
 
-    <div class="status">
-        <strong>Step 1:</strong>
-        Admin page loaded successfully.
-    </div>
-
-    <div class="status" id="test">
-        JavaScript is being tested...
-    </div>
-
-</div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-    document.getElementById("test").innerHTML =
-        "<strong>Step 2A:</strong> JavaScript is working successfully.";
+    document.getElementById("status").innerHTML =
+        "<strong>Step 2B:</strong> Supabase library loaded.";
 
 </script>
 
