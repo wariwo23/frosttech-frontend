@@ -1,96 +1,235 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8">
+
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1.0"
+  >
+
+  <title>FrostTech Admin</title>
+
+  <!-- FrostTech Admin CSS -->
   <link rel="stylesheet" href="admin.css">
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FrostTech Admin</title>
-<link rel="stylesheet" href="admin.css">
 </head>
 
 <body>
 
-<header>
-<h1>FrostTech Admin</h1>
-<p>HVAC and Refrigeration Marketplace</p>
-</header>
+  <!-- =====================================================
+       HEADER
+       ===================================================== -->
 
-<main>
+  <header>
+    <div class="container">
 
-<section class="card">
-<h2>System Status</h2>
-<div id="systemStatus">Connecting...</div>
-</section>
+      <h1>
+        FrostTech Admin
+      </h1>
 
-<section id="loginSection" class="card">
-<h2>Admin Login</h2>
+      <p>
+        HVAC and Refrigeration Marketplace
+      </p>
 
-<input id="email" type="email"
-placeholder="Admin email">
+    </div>
+  </header>
 
-<input id="password" type="password"
-placeholder="Password">
 
-<button id="loginBtn" type="button">
-Login
-</button>
+  <main class="container">
 
-<div id="loginMessage"></div>
-</section>
+    <!-- ===================================================
+         SYSTEM STATUS
+         =================================================== -->
 
-<section id="dashboard" class="hidden">
+    <div
+      id="systemStatus"
+      class="status status-warning"
+    >
+      Checking Supabase connection...
+    </div>
 
-<div class="card">
-<h2>Admin Dashboard</h2>
 
-<p>
-Logged in as:
-<strong id="adminEmail"></strong>
-</p>
+    <!-- ===================================================
+         GENERAL MESSAGE
+         =================================================== -->
 
-<button id="logoutBtn"
-class="danger"
-type="button">
-Logout
-</button>
-</div>
+    <div
+      id="message"
+      class="message"
+      style="display:none;"
+    ></div>
 
-<div class="card">
-<h2>Customer Quote Requests</h2>
 
-<button id="refreshRequestsBtn"
-type="button">
-Refresh Requests
-</button>
+    <!-- ===================================================
+         LOGIN
+         =================================================== -->
 
-<div id="requestMessage"></div>
+    <section id="loginSection">
 
-<div id="requests">
-Loading customer requests...
-</div>
-</div>
+      <h2>
+        Admin Login
+      </h2>
 
-<div class="card">
-<h2>Supplier Quotations</h2>
+      <p>
+        Sign in to access the FrostTech Admin Dashboard.
+      </p>
 
-<button id="refreshQuotesBtn"
-type="button">
-Refresh Supplier Quotations
-</button>
+      <form
+        id="loginForm"
+        onsubmit="event.preventDefault(); loginAdmin();"
+      >
 
-<div id="quoteMessage"></div>
+        <label for="email">
+          Email
+        </label>
 
-<div id="quotes">
-Loading supplier quotations...
-</div>
-</div>
+        <input
+          type="email"
+          id="email"
+          placeholder="Admin email"
+          autocomplete="username"
+          required
+        >
 
-</section>
+        <label for="password">
+          Password
+        </label>
 
-</main>
+        <input
+          type="password"
+          id="password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        >
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="admin.js"></script>
+        <button
+          type="submit"
+          id="loginBtn"
+          class="btn-primary"
+        >
+          Login
+        </button>
+
+      </form>
+
+    </section>
+
+
+    <!-- ===================================================
+         ADMIN DASHBOARD
+         =================================================== -->
+
+    <section
+      id="dashboard"
+      style="display:none;"
+    >
+
+      <!-- Dashboard Header -->
+
+      <div class="dashboard-header">
+
+        <button
+          type="button"
+          id="logoutBtn"
+          class="btn-danger"
+        >
+          Logout
+        </button>
+
+        <h2>
+          Admin Dashboard
+        </h2>
+
+        <div class="logged-user">
+          Logged in as:
+          <strong id="loggedUser">
+            Administrator
+          </strong>
+        </div>
+
+      </div>
+
+
+      <!-- =================================================
+           CUSTOMER QUOTE REQUESTS
+           ================================================= -->
+
+      <section class="admin-section">
+
+        <h2>
+          Customer Quote Requests
+        </h2>
+
+        <div class="actions">
+
+          <button
+            type="button"
+            id="refreshBtn"
+            class="btn-primary"
+          >
+            Refresh Requests
+          </button>
+
+        </div>
+
+        <div
+          id="quoteRequests"
+          style="margin-top:15px;"
+        >
+          <div class="loading">
+            Loading quote requests...
+          </div>
+        </div>
+
+      </section>
+
+
+      <!-- =================================================
+           SUPPLIER QUOTATIONS
+           ================================================= -->
+
+      <section class="admin-section">
+
+        <h2>
+          Supplier Quotations
+        </h2>
+
+        <p>
+          Review supplier quotations, compare pricing,
+          and select the quotation to use for the customer.
+        </p>
+
+        <div
+          id="supplierQuotes"
+        >
+          <div class="loading">
+            Loading supplier quotations...
+          </div>
+        </div>
+
+      </section>
+
+
+    </section>
+
+  </main>
+
+
+  <!-- =====================================================
+       SUPABASE JAVASCRIPT LIBRARY
+       ===================================================== -->
+
+  <script
+    src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"
+  ></script>
+
+
+  <!-- =====================================================
+       FROSTTECH ADMIN JAVASCRIPT
+       ===================================================== -->
+
+  <script src="admin.js"></script>
 
 </body>
-</html> 
+</html>
