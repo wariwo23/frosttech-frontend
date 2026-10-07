@@ -5,24 +5,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>FrostTech Admin</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f6f8;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+    </style>
 </head>
 
 <body>
 
-<h1>FrostTech Admin</h1>
+<div class="container">
 
-<p>HVAC and Refrigeration Marketplace</p>
+    <h1>FrostTech Admin</h1>
 
-<p id="status">
-    Checking Supabase library...
-</p>
+    <p>HVAC and Refrigeration Marketplace</p>
 
+    <p id="status">
+        Checking Supabase library...
+    </p>
+
+</div>
+
+<!-- Load Supabase -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-    document.getElementById("status").innerHTML =
-        "<strong>Step 2B:</strong> Supabase library loaded.";
+    if (window.supabase) {
+
+        document.getElementById("status").innerHTML =
+            "<strong>Step 2B:</strong> Supabase library loaded successfully.";
+
+    } else {
+
+        document.getElementById("status").innerHTML =
+            "<strong>Step 2B:</strong> Supabase library did NOT load.";
+
+    }
 
 </script>
 
