@@ -21,26 +21,37 @@ const supabaseClient =
 
 
 /* =========================================================
-   DOM HELPERS
+   DOM HELPER
    ========================================================= */
 
 function $(id) {
   return document.getElementById(id);
 }
 
+
+/* =========================================================
+   SHOW / HIDE
+   ========================================================= */
+
 function show(id) {
-  const el = $(id);
-  if (el) el.style.display = "";
+  const element = $(id);
+
+  if (element) {
+    element.style.display = "";
+  }
 }
 
 function hide(id) {
-  const el = $(id);
-  if (el) el.style.display = "none";
+  const element = $(id);
+
+  if (element) {
+    element.style.display = "none";
+  }
 }
 
 
 /* =========================================================
-   MESSAGE DISPLAY
+   GENERAL MESSAGE
    ========================================================= */
 
 function showMessage(message, type = "success") {
@@ -53,7 +64,10 @@ function showMessage(message, type = "success") {
   }
 
   box.textContent = message;
-  box.className = "message message-" + type;
+
+  box.className =
+    "message message-" + type;
+
   box.style.display = "block";
 }
 
@@ -62,44 +76,59 @@ function showMessage(message, type = "success") {
    SYSTEM STATUS
    ========================================================= */
 
-function setSystemStatus(message, type = "success") {
+function setSystemStatus(
+  message,
+  type = "success"
+) {
 
   const box = $("systemStatus");
 
   if (!box) return;
 
   box.textContent = message;
-  box.className = "status status-" + type;
+
+  box.className =
+    "status status-" + type;
 }
 
 
 /* =========================================================
-   LOGIN
+   ADMIN LOGIN
    ========================================================= */
 
 async function loginAdmin() {
 
-  const email = $("email")?.value.trim();
-  const password = $("password")?.value;
+  const email =
+    $("email")?.value.trim();
+
+  const password =
+    $("password")?.value;
 
   if (!email || !password) {
+
     showMessage(
       "Please enter your email and password.",
       "error"
     );
+
     return;
   }
 
-  const button = $("loginBtn");
+  const button =
+    $("loginBtn");
 
   if (button) {
+
     button.disabled = true;
     button.textContent = "Logging in...";
   }
 
   try {
 
-    const { data, error } =
+    const {
+      data,
+      error
+    } =
       await supabaseClient.auth.signInWithPassword({
         email: email,
         password: password
@@ -109,24 +138,36 @@ async function loginAdmin() {
       throw error;
     }
 
-    if (!data.user) {
-      throw new Error("Login was not completed.");
+    if (
+      !data ||
+      !data.user
+    ) {
+      throw new Error(
+        "Login was not completed."
+      );
     }
 
-    await checkAdminProfile(data.user);
+    await checkAdminProfile(
+      data.user
+    );
 
   } catch (error) {
 
-    console.error("Login error:", error);
+    console.error(
+      "Login error:",
+      error
+    );
 
     showMessage(
-      "Login failed: " + error.message,
+      "Login failed: " +
+      error.message,
       "error"
     );
 
   } finally {
 
     if (button) {
+
       button.disabled = false;
       button.textContent = "Login";
     }
@@ -135,17 +176,36 @@ async function loginAdmin() {
 
 
 /* =========================================================
-   ADMIN PROFILE CHECK
+   CHECK ADMIN PROFILE
    ========================================================= */
 
 async function checkAdminProfile(user) {
 
   try {
 
-    const { data, error } =
+    /*
+      IMPORTANT:
+      The profiles table does NOT contain email.
+
+      Email comes from Supabase Auth:
+      user.email
+
+      Profiles contains:
+      id
+      full_name
+      role
+      is_active
+    */
+
+    const {
+      data,
+      error
+    } =
       await supabaseClient
         .from("profiles")
-        .select("id, email, full_name, role, is_active")
+        .select(
+          "id, full_name, role, is_active"
+        )
         .eq("id", user.id)
         .single();
 
@@ -154,27 +214,45 @@ async function checkAdminProfile(user) {
     }
 
     if (!data) {
-      throw new Error("Admin profile not found.");
+
+      throw new Error(
+        "Admin profile not found."
+      );
     }
 
     if (data.role !== "admin") {
+
       await supabaseClient.auth.signOut();
-      throw new Error("This account is not an administrator.");
+
+      throw new Error(
+        "This account is not an administrator."
+      );
     }
 
     if (data.is_active !== true) {
+
       await supabaseClient.auth.signOut();
-      throw new Error("This administrator account is inactive.");
+
+      throw new Error(
+        "This administrator account is inactive."
+      );
     }
 
-    showAdminDashboard(data);
+    showAdminDashboard(
+      data,
+      user
+    );
 
   } catch (error) {
 
-    console.error("Profile check error:", error);
+    console.error(
+      "Profile check error:",
+      error
+    );
 
     showMessage(
-      "Admin verification failed: " + error.message,
+      "Admin verification failed: " +
+      error.message,
       "error"
     );
   }
@@ -185,17 +263,27 @@ async function checkAdminProfile(user) {
    SHOW ADMIN DASHBOARD
    ========================================================= */
 
-function showAdminDashboard(profile) {
+function showAdminDashboard(
+  profile,
+  user
+) {
 
   hide("loginSection");
+
   show("dashboard");
 
-  const userDisplay = $("loggedUser");
+  const userDisplay =
+    $("loggedUser");
 
   if (userDisplay) {
 
+    /*
+      Email comes from Supabase Auth,
+      NOT from profiles.email.
+    */
+
     userDisplay.textContent =
-      profile.email ||
+      user.email ||
       profile.full_name ||
       "Administrator";
   }
@@ -206,6 +294,7 @@ function showAdminDashboard(profile) {
   );
 
   loadQuoteRequests();
+
   loadSupplierQuotes();
 }
 
@@ -218,7 +307,9 @@ async function logoutAdmin() {
 
   try {
 
-    const { error } =
+    const {
+      error
+    } =
       await supabaseClient.auth.signOut();
 
     if (error) {
@@ -226,13 +317,27 @@ async function logoutAdmin() {
     }
 
     hide("dashboard");
+
     show("loginSection");
 
-    const email = $("email");
-    const password = $("password");
+    const email =
+      $("email");
 
-    if (email) email.value = "";
-    if (password) password.value = "";
+    const password =
+      $("password");
+
+    if (email) {
+      email.value = "";
+    }
+
+    if (password) {
+      password.value = "";
+    }
+
+    setSystemStatus(
+      "Please log in as administrator.",
+      "warning"
+    );
 
     showMessage(
       "You have been logged out.",
@@ -241,10 +346,14 @@ async function logoutAdmin() {
 
   } catch (error) {
 
-    console.error("Logout error:", error);
+    console.error(
+      "Logout error:",
+      error
+    );
 
     showMessage(
-      "Logout failed: " + error.message,
+      "Logout failed: " +
+      error.message,
       "error"
     );
   }
@@ -260,17 +369,25 @@ async function checkSession() {
   try {
 
     const {
-      data: { session },
+      data,
       error
-    } = await supabaseClient.auth.getSession();
+    } =
+      await supabaseClient.auth.getSession();
 
     if (error) {
       throw error;
     }
 
-    if (!session || !session.user) {
+    const session =
+      data?.session;
+
+    if (
+      !session ||
+      !session.user
+    ) {
 
       hide("dashboard");
+
       show("loginSection");
 
       setSystemStatus(
@@ -281,13 +398,19 @@ async function checkSession() {
       return;
     }
 
-    await checkAdminProfile(session.user);
+    await checkAdminProfile(
+      session.user
+    );
 
   } catch (error) {
 
-    console.error("Session error:", error);
+    console.error(
+      "Session error:",
+      error
+    );
 
     hide("dashboard");
+
     show("loginSection");
 
     setSystemStatus(
@@ -304,7 +427,8 @@ async function checkSession() {
 
 async function loadQuoteRequests() {
 
-  const container = $("quoteRequests");
+  const container =
+    $("quoteRequests");
 
   if (!container) return;
 
@@ -313,145 +437,192 @@ async function loadQuoteRequests() {
 
   try {
 
-    const { data, error } =
+    const {
+      data,
+      error
+    } =
       await supabaseClient
         .from("quote_requests")
         .select("*")
-        .order("created_at", {
-          ascending: false
-        });
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
 
     if (error) {
       throw error;
     }
 
-    if (!data || data.length === 0) {
+    if (
+      !data ||
+      data.length === 0
+    ) {
 
       container.innerHTML =
-        '<div class="empty-state">No customer quote requests found.</div>';
+        '<div class="empty-state">' +
+        'No customer quote requests found.' +
+        '</div>';
 
       return;
     }
 
     container.innerHTML = "";
 
-    data.forEach(request => {
+    data.forEach(
+      request => {
 
-      const card =
-        document.createElement("div");
+        const card =
+          document.createElement(
+            "div"
+          );
 
-      card.className =
-        "card quote-card";
+        card.className =
+          "card quote-card";
 
-      const requestNumber =
-        request.request_number ||
-        request.request_no ||
-        request.id;
+        const requestNumber =
+          request.request_number ||
+          request.request_no ||
+          request.id;
 
-      const customer =
-        request.customer_name ||
-        request.full_name ||
-        request.name ||
-        "N/A";
+        const customer =
+          request.customer_name ||
+          request.full_name ||
+          request.name ||
+          "N/A";
 
-      const phone =
-        request.phone ||
-        request.customer_phone ||
-        "N/A";
+        const phone =
+          request.phone ||
+          request.customer_phone ||
+          "N/A";
 
-      const product =
-        request.product_name ||
-        request.product ||
-        "N/A";
+        const product =
+          request.product_name ||
+          request.product ||
+          "N/A";
 
-      const quantity =
-        request.quantity || 1;
+        const quantity =
+          request.quantity || 1;
 
-      const address =
-        request.delivery_address ||
-        request.address ||
-        "N/A";
+        const address =
+          request.delivery_address ||
+          request.address ||
+          "N/A";
 
-      const status =
-        request.status ||
-        "pending";
+        const status =
+          request.status ||
+          "pending";
 
-      card.innerHTML = `
-        <div class="request-number">
-          Request ${escapeHtml(requestNumber)}
-        </div>
+        card.innerHTML = `
 
-        <p>
-          <strong>Status:</strong>
-          <span class="badge badge-${escapeHtml(status)}">
-            ${escapeHtml(status)}
-          </span>
-        </p>
+          <div class="request-number">
+            Request
+            ${escapeHtml(requestNumber)}
+          </div>
 
-        <p>
-          <strong>Customer:</strong>
-          ${escapeHtml(customer)}
-        </p>
+          <p>
+            <strong>Status:</strong>
+            <span class="badge badge-${escapeHtml(status)}">
+              ${escapeHtml(status)}
+            </span>
+          </p>
 
-        <p>
-          <strong>Phone:</strong>
-          ${escapeHtml(phone)}
-        </p>
+          <p>
+            <strong>Customer:</strong>
+            ${escapeHtml(customer)}
+          </p>
 
-        <p>
-          <strong>Product:</strong>
-          ${escapeHtml(product)}
-        </p>
+          <p>
+            <strong>Phone:</strong>
+            ${escapeHtml(phone)}
+          </p>
 
-        <p>
-          <strong>Quantity:</strong>
-          ${escapeHtml(quantity)}
-        </p>
+          <p>
+            <strong>Product:</strong>
+            ${escapeHtml(product)}
+          </p>
 
-        <p>
-          <strong>Delivery Address:</strong>
-          ${escapeHtml(address)}
-        </p>
+          <p>
+            <strong>Quantity:</strong>
+            ${escapeHtml(quantity)}
+          </p>
 
-        <label>Status</label>
+          <p>
+            <strong>Delivery Address:</strong>
+            ${escapeHtml(address)}
+          </p>
 
-        <select
-          id="request-status-${request.id}">
-          <option value="pending"
-            ${status === "pending" ? "selected" : ""}>
-            Pending
-          </option>
+          <label>
+            Status
+          </label>
 
-          <option value="reviewing"
-            ${status === "reviewing" ? "selected" : ""}>
-            Reviewing
-          </option>
+          <select
+            id="request-status-${request.id}"
+          >
 
-          <option value="quoted"
-            ${status === "quoted" ? "selected" : ""}>
-            Quoted
-          </option>
+            <option
+              value="pending"
+              ${status === "pending"
+                ? "selected"
+                : ""}
+            >
+              Pending
+            </option>
 
-          <option value="completed"
-            ${status === "completed" ? "selected" : ""}>
-            Completed
-          </option>
+            <option
+              value="reviewing"
+              ${status === "reviewing"
+                ? "selected"
+                : ""}
+            >
+              Reviewing
+            </option>
 
-          <option value="cancelled"
-            ${status === "cancelled" ? "selected" : ""}>
-            Cancelled
-          </option>
-        </select>
+            <option
+              value="quoted"
+              ${status === "quoted"
+                ? "selected"
+                : ""}
+            >
+              Quoted
+            </option>
 
-        <button
-          class="btn-primary"
-          onclick="updateRequestStatus('${request.id}')">
-          Save Status
-        </button>
-      `;
+            <option
+              value="completed"
+              ${status === "completed"
+                ? "selected"
+                : ""}
+            >
+              Completed
+            </option>
 
-      container.appendChild(card);
-    });
+            <option
+              value="cancelled"
+              ${status === "cancelled"
+                ? "selected"
+                : ""}
+            >
+              Cancelled
+            </option>
+
+          </select>
+
+          <button
+            type="button"
+            class="btn-primary"
+            onclick="updateRequestStatus('${request.id}')"
+          >
+            Save Status
+          </button>
+
+        `;
+
+        container.appendChild(
+          card
+        );
+      }
+    );
 
   } catch (error) {
 
@@ -461,10 +632,17 @@ async function loadQuoteRequests() {
     );
 
     container.innerHTML = `
+
       <div class="message message-error">
+
         Unable to load quote requests:
-        ${escapeHtml(error.message)}
+
+        ${escapeHtml(
+          error.message
+        )}
+
       </div>
+
     `;
   }
 }
@@ -474,7 +652,9 @@ async function loadQuoteRequests() {
    UPDATE CUSTOMER REQUEST STATUS
    ========================================================= */
 
-async function updateRequestStatus(requestId) {
+async function updateRequestStatus(
+  requestId
+) {
 
   const select =
     $("request-status-" + requestId);
@@ -486,14 +666,20 @@ async function updateRequestStatus(requestId) {
 
   try {
 
-    const { error } =
+    const {
+      error
+    } =
       await supabaseClient
         .from("quote_requests")
         .update({
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at:
+            new Date().toISOString()
         })
-        .eq("id", requestId);
+        .eq(
+          "id",
+          requestId
+        );
 
     if (error) {
       throw error;
@@ -538,182 +724,269 @@ async function loadSupplierQuotes() {
 
   try {
 
-    const { data, error } =
+    const {
+      data,
+      error
+    } =
       await supabaseClient
         .from("supplier_quotes")
         .select("*")
-        .order("created_at", {
-          ascending: false
-        });
+        .order(
+          "created_at",
+          {
+            ascending: false
+          }
+        );
 
     if (error) {
       throw error;
     }
 
-    if (!data || data.length === 0) {
+    if (
+      !data ||
+      data.length === 0
+    ) {
 
       container.innerHTML =
-        '<div class="empty-state">No supplier quotations found.</div>';
+        '<div class="empty-state">' +
+        'No supplier quotations found.' +
+        '</div>';
 
       return;
     }
 
     container.innerHTML = "";
 
-    data.forEach(quote => {
+    data.forEach(
+      quote => {
 
-      const card =
-        document.createElement("div");
+        const card =
+          document.createElement(
+            "div"
+          );
 
-      card.className =
-        "card supplier-quote-card";
+        card.className =
+          "card supplier-quote-card";
 
-      const supplierPrice =
-        Number(
-          quote.supplier_total || 0
-        );
+        const supplierPrice =
+          Number(
+            quote.supplier_total || 0
+          );
 
-      const delivery =
-        Number(
-          quote.delivery_cost || 0
-        );
+        const delivery =
+          Number(
+            quote.delivery_cost || 0
+          );
 
-      const margin =
-        Number(
-          quote.frosttech_margin_amount || 0
-        );
+        const margin =
+          Number(
+            quote.frosttech_margin_amount || 0
+          );
 
-      const customerTotal =
-        Number(
-          quote.customer_total ||
-          supplierPrice +
-          delivery +
-          margin
-        );
+        const customerTotal =
+          Number(
+            quote.customer_total ||
+            supplierPrice +
+            delivery +
+            margin
+          );
 
-      const status =
-        quote.status || "draft";
+        const status =
+          quote.status ||
+          "draft";
 
-      card.innerHTML = `
-        <h3>Supplier Quotation</h3>
+        card.innerHTML = `
 
-        <p>
-          <strong>Quote ID:</strong>
-          ${escapeHtml(quote.id)}
-        </p>
+          <h3>
+            Supplier Quotation
+          </h3>
 
-        <p>
-          <strong>Request ID:</strong>
-          ${escapeHtml(quote.request_id || "N/A")}
-        </p>
+          <p>
+            <strong>Quote ID:</strong>
+            ${escapeHtml(quote.id)}
+          </p>
 
-        <p>
-          <strong>Supplier ID:</strong>
-          ${escapeHtml(quote.supplier_id || "N/A")}
-        </p>
+          <p>
+            <strong>Request ID:</strong>
+            ${escapeHtml(
+              quote.request_id ||
+              "N/A"
+            )}
+          </p>
 
-        <p>
-          <strong>Product ID:</strong>
-          ${escapeHtml(quote.product_id || "N/A")}
-        </p>
+          <p>
+            <strong>Supplier ID:</strong>
+            ${escapeHtml(
+              quote.supplier_id ||
+              "N/A"
+            )}
+          </p>
 
-        <p>
-          <strong>Quantity:</strong>
-          ${escapeHtml(quote.quantity || 1)}
-        </p>
+          <p>
+            <strong>Product ID:</strong>
+            ${escapeHtml(
+              quote.product_id ||
+              "N/A"
+            )}
+          </p>
 
-        <div class="price-box">
+          <p>
+            <strong>Quantity:</strong>
+            ${escapeHtml(
+              quote.quantity || 1
+            )}
+          </p>
 
-          <div class="price-row">
-            <span>Supplier Total</span>
+          <div class="price-box">
+
+            <div class="price-row">
+
+              <span>
+                Supplier Total
+              </span>
+
+              <strong>
+                ₦${supplierPrice.toLocaleString()}
+              </strong>
+
+            </div>
+
+            <div class="price-row">
+
+              <span>
+                Delivery Cost
+              </span>
+
+              <strong>
+                ₦${delivery.toLocaleString()}
+              </strong>
+
+            </div>
+
+            <div class="price-row">
+
+              <span>
+                FrostTech Margin
+              </span>
+
+              <strong>
+                ₦${margin.toLocaleString()}
+              </strong>
+
+            </div>
+
+            <div class="price-row">
+
+              <span>
+                Customer Total
+              </span>
+
+              <strong class="customer-total">
+                ₦${customerTotal.toLocaleString()}
+              </strong>
+
+            </div>
+
+          </div>
+
+          <p>
+
             <strong>
-              ₦${supplierPrice.toLocaleString()}
+              Status:
             </strong>
-          </div>
 
-          <div class="price-row">
-            <span>Delivery Cost</span>
-            <strong>
-              ₦${delivery.toLocaleString()}
-            </strong>
-          </div>
+            <span
+              class="badge badge-${escapeHtml(status)}"
+            >
+              ${escapeHtml(status)}
+            </span>
 
-          <div class="price-row">
-            <span>FrostTech Margin</span>
-            <strong>
-              ₦${margin.toLocaleString()}
-            </strong>
-          </div>
+          </p>
 
-          <div class="price-row">
-            <span>Customer Total</span>
-            <strong class="customer-total">
-              ₦${customerTotal.toLocaleString()}
-            </strong>
-          </div>
+          <label>
+            Supplier Quote Status
+          </label>
 
-        </div>
+          <select
+            id="supplier-status-${quote.id}"
+          >
 
-        <p>
-          <strong>Status:</strong>
-          <span class="badge badge-${escapeHtml(status)}">
-            ${escapeHtml(status)}
-          </span>
-        </p>
+            <option
+              value="draft"
+              ${status === "draft"
+                ? "selected"
+                : ""}
+            >
+              Draft
+            </option>
 
-        <label>Supplier Quote Status</label>
+            <option
+              value="submitted"
+              ${status === "submitted"
+                ? "selected"
+                : ""}
+            >
+              Submitted
+            </option>
 
-        <select
-          id="supplier-status-${quote.id}">
+            <option
+              value="selected"
+              ${status === "selected"
+                ? "selected"
+                : ""}
+            >
+              Selected
+            </option>
 
-          <option value="draft"
-            ${status === "draft" ? "selected" : ""}>
-            Draft
-          </option>
+            <option
+              value="rejected"
+              ${status === "rejected"
+                ? "selected"
+                : ""}
+            >
+              Rejected
+            </option>
 
-          <option value="submitted"
-            ${status === "submitted" ? "selected" : ""}>
-            Submitted
-          </option>
+            <option
+              value="expired"
+              ${status === "expired"
+                ? "selected"
+                : ""}
+            >
+              Expired
+            </option>
 
-          <option value="selected"
-            ${status === "selected" ? "selected" : ""}>
-            Selected
-          </option>
+          </select>
 
-          <option value="rejected"
-            ${status === "rejected" ? "selected" : ""}>
-            Rejected
-          </option>
+          <button
+            type="button"
+            class="btn-success"
+            onclick="updateSupplierQuoteStatus('${quote.id}')"
+          >
+            Save Quote Status
+          </button>
 
-          <option value="expired"
-            ${status === "expired" ? "selected" : ""}>
-            Expired
-          </option>
+          ${
+            status === "submitted"
+              ? `
+                <button
+                  type="button"
+                  class="btn-primary"
+                  onclick="selectSupplierQuote('${quote.id}')"
+                >
+                  Select This Supplier Quote
+                </button>
+              `
+              : ""
+          }
 
-        </select>
+        `;
 
-        <button
-          class="btn-success"
-          onclick="updateSupplierQuoteStatus('${quote.id}')">
-          Save Quote Status
-        </button>
-
-        ${
-          status === "submitted"
-          ? `
-            <button
-              class="btn-primary"
-              onclick="selectSupplierQuote('${quote.id}')">
-              Select This Supplier Quote
-            </button>
-          `
-          : ""
-        }
-      `;
-
-      container.appendChild(card);
-    });
+        container.appendChild(
+          card
+        );
+      }
+    );
 
   } catch (error) {
 
@@ -723,10 +996,17 @@ async function loadSupplierQuotes() {
     );
 
     container.innerHTML = `
+
       <div class="message message-error">
+
         Unable to load supplier quotations:
-        ${escapeHtml(error.message)}
+
+        ${escapeHtml(
+          error.message
+        )}
+
       </div>
+
     `;
   }
 }
@@ -750,14 +1030,20 @@ async function updateSupplierQuoteStatus(
 
   try {
 
-    const { error } =
+    const {
+      error
+    } =
       await supabaseClient
         .from("supplier_quotes")
         .update({
           status: newStatus,
-          updated_at: new Date().toISOString()
+          updated_at:
+            new Date().toISOString()
         })
-        .eq("id", quoteId);
+        .eq(
+          "id",
+          quoteId
+        );
 
     if (error) {
       throw error;
@@ -799,15 +1085,27 @@ async function selectSupplierQuote(
       "Select this supplier quotation?"
     );
 
-  if (!confirmed) return;
+  if (!confirmed) {
+    return;
+  }
 
   try {
 
-    const { data: selectedQuote, error } =
+    /*
+      Get selected quotation.
+    */
+
+    const {
+      data: selectedQuote,
+      error
+    } =
       await supabaseClient
         .from("supplier_quotes")
         .select("*")
-        .eq("id", quoteId)
+        .eq(
+          "id",
+          quoteId
+        )
         .single();
 
     if (error) {
@@ -815,17 +1113,21 @@ async function selectSupplierQuote(
     }
 
     if (!selectedQuote) {
+
       throw new Error(
         "Supplier quotation not found."
       );
     }
 
+
     /*
-      First reject other quotations
-      belonging to the same request.
+      Reject other quotations
+      belonging to this request.
     */
 
-    const { error: rejectError } =
+    const {
+      error: rejectError
+    } =
       await supabaseClient
         .from("supplier_quotes")
         .update({
@@ -837,17 +1139,23 @@ async function selectSupplierQuote(
           "request_id",
           selectedQuote.request_id
         )
-        .neq("id", quoteId);
+        .neq(
+          "id",
+          quoteId
+        );
 
     if (rejectError) {
       throw rejectError;
     }
 
+
     /*
       Mark selected quotation.
     */
 
-    const { error: selectError } =
+    const {
+      error: selectError
+    } =
       await supabaseClient
         .from("supplier_quotes")
         .update({
@@ -856,7 +1164,10 @@ async function selectSupplierQuote(
           updated_at:
             new Date().toISOString()
         })
-        .eq("id", quoteId);
+        .eq(
+          "id",
+          quoteId
+        );
 
     if (selectError) {
       throw selectError;
@@ -886,12 +1197,13 @@ async function selectSupplierQuote(
 
 
 /* =========================================================
-   REFRESH ALL DATA
+   REFRESH ADMIN DATA
    ========================================================= */
 
 async function refreshAdminData() {
 
   await loadQuoteRequests();
+
   await loadSupplierQuotes();
 
   showMessage(
@@ -907,17 +1219,34 @@ async function refreshAdminData() {
 
 function escapeHtml(value) {
 
-  if (value === null ||
-      value === undefined) {
+  if (
+    value === null ||
+    value === undefined
+  ) {
     return "";
   }
 
   return String(value)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
+    .replace(
+      /&/g,
+      "&amp;"
+    )
+    .replace(
+      /</g,
+      "&lt;"
+    )
+    .replace(
+      />/g,
+      "&gt;"
+    )
+    .replace(
+      /"/g,
+      "&quot;"
+    )
+    .replace(
+      /'/g,
+      "&#039;"
+    );
 }
 
 
@@ -926,16 +1255,23 @@ function escapeHtml(value) {
    ========================================================= */
 
 supabaseClient.auth.onAuthStateChange(
-  async (event, session) => {
+  async (
+    event,
+    session
+  ) => {
 
     console.log(
       "Auth event:",
       event
     );
 
-    if (event === "SIGNED_OUT") {
+    if (
+      event ===
+      "SIGNED_OUT"
+    ) {
 
       hide("dashboard");
+
       show("loginSection");
 
       return;
@@ -956,7 +1292,7 @@ supabaseClient.auth.onAuthStateChange(
 
 
 /* =========================================================
-   BUTTON EVENTS
+   PAGE INITIALIZATION
    ========================================================= */
 
 document.addEventListener(
@@ -974,6 +1310,7 @@ document.addEventListener(
       );
     }
 
+
     const logoutButton =
       $("logoutBtn");
 
@@ -985,6 +1322,7 @@ document.addEventListener(
       );
     }
 
+
     const refreshButton =
       $("refreshBtn");
 
@@ -995,6 +1333,12 @@ document.addEventListener(
         refreshAdminData
       );
     }
+
+
+    /*
+      Check existing Supabase
+      login session.
+    */
 
     checkSession();
   }
