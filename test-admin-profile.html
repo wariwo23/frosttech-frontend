@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Admin Profile Test</title>
+</head>
+
+<body>
+
+<h1>FrostTech Admin</h1>
+<p>HVAC and Refrigeration Marketplace</p>
+
+<h2>Step 2E: Admin Profile Test</h2>
+
+<div id="result">Checking...</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+
+const SUPABASE_URL =
+  "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+async function testAdminProfile() {
+
+  const result = document.getElementById("result");
+
+  try {
+
+    result.innerHTML =
+      "Checking Supabase authentication...";
+
+    const {
+      data: { user },
+      error: authError
+    } = await supabaseClient.auth.getUser();
+
+    if (authError) {
+      throw authError;
+    }
+
+    if (!user) {
+      result.innerHTML =
+        "<b>NOT LOGGED IN</b><br><br>" +
+        "Please log in first.";
+      return;
+    }
+
+    result.innerHTML =
+      "Authenticated as: " +
+      user.email +
+      "<br><br>" +
+      "Checking admin profile...";
+
+    const {
+      data: profile,
+      error: profileError
+    } = await supabaseClient
+      .from("profiles")
+      .select("*")
+      .eq("id", user.id)
+      .single();
+
+    if (profileError) {
+      throw profileError;
+    }
+
+    if (!profile) {
+      result.innerHTML =
+        "<b>PROFILE NOT FOUND</b>";
+      return;
+    }
+
+    result.innerHTML =
+      "<h3>SUCCESS!</h3>" +
+      "Authenticated user: " +
+      user.email +
+      "<br><br>" +
+      "Profile found.<br><br>" +
+      "Role: <b>" +
+      profile.role +
+      "</b><br><br>" +
+      "Active: <b>" +
+      profile.is_active +
+      "</b>";
+
+  } catch (error) {
+
+    result.innerHTML =
+      "<b>PROFILE TEST FAILED</b><br><br>" +
+      error.message;
+
+  }
+
+}
+
+testAdminProfile();
+
+</script>
+
+</body>
+</html>
