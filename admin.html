@@ -32,6 +32,13 @@
             background: #eef6ff;
             border-radius: 6px;
         }
+
+        #supabaseStatus {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 6px;
+        }
     </style>
 </head>
 
@@ -48,7 +55,32 @@
             Admin page loaded successfully.
         </div>
 
+        <div id="supabaseStatus">
+            Checking Supabase connection...
+        </div>
+
     </div>
+
+    <!-- Supabase library -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+
+        const SUPABASE_URL =
+            "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+        const SUPABASE_KEY =
+            "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+        const supabase = window.supabase.createClient(
+            SUPABASE_URL,
+            SUPABASE_KEY
+        );
+
+        document.getElementById("supabaseStatus").innerHTML =
+            "<strong>Step 2:</strong> Supabase connection initialized successfully.";
+
+    </script>
 
 </body>
 </html>
