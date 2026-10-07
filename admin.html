@@ -1,1130 +1,478 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrostTech Admin</title>
-
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      background: #f4f6f8;
-      color: #222;
-    }
-
-    header {
-      background: #0b5ed7;
-      color: white;
-      padding: 18px;
-      text-align: center;
-    }
-
-    main {
-      max-width: 1100px;
-      margin: 20px auto;
-      padding: 15px;
-    }
-
-    .card {
-      background: white;
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    }
-
-    h1, h2, h3 {
-      margin-top: 0;
-    }
-
-    input,
-    select,
-    button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 12px;
-      margin-top: 8px;
-      margin-bottom: 12px;
-      border-radius: 6px;
-      border: 1px solid #ccc;
-      font-size: 16px;
-    }
-
-    button {
-      background: #0b5ed7;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      opacity: 0.9;
-    }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .logout {
-      background: #dc3545;
-    }
-
-    .success {
-      color: #198754;
-      font-weight: bold;
-    }
-
-    .error {
-      color: #dc3545;
-      font-weight: bold;
-    }
-
-    .hidden {
-      display: none;
-    }
-
-    .request,
-    .quotation {
-      border: 1px solid #ddd;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 15px;
-      background: #fafafa;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 5px 9px;
-      border-radius: 5px;
-      background: #e9ecef;
-      font-size: 13px;
-      font-weight: bold;
-    }
-
-    .amount {
-      font-size: 18px;
-      font-weight: bold;
-    }
-
-    .system-status {
-      padding: 10px;
-      border-radius: 6px;
-      background: #eef3f8;
-      margin-bottom: 15px;
-    }
-
-    .small {
-      font-size: 13px;
-      color: #666;
-    }
-
-    @media (max-width: 650px) {
-      main {
-        padding: 10px;
-      }
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech Admin</title>
+<style>
+body{font-family:Arial;margin:0;background:#f4f6f8;color:#222}
+header{background:#0b5ed7;color:#fff;text-align:center;padding:18px}
+main{max-width:1000px;margin:20px auto;padding:12px}
+.card{background:#fff;padding:18px;margin-bottom:18px;border-radius:10px;box-shadow:0 2px 7px #ddd}
+input,button{width:100%;padding:12px;margin:7px 0;border-radius:6px;box-sizing:border-box;font-size:16px}
+input{border:1px solid #ccc}button{border:0;background:#0b5ed7;color:#fff;font-weight:bold}
+button:disabled{opacity:.5}.danger{background:#dc3545}.ok{background:#198754}.warn{background:#fd7e14}
+.hidden{display:none}.error{color:#dc3545;font-weight:bold}.success{color:#198754;font-weight:bold}
+.item{border:1px solid #ddd;padding:15px;margin:12px 0;border-radius:8px;background:#fafafa}
+.selected{border:2px solid #198754;background:#f1fff7}
+.status{background:#eee;padding:4px 7px;border-radius:5px;font-size:13px;font-weight:bold}
+.price{font-size:20px;font-weight:bold}.total{font-size:21px;font-weight:bold;color:#198754}
+.small{font-size:12px;color:#666;word-break:break-word}
+@media(max-width:600px){main{padding:8px}}
+</style>
 </head>
 
 <body>
 
 <header>
-  <h1>FrostTech Admin</h1>
-  <p>HVAC and Refrigeration Marketplace</p>
+<h1>FrostTech Admin</h1>
+<p>HVAC and Refrigeration Marketplace</p>
 </header>
 
 <main>
 
-  <div class="card">
-    <h2>System Status</h2>
-    <div id="systemStatus" class="system-status">
-      Connecting to Supabase...
-    </div>
-  </div>
+<div class="card">
+<h2>System Status</h2>
+<div id="system">Connecting...</div>
+</div>
 
-  <div id="loginSection" class="card">
+<div id="login" class="card">
+<h2>Admin Login</h2>
+<input id="email" type="email" placeholder="Admin email">
+<input id="password" type="password" placeholder="Password">
+<button id="loginBtn" type="button">Login</button>
+<div id="loginMsg"></div>
+</div>
 
-    <h2>Admin Login</h2>
+<div id="dash" class="hidden">
 
-    <label>Email</label>
-    <input
-      type="email"
-      id="loginEmail"
-      placeholder="Admin email"
-      autocomplete="username"
-    >
+<div class="card">
+<h2>Admin Dashboard</h2>
+<p>Logged in as: <b id="adminEmail"></b></p>
+<button id="logoutBtn" class="danger" type="button">Logout</button>
+</div>
 
-    <label>Password</label>
-    <input
-      type="password"
-      id="loginPassword"
-      placeholder="Password"
-      autocomplete="current-password"
-    >
+<div class="card">
+<h2>Customer Quote Requests</h2>
+<button id="refreshReq" type="button">Refresh Requests</button>
+<div id="reqMsg"></div>
+<div id="requests">Loading...</div>
+</div>
 
-    <button id="loginButton" type="button">
-      Login
-    </button>
+<div class="card">
+<h2>Supplier Quotations</h2>
+<button id="refreshQuotes" type="button">Refresh Supplier Quotations</button>
+<div id="quoteMsg"></div>
+<div id="quotes">Loading...</div>
+</div>
 
-    <div id="loginMessage"></div>
-
-  </div>
-  <div id="dashboardSection" class="hidden">
-
-    <div class="card">
-
-      <h2>Admin Dashboard</h2>
-
-      <p>
-        Logged in as:
-        <strong id="adminEmail"></strong>
-      </p>
-
-      <button id="logoutButton" type="button" class="logout">
-        Logout
-      </button>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>Customer Quote Requests</h2>
-
-      <button id="refreshRequestsButton" type="button">
-        Refresh Requests
-      </button>
-
-      <div id="requestsMessage"></div>
-
-      <div id="requestsContainer">
-        Loading requests...
-      </div>
-
-    </div>
-
-
-    <div class="card">
-
-      <h2>Supplier Quotations</h2>
-
-      <button id="refreshQuotesButton" type="button">
-        Refresh Supplier Quotations
-      </button>
-
-      <div id="quotesMessage"></div>
-
-      <div id="quotesContainer">
-        Loading supplier quotations...
-      </div>
-
-    </div>
-
-  </div>
-
+</div>
 </main>
 
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 
-  const SUPABASE_URL =
-    "https://nftxptjpgidcsgtaltjn.supabase.co";
+const URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+const sb=supabase.createClient(URL,KEY);
 
-  const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+const $=id=>document.getElementById(id);
+const money=n=>Number(n||0).toLocaleString("en-NG");
+const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
 
+function status(t,c=""){ $("system").textContent=t;$("system").className=c }
 
-  const supabaseClient =
-    window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+function showLogin(){
+$("login").classList.remove("hidden");
+$("dash").classList.add("hidden")
+}
 
+function showDash(email){
+$("login").classList.add("hidden");
+$("dash").classList.remove("hidden");
+$("adminEmail").textContent=email
+}
 
-  const systemStatus =
-    document.getElementById("systemStatus");
+async function checkSession(){
 
-  const loginSection =
-    document.getElementById("loginSection");
+try{
 
-  const dashboardSection =
-    document.getElementById("dashboardSection");
+const {data,error}=await sb.auth.getSession();
+if(error)throw error;
 
-  const loginEmail =
-    document.getElementById("loginEmail");
+if(!data.session){
+showLogin();
+return
+}
 
-  const loginPassword =
-    document.getElementById("loginPassword");
+const user=data.session.user;
 
-  const loginButton =
-    document.getElementById("loginButton");
+const {data:p,error:pe}=await sb
+.from("profiles")
+.select("*")
+.eq("id",user.id)
+.maybeSingle();
 
-  const loginMessage =
-    document.getElementById("loginMessage");
+if(pe)throw pe;
 
-  const adminEmail =
-    document.getElementById("adminEmail");
+if(!p){
+await sb.auth.signOut();
+$("loginMsg").textContent="No FrostTech profile found.";
+$("loginMsg").className="error";
+showLogin();
+return
+}
 
-  const logoutButton =
-    document.getElementById("logoutButton");
+if(p.role!=="admin"){
+await sb.auth.signOut();
+$("loginMsg").textContent="Access denied. Admin account required.";
+$("loginMsg").className="error";
+showLogin();
+return
+}
 
-  const requestsContainer =
-    document.getElementById("requestsContainer");
+if(p.is_active===false){
+await sb.auth.signOut();
+$("loginMsg").textContent="Admin account is inactive.";
+$("loginMsg").className="error";
+showLogin();
+return
+}
 
-  const requestsMessage =
-    document.getElementById("requestsMessage");
+showDash(user.email);
+status("Admin system connected successfully.","success");
+loadRequests();
+loadQuotes();
 
-  const quotesContainer =
-    document.getElementById("quotesContainer");
+}catch(e){
+console.error(e);
+status("Session error: "+e.message,"error")
+}
 
-  const quotesMessage =
-    document.getElementById("quotesMessage");
+}
 
-  const refreshRequestsButton =
-    document.getElementById("refreshRequestsButton");
+async function login(){
 
-  const refreshQuotesButton =
-    document.getElementById("refreshQuotesButton");
+const email=$("email").value.trim();
+const password=$("password").value;
 
+if(!email||!password){
+$("loginMsg").textContent="Enter email and password.";
+$("loginMsg").className="error";
+return
+}
 
-  function setSystemStatus(message, type = "") {
+$("loginBtn").disabled=true;
+$("loginBtn").textContent="Logging in...";
 
-    systemStatus.textContent = message;
+try{
 
-    systemStatus.className = "system-status";
+const {error}=await sb.auth.signInWithPassword({email,password});
+if(error)throw error;
 
-    if (type === "success") {
-      systemStatus.classList.add("success");
-    }
+await checkSession();
 
-    if (type === "error") {
-      systemStatus.classList.add("error");
-    }
+}catch(e){
 
-  }
+$("loginMsg").textContent="Login failed: "+e.message;
+$("loginMsg").className="error";
 
+}finally{
 
-  async function initializeAdmin() {
+$("loginBtn").disabled=false;
+$("loginBtn").textContent="Login"
 
-    try {
+}
 
-      setSystemStatus(
-        "Supabase connection initialized successfully.",
-        "success"
-      );
+}
 
-      const {
-        data: {
-          session
-        }
-      } = await supabaseClient.auth.getSession();
+async function logout(){
 
-      if (session) {
+await sb.auth.signOut();
+$("email").value="";
+$("password").value="";
+$("requests").innerHTML="";
+$("quotes").innerHTML="";
+showLogin();
+status("Logged out successfully.")
 
-        await handleAuthenticatedUser(
-          session.user
-        );
+}
 
-      } else {
+async function loadRequests(){
 
-        showLogin();
+$("requests").textContent="Loading...";
 
-      }
+try{
 
-    } catch (error) {
+let r=await sb.from("quote_requests")
+.select("*").order("created_at",{ascending:false});
 
-      console.error(error);
+if(r.error)
+r=await sb.from("customer_requests")
+.select("*").order("created_at",{ascending:false});
 
-      setSystemStatus(
-        "Supabase initialization failed: " +
-        error.message,
-        "error"
-      );
+if(r.error)throw r.error;
 
-    }
+if(!r.data.length){
+$("requests").innerHTML="<p>No customer requests found.</p>";
+return
+}
 
-  }
+$("requests").innerHTML="";
 
+r.data.forEach(x=>{
 
-  function showLogin() {
+let number=x.request_number||x.request_no||x.reference||x.id;
+let customer=x.customer_name||x.name||x.full_name||"N/A";
+let phone=x.phone||x.customer_phone||"N/A";
+let product=x.product_name||x.product||"N/A";
+let qty=x.quantity||1;
+let address=x.delivery_address||x.address||"N/A";
 
-    loginSection.classList.remove("hidden");
+$("requests").innerHTML+=`
 
-    dashboardSection.classList.add("hidden");
+<div class="item">
+<h3>Request ${esc(number)}</h3>
+<p><b>Status:</b> <span class="status">${esc(x.status||"pending")}</span></p>
+<p><b>Customer:</b> ${esc(customer)}</p>
+<p><b>Phone:</b> ${esc(phone)}</p>
+<p><b>Product:</b> ${esc(product)}</p>
+<p><b>Quantity:</b> ${esc(qty)}</p>
+<p><b>Delivery:</b> ${esc(address)}</p>
+<p class="small">ID: ${esc(x.id)}</p>
+</div>`
 
-    loginMessage.textContent = "";
+})
 
-  }
+}catch(e){
 
+$("requests").innerHTML=
+`<p class="error">Unable to load requests: ${esc(e.message)}</p>`
 
-  function showDashboard(user) {
+}
 
-    loginSection.classList.add("hidden");
+}
 
-    dashboardSection.classList.remove("hidden");
+async function loadQuotes(){
 
-    adminEmail.textContent =
-      user.email || "Unknown";
+$("quotes").textContent="Loading...";
 
-  }
+try{
 
+const {data,error}=await sb
+.from("supplier_quotes")
+.select("*")
+.order("created_at",{ascending:false});
 
-  async function loginAdmin() {
+if(error)throw error;
 
-    const email =
-      loginEmail.value.trim();
+if(!data.length){
+$("quotes").innerHTML="<p>No supplier quotations found.</p>";
+return
+}
 
-    const password =
-      loginPassword.value;
+$("quotes").innerHTML="";
 
-    loginMessage.className = "";
+data.forEach(q=>{
 
-    if (!email || !password) {
+let st=q.status||"submitted";
+let cq=q.customer_quote_status||"draft";
+let selected=st==="selected";
 
-      loginMessage.textContent =
-        "Please enter your email and password.";
+let card=document.createElement("div");
+card.className="item"+(selected?" selected":"");
 
-      loginMessage.className = "error";
+card.innerHTML=`
 
-      return;
+<h3>Supplier Quotation</h3>
 
-    }
+<p><b>Status:</b>
+<span class="status">${esc(st)}</span></p>
 
-    loginButton.disabled = true;
+<p><b>Customer Quote:</b>
+<span class="status">${esc(cq)}</span></p>
 
-    loginButton.textContent =
-      "Logging in...";
+<p><b>Request ID:</b> ${esc(q.request_id)}</p>
 
-    loginMessage.textContent = "";
+<p><b>Supplier ID:</b> ${esc(q.supplier_id)}</p>
 
-    try {
+<p><b>Product ID:</b> ${esc(q.product_id)}</p>
 
-      const {
-        data,
-        error
-      } = await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
+<p><b>Quantity:</b> ${esc(q.quantity||1)}</p>
 
-      if (error) {
+<p><b>Supplier Total:</b>
+<span class="price">₦${money(q.supplier_total)}</span></p>
 
-        throw error;
+<p><b>Delivery:</b>
+₦${money(q.delivery_cost)}</p>
 
-      }
+<p><b>FrostTech Margin:</b>
+${money(q.frosttech_margin_percent)}%</p>
 
-      if (!data || !data.user) {
+<p><b>Margin Amount:</b>
+₦${money(q.frosttech_margin_amount)}</p>
 
-        throw new Error(
-          "Login succeeded but no user session was returned."
-        );
+<p><b>Customer Total:</b>
+<span class="total">₦${money(q.customer_total)}</span></p>
 
-      }
+<p class="small">Quote ID: ${esc(q.id)}</p>
 
-      await handleAuthenticatedUser(
-        data.user
-      );
+`;
 
-    } catch (error) {
+let row=document.createElement("div");
 
-      console.error("Login error:", error);
+let select=document.createElement("button");
+select.textContent=selected?"Selected":"Select Quote";
+select.className="ok";
+select.disabled=selected;
+select.onclick=()=>selectQuote(q);
 
-      loginMessage.textContent =
-        "Login failed: " + error.message;
+let reject=document.createElement("button");
+reject.textContent=st==="rejected"?"Rejected":"Reject";
+reject.className="danger";
+reject.disabled=st==="rejected";
+reject.onclick=()=>rejectQuote(q);
 
-      loginMessage.className = "error";
+let prepare=document.createElement("button");
+prepare.textContent=cq==="ready"?"Customer Quote Ready":"Prepare Customer Quote";
+prepare.className="warn";
+prepare.disabled=!selected||cq==="ready";
+prepare.onclick=()=>prepareQuote(q);
 
-    } finally {
+row.append(select,reject,prepare);
+card.appendChild(row);
+$("quotes").appendChild(card)
 
-      loginButton.disabled = false;
+})
 
-      loginButton.textContent =
-        "Login";
+}catch(e){
 
-    }
+$("quotes").innerHTML=
+`<p class="error">Unable to load quotations: ${esc(e.message)}</p>`
 
-  }
-  async function handleAuthenticatedUser(user) {
+}
 
-    try {
+}
 
-      const {
-        data: profile,
-        error
-      } = await supabaseClient
-        .from("profiles")
-        .select("*")
-        .eq("id", user.id)
-        .maybeSingle();
+async function selectQuote(q){
 
-      if (error) {
-        throw error;
-      }
+if(!confirm("Select this supplier quotation?"))return;
 
-      if (!profile) {
+try{
 
-        await supabaseClient.auth.signOut();
+/*
+Reset any other selected quote for
+the same customer request.
+*/
 
-        showLogin();
+const {data:others,error:oe}=await sb
+.from("supplier_quotes")
+.select("id")
+.eq("request_id",q.request_id)
+.eq("status","selected")
+.neq("id",q.id);
 
-        loginMessage.textContent =
-          "No FrostTech profile was found for this account.";
+if(oe)throw oe;
 
-        loginMessage.className = "error";
+for(const x of others||[]){
 
-        return;
-      }
+const {error}=await sb
+.from("supplier_quotes")
+.update({status:"submitted"})
+.eq("id",x.id);
 
-      if (profile.role !== "admin") {
+if(error)throw error
 
-        await supabaseClient.auth.signOut();
+}
 
-        showLogin();
+const {error}=await sb
+.from("supplier_quotes")
+.update({status:"selected"})
+.eq("id",q.id);
 
-        loginMessage.textContent =
-          "Access denied. This account is not an admin.";
+if(error)throw error;
 
-        loginMessage.className = "error";
+alert("Supplier quotation selected.");
+loadQuotes();
 
-        return;
-      }
+}catch(e){
 
-      if (profile.is_active === false) {
+alert("Unable to select quotation: "+e.message)
 
-        await supabaseClient.auth.signOut();
+}
 
-        showLogin();
+}
 
-        loginMessage.textContent =
-          "This admin account is inactive.";
+async function rejectQuote(q){
 
-        loginMessage.className = "error";
+if(!confirm("Reject this supplier quotation?"))return;
 
-        return;
-      }
+try{
 
-      showDashboard(user);
+const {error}=await sb
+.from("supplier_quotes")
+.update({status:"rejected"})
+.eq("id",q.id);
 
-      await loadRequests();
+if(error)throw error;
 
-      await loadSupplierQuotes();
+alert("Supplier quotation rejected.");
+loadQuotes();
 
-    } catch (error) {
+}catch(e){
 
-      console.error(
-        "Admin profile error:",
-        error
-      );
+alert("Unable to reject quotation: "+e.message)
 
-      await supabaseClient.auth.signOut();
+}
 
-      showLogin();
+}
 
-      loginMessage.textContent =
-        "Admin verification failed: " +
-        error.message;
+async function prepareQuote(q){
 
-      loginMessage.className = "error";
-    }
+if(q.status!=="selected"){
+alert("Select the supplier quotation first.");
+return
+}
 
-  }
+if(!confirm("Prepare this quotation for the customer?"))return;
 
+try{
 
-  async function logoutAdmin() {
+const {error}=await sb
+.from("supplier_quotes")
+.update({customer_quote_status:"ready"})
+.eq("id",q.id);
 
-    logoutButton.disabled = true;
+if(error)throw error;
 
-    try {
+alert("Customer quote prepared successfully.");
+loadQuotes();
 
-      const {
-        error
-      } = await supabaseClient.auth.signOut();
+}catch(e){
 
-      if (error) {
-        throw error;
-      }
+alert("Unable to prepare customer quote: "+e.message)
 
-      showLogin();
+}
 
-      loginEmail.value = "";
+}
 
-      loginPassword.value = "";
+$("loginBtn").addEventListener("click",login);
+$("logoutBtn").addEventListener("click",logout);
+$("refreshReq").addEventListener("click",loadRequests);
+$("refreshQuotes").addEventListener("click",loadQuotes);
 
-      requestsContainer.innerHTML = "";
+$("password").addEventListener("keydown",e=>{
+if(e.key==="Enter")login()
+});
 
-      quotesContainer.innerHTML = "";
+sb.auth.onAuthStateChange((event,session)=>{
+if(session&&session.user)checkSession();
+else showLogin()
+});
 
-      setSystemStatus(
-        "Logged out successfully."
-      );
-
-    } catch (error) {
-
-      console.error(error);
-
-      alert(
-        "Logout failed: " +
-        error.message
-      );
-
-    } finally {
-
-      logoutButton.disabled = false;
-
-    }
-
-  }
-
-
-  async function loadRequests() {
-
-    requestsContainer.innerHTML =
-      "Loading customer quote requests...";
-
-    requestsMessage.textContent = "";
-
-    try {
-
-      let result =
-        await supabaseClient
-          .from("quote_requests")
-          .select("*")
-          .order("created_at", {
-            ascending: false
-          });
-
-
-      if (result.error) {
-
-        console.warn(
-          "quote_requests query failed:",
-          result.error
-        );
-
-        result =
-          await supabaseClient
-            .from("customer_requests")
-            .select("*")
-            .order("created_at", {
-              ascending: false
-            });
-
-      }
-
-
-      if (result.error) {
-        throw result.error;
-      }
-
-
-      const requests =
-        result.data || [];
-
-
-      if (requests.length === 0) {
-
-        requestsContainer.innerHTML =
-          "<p>No customer quote requests found.</p>";
-
-        return;
-      }
-
-
-      requestsContainer.innerHTML = "";
-
-
-      requests.forEach(function(request) {
-
-        const card =
-          document.createElement("div");
-
-        card.className = "request";
-
-
-        const requestNumber =
-          request.request_number ||
-          request.request_no ||
-          request.reference ||
-          request.id ||
-          "N/A";
-
-
-        const status =
-          request.status ||
-          "pending";
-
-
-        const customer =
-          request.customer_name ||
-          request.name ||
-          request.full_name ||
-          request.customer ||
-          "N/A";
-
-
-        const phone =
-          request.phone ||
-          request.customer_phone ||
-          request.phone_number ||
-          "N/A";
-
-
-        const product =
-          request.product_name ||
-          request.product ||
-          request.description ||
-          "N/A";
-
-
-        const quantity =
-          request.quantity ||
-          1;
-
-
-        const deliveryAddress =
-          request.delivery_address ||
-          request.address ||
-          request.location ||
-          "N/A";
-
-
-        card.innerHTML = `
-
-          <h3>
-            Request ${escapeHtml(requestNumber)}
-          </h3>
-
-          <p>
-            <strong>Status:</strong>
-            <span class="status">
-              ${escapeHtml(status)}
-            </span>
-          </p>
-
-          <p>
-            <strong>Customer:</strong>
-            ${escapeHtml(customer)}
-          </p>
-
-          <p>
-            <strong>Phone:</strong>
-            ${escapeHtml(phone)}
-          </p>
-
-          <p>
-            <strong>Product:</strong>
-            ${escapeHtml(product)}
-          </p>
-
-          <p>
-            <strong>Quantity:</strong>
-            ${escapeHtml(String(quantity))}
-          </p>
-
-          <p>
-            <strong>Delivery Address:</strong>
-            ${escapeHtml(deliveryAddress)}
-          </p>
-
-          <p class="small">
-            Request ID:
-            ${escapeHtml(request.id || "N/A")}
-          </p>
-
-        `;
-
-
-        requestsContainer.appendChild(card);
-
-      });
-
-
-    } catch (error) {
-
-      console.error(
-        "Load requests error:",
-        error
-      );
-
-      requestsContainer.innerHTML =
-        "<p class='error'>Unable to load customer requests.</p>";
-
-      requestsMessage.textContent =
-        error.message;
-
-      requestsMessage.className = "error";
-
-    }
-
-  }
-
-
-  async function loadSupplierQuotes() {
-
-    quotesContainer.innerHTML =
-      "Loading supplier quotations...";
-
-    quotesMessage.textContent = "";
-
-    try {
-
-      const {
-        data,
-        error
-      } = await supabaseClient
-        .from("supplier_quotes")
-        .select("*")
-        .order("created_at", {
-          ascending: false
-        });
-
-
-      if (error) {
-        throw error;
-      }
-
-
-      const quotes =
-        data || [];
-
-
-      if (quotes.length === 0) {
-
-        quotesContainer.innerHTML =
-          "<p>No supplier quotations found.</p>";
-
-        return;
-      }
-
-
-      quotesContainer.innerHTML = "";
-
-
-      quotes.forEach(function(quote) {
-
-        const card =
-          document.createElement("div");
-
-        card.className = "quotation";
-
-
-        const supplierPrice =
-          Number(
-            quote.supplier_total || 0
-          );
-
-
-        const deliveryCost =
-          Number(
-            quote.delivery_cost || 0
-          );
-
-
-        const marginAmount =
-          Number(
-            quote.frosttech_margin_amount || 0
-          );
-
-
-        const customerTotal =
-          Number(
-            quote.customer_total || 0
-          );
-
-
-        const marginPercent =
-          Number(
-            quote.frosttech_margin_percent || 0
-          );
-
-
-        const status =
-          quote.status ||
-          "submitted";
-
-
-        const customerQuoteStatus =
-          quote.customer_quote_status ||
-          "draft";
-
-
-        card.innerHTML = `
-
-          <h3>
-            Supplier Quotation
-          </h3>
-
-          <p>
-            <strong>Status:</strong>
-            <span class="status">
-              ${escapeHtml(status)}
-            </span>
-          </p>
-
-          <p>
-            <strong>Request ID:</strong>
-            ${escapeHtml(
-              quote.request_id || "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Supplier ID:</strong>
-            ${escapeHtml(
-              quote.supplier_id || "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Product ID:</strong>
-            ${escapeHtml(
-              quote.product_id || "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Quantity:</strong>
-            ${escapeHtml(
-              String(quote.quantity || 1)
-            )}
-          </p>
-
-          <p>
-            <strong>Supplier Total:</strong>
-            ₦${formatMoney(supplierPrice)}
-          </p>
-
-          <p>
-            <strong>Delivery Cost:</strong>
-            ₦${formatMoney(deliveryCost)}
-          </p>
-
-          <p>
-            <strong>FrostTech Margin:</strong>
-            ${formatMoney(marginPercent)}%
-          </p>
-
-          <p>
-            <strong>FrostTech Margin Amount:</strong>
-            ₦${formatMoney(marginAmount)}
-          </p>
-
-          <p class="amount">
-            Customer Total:
-            ₦${formatMoney(customerTotal)}
-          </p>
-
-          <p>
-            <strong>Customer Quote Status:</strong>
-            ${escapeHtml(customerQuoteStatus)}
-          </p>
-
-          ${
-            quote.notes
-              ? `
-                <p>
-                  <strong>Supplier Notes:</strong>
-                  ${escapeHtml(quote.notes)}
-                </p>
-              `
-              : ""
-          }
-
-          ${
-            quote.valid_until
-              ? `
-                <p>
-                  <strong>Valid Until:</strong>
-                  ${escapeHtml(
-                    formatDate(quote.valid_until)
-                  )}
-                </p>
-              `
-              : ""
-          }
-
-          <p class="small">
-            Quote ID:
-            ${escapeHtml(
-              quote.id || "N/A"
-            )}
-          </p>
-
-        `;
-
-
-        quotesContainer.appendChild(card);
-
-      });
-
-
-    } catch (error) {
-
-      console.error(
-        "Load supplier quotes error:",
-        error
-      );
-
-      quotesContainer.innerHTML =
-        "<p class='error'>Unable to load supplier quotations.</p>";
-
-      quotesMessage.textContent =
-        error.message;
-
-      quotesMessage.className = "error";
-
-    }
-
-  }
-  function formatMoney(value) {
-
-    return Number(value || 0)
-      .toLocaleString(
-        "en-NG",
-        {
-          minimumFractionDigits: 0,
-          maximumFractionDigits: 2
-        }
-      );
-
-  }
-
-
-  function formatDate(value) {
-
-    try {
-
-      return new Date(value)
-        .toLocaleString("en-NG");
-
-    } catch {
-
-      return value;
-
-    }
-
-  }
-
-
-  function escapeHtml(value) {
-
-    return String(value)
-      .replace(/&/g, "&amp;")
-      .replace(/</g, "&lt;")
-      .replace(/>/g, "&gt;")
-      .replace(/"/g, "&quot;")
-      .replace(/'/g, "&#039;");
-
-  }
-
-
-  /*
-   * BUTTON EVENT LISTENERS
-   *
-   * We deliberately use addEventListener()
-   * instead of onclick="..."
-   */
-
-  loginButton.addEventListener(
-    "click",
-    function() {
-
-      loginAdmin();
-
-    }
-  );
-
-
-  logoutButton.addEventListener(
-    "click",
-    function() {
-
-      logoutAdmin();
-
-    }
-  );
-
-
-  refreshRequestsButton.addEventListener(
-    "click",
-    function() {
-
-      loadRequests();
-
-    }
-  );
-
-
-  refreshQuotesButton.addEventListener(
-    "click",
-    function() {
-
-      loadSupplierQuotes();
-
-    }
-  );
-
-
-  /*
-   * Allow Enter key to submit login.
-   */
-
-  loginPassword.addEventListener(
-    "keydown",
-    function(event) {
-
-      if (event.key === "Enter") {
-
-        event.preventDefault();
-
-        loginAdmin();
-
-      }
-
-    }
-  );
-
-
-  /*
-   * AUTH STATE LISTENER
-   */
-
-  supabaseClient.auth.onAuthStateChange(
-    async function(event, session) {
-
-      console.log(
-        "Auth event:",
-        event
-      );
-
-      if (session && session.user) {
-
-        await handleAuthenticatedUser(
-          session.user
-        );
-
-      } else {
-
-        showLogin();
-
-      }
-
-    }
-  );
-
-
-  /*
-   * START APPLICATION
-   */
-
-  initializeAdmin();
+status("Supabase connection initialized successfully.","success");
+checkSession();
 
 </script>
-
 </body>
-</html>
+  </html>
