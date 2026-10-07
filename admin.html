@@ -12,45 +12,131 @@
 
   <title>FrostTech Admin</title>
 
-
-  <!-- =====================================================
-       SUPABASE LIBRARY
-       ===================================================== -->
-
+  <!-- SUPABASE -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 
   <style>
 
-    body {
-      font-family: Arial, sans-serif;
-      margin: 30px;
-      line-height: 1.5;
+    * {
+      box-sizing: border-box;
     }
 
-    input {
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    header {
+      background: #0b3d91;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    header p {
+      margin: 6px 0 0;
+      font-size: 14px;
+    }
+
+    .container {
+      width: 95%;
+      max-width: 1000px;
+      margin: 20px auto;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+
+    input,
+    select,
+    button,
+    textarea {
       width: 100%;
-      max-width: 400px;
-      padding: 10px;
-      margin-top: 5px;
+      padding: 12px;
+      margin-top: 8px;
+      margin-bottom: 14px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      font-size: 16px;
     }
 
     button {
-      padding: 10px 20px;
+      background: #0b3d91;
+      color: white;
+      border: none;
       cursor: pointer;
-    }
-
-    button:disabled {
-      cursor: not-allowed;
-      opacity: 0.6;
-    }
-
-    #loginMessage {
       font-weight: bold;
     }
 
-    #adminArea {
+    button:hover {
+      background: #082f70;
+    }
+
+    .logout-button {
+      background: #b00020;
+    }
+
+    .logout-button:hover {
+      background: #870018;
+    }
+
+    .success {
+      color: green;
+      font-weight: bold;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+    }
+
+    .hidden {
       display: none;
+    }
+
+    .quote-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      background: #fafafa;
+    }
+
+    .quote-card h3 {
+      margin-top: 0;
+      color: #0b3d91;
+    }
+
+    .supplier-card {
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 15px;
+      background: #fff;
+    }
+
+    .total {
+      font-size: 18px;
+      font-weight: bold;
+      color: #0b3d91;
+    }
+
+    .small {
+      font-size: 13px;
+      color: #666;
     }
 
   </style>
@@ -61,505 +147,529 @@
 <body>
 
 
-  <!-- =====================================================
-       SECTION 1
-       BASIC ADMIN PAGE
-       ===================================================== -->
+<header>
 
   <h1>FrostTech Admin</h1>
 
   <p>
-    Admin system loading...
+    HVAC and Refrigeration Marketplace
   </p>
 
-  <p id="systemMessage">
-    Connecting to Supabase...
-  </p>
+</header>
 
 
-  <!-- =====================================================
-       SECTION 2
-       SUPABASE INITIALIZATION
-       ===================================================== -->
+<div class="container">
 
-  <script>
 
-    /* =====================================================
-       FROSTTECH SUPABASE CONFIGURATION
-       ===================================================== */
+  <!-- SYSTEM STATUS -->
 
-    const SUPABASE_URL =
-      "https://nftxptjpgidcsgtaltjn.supabase.co";
+  <div class="card">
 
+    <h2>System Status</h2>
 
-    const SUPABASE_ANON_KEY =
-      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdy_cyuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
-
-    /* =====================================================
-       SUPABASE CLIENT
-       ===================================================== */
-
-    let supabaseClient = null;
-
-
-    /* =====================================================
-       INITIALIZE SUPABASE
-       ===================================================== */
-
-    function initializeSupabase() {
-
-      console.log(
-        "Starting FrostTech Supabase initialization..."
-      );
-
-
-      try {
-
-        /* Check Supabase library */
-
-        if (
-          typeof window.supabase === "undefined"
-        ) {
-
-          console.error(
-            "Supabase library was not loaded."
-          );
-
-
-          document.getElementById(
-            "systemMessage"
-          ).textContent =
-            "Supabase library failed to load.";
-
-          return false;
-
-        }
-
-
-        /* Create Supabase client */
-
-        supabaseClient =
-          window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_ANON_KEY
-          );
-
-
-        console.log(
-          "FrostTech Supabase initialized successfully."
-        );
-
-
-        document.getElementById(
-          "systemMessage"
-        ).textContent =
-          "Supabase connection section loaded successfully.";
-
-
-        return true;
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "Supabase initialization error:",
-          error
-        );
-
-
-        document.getElementById(
-          "systemMessage"
-        ).textContent =
-          "Supabase initialization failed.";
-
-
-        return false;
-
-      }
-
-    }
-
-
-  </script>
-
-
-  <!-- =====================================================
-       SECTION 3
-       ADMIN LOGIN
-       ===================================================== -->
-
-  <hr>
-
-  <h2>
-    Admin Login
-  </h2>
-
-
-  <!-- =====================================================
-       EMAIL
-       ===================================================== -->
-
-  <label for="adminEmail">
-    Email
-  </label>
-
-  <br>
-
-  <input
-    type="email"
-    id="adminEmail"
-    placeholder="Enter admin email"
-    autocomplete="username"
-  >
-
-
-  <br><br>
-
-
-  <!-- =====================================================
-       PASSWORD
-       ===================================================== -->
-
-  <label for="adminPassword">
-    Password
-  </label>
-
-  <br>
-
-  <input
-    type="password"
-    id="adminPassword"
-    placeholder="Enter admin password"
-    autocomplete="current-password"
-  >
-
-
-  <br><br>
-
-
-  <!-- =====================================================
-       LOGIN BUTTON
-       ===================================================== -->
-
-  <button
-    type="button"
-    id="adminLoginButton"
-  >
-    Login
-  </button>
-
-
-  <!-- =====================================================
-       LOGIN MESSAGE
-       ===================================================== -->
-
-  <p id="loginMessage"></p>
-
-
-  <!-- =====================================================
-       SECTION 3C
-       SUPABASE AUTHENTICATION
-       ===================================================== -->
-
-  <script>
-
-    /* =====================================================
-       ADMIN LOGIN FUNCTION
-       ===================================================== */
-
-    async function loginAdmin() {
-
-      console.log(
-        "FrostTech Admin Login button clicked."
-      );
-
-
-      const emailInput =
-        document.getElementById(
-          "adminEmail"
-        );
-
-
-      const passwordInput =
-        document.getElementById(
-          "adminPassword"
-        );
-
-
-      const loginButton =
-        document.getElementById(
-          "adminLoginButton"
-        );
-
-
-      const loginMessage =
-        document.getElementById(
-          "loginMessage"
-        );
-
-
-      /* ===================================================
-         CHECK SUPABASE
-         =================================================== */
-
-      if (!supabaseClient) {
-
-        loginMessage.textContent =
-          "Supabase is not initialized.";
-
-        console.error(
-          "Login attempted before Supabase initialization."
-        );
-
-        return;
-
-      }
-
-
-      /* ===================================================
-         GET USER INPUT
-         =================================================== */
-
-      const email =
-        emailInput.value.trim();
-
-
-      const password =
-        passwordInput.value;
-
-
-      /* ===================================================
-         CHECK EMAIL
-         =================================================== */
-
-      if (!email) {
-
-        loginMessage.textContent =
-          "Please enter your admin email.";
-
-        emailInput.focus();
-
-        return;
-
-      }
-
-
-      /* ===================================================
-         CHECK PASSWORD
-         =================================================== */
-
-      if (!password) {
-
-        loginMessage.textContent =
-          "Please enter your admin password.";
-
-        passwordInput.focus();
-
-        return;
-
-      }
-
-
-      /* ===================================================
-         LOGIN START
-         =================================================== */
-
-      loginMessage.textContent =
-        "Logging in...";
-
-
-      loginButton.disabled = true;
-
-      loginButton.textContent =
-        "Logging in...";
-
-
-      try {
-
-        console.log(
-          "Sending authentication request to Supabase..."
-        );
-
-
-        /* =================================================
-           SUPABASE LOGIN
-           ================================================= */
-
-        const {
-          data,
-          error
-        } =
-          await supabaseClient.auth.signInWithPassword({
-
-            email: email,
-
-            password: password
-
-          });
-
-
-        /* =================================================
-           LOGIN ERROR
-           ================================================= */
-
-        if (error) {
-
-          console.error(
-            "FrostTech login error:",
-            error
-          );
-
-
-          loginMessage.textContent =
-            "Login failed: " +
-            error.message;
-
-
-          loginButton.disabled = false;
-
-          loginButton.textContent =
-            "Login";
-
-
-          return;
-
-        }
-
-
-        /* =================================================
-           LOGIN SUCCESS
-           ================================================= */
-
-        console.log(
-          "FrostTech admin login successful.",
-          data
-        );
-
-
-        loginMessage.textContent =
-          "Admin login successful.";
-
-
-        loginButton.textContent =
-          "Logged In";
-
-
-        /* =================================================
-           SHOW ADMIN AREA
-           ================================================= */
-
-        const adminArea =
-          document.getElementById(
-            "adminArea"
-          );
-
-
-        if (adminArea) {
-
-          adminArea.style.display =
-            "block";
-
-        }
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "Unexpected FrostTech login error:",
-          error
-        );
-
-
-        loginMessage.textContent =
-          "An unexpected error occurred: " +
-          error.message;
-
-
-        loginButton.disabled = false;
-
-        loginButton.textContent =
-          "Login";
-
-      }
-
-    }
-
-
-    /* =====================================================
-       LOGIN BUTTON EVENT
-       ===================================================== */
-
-    function setupLoginButton() {
-
-      const loginButton =
-        document.getElementById(
-          "adminLoginButton"
-        );
-
-
-      if (!loginButton) {
-
-        console.error(
-          "FrostTech Login button was not found."
-        );
-
-        return;
-
-      }
-
-
-      loginButton.addEventListener(
-        "click",
-        loginAdmin
-      );
-
-
-      console.log(
-        "FrostTech Login button event listener attached."
-      );
-
-    }
-
-
-  </script>
-
-
-  <!-- =====================================================
-       SECTION 4
-       ADMIN AREA
-       ===================================================== -->
-
-  <div id="adminArea">
-
-    <hr>
-
-    <h2>
-      FrostTech Admin Dashboard
-    </h2>
-
-    <p>
-      Admin authentication successful.
+    <p id="systemStatus">
+      Admin system loading...
     </p>
 
   </div>
 
 
-  <!-- =====================================================
-       SECTION 5
-       SESSION CHECK
-       ===================================================== -->
+  <!-- LOGIN -->
 
-  <script>
+  <div
+    class="card"
+    id="loginSection"
+  >
 
-    async function checkSession() {
+    <h2>Admin Login</h2>
 
-      if (!supabaseClient) {
+    <label>Email</label>
 
-        console.error(
-          "Cannot check session. Supabase is not initialized."
+    <input
+      type="email"
+      id="email"
+      placeholder="Admin email"
+      autocomplete="username"
+    >
+
+
+    <label>Password</label>
+
+    <input
+      type="password"
+      id="password"
+      placeholder="Password"
+      autocomplete="current-password"
+    >
+
+
+    <button
+      type="button"
+      id="loginButton"
+    >
+      Login
+    </button>
+
+
+    <p id="loginMessage"></p>
+
+  </div>
+
+
+  <!-- ADMIN DASHBOARD -->
+
+  <div
+    class="hidden"
+    id="dashboard"
+  >
+
+
+    <div class="card">
+
+      <h2>Admin Dashboard</h2>
+
+      <p id="adminUser"></p>
+
+      <button
+        type="button"
+        class="logout-button"
+        id="logoutButton"
+      >
+        Logout
+      </button>
+
+    </div>
+
+
+    <!-- CUSTOMER QUOTE REQUESTS -->
+
+    <div class="card">
+
+      <h2>Customer Quote Requests</h2>
+
+      <button
+        type="button"
+        id="refreshRequestsButton"
+      >
+        Refresh Requests
+      </button>
+
+      <div id="requestsContainer">
+        Loading requests...
+      </div>
+
+    </div>
+
+
+    <!-- SUPPLIER QUOTATIONS -->
+
+    <div class="card">
+
+      <h2>Saved Supplier Quotations</h2>
+
+      <button
+        type="button"
+        id="refreshSupplierQuotesButton"
+      >
+        Refresh Supplier Quotations
+      </button>
+
+      <div id="supplierQuotesContainer">
+        Loading supplier quotations...
+      </div>
+
+    </div>
+
+
+  </div>
+
+
+</div>
+
+
+<script>
+
+  /*
+   =========================================================
+   FROSTTECH SUPABASE CONFIGURATION
+   =========================================================
+  */
+
+  const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+
+  /*
+   =========================================================
+   SUPABASE INITIALIZATION
+   =========================================================
+  */
+
+  let supabaseClient = null;
+
+
+  function initializeSupabase() {
+
+    try {
+
+      if (!window.supabase) {
+
+        throw new Error(
+          "Supabase library did not load."
+        );
+
+      }
+
+
+      supabaseClient =
+        window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_KEY
+        );
+
+
+      document.getElementById(
+        "systemStatus"
+      ).textContent =
+        "Supabase connection initialized successfully.";
+
+      document.getElementById(
+        "systemStatus"
+      ).className =
+        "success";
+
+
+      console.log(
+        "FrostTech Supabase initialized."
+      );
+
+
+      return true;
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Supabase initialization error:",
+        error
+      );
+
+
+      document.getElementById(
+        "systemStatus"
+      ).textContent =
+        "Supabase initialization failed: " +
+        error.message;
+
+
+      document.getElementById(
+        "systemStatus"
+      ).className =
+        "error";
+
+
+      return false;
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   ADMIN LOGIN
+   =========================================================
+  */
+
+  async function loginAdmin() {
+
+    const email =
+      document.getElementById(
+        "email"
+      ).value.trim();
+
+
+    const password =
+      document.getElementById(
+        "password"
+      ).value;
+
+
+    const message =
+      document.getElementById(
+        "loginMessage"
+      );
+
+
+    if (!email || !password) {
+
+      message.textContent =
+        "Please enter your email and password.";
+
+      message.className =
+        "error";
+
+      return;
+
+    }
+
+
+    message.textContent =
+      "Logging in...";
+
+    message.className =
+      "";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.signInWithPassword({
+          email: email,
+          password: password
+        });
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data || !data.user) {
+
+        throw new Error(
+          "Login succeeded but no user was returned."
+        );
+
+      }
+
+
+      console.log(
+        "Supabase login successful:",
+        data.user.email
+      );
+
+
+      await checkAdminProfile(
+        data.user
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Login error:",
+        error
+      );
+
+
+      message.textContent =
+        "Login failed: " +
+        error.message;
+
+
+      message.className =
+        "error";
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   CHECK ADMIN PROFILE
+   =========================================================
+  */
+
+  async function checkAdminProfile(user) {
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("profiles")
+          .select(
+            "id, full_name, role, is_active"
+          )
+          .eq(
+            "id",
+            user.id
+          )
+          .single();
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data) {
+
+        throw new Error(
+          "Admin profile was not found."
+        );
+
+      }
+
+
+      if (data.role !== "admin") {
+
+        throw new Error(
+          "This account is not an admin account."
+        );
+
+      }
+
+
+      if (data.is_active !== true) {
+
+        throw new Error(
+          "This admin account is not active."
+        );
+
+      }
+
+
+      document.getElementById(
+        "loginMessage"
+      ).textContent =
+        "Login successful.";
+
+
+      document.getElementById(
+        "loginMessage"
+      ).className =
+        "success";
+
+
+      showDashboard(
+        user,
+        data
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Admin profile error:",
+        error
+      );
+
+
+      await supabaseClient.auth.signOut();
+
+
+      document.getElementById(
+        "loginMessage"
+      ).textContent =
+        "Admin verification failed: " +
+        error.message;
+
+
+      document.getElementById(
+        "loginMessage"
+      ).className =
+        "error";
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   SHOW DASHBOARD
+   =========================================================
+  */
+
+  function showDashboard(
+    user,
+    profile
+  ) {
+
+    document.getElementById(
+      "loginSection"
+    ).classList.add(
+      "hidden"
+    );
+
+
+    document.getElementById(
+      "dashboard"
+    ).classList.remove(
+      "hidden"
+    );
+
+
+    document.getElementById(
+      "adminUser"
+    ).textContent =
+      "Logged in as: " +
+      (
+        profile.full_name ||
+        user.email
+      ) +
+      " (" +
+      user.email +
+      ")";
+
+
+    loadQuoteRequests();
+
+    loadSupplierQuotes();
+
+  }
+
+
+  /*
+   =========================================================
+   CHECK EXISTING SESSION
+   =========================================================
+  */
+
+  async function checkSession() {
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient.auth.getSession();
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      const session =
+        data.session;
+
+
+      if (!session) {
+
+        console.log(
+          "No active admin session."
         );
 
         return;
@@ -567,134 +677,573 @@
       }
 
 
-      try {
-
-        const {
-          data,
-          error
-        } =
-          await supabaseClient.auth.getSession();
+      console.log(
+        "Existing session found."
+      );
 
 
-        if (error) {
-
-          console.error(
-            "Session check error:",
-            error
-          );
-
-          return;
-
-        }
-
-
-        if (
-          data &&
-          data.session
-        ) {
-
-          console.log(
-            "Existing FrostTech admin session found."
-          );
-
-
-          document.getElementById(
-            "loginMessage"
-          ).textContent =
-            "Admin session already active.";
-
-
-          document.getElementById(
-            "adminArea"
-          ).style.display =
-            "block";
-
-
-          document.getElementById(
-            "adminLoginButton"
-          ).textContent =
-            "Logged In";
-
-
-          document.getElementById(
-            "adminLoginButton"
-          ).disabled =
-            true;
-
-        }
-
-        else {
-
-          console.log(
-            "No existing FrostTech admin session."
-          );
-
-        }
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "Unexpected session error:",
-          error
-        );
-
-      }
+      await checkAdminProfile(
+        session.user
+      );
 
     }
 
+    catch (error) {
 
-  </script>
+      console.error(
+        "Session check failed:",
+        error
+      );
+
+    }
+
+  }
 
 
-  <!-- =====================================================
-       PAGE START
-       ===================================================== -->
+  /*
+   =========================================================
+   LOGOUT
+   =========================================================
+  */
 
-  <script>
+  async function logoutAdmin() {
 
-    document.addEventListener(
-      "DOMContentLoaded",
-      function () {
+    try {
 
-        console.log(
-          "FrostTech Admin JavaScript loaded successfully."
+      const {
+        error
+      } =
+        await supabaseClient.auth.signOut();
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      document.getElementById(
+        "dashboard"
+      ).classList.add(
+        "hidden"
+      );
+
+
+      document.getElementById(
+        "loginSection"
+      ).classList.remove(
+        "hidden"
+      );
+
+
+      document.getElementById(
+        "loginMessage"
+      ).textContent =
+        "Logged out successfully.";
+
+
+      document.getElementById(
+        "loginMessage"
+      ).className =
+        "success";
+
+
+      document.getElementById(
+        "password"
+      ).value = "";
+
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Logout error:",
+        error
+      );
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   LOAD CUSTOMER QUOTE REQUESTS
+   =========================================================
+  */
+
+  async function loadQuoteRequests() {
+
+    const container =
+      document.getElementById(
+        "requestsContainer"
+      );
+
+
+    container.innerHTML =
+      "Loading requests...";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("quote_requests")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data || data.length === 0) {
+
+        container.innerHTML =
+          "<p>No customer quote requests found.</p>";
+
+        return;
+
+      }
+
+
+      container.innerHTML = "";
+
+
+      data.forEach(
+        request => {
+
+          const card =
+            document.createElement(
+              "div"
+            );
+
+
+          card.className =
+            "quote-card";
+
+
+          card.innerHTML = `
+
+            <h3>
+              Request ${
+                request.request_number ||
+                request.id
+              }
+            </h3>
+
+            <p>
+              <strong>Status:</strong>
+              ${
+                request.status ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Customer:</strong>
+              ${
+                request.customer_name ||
+                request.name ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Phone:</strong>
+              ${
+                request.phone ||
+                request.customer_phone ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Product:</strong>
+              ${
+                request.product_name ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Quantity:</strong>
+              ${
+                request.quantity ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Delivery Address:</strong>
+              ${
+                request.delivery_address ||
+                "N/A"
+              }
+            </p>
+
+            <p class="small">
+              Request ID:
+              ${request.id}
+            </p>
+
+          `;
+
+
+          container.appendChild(
+            card
+          );
+
+        }
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Quote request error:",
+        error
+      );
+
+
+      container.innerHTML =
+        `
+        <p class="error">
+          Could not load quote requests:
+          ${error.message}
+        </p>
+        `;
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   LOAD SUPPLIER QUOTATIONS
+   =========================================================
+  */
+
+  async function loadSupplierQuotes() {
+
+    const container =
+      document.getElementById(
+        "supplierQuotesContainer"
+      );
+
+
+    container.innerHTML =
+      "Loading supplier quotations...";
+
+
+    try {
+
+      const {
+        data,
+        error
+      } =
+        await supabaseClient
+          .from("supplier_quotes")
+          .select("*")
+          .order(
+            "created_at",
+            {
+              ascending: false
+            }
+          );
+
+
+      if (error) {
+
+        throw error;
+
+      }
+
+
+      if (!data || data.length === 0) {
+
+        container.innerHTML =
+          "<p>No supplier quotations found.</p>";
+
+        return;
+
+      }
+
+
+      container.innerHTML = "";
+
+
+      data.forEach(
+        quote => {
+
+          const card =
+            document.createElement(
+              "div"
+            );
+
+
+          card.className =
+            "supplier-card";
+
+
+          const supplierTotal =
+            Number(
+              quote.supplier_total || 0
+            );
+
+
+          const deliveryCost =
+            Number(
+              quote.delivery_cost || 0
+            );
+
+
+          const marginAmount =
+            Number(
+              quote.frosttech_margin_amount || 0
+            );
+
+
+          const customerTotal =
+            Number(
+              quote.customer_total || 0
+            );
+
+
+          card.innerHTML = `
+
+            <h3>
+              Supplier Quotation
+            </h3>
+
+            <p>
+              <strong>Status:</strong>
+              ${
+                quote.status ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Supplier ID:</strong>
+              ${
+                quote.supplier_id ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Product ID:</strong>
+              ${
+                quote.product_id ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Quantity:</strong>
+              ${
+                quote.quantity ||
+                0
+              }
+            </p>
+
+            <p>
+              <strong>Supplier Total:</strong>
+              ₦${supplierTotal.toLocaleString()}
+            </p>
+
+            <p>
+              <strong>Delivery Cost:</strong>
+              ₦${deliveryCost.toLocaleString()}
+            </p>
+
+            <p>
+              <strong>FrostTech Margin:</strong>
+              ${
+                quote.frosttech_margin_percent ||
+                0
+              }%
+              =
+              ₦${marginAmount.toLocaleString()}
+            </p>
+
+            <p class="total">
+              Customer Total:
+              ₦${customerTotal.toLocaleString()}
+            </p>
+
+            <p>
+              <strong>Customer Quote Status:</strong>
+              ${
+                quote.customer_quote_status ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              <strong>Valid Until:</strong>
+              ${
+                quote.valid_until ||
+                "N/A"
+              }
+            </p>
+
+            <p>
+              ${
+                quote.notes ||
+                ""
+              }
+            </p>
+
+            <p class="small">
+              Quote ID:
+              ${quote.id}
+            </p>
+
+          `;
+
+
+          container.appendChild(
+            card
+          );
+
+        }
+      );
+
+    }
+
+    catch (error) {
+
+      console.error(
+        "Supplier quote error:",
+        error
+      );
+
+
+      container.innerHTML =
+        `
+        <p class="error">
+          Could not load supplier quotations:
+          ${error.message}
+        </p>
+        `;
+
+    }
+
+  }
+
+
+  /*
+   =========================================================
+   BUTTON EVENT LISTENERS
+   =========================================================
+  */
+
+  document.addEventListener(
+    "DOMContentLoaded",
+    async function () {
+
+      console.log(
+        "FrostTech Admin JavaScript loaded successfully."
+      );
+
+
+      const ready =
+        initializeSupabase();
+
+
+      if (!ready) {
+
+        return;
+
+      }
+
+
+      document
+        .getElementById(
+          "loginButton"
+        )
+        .addEventListener(
+          "click",
+          loginAdmin
         );
 
 
-        /* Initialize Supabase */
-
-        const ready =
-          initializeSupabase();
-
-
-        if (!ready) {
-
-          console.error(
-            "FrostTech Admin stopped because Supabase initialization failed."
-          );
-
-          return;
-
-        }
+      document
+        .getElementById(
+          "logoutButton"
+        )
+        .addEventListener(
+          "click",
+          logoutAdmin
+        );
 
 
-        /* Connect Login button */
+      document
+        .getElementById(
+          "refreshRequestsButton"
+        )
+        .addEventListener(
+          "click",
+          loadQuoteRequests
+        );
 
-        setupLoginButton();
+
+      document
+        .getElementById(
+          "refreshSupplierQuotesButton"
+        )
+        .addEventListener(
+          "click",
+          loadSupplierQuotes
+        );
 
 
-        /* Check existing session */
+      document
+        .getElementById(
+          "password"
+        )
+        .addEventListener(
+          "keydown",
+          function (event) {
 
-        checkSession();
+            if (
+              event.key === "Enter"
+            ) {
 
-      }
-    );
+              loginAdmin();
 
-  </script>
+            }
+
+          }
+        );
+
+
+      await checkSession();
+
+    }
+  );
+
+
+</script>
 
 
 </body>
 
-</html>
+  </html>
