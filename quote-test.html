@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Quote Test</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+
+    h1 {
+      color: #222;
+    }
+
+    #status {
+      padding: 12px;
+      background: white;
+      margin-bottom: 15px;
+      border-radius: 6px;
+    }
+
+    .quote {
+      background: white;
+      padding: 18px;
+      margin-top: 15px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+    }
+
+    .quote p {
+      margin: 8px 0;
+    }
+
+    .label {
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body>
+
+  <h1>FrostTech Admin</h1>
+  <h2>Step 3B: Customer Quote Request</h2>
+
+  <div id="status">Checking...</div>
+
+  <div id="quoteArea"></div>
+
+<script>
+
+const SUPABASE_URL =
+  "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+  window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+
+async function loadQuote() {
+
+  const status = document.getElementById("status");
+  const quoteArea = document.getElementById("quoteArea");
+
+  status.innerHTML = "Checking admin session...";
+
+  const { data: sessionData } =
+    await supabaseClient.auth.getSession();
+
+  if (!sessionData.session) {
+    status.innerHTML =
+      "No active login session. Please login through admin.html first.";
+    return;
+  }
+
+  status.innerHTML =
+    "Logged in. Reading customer quote request...";
+
+  const { data, error } =
+    await supabaseClient
+      .from("quote_requests")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+  if (error) {
+
+    status.innerHTML =
+      "Error reading quote request: " +
+      error.message;
+
+    return;
+  }
+
+  if (!data || data.length === 0) {
+
+    status.innerHTML =
+      "No customer quote request found.";
+
+    return;
+  }
+
+  const quote = data[0];
+
+  status.innerHTML =
+    "Customer quote request loaded successfully.";
+
+  quoteArea.innerHTML = `
+
+    <div class="quote">
+
+      <p>
+        <span class="label">Request Number:</span>
+        ${quote.request_number || "N/A"}
+      </p>
+
+      <p>
+        <span class="label">Customer Name:</span>
+        ${quote.customer_name || "N/A"}
+      </p>
+
+      <p>
+        <span class="label">Product:</span>
+        ${quote.product_name || "N/A"}
+      </p>
+
+      <p>
+        <span class="label">Quantity:</span>
+        ${quote.quantity || "N/A"}
+      </p>
+
+      <p>
+        <span class="label">Delivery Address:</span>
+        ${quote.delivery_address || "N/A"}
+      </p>
+
+      <p>
+        <span class="label">Status:</span>
+        ${quote.status || "N/A"}
+      </p>
+
+    </div>
+
+  `;
+}
+
+
+loadQuote();
+
+</script>
+
+</body>
+</html>
