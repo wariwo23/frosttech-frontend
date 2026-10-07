@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3B Test</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f4f7f9;
+        }
+
+        h1 {
+            color: #123b5d;
+        }
+
+        button {
+            padding: 12px 18px;
+            font-size: 16px;
+            background: #123b5d;
+            color: white;
+            border: none;
+            border-radius: 6px;
+        }
+
+        #status {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+        }
+
+        .quote {
+            margin-top: 20px;
+            padding: 15px;
+            background: white;
+            border-radius: 8px;
+            border-left: 5px solid #123b5d;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>FrostTech Step 3B</h1>
+
+    <p>Customer Quote Request Test</p>
+
+    <button id="loadQuoteBtn" type="button">
+        Load Customer Quote
+    </button>
+
+    <div id="status">
+        Waiting for test...
+    </div>
+
+    <div id="quote"></div>
+
+
+<script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+document.getElementById("loadQuoteBtn").addEventListener("click", loadQuote);
+
+
+async function loadQuote() {
+
+    const status =
+        document.getElementById("status");
+
+    const quote =
+        document.getElementById("quote");
+
+    status.innerHTML = "Loading customer quote...";
+    quote.innerHTML = "";
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("quote_requests")
+                .select("*")
+                .order("created_at", { ascending: false })
+                .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            status.innerHTML =
+                "<strong>No quote request found.</strong>";
+
+            return;
+        }
+
+        const request = data[0];
+
+        status.innerHTML =
+            "<strong>Step 3B SUCCESS!</strong> Customer quote request loaded.";
+
+        quote.innerHTML = `
+            <div class="quote">
+
+                <h2>${request.title || "Customer Quote Request"}</h2>
+
+                <p>
+                    <strong>Request Number:</strong>
+                    ${request.request_number || ""}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    ${request.description || ""}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${request.quantity || ""}
+                </p>
+
+                <p>
+                    <strong>Preferred Brand:</strong>
+                    ${request.preferred_brand || ""}
+                </p>
+
+                <p>
+                    <strong>Budget:</strong>
+                    ${request.budget || ""}
+                </p>
+
+                <p>
+                    <strong>Delivery Address:</strong>
+                    ${request.delivery_address || ""}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${request.status || ""}
+                </p>
+
+            </div>
+        `;
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<strong>Step 3B ERROR:</strong> " +
+            error.message;
+
+    }
+
+}
+
+</script>
+
+</body>
+  </html>
