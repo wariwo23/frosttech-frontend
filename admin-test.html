@@ -1,14 +1,18 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
   <title>FrostTech Admin - Step 2D</title>
 </head>
 
 <body>
 
   <h1>FrostTech Admin</h1>
+
   <p>HVAC and Refrigeration Marketplace</p>
 
   <h2>Step 2D: Authentication Test</h2>
@@ -34,16 +38,31 @@
     Test Login
   </button>
 
-  <p id="result">Waiting for login test...</p>
+  <p id="result">
+    Waiting for login test...
+  </p>
 
+
+  <!-- Supabase Library -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+
   <script>
+
+    /* =========================================
+       SUPABASE CONFIGURATION
+       ========================================= */
+
     const SUPABASE_URL =
       "https://nftxptjpgidcsgtaltjn.supabase.co";
 
     const SUPABASE_KEY =
       "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+
+    /* =========================================
+       CREATE SUPABASE CLIENT
+       ========================================= */
 
     const supabaseClient =
       window.supabase.createClient(
@@ -51,8 +70,18 @@
         SUPABASE_KEY
       );
 
+
+    /* =========================================
+       INITIAL STATUS
+       ========================================= */
+
     document.getElementById("result").textContent =
       "Step 2D: Supabase client initialized successfully.";
+
+
+    /* =========================================
+       LOGIN TEST
+       ========================================= */
 
     document
       .getElementById("loginButton")
@@ -67,40 +96,68 @@
         const result =
           document.getElementById("result");
 
+
+        if (!email || !password) {
+
+          result.textContent =
+            "Please enter the email and password.";
+
+          return;
+        }
+
+
         result.textContent =
           "Testing authentication...";
+
 
         try {
 
           const { data, error } =
             await supabaseClient.auth.signInWithPassword({
+
               email: email,
+
               password: password
+
             });
 
+
           if (error) {
+
             result.textContent =
-              "Authentication error: " + error.message;
+              "Authentication error: "
+              + error.message;
+
             return;
           }
 
+
           if (data && data.user) {
+
             result.textContent =
-              "SUCCESS! Authentication works. Logged in as: "
+              "SUCCESS! Authentication works. "
+              + "Logged in as: "
               + data.user.email;
+
           } else {
+
             result.textContent =
-              "Authentication responded, but no user was returned.";
+              "Authentication responded, "
+              + "but no user was returned.";
+
           }
+
 
         } catch (err) {
 
           result.textContent =
-            "Unexpected error: " + err.message;
+            "Unexpected error: "
+            + err.message;
 
         }
 
       });
+
   </script>
 
 </body>
