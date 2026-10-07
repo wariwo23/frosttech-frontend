@@ -20,6 +20,13 @@
             padding: 25px;
             border-radius: 10px;
         }
+
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            background: #eef6ff;
+            border-radius: 6px;
+        }
     </style>
 </head>
 
@@ -31,26 +38,38 @@
 
     <p>HVAC and Refrigeration Marketplace</p>
 
-    <p id="status">
-        Checking Supabase library...
-    </p>
+    <div class="status" id="status">
+        Initializing Supabase...
+    </div>
 
 </div>
 
-<!-- Load Supabase -->
+<!-- Supabase library -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 
-    if (window.supabase) {
+    const SUPABASE_URL =
+        "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+    const SUPABASE_KEY =
+        "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+    try {
+
+        const frosttechSupabase =
+            window.supabase.createClient(
+                SUPABASE_URL,
+                SUPABASE_KEY
+            );
 
         document.getElementById("status").innerHTML =
-            "<strong>Step 2B:</strong> Supabase library loaded successfully.";
+            "<strong>Step 2C:</strong> Supabase client initialized successfully.";
 
-    } else {
+    } catch (error) {
 
         document.getElementById("status").innerHTML =
-            "<strong>Step 2B:</strong> Supabase library did NOT load.";
+            "<strong>Step 2C ERROR:</strong> " + error.message;
 
     }
 
