@@ -3,16 +3,16 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrostTech TEST</title>
+  <title>FrostTech Test</title>
 </head>
 
 <body>
 
 <h1>FROSTTECH NEW TEST PAGE</h1>
 
-<p>If you can see this, GitHub is serving the new file.</p>
+<p>This is the new GitHub Pages test.</p>
 
-<button onclick="alert('BUTTON WORKS')">
+<button type="button" onclick="alert('BUTTON WORKS')">
   TEST BUTTON
 </button>
 
