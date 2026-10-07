@@ -1,32 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FrostTech Admin Test</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Admin Test</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: #f5f5f5;
+    }
+
+    .box {
+      max-width: 400px;
+      margin: 40px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+    }
+
+    input {
+      width: 100%;
+      padding: 12px;
+      margin: 8px 0;
+      box-sizing: border-box;
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+
+    #message {
+      margin-top: 15px;
+      font-weight: bold;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>FrostTech Admin</h1>
+<div class="box">
 
-<p>Supabase connection initialized successfully.</p>
+  <h1>FrostTech Admin</h1>
 
-<hr>
+  <p>HVAC and Refrigeration Marketplace</p>
 
-<h2>Admin Login</h2>
+  <h2>Admin Login</h2>
 
-<p>If you can see this, the Login interface is working.</p>
+  <input
+    type="email"
+    id="email"
+    placeholder="Email"
+  >
 
-<form>
-<label>Email</label><br>
-<input type="email" placeholder="Admin email"><br><br>
+  <input
+    type="password"
+    id="password"
+    placeholder="Password"
+  >
 
-<label>Password</label><br>
-<input type="password" placeholder="Password"><br><br>
+  <button type="button" id="loginBtn">
+    LOGIN
+  </button>
 
-<button type="button">Login</button>
-</form>
+  <div id="message"></div>
+
+</div>
+
+<script>
+document.getElementById("loginBtn").addEventListener("click", function () {
+
+  document.getElementById("message").textContent =
+    "LOGIN BUTTON IS WORKING";
+
+});
+</script>
 
 </body>
 </html>
