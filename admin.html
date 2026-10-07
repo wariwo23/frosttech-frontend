@@ -9,7 +9,6 @@
     <style>
         body {
             font-family: Arial, sans-serif;
-            margin: 0;
             padding: 20px;
             background: #f4f6f8;
         }
@@ -22,21 +21,10 @@
             border-radius: 10px;
         }
 
-        h1 {
-            margin-top: 0;
-        }
-
         .status {
             padding: 15px;
             margin-top: 20px;
             background: #eef6ff;
-            border-radius: 6px;
-        }
-
-        #supabaseStatus {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f5f5f5;
             border-radius: 6px;
         }
     </style>
@@ -44,43 +32,29 @@
 
 <body>
 
-    <div class="container">
+<div class="container">
 
-        <h1>FrostTech Admin</h1>
+    <h1>FrostTech Admin</h1>
 
-        <p>HVAC and Refrigeration Marketplace</p>
+    <p>HVAC and Refrigeration Marketplace</p>
 
-        <div class="status">
-            <strong>Step 1:</strong>
-            Admin page loaded successfully.
-        </div>
-
-        <div id="supabaseStatus">
-            Checking Supabase connection...
-        </div>
-
+    <div class="status">
+        <strong>Step 1:</strong>
+        Admin page loaded successfully.
     </div>
 
-    <!-- Supabase library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <div class="status" id="test">
+        JavaScript is being tested...
+    </div>
 
-    <script>
+</div>
 
-        const SUPABASE_URL =
-            "https://nftxptjpgidcsgtaltjn.supabase.co";
+<script>
 
-        const SUPABASE_KEY =
-            "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+    document.getElementById("test").innerHTML =
+        "<strong>Step 2A:</strong> JavaScript is working successfully.";
 
-        const supabase = window.supabase.createClient(
-            SUPABASE_URL,
-            SUPABASE_KEY
-        );
-
-        document.getElementById("supabaseStatus").innerHTML =
-            "<strong>Step 2:</strong> Supabase connection initialized successfully.";
-
-    </script>
+</script>
 
 </body>
 </html>
