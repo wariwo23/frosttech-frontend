@@ -1,1345 +1,280 @@
-/* =========================================================
-   FROSTTECH ADMIN
-   admin.js
-   ========================================================= */
+const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+const SUPABASE_KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-/* =========================================================
-   SUPABASE SETUP
-   ========================================================= */
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-const SUPABASE_URL =
-  "https://nftxptjpgidcsgtaltjn.supabase.co";
+const $=id=>document.getElementById(id);
 
-const SUPABASE_KEY =
-  "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
-
-const supabaseClient =
-  window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_KEY
-  );
-
-
-/* =========================================================
-   DOM HELPER
-   ========================================================= */
-
-function $(id) {
-  return document.getElementById(id);
+function show(id){
+  const e=$(id);
+  if(e)e.style.display="";
 }
 
+function hide(id){
+  const e=$(id);
+  if(e)e.style.display="none";
+}
 
-/* =========================================================
-   SHOW / HIDE
-   ========================================================= */
+function message(txt,type="info"){
+  const e=$("message");
+  if(!e)return;
+  e.textContent=txt;
+  e.className="message "+type;
+  e.style.display="block";
+}
 
-function show(id) {
-  const element = $(id);
-
-  if (element) {
-    element.style.display = "";
+function status(txt,type="status-success"){
+  const e=$("systemStatus");
+  if(e){
+    e.textContent=txt;
+    e.className="status "+type;
   }
 }
 
-function hide(id) {
-  const element = $(id);
-
-  if (element) {
-    element.style.display = "none";
-  }
+function showLogin(){
+  show("loginSection");
+  hide("dashboard");
 }
 
-
-/* =========================================================
-   GENERAL MESSAGE
-   ========================================================= */
-
-function showMessage(message, type = "success") {
-
-  const box = $("message");
-
-  if (!box) {
-    alert(message);
-    return;
-  }
-
-  box.textContent = message;
-
-  box.className =
-    "message message-" + type;
-
-  box.style.display = "block";
-}
-
-
-/* =========================================================
-   SYSTEM STATUS
-   ========================================================= */
-
-function setSystemStatus(
-  message,
-  type = "success"
-) {
-
-  const box = $("systemStatus");
-
-  if (!box) return;
-
-  box.textContent = message;
-
-  box.className =
-    "status status-" + type;
-}
-
-
-/* =========================================================
-   ADMIN LOGIN
-   ========================================================= */
-
-async function loginAdmin() {
-
-  const email =
-    $("email")?.value.trim();
-
-  const password =
-    $("password")?.value;
-
-  if (!email || !password) {
-
-    showMessage(
-      "Please enter your email and password.",
-      "error"
-    );
-
-    return;
-  }
-
-  const button =
-    $("loginBtn");
-
-  if (button) {
-
-    button.disabled = true;
-    button.textContent = "Logging in...";
-  }
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth.signInWithPassword({
-        email: email,
-        password: password
-      });
-
-    if (error) {
-      throw error;
-    }
-
-    if (
-      !data ||
-      !data.user
-    ) {
-      throw new Error(
-        "Login was not completed."
-      );
-    }
-
-    await checkAdminProfile(
-      data.user
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Login error:",
-      error
-    );
-
-    showMessage(
-      "Login failed: " +
-      error.message,
-      "error"
-    );
-
-  } finally {
-
-    if (button) {
-
-      button.disabled = false;
-      button.textContent = "Login";
-    }
-  }
-}
-
-
-/* =========================================================
-   CHECK ADMIN PROFILE
-   ========================================================= */
-
-async function checkAdminProfile(user) {
-
-  try {
-
-    /*
-      IMPORTANT:
-      The profiles table does NOT contain email.
-
-      Email comes from Supabase Auth:
-      user.email
-
-      Profiles contains:
-      id
-      full_name
-      role
-      is_active
-    */
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("profiles")
-        .select(
-          "id, full_name, role, is_active"
-        )
-        .eq("id", user.id)
-        .single();
-
-    if (error) {
-      throw error;
-    }
-
-    if (!data) {
-
-      throw new Error(
-        "Admin profile not found."
-      );
-    }
-
-    if (data.role !== "admin") {
-
-      await supabaseClient.auth.signOut();
-
-      throw new Error(
-        "This account is not an administrator."
-      );
-    }
-
-    if (data.is_active !== true) {
-
-      await supabaseClient.auth.signOut();
-
-      throw new Error(
-        "This administrator account is inactive."
-      );
-    }
-
-    showAdminDashboard(
-      data,
-      user
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Profile check error:",
-      error
-    );
-
-    showMessage(
-      "Admin verification failed: " +
-      error.message,
-      "error"
-    );
-  }
-}
-
-
-/* =========================================================
-   SHOW ADMIN DASHBOARD
-   ========================================================= */
-
-function showAdminDashboard(
-  profile,
-  user
-) {
-
+function showDashboard(user,profile){
   hide("loginSection");
-
   show("dashboard");
 
-  const userDisplay =
-    $("loggedUser");
-
-  if (userDisplay) {
-
-    /*
-      Email comes from Supabase Auth,
-      NOT from profiles.email.
-    */
-
-    userDisplay.textContent =
-      user.email ||
-      profile.full_name ||
-      "Administrator";
-  }
-
-  setSystemStatus(
-    "Supabase connection initialized successfully.",
-    "success"
-  );
+  if($("loggedUser"))
+    $("loggedUser").textContent=user.email||profile.full_name||"Administrator";
 
   loadQuoteRequests();
-
   loadSupplierQuotes();
 }
 
+async function verifyAdmin(user){
+  const {data,error}=await sb
+    .from("profiles")
+    .select("id,full_name,role,is_active")
+    .eq("id",user.id)
+    .single();
 
-/* =========================================================
-   LOGOUT
-   ========================================================= */
+  if(error)throw new Error("Admin verification failed: "+error.message);
 
-async function logoutAdmin() {
+  if(data.role!=="admin"||data.is_active!==true)
+    throw new Error("Admin access denied.");
 
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient.auth.signOut();
-
-    if (error) {
-      throw error;
-    }
-
-    hide("dashboard");
-
-    show("loginSection");
-
-    const email =
-      $("email");
-
-    const password =
-      $("password");
-
-    if (email) {
-      email.value = "";
-    }
-
-    if (password) {
-      password.value = "";
-    }
-
-    setSystemStatus(
-      "Please log in as administrator.",
-      "warning"
-    );
-
-    showMessage(
-      "You have been logged out.",
-      "success"
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Logout error:",
-      error
-    );
-
-    showMessage(
-      "Logout failed: " +
-      error.message,
-      "error"
-    );
-  }
+  return data;
 }
 
-
-/* =========================================================
-   SESSION CHECK
-   ========================================================= */
-
-async function checkSession() {
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient.auth.getSession();
-
-    if (error) {
-      throw error;
-    }
-
-    const session =
-      data?.session;
-
-    if (
-      !session ||
-      !session.user
-    ) {
-
-      hide("dashboard");
-
-      show("loginSection");
-
-      setSystemStatus(
-        "Please log in as administrator.",
-        "warning"
-      );
-
-      return;
-    }
-
-    await checkAdminProfile(
-      session.user
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Session error:",
-      error
-    );
-
-    hide("dashboard");
-
-    show("loginSection");
-
-    setSystemStatus(
-      "Unable to check login session.",
-      "error"
-    );
-  }
-}
-
-
-/* =========================================================
-   CUSTOMER QUOTE REQUESTS
-   ========================================================= */
-
-async function loadQuoteRequests() {
-
-  const container =
-    $("quoteRequests");
-
-  if (!container) return;
-
-  container.innerHTML =
-    '<div class="loading">Loading quote requests...</div>';
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("quote_requests")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    if (
-      !data ||
-      data.length === 0
-    ) {
-
-      container.innerHTML =
-        '<div class="empty-state">' +
-        'No customer quote requests found.' +
-        '</div>';
-
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.forEach(
-      request => {
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-        card.className =
-          "card quote-card";
-
-        const requestNumber =
-          request.request_number ||
-          request.request_no ||
-          request.id;
-
-        const customer =
-          request.customer_name ||
-          request.full_name ||
-          request.name ||
-          "N/A";
-
-        const phone =
-          request.phone ||
-          request.customer_phone ||
-          "N/A";
-
-        const product =
-          request.product_name ||
-          request.product ||
-          "N/A";
-
-        const quantity =
-          request.quantity || 1;
-
-        const address =
-          request.delivery_address ||
-          request.address ||
-          "N/A";
-
-        const status =
-          request.status ||
-          "pending";
-
-        card.innerHTML = `
-
-          <div class="request-number">
-            Request
-            ${escapeHtml(requestNumber)}
-          </div>
-
-          <p>
-            <strong>Status:</strong>
-            <span class="badge badge-${escapeHtml(status)}">
-              ${escapeHtml(status)}
-            </span>
-          </p>
-
-          <p>
-            <strong>Customer:</strong>
-            ${escapeHtml(customer)}
-          </p>
-
-          <p>
-            <strong>Phone:</strong>
-            ${escapeHtml(phone)}
-          </p>
-
-          <p>
-            <strong>Product:</strong>
-            ${escapeHtml(product)}
-          </p>
-
-          <p>
-            <strong>Quantity:</strong>
-            ${escapeHtml(quantity)}
-          </p>
-
-          <p>
-            <strong>Delivery Address:</strong>
-            ${escapeHtml(address)}
-          </p>
-
-          <label>
-            Status
-          </label>
-
-          <select
-            id="request-status-${request.id}"
-          >
-
-            <option
-              value="pending"
-              ${status === "pending"
-                ? "selected"
-                : ""}
-            >
-              Pending
-            </option>
-
-            <option
-              value="reviewing"
-              ${status === "reviewing"
-                ? "selected"
-                : ""}
-            >
-              Reviewing
-            </option>
-
-            <option
-              value="quoted"
-              ${status === "quoted"
-                ? "selected"
-                : ""}
-            >
-              Quoted
-            </option>
-
-            <option
-              value="completed"
-              ${status === "completed"
-                ? "selected"
-                : ""}
-            >
-              Completed
-            </option>
-
-            <option
-              value="cancelled"
-              ${status === "cancelled"
-                ? "selected"
-                : ""}
-            >
-              Cancelled
-            </option>
-
-          </select>
-
-          <button
-            type="button"
-            class="btn-primary"
-            onclick="updateRequestStatus('${request.id}')"
-          >
-            Save Status
-          </button>
-
-        `;
-
-        container.appendChild(
-          card
-        );
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Quote request error:",
-      error
-    );
-
-    container.innerHTML = `
-
-      <div class="message message-error">
-
-        Unable to load quote requests:
-
-        ${escapeHtml(
-          error.message
-        )}
-
-      </div>
-
-    `;
-  }
-}
-
-
-/* =========================================================
-   UPDATE CUSTOMER REQUEST STATUS
-   ========================================================= */
-
-async function updateRequestStatus(
-  requestId
-) {
-
-  const select =
-    $("request-status-" + requestId);
-
-  if (!select) return;
-
-  const newStatus =
-    select.value;
-
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("quote_requests")
-        .update({
-          status: newStatus,
-          updated_at:
-            new Date().toISOString()
-        })
-        .eq(
-          "id",
-          requestId
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    showMessage(
-      "Customer request status updated.",
-      "success"
-    );
-
-    await loadQuoteRequests();
-
-  } catch (error) {
-
-    console.error(
-      "Status update error:",
-      error
-    );
-
-    showMessage(
-      "Unable to update status: " +
-      error.message,
-      "error"
-    );
-  }
-}
-
-
-/* =========================================================
-   SUPPLIER QUOTATIONS
-   ========================================================= */
-
-async function loadSupplierQuotes() {
-
-  const container =
-    $("supplierQuotes");
-
-  if (!container) return;
-
-  container.innerHTML =
-    '<div class="loading">Loading supplier quotations...</div>';
-
-  try {
-
-    const {
-      data,
-      error
-    } =
-      await supabaseClient
-        .from("supplier_quotes")
-        .select("*")
-        .order(
-          "created_at",
-          {
-            ascending: false
-          }
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    if (
-      !data ||
-      data.length === 0
-    ) {
-
-      container.innerHTML =
-        '<div class="empty-state">' +
-        'No supplier quotations found.' +
-        '</div>';
-
-      return;
-    }
-
-    container.innerHTML = "";
-
-    data.forEach(
-      quote => {
-
-        const card =
-          document.createElement(
-            "div"
-          );
-
-        card.className =
-          "card supplier-quote-card";
-
-        const supplierPrice =
-          Number(
-            quote.supplier_total || 0
-          );
-
-        const delivery =
-          Number(
-            quote.delivery_cost || 0
-          );
-
-        const margin =
-          Number(
-            quote.frosttech_margin_amount || 0
-          );
-
-        const customerTotal =
-          Number(
-            quote.customer_total ||
-            supplierPrice +
-            delivery +
-            margin
-          );
-
-        const status =
-          quote.status ||
-          "draft";
-
-        card.innerHTML = `
-
-          <h3>
-            Supplier Quotation
-          </h3>
-
-          <p>
-            <strong>Quote ID:</strong>
-            ${escapeHtml(quote.id)}
-          </p>
-
-          <p>
-            <strong>Request ID:</strong>
-            ${escapeHtml(
-              quote.request_id ||
-              "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Supplier ID:</strong>
-            ${escapeHtml(
-              quote.supplier_id ||
-              "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Product ID:</strong>
-            ${escapeHtml(
-              quote.product_id ||
-              "N/A"
-            )}
-          </p>
-
-          <p>
-            <strong>Quantity:</strong>
-            ${escapeHtml(
-              quote.quantity || 1
-            )}
-          </p>
-
-          <div class="price-box">
-
-            <div class="price-row">
-
-              <span>
-                Supplier Total
-              </span>
-
-              <strong>
-                ₦${supplierPrice.toLocaleString()}
-              </strong>
-
-            </div>
-
-            <div class="price-row">
-
-              <span>
-                Delivery Cost
-              </span>
-
-              <strong>
-                ₦${delivery.toLocaleString()}
-              </strong>
-
-            </div>
-
-            <div class="price-row">
-
-              <span>
-                FrostTech Margin
-              </span>
-
-              <strong>
-                ₦${margin.toLocaleString()}
-              </strong>
-
-            </div>
-
-            <div class="price-row">
-
-              <span>
-                Customer Total
-              </span>
-
-              <strong class="customer-total">
-                ₦${customerTotal.toLocaleString()}
-              </strong>
-
-            </div>
-
-          </div>
-
-          <p>
-
-            <strong>
-              Status:
-            </strong>
-
-            <span
-              class="badge badge-${escapeHtml(status)}"
-            >
-              ${escapeHtml(status)}
-            </span>
-
-          </p>
-
-          <label>
-            Supplier Quote Status
-          </label>
-
-          <select
-            id="supplier-status-${quote.id}"
-          >
-
-            <option
-              value="draft"
-              ${status === "draft"
-                ? "selected"
-                : ""}
-            >
-              Draft
-            </option>
-
-            <option
-              value="submitted"
-              ${status === "submitted"
-                ? "selected"
-                : ""}
-            >
-              Submitted
-            </option>
-
-            <option
-              value="selected"
-              ${status === "selected"
-                ? "selected"
-                : ""}
-            >
-              Selected
-            </option>
-
-            <option
-              value="rejected"
-              ${status === "rejected"
-                ? "selected"
-                : ""}
-            >
-              Rejected
-            </option>
-
-            <option
-              value="expired"
-              ${status === "expired"
-                ? "selected"
-                : ""}
-            >
-              Expired
-            </option>
-
-          </select>
-
-          <button
-            type="button"
-            class="btn-success"
-            onclick="updateSupplierQuoteStatus('${quote.id}')"
-          >
-            Save Quote Status
-          </button>
-
-          ${
-            status === "submitted"
-              ? `
-                <button
-                  type="button"
-                  class="btn-primary"
-                  onclick="selectSupplierQuote('${quote.id}')"
-                >
-                  Select This Supplier Quote
-                </button>
-              `
-              : ""
-          }
-
-        `;
-
-        container.appendChild(
-          card
-        );
-      }
-    );
-
-  } catch (error) {
-
-    console.error(
-      "Supplier quote error:",
-      error
-    );
-
-    container.innerHTML = `
-
-      <div class="message message-error">
-
-        Unable to load supplier quotations:
-
-        ${escapeHtml(
-          error.message
-        )}
-
-      </div>
-
-    `;
-  }
-}
-
-
-/* =========================================================
-   UPDATE SUPPLIER QUOTE STATUS
-   ========================================================= */
-
-async function updateSupplierQuoteStatus(
-  quoteId
-) {
-
-  const select =
-    $("supplier-status-" + quoteId);
-
-  if (!select) return;
-
-  const newStatus =
-    select.value;
-
-  try {
-
-    const {
-      error
-    } =
-      await supabaseClient
-        .from("supplier_quotes")
-        .update({
-          status: newStatus,
-          updated_at:
-            new Date().toISOString()
-        })
-        .eq(
-          "id",
-          quoteId
-        );
-
-    if (error) {
-      throw error;
-    }
-
-    showMessage(
-      "Supplier quotation status updated.",
-      "success"
-    );
-
-    await loadSupplierQuotes();
-
-  } catch (error) {
-
-    console.error(
-      "Supplier status error:",
-      error
-    );
-
-    showMessage(
-      "Unable to update supplier quote: " +
-      error.message,
-      "error"
-    );
-  }
-}
-
-
-/* =========================================================
-   SELECT SUPPLIER QUOTE
-   ========================================================= */
-
-async function selectSupplierQuote(
-  quoteId
-) {
-
-  const confirmed =
-    confirm(
-      "Select this supplier quotation?"
-    );
-
-  if (!confirmed) {
+async function loginAdmin(){
+  const email=$("email").value.trim();
+  const password=$("password").value;
+
+  if(!email||!password){
+    message("Enter your email and password.","error");
     return;
   }
 
-  try {
+  message("Signing in...","info");
 
-    /*
-      Get selected quotation.
-    */
+  const {data,error}=await sb.auth.signInWithPassword({email,password});
 
-    const {
-      data: selectedQuote,
-      error
-    } =
-      await supabaseClient
-        .from("supplier_quotes")
-        .select("*")
-        .eq(
-          "id",
-          quoteId
-        )
-        .single();
+  if(error){
+    message("Login failed: "+error.message,"error");
+    showLogin();
+    return;
+  }
 
-    if (error) {
-      throw error;
-    }
-
-    if (!selectedQuote) {
-
-      throw new Error(
-        "Supplier quotation not found."
-      );
-    }
-
-
-    /*
-      Reject other quotations
-      belonging to this request.
-    */
-
-    const {
-      error: rejectError
-    } =
-      await supabaseClient
-        .from("supplier_quotes")
-        .update({
-          status: "rejected",
-          updated_at:
-            new Date().toISOString()
-        })
-        .eq(
-          "request_id",
-          selectedQuote.request_id
-        )
-        .neq(
-          "id",
-          quoteId
-        );
-
-    if (rejectError) {
-      throw rejectError;
-    }
-
-
-    /*
-      Mark selected quotation.
-    */
-
-    const {
-      error: selectError
-    } =
-      await supabaseClient
-        .from("supplier_quotes")
-        .update({
-          status: "selected",
-          customer_quote_status: "draft",
-          updated_at:
-            new Date().toISOString()
-        })
-        .eq(
-          "id",
-          quoteId
-        );
-
-    if (selectError) {
-      throw selectError;
-    }
-
-    showMessage(
-      "Supplier quotation selected successfully.",
-      "success"
-    );
-
-    await loadSupplierQuotes();
-
-  } catch (error) {
-
-    console.error(
-      "Supplier selection error:",
-      error
-    );
-
-    showMessage(
-      "Unable to select supplier quotation: " +
-      error.message,
-      "error"
-    );
+  try{
+    const profile=await verifyAdmin(data.user);
+    message("Login successful.","success");
+    showDashboard(data.user,profile);
+  }catch(e){
+    await sb.auth.signOut();
+    message(e.message,"error");
+    showLogin();
   }
 }
 
-
-/* =========================================================
-   REFRESH ADMIN DATA
-   ========================================================= */
-
-async function refreshAdminData() {
-
-  await loadQuoteRequests();
-
-  await loadSupplierQuotes();
-
-  showMessage(
-    "Admin data refreshed.",
-    "success"
-  );
+async function logoutAdmin(){
+  await sb.auth.signOut();
+  showLogin();
+  message("You have been logged out.","success");
 }
 
+async function checkSession(){
+  showLogin();
 
-/* =========================================================
-   HTML ESCAPE
-   ========================================================= */
+  const {data}=await sb.auth.getSession();
+  const session=data.session;
 
-function escapeHtml(value) {
-
-  if (
-    value === null ||
-    value === undefined
-  ) {
-    return "";
+  if(!session){
+    status("Supabase connection initialized successfully.","status-success");
+    return;
   }
 
-  return String(value)
-    .replace(
-      /&/g,
-      "&amp;"
-    )
-    .replace(
-      /</g,
-      "&lt;"
-    )
-    .replace(
-      />/g,
-      "&gt;"
-    )
-    .replace(
-      /"/g,
-      "&quot;"
-    )
-    .replace(
-      /'/g,
-      "&#039;"
-    );
+  try{
+    const profile=await verifyAdmin(session.user);
+    showDashboard(session.user,profile);
+    status("Supabase connection initialized successfully.","status-success");
+  }catch(e){
+    await sb.auth.signOut();
+    showLogin();
+    message(e.message,"error");
+  }
 }
 
+async function loadQuoteRequests(){
+  const box=$("quoteRequests");
+  if(!box)return;
 
-/* =========================================================
-   AUTH STATE LISTENER
-   ========================================================= */
+  box.innerHTML='<div class="loading">Loading quote requests...</div>';
 
-supabaseClient.auth.onAuthStateChange(
-  async (
-    event,
-    session
-  ) => {
+  const {data,error}=await sb
+    .from("quote_requests")
+    .select("*")
+    .order("created_at",{ascending:false});
 
-    console.log(
-      "Auth event:",
-      event
-    );
-
-    if (
-      event ===
-      "SIGNED_OUT"
-    ) {
-
-      hide("dashboard");
-
-      show("loginSection");
-
-      return;
-    }
-
-    if (
-      event === "SIGNED_IN" &&
-      session &&
-      session.user
-    ) {
-
-      await checkAdminProfile(
-        session.user
-      );
-    }
+  if(error){
+    box.innerHTML='<div class="message error">Error loading requests: '+escapeHtml(error.message)+'</div>';
+    return;
   }
-);
 
-
-/* =========================================================
-   PAGE INITIALIZATION
-   ========================================================= */
-
-document.addEventListener(
-  "DOMContentLoaded",
-  () => {
-
-    const loginButton =
-      $("loginBtn");
-
-    if (loginButton) {
-
-      loginButton.addEventListener(
-        "click",
-        loginAdmin
-      );
-    }
-
-
-    const logoutButton =
-      $("logoutBtn");
-
-    if (logoutButton) {
-
-      logoutButton.addEventListener(
-        "click",
-        logoutAdmin
-      );
-    }
-
-
-    const refreshButton =
-      $("refreshBtn");
-
-    if (refreshButton) {
-
-      refreshButton.addEventListener(
-        "click",
-        refreshAdminData
-      );
-    }
-
-
-    /*
-      Check existing Supabase
-      login session.
-    */
-
-    checkSession();
+  if(!data||!data.length){
+    box.innerHTML='<div class="empty">No quote requests found.</div>';
+    return;
   }
-);
+
+  box.innerHTML=data.map(r=>`
+    <div class="quote-card">
+      <h3>Request ${escapeHtml(r.request_number||r.id)}</h3>
+      <p><strong>Status:</strong> ${escapeHtml(r.status||"pending")}</p>
+      <p><strong>Quantity:</strong> ${escapeHtml(r.quantity||"1")}</p>
+      <p><strong>Delivery:</strong> ${escapeHtml(r.delivery_address||"N/A")}</p>
+      <label>Change Status</label>
+      <select id="req_${r.id}">
+        ${["pending","reviewing","quoted","accepted","rejected","completed"].map(s=>
+          `<option value="${s}" ${r.status===s?"selected":""}>${s}</option>`
+        ).join("")}
+      </select>
+      <button class="btn-primary" onclick="updateRequestStatus('${r.id}')">Save Status</button>
+    </div>
+  `).join("");
+}
+
+async function updateRequestStatus(id){
+  const select=$("req_"+id);
+  if(!select)return;
+
+  const {error}=await sb
+    .from("quote_requests")
+    .update({status:select.value})
+    .eq("id",id);
+
+  if(error){
+    message("Status update failed: "+error.message,"error");
+    return;
+  }
+
+  message("Request status updated.","success");
+  loadQuoteRequests();
+}
+
+async function loadSupplierQuotes(){
+  const box=$("supplierQuotes");
+  if(!box)return;
+
+  box.innerHTML='<div class="loading">Loading supplier quotations...</div>';
+
+  const {data,error}=await sb
+    .from("supplier_quotes")
+    .select("*")
+    .order("created_at",{ascending:false});
+
+  if(error){
+    box.innerHTML='<div class="message error">Error loading supplier quotations: '+escapeHtml(error.message)+'</div>';
+    return;
+  }
+
+  if(!data||!data.length){
+    box.innerHTML='<div class="empty">No supplier quotations found.</div>';
+    return;
+  }
+
+  box.innerHTML=data.map(q=>`
+    <div class="supplier-quote-card">
+      <h3>Supplier Quotation</h3>
+      <p><strong>Supplier:</strong> ${escapeHtml(q.supplier_id||"N/A")}</p>
+      <p><strong>Product:</strong> ${escapeHtml(q.product_id||"N/A")}</p>
+      <p><strong>Quantity:</strong> ${escapeHtml(q.quantity||1)}</p>
+      <p><strong>Supplier Total:</strong> ₦${Number(q.supplier_total||0).toLocaleString()}</p>
+      <p><strong>FrostTech Margin:</strong> ₦${Number(q.frosttech_margin_amount||0).toLocaleString()}</p>
+      <p><strong>Customer Total:</strong> ₦${Number(q.customer_total||0).toLocaleString()}</p>
+      <p><strong>Status:</strong> ${escapeHtml(q.status||"submitted")}</p>
+      <button class="btn-primary" onclick="selectSupplierQuote('${q.id}')">Select Quotation</button>
+    </div>
+  `).join("");
+}
+
+async function selectSupplierQuote(id){
+  const {data:quote,error:getError}=await sb
+    .from("supplier_quotes")
+    .select("id,request_id")
+    .eq("id",id)
+    .single();
+
+  if(getError){
+    message("Unable to find quotation: "+getError.message,"error");
+    return;
+  }
+
+  const {error:rejectError}=await sb
+    .from("supplier_quotes")
+    .update({status:"rejected"})
+    .eq("request_id",quote.request_id)
+    .neq("id",id)
+    .eq("status","submitted");
+
+  if(rejectError){
+    message("Could not update other quotations: "+rejectError.message,"error");
+    return;
+  }
+
+  const {error}=await sb
+    .from("supplier_quotes")
+    .update({
+      status:"selected",
+      customer_quote_status:"draft"
+    })
+    .eq("id",id);
+
+  if(error){
+    message("Quotation selection failed: "+error.message,"error");
+    return;
+  }
+
+  message("Supplier quotation selected.","success");
+  loadSupplierQuotes();
+}
+
+function escapeHtml(value){
+  return String(value??"")
+    .replace(/&/g,"&amp;")
+    .replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;")
+    .replace(/"/g,"&quot;")
+    .replace(/'/g,"&#039;");
+}
+
+document.addEventListener("DOMContentLoaded",()=>{
+  $("loginForm")?.addEventListener("submit",e=>{
+    e.preventDefault();
+    loginAdmin();
+  });
+
+  $("logoutBtn")?.addEventListener("click",logoutAdmin);
+
+  $("refreshBtn")?.addEventListener("click",()=>{
+    loadQuoteRequests();
+    loadSupplierQuotes();
+  });
+
+  status("Supabase connection initialized successfully.","status-success");
+  checkSession();
+});
