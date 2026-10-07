@@ -3,70 +3,70 @@
 
 <head>
 
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>FrostTech Step 3C - Admin Quote Management</title>
+<title>FrostTech Step 3C - Admin Quote Management</title>
 
-    <style>
+<style>
 
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f4f7f9;
-        }
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+    background: #f4f7f9;
+}
 
-        h1 {
-            color: #123;
-        }
+h1 {
+    color: #123;
+}
 
-        .card {
-            background: white;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        }
+.card {
+    background: white;
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
 
-        button {
-            padding: 12px 18px;
-            margin-top: 10px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-        }
+button {
+    padding: 12px 18px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
 
-        #loadBtn {
-            background: #0066cc;
-            color: white;
-        }
+#loadBtn {
+    background: #0066cc;
+    color: white;
+}
 
-        #saveBtn {
-            background: #16803c;
-            color: white;
-        }
+#saveBtn {
+    background: #16803c;
+    color: white;
+}
 
-        select {
-            padding: 10px;
-            width: 100%;
-            max-width: 400px;
-            margin-top: 8px;
-        }
+select {
+    padding: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 8px;
+}
 
-        .success {
-            color: green;
-            font-weight: bold;
-        }
+.success {
+    color: green;
+    font-weight: bold;
+}
 
-        .error {
-            color: red;
-            font-weight: bold;
-        }
+.error {
+    color: red;
+    font-weight: bold;
+}
 
-        .label {
-            font-weight: bold;
-        }
+.label {
+    font-weight: bold;
+}
 
-    </style>
+</style>
 
 </head>
 
@@ -77,391 +77,330 @@
 
 <p>Admin Quote Management Test</p>
 
-
 <button id="loadBtn" type="button">
-    Load Customer Quote
+Load Customer Quote
 </button>
-
 
 <div id="status"></div>
 
-
 <div id="quoteBox" class="card" style="display:none;">
 
-    <h2 id="quoteTitle"></h2>
+<h2 id="quoteTitle"></h2>
 
+<p>
+<span class="label">Request Number:</span>
+<span id="requestNumber"></span>
+</p>
 
-    <p>
-        <span class="label">Request Number:</span>
-        <span id="requestNumber"></span>
-    </p>
+<p>
+<span class="label">Customer:</span>
+<span id="customerName"></span>
+</p>
 
+<p>
+<span class="label">Phone:</span>
+<span id="customerPhone"></span>
+</p>
 
-    <p>
-        <span class="label">Customer:</span>
-        <span id="customerName"></span>
-    </p>
+<p>
+<span class="label">Product:</span>
+<span id="productName"></span>
+</p>
 
+<p>
+<span class="label">Quantity:</span>
+<span id="quantity"></span>
+</p>
 
-    <p>
-        <span class="label">Phone:</span>
-        <span id="customerPhone"></span>
-    </p>
+<p>
+<span class="label">Preferred Brand:</span>
+<span id="preferredBrand"></span>
+</p>
 
+<p>
+<span class="label">Delivery Address:</span>
+<span id="deliveryAddress"></span>
+</p>
 
-    <p>
-        <span class="label">Product:</span>
-        <span id="productName"></span>
-    </p>
+<hr>
 
+<p class="label">
+Request Status
+</p>
 
-    <p>
-        <span class="label">Quantity:</span>
-        <span id="quantity"></span>
-    </p>
+<select id="quoteStatus">
 
+<option value="pending">Pending</option>
 
-    <p>
-        <span class="label">Preferred Brand:</span>
-        <span id="preferredBrand"></span>
-    </p>
+<option value="reviewing">Reviewing</option>
 
+<option value="quoted">Quoted</option>
 
-    <p>
-        <span class="label">Delivery Address:</span>
-        <span id="deliveryAddress"></span>
-    </p>
+<option value="approved">Approved</option>
 
+<option value="completed">Completed</option>
 
-    <hr>
+<option value="cancelled">Cancelled</option>
 
+</select>
 
-    <p class="label">
-        Request Status
-    </p>
+<br>
 
+<button id="saveBtn" type="button">
+Save Status
+</button>
 
-    <select id="quoteStatus">
-
-        <option value="pending">
-            Pending
-        </option>
-
-        <option value="reviewing">
-            Reviewing
-        </option>
-
-        <option value="quoted">
-            Quoted
-        </option>
-
-        <option value="approved">
-            Approved
-        </option>
-
-        <option value="completed">
-            Completed
-        </option>
-
-        <option value="cancelled">
-            Cancelled
-        </option>
-
-    </select>
-
-
-    <br>
-
-
-    <button id="saveBtn" type="button">
-        Save Status
-    </button>
-
-
-    <div id="saveMessage"></div>
+<div id="saveMessage"></div>
 
 </div>
 
 
-
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 
 <script>
 
-
 const SUPABASE_URL =
-    "https://nftxptjpgidcsgtaltjn.supabase.co";
-
+"https://nftxptjpgidcsgtaltjn.supabase.co";
 
 const SUPABASE_KEY =
-    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
-
+"sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
 const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+supabase.createClient(
+SUPABASE_URL,
+SUPABASE_KEY
+);
 
+
+/*
+IMPORTANT:
+This is the existing FrostTech
+customer quote request ID.
+*/
 
 const REQUEST_ID =
-    "694e5ec3-5ceb-4238-b20d-326f1c07760e";
-
-
-
-document
-    .getElementById("loadBtn")
-    .addEventListener(
-        "click",
-        loadQuote
-    );
-
+"694e5ec3-5ceb-4238-b20d-326f1c07760e";
 
 
 document
-    .getElementById("saveBtn")
-    .addEventListener(
-        "click",
-        saveStatus
-    );
+.getElementById("loadBtn")
+.addEventListener("click", loadQuote);
 
+
+document
+.getElementById("saveBtn")
+.addEventListener("click", saveStatus);
 
 
 async function loadQuote() {
 
-    const statusBox =
-        document.getElementById("status");
+const statusBox =
+document.getElementById("status");
+
+statusBox.innerHTML =
+"Loading customer quote...";
 
 
-    statusBox.innerHTML =
-        "Loading customer quote...";
+try {
+
+/*
+Step 3B uses the quote_requests
+customer quote flow.
+*/
+
+const { data, error } =
+await supabaseClient
+
+.from("quote_requests")
+
+.select("*")
+
+.eq("id", REQUEST_ID)
+
+.limit(1);
 
 
-    try {
-
-        const { data, error } =
-
-            await supabaseClient
-
-            .from("customer_requests")
-
-            .select("*")
-
-            .eq("id", REQUEST_ID)
-
-            .limit(1);
+if (error) {
+throw error;
+}
 
 
-        if (error) {
+if (!data || data.length === 0) {
 
-            throw error;
-
-        }
-
-
-        if (!data || data.length === 0) {
-
-            throw new Error(
-                "Customer quote request not found."
-            );
-
-        }
-
-
-        const quote = data[0];
-
-
-        document
-            .getElementById("quoteTitle")
-            .textContent =
-            quote.title ||
-            "Customer Quote Request";
-
-
-        document
-            .getElementById("requestNumber")
-            .textContent =
-            quote.request_number ||
-            "";
-
-
-        document
-            .getElementById("productName")
-            .textContent =
-            quote.title ||
-            "";
-
-
-        document
-            .getElementById("quantity")
-            .textContent =
-            quote.quantity ||
-            "";
-
-
-        document
-            .getElementById("preferredBrand")
-            .textContent =
-            quote.preferred_brand ||
-            "Not specified";
-
-
-        document
-            .getElementById("deliveryAddress")
-            .textContent =
-            quote.delivery_address ||
-            "";
-
-
-        document
-            .getElementById("quoteStatus")
-            .value =
-            quote.status ||
-            "pending";
-
-
-        const description =
-            quote.description ||
-            "";
-
-
-        const customerMatch =
-            description.match(
-                /Customer:\s*([^P]+?)\s*Phone:/i
-            );
-
-
-        const phoneMatch =
-            description.match(
-                /Phone:\s*([^P]+?)\s*Product:/i
-            );
-
-
-        document
-            .getElementById("customerName")
-            .textContent =
-
-            customerMatch
-            ? customerMatch[1].trim()
-            : "Not available";
-
-
-        document
-            .getElementById("customerPhone")
-            .textContent =
-
-            phoneMatch
-            ? phoneMatch[1].trim()
-            : "Not available";
-
-
-        document
-            .getElementById("quoteBox")
-            .style.display =
-            "block";
-
-
-        statusBox.innerHTML =
-
-            '<p class="success">' +
-
-            'Step 3C SUCCESS! ' +
-            'Customer quote loaded.' +
-
-            '</p>';
-
-    }
-
-
-    catch (error) {
-
-        statusBox.innerHTML =
-
-            '<p class="error">' +
-
-            'Step 3C ERROR: ' +
-
-            error.message +
-
-            '</p>';
-
-    }
+throw new Error(
+"Customer quote request not found in quote_requests."
+);
 
 }
 
+
+const quote = data[0];
+
+
+document
+.getElementById("quoteTitle")
+.textContent =
+quote.title ||
+"Customer Quote Request";
+
+
+document
+.getElementById("requestNumber")
+.textContent =
+quote.request_number ||
+"";
+
+
+document
+.getElementById("productName")
+.textContent =
+quote.title ||
+quote.product_name ||
+"";
+
+
+document
+.getElementById("quantity")
+.textContent =
+quote.quantity ||
+"";
+
+
+document
+.getElementById("preferredBrand")
+.textContent =
+quote.preferred_brand ||
+"Not specified";
+
+
+document
+.getElementById("deliveryAddress")
+.textContent =
+quote.delivery_address ||
+"";
+
+
+document
+.getElementById("quoteStatus")
+.value =
+quote.status ||
+"pending";
+
+
+const description =
+quote.description ||
+"";
+
+
+const customerMatch =
+description.match(
+/Customer:\s*([^P]+?)\s*Phone:/i
+);
+
+
+const phoneMatch =
+description.match(
+/Phone:\s*([^P]+?)\s*Product:/i
+);
+
+
+document
+.getElementById("customerName")
+.textContent =
+customerMatch
+? customerMatch[1].trim()
+: quote.customer_name || "Not available";
+
+
+document
+.getElementById("customerPhone")
+.textContent =
+phoneMatch
+? phoneMatch[1].trim()
+: quote.phone || "Not available";
+
+
+document
+.getElementById("quoteBox")
+.style.display =
+"block";
+
+
+statusBox.innerHTML =
+'<p class="success">' +
+'Step 3C SUCCESS! Customer quote loaded.' +
+'</p>';
+
+}
+
+catch (error) {
+
+statusBox.innerHTML =
+'<p class="error">' +
+'Step 3C ERROR: ' +
+error.message +
+'</p>';
+
+}
+
+}
 
 
 async function saveStatus() {
 
-    const newStatus =
-        document
-        .getElementById("quoteStatus")
-        .value;
+const newStatus =
+document
+.getElementById("quoteStatus")
+.value;
 
 
-    const saveMessage =
-        document
-        .getElementById("saveMessage");
+const saveMessage =
+document
+.getElementById("saveMessage");
 
 
-    saveMessage.innerHTML =
-        "Saving status...";
+saveMessage.innerHTML =
+"Saving status...";
 
 
-    try {
+try {
 
-        const { error } =
+const { error } =
+await supabaseClient
 
-            await supabaseClient
+.from("quote_requests")
 
-            .from("customer_requests")
+.update({
+status: newStatus
+})
 
-            .update({
-
-                status: newStatus
-
-            })
-
-            .eq("id", REQUEST_ID);
+.eq("id", REQUEST_ID);
 
 
-        if (error) {
-
-            throw error;
-
-        }
+if (error) {
+throw error;
+}
 
 
-        saveMessage.innerHTML =
-
-            '<p class="success">' +
-
-            'Status saved successfully: ' +
-
-            newStatus +
-
-            '</p>';
-
-    }
-
-
-    catch (error) {
-
-        saveMessage.innerHTML =
-
-            '<p class="error">' +
-
-            'SAVE ERROR: ' +
-
-            error.message +
-
-            '</p>';
-
-    }
+saveMessage.innerHTML =
+'<p class="success">' +
+'Status saved successfully: ' +
+newStatus +
+'</p>';
 
 }
 
+catch (error) {
+
+saveMessage.innerHTML =
+'<p class="error">' +
+'SAVE ERROR: ' +
+error.message +
+'</p>';
+
+}
+
+}
 
 </script>
 
