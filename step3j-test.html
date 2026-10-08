@@ -1,0 +1,214 @@
+<!DOCTYPE html><html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3J</title>
+</head><body><h1>FrostTech Step 3J</h1><p><strong>Customer Quotation Delivery</strong></p><button type="button" id="loadBtn">
+    Load Approved Quote
+</button><div id="result" style="margin-top:20px;">
+    Waiting for test...
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* Approved supplier quotation */
+const SUPPLIER_QUOTE_ID =
+    "703982c3-b94f-4a8a-8702-a35fc1192523";
+
+
+async function loadApprovedQuote() {
+
+    const result =
+        document.getElementById("result");
+
+    result.innerHTML =
+        "Loading approved customer quotation...";
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .select(`
+                    id,
+                    request_id,
+                    supplier_id,
+                    product_id,
+                    quantity,
+                    supplier_total,
+                    delivery_cost,
+                    frosttech_margin_percent,
+                    frosttech_margin_amount,
+                    customer_total,
+                    status,
+                    customer_quote_status,
+                    updated_at
+                `)
+                .eq("id", SUPPLIER_QUOTE_ID)
+                .eq("customer_quote_status", "approved")
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error(
+                "Approved customer quotation not found."
+            );
+        }
+
+
+        /*
+         * Prepare the customer-facing quotation.
+         */
+
+        const customerTotal =
+            Number(data.customer_total)
+                .toLocaleString();
+
+        const supplierCost =
+            Number(data.supplier_total)
+                .toLocaleString();
+
+        const deliveryCost =
+            Number(data.delivery_cost)
+                .toLocaleString();
+
+        const margin =
+            Number(data.frosttech_margin_amount)
+                .toLocaleString();
+
+
+        result.innerHTML = `
+
+            <h2>Approved Customer Quotation</h2>
+
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${data.id}
+            </p>
+
+            <p>
+                <strong>Request ID:</strong><br>
+                ${data.request_id}
+            </p>
+
+            <p>
+                <strong>Quantity:</strong>
+                ${data.quantity}
+            </p>
+
+            <p>
+                <strong>Supplier Cost:</strong><br>
+                ₦${supplierCost}
+            </p>
+
+            <p>
+                <strong>Delivery:</strong><br>
+                ₦${deliveryCost}
+            </p>
+
+            <p>
+                <strong>FrostTech Margin:</strong><br>
+                ₦${margin}
+            </p>
+
+            <hr>
+
+            <h2>
+                Customer Price:
+                ₦${customerTotal}
+            </h2>
+
+            <p>
+                <strong>Status:</strong>
+                ${data.customer_quote_status}
+            </p>
+
+            <hr>
+
+            <h3>Customer Message</h3>
+
+            <div style="
+                border:1px solid #ccc;
+                padding:15px;
+                max-width:500px;
+            ">
+
+                <p>Hello,</p>
+
+                <p>
+                    Thank you for your enquiry to
+                    FrostTech HVAC and Refrigeration.
+                </p>
+
+                <p>
+                    We have received your request and
+                    prepared the following quotation:
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${data.quantity}
+                </p>
+
+                <p>
+                    <strong>Total quotation:</strong>
+                    ₦${customerTotal}
+                </p>
+
+                <p>
+                    This quotation includes delivery.
+                </p>
+
+                <p>
+                    Please confirm if you would like
+                    to proceed with the order.
+                </p>
+
+                <p>
+                    Thank you,<br>
+                    <strong>
+                        FrostTech HVAC and Refrigeration
+                    </strong>
+                </p>
+
+            </div>
+
+            <hr>
+
+            <h3>STEP 3J SUCCESS</h3>
+
+            <p>
+                Approved customer quotation loaded
+                and customer message prepared successfully.
+            </p>
+
+        `;
+
+    } catch (error) {
+
+        result.innerHTML = `
+            <h3>STEP 3J ERROR</h3>
+            <p>${error.message}</p>
+        `;
+
+        console.error(error);
+    }
+}
+
+
+document
+    .getElementById("loadBtn")
+    .addEventListener("click", loadApprovedQuote);
+
+</script></body>
+</html>
