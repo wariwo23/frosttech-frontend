@@ -71,8 +71,8 @@
 <p><strong>Admin Fee Payment</strong></p>
 
 <p>
-  This is a Paystack Test Mode payment for the FrostTech
-  customer quotation process.
+  This is a Paystack Test Mode payment for the
+  FrostTech customer quotation process.
 </p>
 
 <div class="amount">₦5,000</div>
@@ -99,25 +99,28 @@
   Ready for test payment.
 </div>
 
-  </div>  <!-- Paystack InlineJS V2 -->  <script src="https://js.paystack.co/v2/inline.js"></script>  <script>
+  </div>  <!-- Paystack InlineJS -->  <script src="https://js.paystack.co/v2/inline.js"></script>  <!-- DIAGNOSTIC TEST -->  <script>
+    alert("Paystack library status: " + typeof Paystack);
+  </script>  <script>
 
     /*
       STEP 3L
 
-      IMPORTANT:
-      Replace ONLY the value below with the
-      Paystack TEST PUBLIC KEY you copied.
+      Paste your PAYSTACK TEST PUBLIC KEY below.
 
-      Example:
-      pk_test_xxxxxxxxxxxxxxxxx
+      DO NOT put the Paystack Secret Key here.
     */
 
-    const PAYSTACK_PUBLIC_KEY = "pk_test_1355c2798444908455fdf76b954c613b4c54075e";
+    const PAYSTACK_PUBLIC_KEY =
+      "PASTE_YOUR_TEST_PUBLIC_KEY_HERE";
 
     const TEST_AMOUNT_NAIRA = 5000;
 
-    const payButton = document.getElementById("payButton");
-    const message = document.getElementById("message");
+    const payButton =
+      document.getElementById("payButton");
+
+    const message =
+      document.getElementById("message");
 
     payButton.addEventListener("click", function () {
 
@@ -125,17 +128,22 @@
         document.getElementById("email").value.trim();
 
       if (!email) {
+
         message.textContent =
           "Please enter the customer email address.";
+
         return;
       }
 
       if (
         !PAYSTACK_PUBLIC_KEY ||
-        PAYSTACK_PUBLIC_KEY === "PASTE_YOUR_TEST_PUBLIC_KEY_HERE"
+        PAYSTACK_PUBLIC_KEY ===
+        "PASTE_YOUR_TEST_PUBLIC_KEY_HERE"
       ) {
+
         message.textContent =
           "Paystack Public Key has not been added yet.";
+
         return;
       }
 
@@ -154,23 +162,25 @@
 
           email: email,
 
-          /*
-            Paystack expects the amount
-            in the lowest currency unit.
-            ₦5,000 = 500000 kobo.
-          */
           amount: TEST_AMOUNT_NAIRA * 100,
 
           currency: "NGN",
 
           metadata: {
-            system: "FrostTech HVAC and Refrigeration Marketplace",
+
+            system:
+              "FrostTech HVAC and Refrigeration Marketplace",
+
             step: "3L",
-            payment_type: "admin_fee",
-            admin_fee: TEST_AMOUNT_NAIRA
+
+            payment_type:
+              "admin_fee",
+
+            admin_fee:
+              TEST_AMOUNT_NAIRA
           },
 
-          onLoad: function (response) {
+          onLoad: function () {
 
             message.textContent =
               "Paystack checkout loaded.";
@@ -188,7 +198,6 @@
               transaction.reference;
 
             payButton.disabled = false;
-
           },
 
           onCancel: function () {
@@ -229,4 +238,4 @@
     });
 
   </script></body>
-                   </html>
+</html>
