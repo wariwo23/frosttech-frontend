@@ -1,1 +1,232 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>FrostTech Step 3L</title>  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f7f9;
+      margin: 0;
+      padding: 20px;
+    }
 
+    .box {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      margin-top: 0;
+    }
+
+    .amount {
+      font-size: 28px;
+      font-weight: bold;
+      margin: 20px 0;
+    }
+
+    label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
+      background: #111;
+      color: white;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #message {
+      margin-top: 20px;
+      padding: 12px;
+      border-radius: 6px;
+      background: #f1f1f1;
+      word-break: break-word;
+    }
+  </style></head><body>  <div class="box"><h1>FrostTech Step 3L</h1>
+
+<p><strong>Admin Fee Payment</strong></p>
+
+<p>
+  This is a Paystack Test Mode payment for the FrostTech
+  customer quotation process.
+</p>
+
+<div class="amount">₦5,000</div>
+
+<label for="email">
+  Customer Email
+</label>
+
+<input
+  type="email"
+  id="email"
+  placeholder="customer@example.com"
+  required
+>
+
+<button
+  type="button"
+  id="payButton"
+>
+  Pay ₦5,000 Test Fee
+</button>
+
+<div id="message">
+  Ready for test payment.
+</div>
+
+  </div>  <!-- Paystack InlineJS V2 -->  <script src="https://js.paystack.co/v2/inline.js"></script>  <script>
+
+    /*
+      STEP 3L
+
+      IMPORTANT:
+      Replace ONLY the value below with the
+      Paystack TEST PUBLIC KEY you copied.
+
+      Example:
+      pk_test_xxxxxxxxxxxxxxxxx
+    */
+
+    const PAYSTACK_PUBLIC_KEY = "pk_test_1355c2798444908455fdf76b954c613b4c54075e";
+
+    const TEST_AMOUNT_NAIRA = 5000;
+
+    const payButton = document.getElementById("payButton");
+    const message = document.getElementById("message");
+
+    payButton.addEventListener("click", function () {
+
+      const email =
+        document.getElementById("email").value.trim();
+
+      if (!email) {
+        message.textContent =
+          "Please enter the customer email address.";
+        return;
+      }
+
+      if (
+        !PAYSTACK_PUBLIC_KEY ||
+        PAYSTACK_PUBLIC_KEY === "PASTE_YOUR_TEST_PUBLIC_KEY_HERE"
+      ) {
+        message.textContent =
+          "Paystack Public Key has not been added yet.";
+        return;
+      }
+
+      payButton.disabled = true;
+
+      message.textContent =
+        "Opening Paystack Test Checkout...";
+
+      try {
+
+        const paystack = new Paystack();
+
+        paystack.newTransaction({
+
+          key: PAYSTACK_PUBLIC_KEY,
+
+          email: email,
+
+          /*
+            Paystack expects the amount
+            in the lowest currency unit.
+            ₦5,000 = 500000 kobo.
+          */
+          amount: TEST_AMOUNT_NAIRA * 100,
+
+          currency: "NGN",
+
+          metadata: {
+            system: "FrostTech HVAC and Refrigeration Marketplace",
+            step: "3L",
+            payment_type: "admin_fee",
+            admin_fee: TEST_AMOUNT_NAIRA
+          },
+
+          onLoad: function (response) {
+
+            message.textContent =
+              "Paystack checkout loaded.";
+          },
+
+          onSuccess: function (transaction) {
+
+            console.log(
+              "Paystack transaction:",
+              transaction
+            );
+
+            message.textContent =
+              "Payment completed. Reference: " +
+              transaction.reference;
+
+            payButton.disabled = false;
+
+          },
+
+          onCancel: function () {
+
+            message.textContent =
+              "Payment was cancelled.";
+
+            payButton.disabled = false;
+          },
+
+          onError: function (error) {
+
+            console.error(
+              "Paystack error:",
+              error
+            );
+
+            message.textContent =
+              "Paystack error: " +
+              (error.message || "Unknown error");
+
+            payButton.disabled = false;
+          }
+
+        });
+
+      } catch (error) {
+
+        console.error(error);
+
+        message.textContent =
+          "Unable to start Paystack: " +
+          error.message;
+
+        payButton.disabled = false;
+      }
+
+    });
+
+  </script></body>
+                   </html>
