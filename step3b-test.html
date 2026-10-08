@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FrostTech Step 3B Test</title>
+    <title>FrostTech Step 3B</title>
 </head>
 
 <body>
@@ -14,6 +15,86 @@
 <button onclick="alert('BUTTON WORKS')">
     TEST BUTTON
 </button>
+
+<br><br>
+
+<button onclick="loadQuote()">
+    LOAD CUSTOMER QUOTE
+</button>
+
+<p id="status">
+    Waiting for test...
+</p>
+
+<script type="module">
+
+import { createClient } from
+"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+const SUPABASE_URL =
+"https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+"YOUR_PUBLISHABLE_KEY_HERE";
+
+const supabase =
+createClient(SUPABASE_URL, SUPABASE_KEY);
+
+window.loadQuote = async function () {
+
+    const status =
+        document.getElementById("status");
+
+    status.innerHTML =
+        "Loading customer quote...";
+
+    try {
+
+        const { data, error } = await supabase
+            .from("quote_requests")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(1);
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            status.innerHTML =
+                "<strong>ERROR:</strong> No customer quote found.";
+
+            return;
+        }
+
+        const quote = data[0];
+
+        status.innerHTML = `
+            <h3>Customer Quote Found</h3>
+
+            <p><strong>Request ID:</strong><br>
+            ${quote.id}</p>
+
+            <p><strong>Request Number:</strong><br>
+            ${quote.request_number || "N/A"}</p>
+
+            <p><strong>Status:</strong><br>
+            ${quote.status || "N/A"}</p>
+
+            <p><strong>Created:</strong><br>
+            ${quote.created_at || "N/A"}</p>
+        `;
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<strong>ERROR:</strong> " +
+            error.message;
+    }
+};
+
+</script>
 
 </body>
 </html>
