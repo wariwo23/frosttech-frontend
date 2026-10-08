@@ -3,7 +3,7 @@
 
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FrostTech Step 3B</title>
+    <title>FrostTech Step 3B Test</title>
 </head>
 
 <body>
@@ -12,13 +12,13 @@
 
 <p>Customer Quote Request Test</p>
 
-<button onclick="alert('BUTTON WORKS')">
+<button type="button" onclick="alert('BUTTON WORKS')">
     TEST BUTTON
 </button>
 
 <br><br>
 
-<button onclick="loadQuote()">
+<button type="button" onclick="alert('LOAD BUTTON WORKS')">
     LOAD CUSTOMER QUOTE
 </button>
 
@@ -26,75 +26,6 @@
     Waiting for test...
 </p>
 
-<script type="module">
-
-import { createClient } from
-"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
-
-const SUPABASE_URL =
-"https://nftxptjpgidcsgtaltjn.supabase.co";
-
-const SUPABASE_KEY =
-"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkY3NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
-const supabase =
-createClient(SUPABASE_URL, SUPABASE_KEY);
-
-window.loadQuote = async function () {
-
-    const status =
-        document.getElementById("status");
-
-    status.innerHTML =
-        "Loading customer quote...";
-
-    try {
-
-        const { data, error } = await supabase
-            .from("quote_requests")
-            .select("*")
-            .order("created_at", { ascending: false })
-            .limit(1);
-
-        if (error) {
-            throw error;
-        }
-
-        if (!data || data.length === 0) {
-
-            status.innerHTML =
-                "<strong>ERROR:</strong> No customer quote found.";
-
-            return;
-        }
-
-        const quote = data[0];
-
-        status.innerHTML = `
-            <h3>Customer Quote Found</h3>
-
-            <p><strong>Request ID:</strong><br>
-            ${quote.id}</p>
-
-            <p><strong>Request Number:</strong><br>
-            ${quote.request_number || "N/A"}</p>
-
-            <p><strong>Status:</strong><br>
-            ${quote.status || "N/A"}</p>
-
-            <p><strong>Created:</strong><br>
-            ${quote.created_at || "N/A"}</p>
-        `;
-
-    } catch (error) {
-
-        status.innerHTML =
-            "<strong>ERROR:</strong> " +
-            error.message;
-    }
-};
-
-</script>
-
 </body>
+
 </html>
