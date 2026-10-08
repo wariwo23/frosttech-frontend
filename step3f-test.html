@@ -18,6 +18,7 @@
             padding: 18px;
             margin-top: 15px;
             border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
         button {
@@ -50,23 +51,22 @@
 
 <div id="quoteArea"></div>
 
+
 <script>
 
 const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
+
 const SUPABASE_KEY =
-    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+    "PASTE_YOUR_WORKING_PUBLISHABLE_KEY_HERE";
+
 
 const supabaseClient =
     supabase.createClient(
         SUPABASE_URL,
         SUPABASE_KEY
     );
-
-
-const requestId =
-    "694e5ec3-5ceb-4238-b20d-326f1c07760e";
 
 
 async function loadSupplierQuote() {
@@ -78,9 +78,10 @@ async function loadSupplierQuote() {
         document.getElementById("quoteArea");
 
     status.innerHTML =
-        "Loading supplier quotation...";
+        "Loading supplier quotations...";
 
     quoteArea.innerHTML = "";
+
 
     try {
 
@@ -88,12 +89,16 @@ async function loadSupplierQuote() {
             await supabaseClient
                 .from("supplier_quotes")
                 .select("*")
-                .eq("request_id", requestId)
-                .eq("status", "submitted");
+                .eq("status", "submitted")
+                .order("created_at", {
+                    ascending: false
+                });
+
 
         if (error) {
             throw error;
         }
+
 
         if (!data || data.length === 0) {
 
@@ -103,8 +108,10 @@ async function loadSupplierQuote() {
             return;
         }
 
+
         status.innerHTML =
             "Supplier quotation loaded successfully.";
+
 
         data.forEach(function(quote) {
 
@@ -113,9 +120,20 @@ async function loadSupplierQuote() {
 
             card.className = "card";
 
+
             card.innerHTML = `
 
                 <h2>Supplier Quotation</h2>
+
+                <p>
+                    <strong>Quote ID:</strong>
+                    ${quote.id}
+                </p>
+
+                <p>
+                    <strong>Request ID:</strong>
+                    ${quote.request_id}
+                </p>
 
                 <p>
                     <strong>Supplier ID:</strong>
@@ -133,14 +151,21 @@ async function loadSupplierQuote() {
                 </p>
 
                 <p>
-                    <strong>Supplier Price:</strong>
+                    <strong>Supplier Unit Price:</strong>
                     ₦${Number(
-                        quote.supplier_unit_price
+                        quote.supplier_unit_price || 0
                     ).toLocaleString()}
                 </p>
 
                 <p>
-                    <strong>Delivery:</strong>
+                    <strong>Supplier Total:</strong>
+                    ₦${Number(
+                        quote.supplier_total || 0
+                    ).toLocaleString()}
+                </p>
+
+                <p>
+                    <strong>Delivery Cost:</strong>
                     ₦${Number(
                         quote.delivery_cost || 0
                     ).toLocaleString()}
@@ -148,7 +173,7 @@ async function loadSupplierQuote() {
 
                 <p>
                     <strong>FrostTech Margin:</strong>
-                    ${quote.frosttech_margin_percent}%
+                    ${quote.frosttech_margin_percent || 0}%
                 </p>
 
                 <p>
@@ -178,9 +203,11 @@ async function loadSupplierQuote() {
 
             `;
 
+
             quoteArea.appendChild(card);
 
         });
+
 
     } catch (error) {
 
@@ -197,8 +224,10 @@ async function selectSupplierQuote(quoteId) {
     const status =
         document.getElementById("status");
 
+
     status.innerHTML =
         "Selecting supplier quotation...";
+
 
     try {
 
@@ -211,14 +240,18 @@ async function selectSupplierQuote(quoteId) {
                 .eq("id", quoteId)
                 .select();
 
+
         if (error) {
             throw error;
         }
 
+
         status.innerHTML =
             "Supplier quotation selected successfully.";
 
+
         console.log(data);
+
 
     } catch (error) {
 
@@ -240,4 +273,4 @@ document
 </script>
 
 </body>
-  </html>
+</html>
