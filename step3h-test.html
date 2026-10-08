@@ -1,0 +1,207 @@
+<!DOCTYPE html><html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3H</title>
+</head><body><h1>FrostTech Step 3H</h1><p><strong>Save Customer Quotation</strong></p><button type="button" id="saveQuoteBtn">
+    Save Customer Quote
+</button><div id="result" style="margin-top:20px;">
+    Waiting for test...
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* Selected supplier quotation */
+const SUPPLIER_QUOTE_ID =
+    "703982c3-b94f-4a8a-8702-a35fc1192523";
+
+
+/* FrostTech pricing rules */
+const DELIVERY_PERCENT = 10;
+const MARGIN_PERCENT = 15;
+
+
+async function saveCustomerQuote() {
+
+    const result = document.getElementById("result");
+
+    result.innerHTML = "Loading selected supplier quotation...";
+
+    try {
+
+        /* 1. Load selected supplier quotation */
+
+        const { data: quote, error: loadError } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .select(`
+                    id,
+                    request_id,
+                    supplier_id,
+                    product_id,
+                    quantity,
+                    supplier_unit_price,
+                    supplier_total,
+                    status
+                `)
+                .eq("id", SUPPLIER_QUOTE_ID)
+                .eq("status", "selected")
+                .single();
+
+        if (loadError) {
+            throw loadError;
+        }
+
+        if (!quote) {
+            throw new Error(
+                "Selected supplier quotation not found."
+            );
+        }
+
+
+        /* 2. Calculate pricing */
+
+        const supplierCost =
+            Number(quote.supplier_total);
+
+        const deliveryCost =
+            supplierCost * (DELIVERY_PERCENT / 100);
+
+        const marginAmount =
+            supplierCost * (MARGIN_PERCENT / 100);
+
+        const customerTotal =
+            supplierCost +
+            deliveryCost +
+            marginAmount;
+
+
+        /* 3. Save customer quotation */
+
+        result.innerHTML =
+            "Saving customer quotation...";
+
+        const { data: savedQuote, error: updateError } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .update({
+                    delivery_cost: deliveryCost,
+                    frosttech_margin_percent: MARGIN_PERCENT,
+                    frosttech_margin_amount: marginAmount,
+                    customer_total: customerTotal,
+                    customer_quote_status: "draft"
+                })
+                .eq("id", SUPPLIER_QUOTE_ID)
+                .select(`
+                    id,
+                    request_id,
+                    supplier_id,
+                    product_id,
+                    quantity,
+                    supplier_total,
+                    delivery_cost,
+                    frosttech_margin_percent,
+                    frosttech_margin_amount,
+                    customer_total,
+                    status,
+                    customer_quote_status,
+                    updated_at
+                `)
+                .single();
+
+        if (updateError) {
+            throw updateError;
+        }
+
+
+        /* 4. Display confirmation */
+
+        result.innerHTML = `
+
+            <h2>Customer Quotation Saved</h2>
+
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${savedQuote.id}
+            </p>
+
+            <p>
+                <strong>Request ID:</strong><br>
+                ${savedQuote.request_id}
+            </p>
+
+            <p>
+                <strong>Supplier Cost:</strong><br>
+                ₦${Number(savedQuote.supplier_total)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Delivery:</strong><br>
+                ${savedQuote.frosttech_margin_percent === MARGIN_PERCENT
+                    ? DELIVERY_PERCENT
+                    : DELIVERY_PERCENT}% =
+                ₦${Number(savedQuote.delivery_cost)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>FrostTech Margin:</strong><br>
+                ${savedQuote.frosttech_margin_percent}% =
+                ₦${Number(savedQuote.frosttech_margin_amount)
+                    .toLocaleString()}
+            </p>
+
+            <hr>
+
+            <h2>
+                Customer Quote:
+                ₦${Number(savedQuote.customer_total)
+                    .toLocaleString()}
+            </h2>
+
+            <p>
+                <strong>Supplier Quote Status:</strong>
+                ${savedQuote.status}
+            </p>
+
+            <p>
+                <strong>Customer Quote Status:</strong>
+                ${savedQuote.customer_quote_status}
+            </p>
+
+            <hr>
+
+            <h3>STEP 3H SUCCESS</h3>
+
+            <p>
+                Customer quotation has been saved successfully.
+            </p>
+
+        `;
+
+    } catch (error) {
+
+        result.innerHTML = `
+            <h3>STEP 3H ERROR</h3>
+            <p>${error.message}</p>
+        `;
+
+        console.error(error);
+    }
+}
+
+
+document
+    .getElementById("saveQuoteBtn")
+    .addEventListener("click", saveCustomerQuote);
+
+</script></body>
+</html>
