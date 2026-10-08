@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>FrostTech Step 3D</title>
+
+</head>
+
+<body>
+
+<h1>FrostTech Step 3D</h1>
+
+<p>Supplier Quotation Test</p>
+
+<button type="button" onclick="loadSupplierQuotes()">
+    LOAD SUPPLIER QUOTATIONS
+</button>
+
+<hr>
+
+<div id="status">
+    Waiting for supplier quotations...
+</div>
+
+
+<script type="module">
+
+import { createClient } from
+"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+
+const SUPABASE_URL =
+"https://nftxptjpgidcsgtaltjn.supabase.co";
+
+
+const SUPABASE_KEY =
+"YOUR_WORKING_PUBLISHABLE_KEY_HERE";
+
+
+const supabase =
+createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+const REQUEST_ID =
+"694e5ec3-5ceb-4238-b20d-326f1c07760e";
+
+
+window.loadSupplierQuotes = async function () {
+
+    const status =
+        document.getElementById("status");
+
+
+    status.innerHTML =
+        "Loading supplier quotations...";
+
+
+    try {
+
+        const { data, error } = await supabase
+
+            .from("supplier_quotes")
+
+            .select("*")
+
+            .eq("request_id", REQUEST_ID);
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+        if (!data || data.length === 0) {
+
+            status.innerHTML = `
+                <h3>No Supplier Quotations Found</h3>
+
+                <p>
+                    There are currently no supplier
+                    quotations linked to this customer request.
+                </p>
+            `;
+
+            return;
+
+        }
+
+
+        let html = `
+            <h2>Supplier Quotations Found</h2>
+
+            <p>
+                Number of quotations:
+                <strong>${data.length}</strong>
+            </p>
+        `;
+
+
+        data.forEach(function (quote, index) {
+
+            html += `
+
+                <hr>
+
+                <h3>
+                    Supplier Quote ${index + 1}
+                </h3>
+
+                <p>
+                    <strong>Quote ID:</strong><br>
+                    ${quote.id || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Supplier ID:</strong><br>
+                    ${quote.supplier_id || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Product ID:</strong><br>
+                    ${quote.product_id || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong><br>
+                    ${quote.quantity || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Supplier Unit Price:</strong><br>
+                    ₦${quote.supplier_unit_price || "0"}
+                </p>
+
+                <p>
+                    <strong>Supplier Total:</strong><br>
+                    ₦${quote.supplier_total || "0"}
+                </p>
+
+                <p>
+                    <strong>Delivery Cost:</strong><br>
+                    ₦${quote.delivery_cost || "0"}
+                </p>
+
+                <p>
+                    <strong>FrostTech Margin:</strong><br>
+                    ${quote.frosttech_margin_percent || "0"}%
+                </p>
+
+                <p>
+                    <strong>FrostTech Margin Amount:</strong><br>
+                    ₦${quote.frosttech_margin_amount || "0"}
+                </p>
+
+                <p>
+                    <strong>Customer Total:</strong><br>
+                    ₦${quote.customer_total || "0"}
+                </p>
+
+                <p>
+                    <strong>Status:</strong><br>
+                    ${quote.status || "N/A"}
+                </p>
+
+                <p>
+                    <strong>Customer Quote Status:</strong><br>
+                    ${quote.customer_quote_status || "N/A"}
+                </p>
+
+            `;
+
+        });
+
+
+        status.innerHTML = html;
+
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<strong>STEP 3D ERROR:</strong><br>" +
+            error.message;
+
+    }
+
+};
+
+</script>
+
+</body>
+
+</html>
