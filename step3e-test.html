@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>FrostTech Step 3E</title>
+
+</head>
+
+<body>
+
+<h1>FrostTech Step 3E</h1>
+
+<p>Select Supplier Quotation Test</p>
+
+<hr>
+
+<div id="status">
+    Checking admin session...
+</div>
+
+<br>
+
+<button type="button"
+        id="selectButton"
+        style="display:none;"
+        onclick="selectSupplierQuote()">
+    SELECT THIS SUPPLIER QUOTE
+</button>
+
+
+<script type="module">
+
+import { createClient } from
+"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+
+const SUPABASE_URL =
+"https://nftxptjpgidcsgtaltjn.supabase.co";
+
+
+const SUPABASE_KEY =
+"YOUR_WORKING_PUBLISHABLE_KEY_HERE";
+
+
+const supabase =
+createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+const QUOTE_ID =
+"703982c3-b94f-4a8a-8702-a35fc1192523";
+
+
+async function checkAdminSession() {
+
+    const status =
+        document.getElementById("status");
+
+    try {
+
+        const {
+            data: { user },
+            error
+        } = await supabase.auth.getUser();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        if (!user) {
+
+            status.innerHTML = `
+                <strong>ADMIN NOT LOGGED IN</strong>
+
+                <p>
+                    Please log in to FrostTech Admin
+                    before running this test.
+                </p>
+            `;
+
+            return;
+
+        }
+
+
+        status.innerHTML = `
+            <h3>Admin Session Found</h3>
+
+            <p>
+                Logged in as:
+                <strong>${user.email}</strong>
+            </p>
+
+            <p>
+                Loading supplier quotation...
+            </p>
+        `;
+
+
+        await loadSupplierQuote();
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<strong>STEP 3E ERROR:</strong><br>" +
+            error.message;
+
+    }
+
+}
+
+
+async function loadSupplierQuote() {
+
+    const status =
+        document.getElementById("status");
+
+
+    const {
+        data,
+        error
+    } = await supabase
+
+        .from("supplier_quotes")
+
+        .select("*")
+
+        .eq("id", QUOTE_ID)
+
+        .single();
+
+
+    if (error) {
+        throw error;
+    }
+
+
+    if (!data) {
+
+        status.innerHTML =
+            "<strong>Supplier quote not found.</strong>";
+
+        return;
+
+    }
+
+
+    status.innerHTML = `
+
+        <h2>Supplier Quote Found</h2>
+
+        <p>
+            <strong>Supplier Quote ID:</strong><br>
+            ${data.id}
+        </p>
+
+        <p>
+            <strong>Supplier Unit Price:</strong><br>
+            ₦${data.supplier_unit_price || 0}
+        </p>
+
+        <p>
+            <strong>Supplier Total:</strong><br>
+            ₦${data.supplier_total || 0}
+        </p>
+
+        <p>
+            <strong>FrostTech Margin:</strong><br>
+            ${data.frosttech_margin_percent || 0}%
+        </p>
+
+        <p>
+            <strong>Customer Total:</strong><br>
+            ₦${data.customer_total || 0}
+        </p>
+
+        <p>
+            <strong>Current Status:</strong><br>
+            <strong>${data.status || "N/A"}</strong>
+        </p>
+
+    `;
+
+
+    if (data.status === "submitted") {
+
+        document.getElementById(
+            "selectButton"
+        ).style.display = "block";
+
+    } else {
+
+        status.innerHTML += `
+            <p>
+                <strong>
+                    This quotation is not currently
+                    in submitted status.
+                </strong>
+            </p>
+        `;
+
+    }
+
+}
+
+
+window.selectSupplierQuote =
+async function () {
+
+    const status =
+        document.getElementById("status");
+
+    const button =
+        document.getElementById("selectButton");
+
+
+    button.disabled = true;
+
+    button.innerText =
+        "SELECTING...";
+
+
+    try {
+
+        const {
+            data,
+            error
+        } = await supabase
+
+            .from("supplier_quotes")
+
+            .update({
+                status: "selected"
+            })
+
+            .eq("id", QUOTE_ID)
+
+            .select()
+            .single();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        status.innerHTML = `
+
+            <h2>Supplier Quote Selected</h2>
+
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${data.id}
+            </p>
+
+            <p>
+                <strong>Previous Status:</strong><br>
+                submitted
+            </p>
+
+            <p>
+                <strong>New Status:</strong><br>
+                <strong>${data.status}</strong>
+            </p>
+
+            <p>
+                Customer Total:
+                <strong>
+                    ₦${data.customer_total || 0}
+                </strong>
+            </p>
+
+            <p>
+                FrostTech Margin:
+                <strong>
+                    ${data.frosttech_margin_percent || 0}%
+                </strong>
+            </p>
+
+        `;
+
+
+        button.style.display = "none";
+
+
+    } catch (error) {
+
+        button.disabled = false;
+
+        button.innerText =
+            "SELECT THIS SUPPLIER QUOTE";
+
+
+        status.innerHTML += `
+
+            <p>
+                <strong>STEP 3E ERROR:</strong><br>
+                ${error.message}
+            </p>
+
+        `;
+
+    }
+
+};
+
+
+checkAdminSession();
+
+</script>
+
+</body>
+
+  </html>
