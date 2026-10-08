@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3F</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+
+        .card {
+            background: white;
+            padding: 18px;
+            margin-top: 15px;
+            border-radius: 8px;
+        }
+
+        button {
+            padding: 12px 18px;
+            font-size: 16px;
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        #status {
+            margin-top: 15px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<h1>FrostTech Step 3F</h1>
+
+<p>Select Supplier Quotation</p>
+
+<button type="button" id="loadButton">
+    Load Supplier Quote
+</button>
+
+<div id="status">
+    Waiting for test...
+</div>
+
+<div id="quoteArea"></div>
+
+<script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "PASTE_YOUR_CURRENT_PUBLISHABLE_KEY_HERE";
+
+const supabaseClient =
+    supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+    );
+
+
+const requestId =
+    "694e5ec3-5ceb-4238-b20d-326f1c07760e";
+
+
+async function loadSupplierQuote() {
+
+    const status =
+        document.getElementById("status");
+
+    const quoteArea =
+        document.getElementById("quoteArea");
+
+    status.innerHTML =
+        "Loading supplier quotation...";
+
+    quoteArea.innerHTML = "";
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .select("*")
+                .eq("request_id", requestId)
+                .eq("status", "submitted");
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data || data.length === 0) {
+
+            status.innerHTML =
+                "No submitted supplier quotation found.";
+
+            return;
+        }
+
+        status.innerHTML =
+            "Supplier quotation loaded successfully.";
+
+        data.forEach(function(quote) {
+
+            const card =
+                document.createElement("div");
+
+            card.className = "card";
+
+            card.innerHTML = `
+
+                <h2>Supplier Quotation</h2>
+
+                <p>
+                    <strong>Supplier ID:</strong>
+                    ${quote.supplier_id}
+                </p>
+
+                <p>
+                    <strong>Product ID:</strong>
+                    ${quote.product_id}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${quote.quantity}
+                </p>
+
+                <p>
+                    <strong>Supplier Price:</strong>
+                    ₦${Number(
+                        quote.supplier_unit_price
+                    ).toLocaleString()}
+                </p>
+
+                <p>
+                    <strong>Delivery:</strong>
+                    ₦${Number(
+                        quote.delivery_cost || 0
+                    ).toLocaleString()}
+                </p>
+
+                <p>
+                    <strong>FrostTech Margin:</strong>
+                    ${quote.frosttech_margin_percent}%
+                </p>
+
+                <p>
+                    <strong>Margin Amount:</strong>
+                    ₦${Number(
+                        quote.frosttech_margin_amount || 0
+                    ).toLocaleString()}
+                </p>
+
+                <p>
+                    <strong>Customer Total:</strong>
+                    ₦${Number(
+                        quote.customer_total || 0
+                    ).toLocaleString()}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    ${quote.status}
+                </p>
+
+                <button
+                    type="button"
+                    onclick="selectSupplierQuote('${quote.id}')">
+                    Select This Supplier
+                </button>
+
+            `;
+
+            quoteArea.appendChild(card);
+
+        });
+
+    } catch (error) {
+
+        status.innerHTML =
+            "STEP 3F ERROR: " + error.message;
+
+    }
+
+}
+
+
+async function selectSupplierQuote(quoteId) {
+
+    const status =
+        document.getElementById("status");
+
+    status.innerHTML =
+        "Selecting supplier quotation...";
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .update({
+                    status: "selected"
+                })
+                .eq("id", quoteId)
+                .select();
+
+        if (error) {
+            throw error;
+        }
+
+        status.innerHTML =
+            "Supplier quotation selected successfully.";
+
+        console.log(data);
+
+    } catch (error) {
+
+        status.innerHTML =
+            "SELECTION ERROR: " + error.message;
+
+    }
+
+}
+
+
+document
+    .getElementById("loadButton")
+    .addEventListener(
+        "click",
+        loadSupplierQuote
+    );
+
+</script>
+
+</body>
+  </html>
