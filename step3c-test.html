@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+
+    <title>FrostTech Step 3C</title>
+
+</head>
+
+<body>
+
+<h1>FrostTech Step 3C</h1>
+
+<p>Customer Quote Details</p>
+
+<button type="button" onclick="loadQuote()">
+    LOAD CUSTOMER QUOTE
+</button>
+
+<hr>
+
+<div id="status">
+    Waiting for quote...
+</div>
+
+<script type="module">
+
+import { createClient } from
+"https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+
+const SUPABASE_URL =
+"https://nftxptjpgidcsgtaltjn.supabase.co";
+
+
+const SUPABASE_KEY =
+"YOUR_PUBLISHABLE_KEY_HERE";
+
+
+const supabase =
+createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+);
+
+
+window.loadQuote = async function () {
+
+    const status =
+        document.getElementById("status");
+
+
+    status.innerHTML =
+        "Loading customer quote...";
+
+
+    try {
+
+        const { data, error } = await supabase
+
+            .from("quote_requests")
+
+            .select("*")
+
+            .eq(
+                "id",
+                "694e5ec3-5ceb-4238-b20d-326f1c07760e"
+            )
+
+            .single();
+
+
+        if (error) {
+
+            throw error;
+
+        }
+
+
+        if (!data) {
+
+            status.innerHTML =
+                "<strong>Customer quote not found.</strong>";
+
+            return;
+
+        }
+
+
+        status.innerHTML = `
+
+            <h2>Customer Quote Found</h2>
+
+            <p>
+                <strong>Request Number:</strong><br>
+                ${data.request_number || "N/A"}
+            </p>
+
+            <p>
+                <strong>Status:</strong><br>
+                ${data.status || "N/A"}
+            </p>
+
+            <p>
+                <strong>Customer Details:</strong><br>
+                ${data.description || "N/A"}
+            </p>
+
+            <p>
+                <strong>Request ID:</strong><br>
+                ${data.id}
+            </p>
+
+            <p>
+                <strong>Created:</strong><br>
+                ${data.created_at || "N/A"}
+            </p>
+
+        `;
+
+
+    } catch (error) {
+
+        status.innerHTML =
+            "<strong>STEP 3C ERROR:</strong><br>" +
+            error.message;
+
+    }
+
+};
+
+</script>
+
+</body>
+
+</html>
