@@ -1,0 +1,270 @@
+<!DOCTYPE html><html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3I</title>
+</head><body><h1>FrostTech Step 3I</h1><p><strong>Customer Quote Approval</strong></p><button type="button" id="loadBtn">
+    Load Customer Quote
+</button><button type="button" id="approveBtn" disabled>
+    Approve Customer Quote
+</button><div id="result" style="margin-top:20px;">
+    Waiting for test...
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* Selected supplier quotation */
+const SUPPLIER_QUOTE_ID =
+    "703982c3-b94f-4a8a-8702-a35fc1192523";
+
+
+let currentQuote = null;
+
+
+async function loadCustomerQuote() {
+
+    const result = document.getElementById("result");
+    const approveBtn = document.getElementById("approveBtn");
+
+    result.innerHTML =
+        "Loading customer quotation...";
+
+    approveBtn.disabled = true;
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .select(`
+                    id,
+                    request_id,
+                    supplier_id,
+                    product_id,
+                    quantity,
+                    supplier_total,
+                    delivery_cost,
+                    frosttech_margin_percent,
+                    frosttech_margin_amount,
+                    customer_total,
+                    status,
+                    customer_quote_status,
+                    updated_at
+                `)
+                .eq("id", SUPPLIER_QUOTE_ID)
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error(
+                "Customer quotation not found."
+            );
+        }
+
+        currentQuote = data;
+
+        result.innerHTML = `
+
+            <h2>Customer Quotation</h2>
+
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${data.id}
+            </p>
+
+            <p>
+                <strong>Request ID:</strong><br>
+                ${data.request_id}
+            </p>
+
+            <p>
+                <strong>Supplier Cost:</strong><br>
+                ₦${Number(data.supplier_total)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Delivery:</strong><br>
+                ₦${Number(data.delivery_cost)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>FrostTech Margin:</strong><br>
+                ${data.frosttech_margin_percent}%
+                =
+                ₦${Number(data.frosttech_margin_amount)
+                    .toLocaleString()}
+            </p>
+
+            <hr>
+
+            <h2>
+                Customer Quote:
+                ₦${Number(data.customer_total)
+                    .toLocaleString()}
+            </h2>
+
+            <p>
+                <strong>Supplier Quote Status:</strong>
+                ${data.status}
+            </p>
+
+            <p>
+                <strong>Customer Quote Status:</strong>
+                ${data.customer_quote_status}
+            </p>
+
+        `;
+
+        if (data.customer_quote_status === "draft") {
+            approveBtn.disabled = false;
+        }
+
+    } catch (error) {
+
+        result.innerHTML = `
+            <h3>STEP 3I ERROR</h3>
+            <p>${error.message}</p>
+        `;
+
+        console.error(error);
+    }
+}
+
+
+async function approveCustomerQuote() {
+
+    const result = document.getElementById("result");
+    const approveBtn = document.getElementById("approveBtn");
+
+    if (!currentQuote) {
+        result.innerHTML =
+            "<strong>Load the customer quotation first.</strong>";
+        return;
+    }
+
+    result.innerHTML =
+        "Approving customer quotation...";
+
+    approveBtn.disabled = true;
+
+    try {
+
+        const { data, error } =
+            await supabaseClient
+                .from("supplier_quotes")
+                .update({
+                    customer_quote_status: "approved"
+                })
+                .eq("id", SUPPLIER_QUOTE_ID)
+                .eq("customer_quote_status", "draft")
+                .select(`
+                    id,
+                    request_id,
+                    supplier_total,
+                    delivery_cost,
+                    frosttech_margin_percent,
+                    frosttech_margin_amount,
+                    customer_total,
+                    status,
+                    customer_quote_status,
+                    updated_at
+                `)
+                .single();
+
+        if (error) {
+            throw error;
+        }
+
+        result.innerHTML = `
+
+            <h2>Customer Quote Approved</h2>
+
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${data.id}
+            </p>
+
+            <p>
+                <strong>Supplier Cost:</strong><br>
+                ₦${Number(data.supplier_total)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Delivery:</strong><br>
+                ₦${Number(data.delivery_cost)
+                    .toLocaleString()}
+            </p>
+
+            <p>
+                <strong>FrostTech Margin:</strong><br>
+                ${data.frosttech_margin_percent}%
+                =
+                ₦${Number(data.frosttech_margin_amount)
+                    .toLocaleString()}
+            </p>
+
+            <hr>
+
+            <h2>
+                Customer Quote:
+                ₦${Number(data.customer_total)
+                    .toLocaleString()}
+            </h2>
+
+            <p>
+                <strong>Supplier Quote Status:</strong>
+                ${data.status}
+            </p>
+
+            <p>
+                <strong>Customer Quote Status:</strong>
+                ${data.customer_quote_status}
+            </p>
+
+            <hr>
+
+            <h3>STEP 3I SUCCESS</h3>
+
+            <p>
+                Customer quotation has been approved successfully.
+            </p>
+
+        `;
+
+    } catch (error) {
+
+        approveBtn.disabled = false;
+
+        result.innerHTML = `
+            <h3>STEP 3I ERROR</h3>
+            <p>${error.message}</p>
+        `;
+
+        console.error(error);
+    }
+}
+
+
+document
+    .getElementById("loadBtn")
+    .addEventListener("click", loadCustomerQuote);
+
+document
+    .getElementById("approveBtn")
+    .addEventListener("click", approveCustomerQuote);
+
+</script></body>
+  </html>
