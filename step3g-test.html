@@ -1,0 +1,162 @@
+<!DOCTYPE html><html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3G</title>
+</head><body><h1>FrostTech Step 3G</h1><p><strong>Calculate Customer Quotation</strong></p><button type="button" id="calculateBtn">
+    Calculate Customer Quote
+</button><div id="result" style="margin-top:20px;">
+    Waiting for calculation...
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* Selected supplier quotation from Step 3F */
+const SUPPLIER_QUOTE_ID =
+    "703982c3-b94f-4a8a-8702-a35fc1192523";
+
+
+/* FrostTech pricing rules */
+const DELIVERY_PERCENT = 10;
+const MARGIN_PERCENT = 15;
+
+
+async function calculateCustomerQuote() {
+
+    const result = document.getElementById("result");
+
+    result.innerHTML =
+        "Loading selected supplier quotation...";
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("supplier_quotes")
+            .select(`
+                id,
+                request_id,
+                supplier_id,
+                product_id,
+                quantity,
+                supplier_unit_price,
+                supplier_total,
+                delivery_cost,
+                frosttech_margin_percent,
+                frosttech_margin_amount,
+                customer_total,
+                status
+            `)
+            .eq("id", SUPPLIER_QUOTE_ID)
+            .eq("status", "selected")
+            .single();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data) {
+            result.innerHTML =
+                "<strong>Selected supplier quotation not found.</strong>";
+            return;
+        }
+
+
+        /* Supplier cost */
+        const supplierCost =
+            Number(data.supplier_total);
+
+
+        /* 10% delivery allowance */
+        const deliveryCost =
+            supplierCost * (DELIVERY_PERCENT / 100);
+
+
+        /* 15% FrostTech margin */
+        const frosttechMargin =
+            supplierCost * (MARGIN_PERCENT / 100);
+
+
+        /* Final customer quotation */
+        const customerTotal =
+            supplierCost +
+            deliveryCost +
+            frosttechMargin;
+
+
+        result.innerHTML = `
+
+            <h2>Customer Quotation Calculation</h2>
+
+            <p>
+                <strong>Supplier Cost:</strong><br>
+                ₦${supplierCost.toLocaleString()}
+            </p>
+
+            <p>
+                <strong>Delivery Allowance:</strong><br>
+                ${DELIVERY_PERCENT}% =
+                ₦${deliveryCost.toLocaleString()}
+            </p>
+
+            <p>
+                <strong>FrostTech Margin:</strong><br>
+                ${MARGIN_PERCENT}% =
+                ₦${frosttechMargin.toLocaleString()}
+            </p>
+
+            <hr>
+
+            <h2>
+                Customer Quote:
+                ₦${customerTotal.toLocaleString()}
+            </h2>
+
+            <hr>
+
+            <h3>Pricing Formula</h3>
+
+            <p>
+                ₦${supplierCost.toLocaleString()}
+                +
+                ₦${deliveryCost.toLocaleString()}
+                +
+                ₦${frosttechMargin.toLocaleString()}
+                =
+                <strong>
+                    ₦${customerTotal.toLocaleString()}
+                </strong>
+            </p>
+
+            <h3>STEP 3G SUCCESS</h3>
+
+            <p>
+                Customer quotation calculated successfully.
+            </p>
+
+        `;
+
+    } catch (error) {
+
+        result.innerHTML = `
+            <h3>STEP 3G ERROR</h3>
+            <p>${error.message}</p>
+        `;
+
+        console.error(error);
+    }
+}
+
+
+document
+    .getElementById("calculateBtn")
+    .addEventListener("click", calculateCustomerQuote);
+
+</script></body>
+  </html>
