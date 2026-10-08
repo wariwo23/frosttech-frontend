@@ -99,143 +99,231 @@
   Ready for test payment.
 </div>
 
-  </div>  <!-- Paystack InlineJS -->  <script src="https://js.paystack.co/v2/inline.js"></script>  <!-- DIAGNOSTIC TEST -->  <script>
-    alert("Paystack library status: " + typeof Paystack);
+  </div>  <!-- Paystack InlineJS V2 -->  <script src="https://js.paystack.co/v2/inline.js"></script>  <!-- Paystack Library Diagnostic -->  <script>
+
+    alert(
+      "Paystack library status: " +
+      typeof PaystackPop
+    );
+
   </script>  <script>
 
     /*
-      STEP 3L
+      =========================================
+      FROSTTECH STEP 3L
+      PAYSTACK TEST MODE
+      =========================================
 
-      Paste your PAYSTACK TEST PUBLIC KEY below.
+      Paste your Paystack TEST PUBLIC KEY below.
 
-      DO NOT put the Paystack Secret Key here.
+      Example:
+
+      pk_test_xxxxxxxxxxxxxxxxx
+
+      IMPORTANT:
+      NEVER put the Paystack SECRET KEY here.
     */
 
     const PAYSTACK_PUBLIC_KEY =
       "PASTE_YOUR_TEST_PUBLIC_KEY_HERE";
 
+
     const TEST_AMOUNT_NAIRA = 5000;
+
 
     const payButton =
       document.getElementById("payButton");
 
+
     const message =
       document.getElementById("message");
 
-    payButton.addEventListener("click", function () {
 
-      const email =
-        document.getElementById("email").value.trim();
+    payButton.addEventListener(
+      "click",
+      function () {
 
-      if (!email) {
+        const email =
+          document
+            .getElementById("email")
+            .value
+            .trim();
 
-        message.textContent =
-          "Please enter the customer email address.";
 
-        return;
-      }
+        if (!email) {
 
-      if (
-        !PAYSTACK_PUBLIC_KEY ||
-        PAYSTACK_PUBLIC_KEY ===
-        "PASTE_YOUR_TEST_PUBLIC_KEY_HERE"
-      ) {
+          message.textContent =
+            "Please enter the customer email address.";
 
-        message.textContent =
-          "Paystack Public Key has not been added yet.";
+          return;
+        }
 
-        return;
-      }
 
-      payButton.disabled = true;
+        if (
+          !PAYSTACK_PUBLIC_KEY ||
+          PAYSTACK_PUBLIC_KEY ===
+          "PASTE_YOUR_TEST_PUBLIC_KEY_HERE"
+        ) {
 
-      message.textContent =
-        "Opening Paystack Test Checkout...";
+          message.textContent =
+            "Paystack Public Key has not been added yet.";
 
-      try {
+          return;
+        }
 
-        const paystack = new Paystack();
 
-        paystack.newTransaction({
+        if (typeof PaystackPop === "undefined") {
 
-          key: PAYSTACK_PUBLIC_KEY,
+          message.textContent =
+            "Paystack library is not available.";
 
-          email: email,
+          return;
+        }
 
-          amount: TEST_AMOUNT_NAIRA * 100,
 
-          currency: "NGN",
+        payButton.disabled = true;
 
-          metadata: {
-
-            system:
-              "FrostTech HVAC and Refrigeration Marketplace",
-
-            step: "3L",
-
-            payment_type:
-              "admin_fee",
-
-            admin_fee:
-              TEST_AMOUNT_NAIRA
-          },
-
-          onLoad: function () {
-
-            message.textContent =
-              "Paystack checkout loaded.";
-          },
-
-          onSuccess: function (transaction) {
-
-            console.log(
-              "Paystack transaction:",
-              transaction
-            );
-
-            message.textContent =
-              "Payment completed. Reference: " +
-              transaction.reference;
-
-            payButton.disabled = false;
-          },
-
-          onCancel: function () {
-
-            message.textContent =
-              "Payment was cancelled.";
-
-            payButton.disabled = false;
-          },
-
-          onError: function (error) {
-
-            console.error(
-              "Paystack error:",
-              error
-            );
-
-            message.textContent =
-              "Paystack error: " +
-              (error.message || "Unknown error");
-
-            payButton.disabled = false;
-          }
-
-        });
-
-      } catch (error) {
-
-        console.error(error);
 
         message.textContent =
-          "Unable to start Paystack: " +
-          error.message;
+          "Opening Paystack Test Checkout...";
 
-        payButton.disabled = false;
+
+        try {
+
+          const paystack =
+            new PaystackPop();
+
+
+          paystack.newTransaction({
+
+            key:
+              PAYSTACK_PUBLIC_KEY,
+
+
+            email:
+              email,
+
+
+            /*
+              Paystack amount is supplied
+              in the lowest currency unit.
+
+              ₦5,000 =
+              500,000 kobo
+            */
+
+            amount:
+              TEST_AMOUNT_NAIRA * 100,
+
+
+            currency:
+              "NGN",
+
+
+            metadata: {
+
+              system:
+                "FrostTech HVAC and Refrigeration Marketplace",
+
+              step:
+                "3L",
+
+              payment_type:
+                "admin_fee",
+
+              admin_fee:
+                TEST_AMOUNT_NAIRA
+
+            },
+
+
+            onLoad:
+              function () {
+
+                message.textContent =
+                  "Paystack checkout loaded.";
+
+              },
+
+
+            onSuccess:
+              function (transaction) {
+
+                console.log(
+                  "Paystack transaction:",
+                  transaction
+                );
+
+
+                message.textContent =
+                  "Payment completed. Reference: " +
+                  transaction.reference;
+
+
+                payButton.disabled =
+                  false;
+
+              },
+
+
+            onCancel:
+              function () {
+
+                message.textContent =
+                  "Payment was cancelled.";
+
+
+                payButton.disabled =
+                  false;
+
+              },
+
+
+            onError:
+              function (error) {
+
+                console.error(
+                  "Paystack error:",
+                  error
+                );
+
+
+                message.textContent =
+                  "Paystack error: " +
+                  (
+                    error.message ||
+                    "Unknown error"
+                  );
+
+
+                payButton.disabled =
+                  false;
+
+              }
+
+          });
+
+        }
+
+
+        catch (error) {
+
+          console.error(error);
+
+
+          message.textContent =
+            "Unable to start Paystack: " +
+            error.message;
+
+
+          payButton.disabled =
+            false;
+
+        }
+
       }
 
-    });
+    );
 
   </script></body>
 </html>
