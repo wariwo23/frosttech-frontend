@@ -1,276 +1,164 @@
-i<!DOCTYPE html>
-<html>
+<!DOCTYPE html><html>
 <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FrostTech Step 3F</title>
-
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f5f5f5;
-        }
-
-        .card {
-            background: white;
-            padding: 18px;
-            margin-top: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-        }
-
-        button {
-            padding: 12px 18px;
-            font-size: 16px;
-            margin-top: 15px;
-            cursor: pointer;
-        }
-
-        #status {
-            margin-top: 15px;
-            font-weight: bold;
-        }
-    </style>
-</head>
-
-<body>
-
-<h1>FrostTech Step 3F</h1>
-
-<p>Select Supplier Quotation</p>
-
-<button type="button" id="loadButton">
+</head><body><h1>FrostTech Step 3F</h1><p><strong>Select Supplier Quotation</strong></p><button type="button" id="loadQuoteBtn">
     Load Supplier Quote
-</button>
-
-<div id="status">
+</button><div id="result" style="margin-top:20px;">
     Waiting for test...
-</div>
-
-<div id="quoteArea"></div>
-
-
-<script>
+</div><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 
 const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
-
 const SUPABASE_KEY =
     "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-
 const supabaseClient =
-    supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_KEY
-    );
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+/* Known supplier quotation selected in Step 3E */
+const SUPPLIER_QUOTE_ID =
+    "703982c3-b94f-4a8a-8702-a35fc1192523";
 
 
 async function loadSupplierQuote() {
 
-    const status =
-        document.getElementById("status");
+    const result = document.getElementById("result");
 
-    const quoteArea =
-        document.getElementById("quoteArea");
-
-    status.innerHTML =
-        "Loading supplier quotations...";
-
-    quoteArea.innerHTML = "";
-
+    result.innerHTML = "Loading selected supplier quotation...";
 
     try {
 
-        const { data, error } =
-            await supabaseClient
-                .from("supplier_quotes")
-                .select("*")
-                .eq("status", "submitted")
-                .order("created_at", {
-                    ascending: false
-                });
-
+        const { data, error } = await supabaseClient
+            .from("supplier_quotes")
+            .select(`
+                id,
+                request_id,
+                supplier_id,
+                product_id,
+                quantity,
+                supplier_unit_price,
+                supplier_total,
+                delivery_cost,
+                frosttech_margin_percent,
+                frosttech_margin_amount,
+                customer_total,
+                notes,
+                valid_until,
+                status,
+                customer_quote_status,
+                created_at,
+                updated_at
+            `)
+            .eq("id", SUPPLIER_QUOTE_ID)
+            .eq("status", "selected")
+            .single();
 
         if (error) {
             throw error;
         }
 
-
-        if (!data || data.length === 0) {
-
-            status.innerHTML =
-                "No submitted supplier quotation found.";
-
+        if (!data) {
+            result.innerHTML =
+                "<strong>No selected supplier quotation found.</strong>";
             return;
         }
 
+        result.innerHTML = `
 
-        status.innerHTML =
-            "Supplier quotation loaded successfully.";
+            <h2>Selected Supplier Quotation</h2>
 
+            <p>
+                <strong>Quote ID:</strong><br>
+                ${data.id}
+            </p>
 
-        data.forEach(function(quote) {
+            <p>
+                <strong>Request ID:</strong><br>
+                ${data.request_id}
+            </p>
 
-            const card =
-                document.createElement("div");
+            <p>
+                <strong>Supplier ID:</strong><br>
+                ${data.supplier_id}
+            </p>
 
-            card.className = "card";
+            <p>
+                <strong>Product ID:</strong><br>
+                ${data.product_id}
+            </p>
 
+            <p>
+                <strong>Quantity:</strong>
+                ${data.quantity}
+            </p>
 
-            card.innerHTML = `
+            <p>
+                <strong>Supplier Unit Price:</strong>
+                ₦${Number(data.supplier_unit_price).toLocaleString()}
+            </p>
 
-                <h2>Supplier Quotation</h2>
+            <p>
+                <strong>Supplier Total:</strong>
+                ₦${Number(data.supplier_total).toLocaleString()}
+            </p>
 
-                <p>
-                    <strong>Quote ID:</strong>
-                    ${quote.id}
-                </p>
+            <p>
+                <strong>Delivery Cost:</strong>
+                ₦${Number(data.delivery_cost).toLocaleString()}
+            </p>
 
-                <p>
-                    <strong>Request ID:</strong>
-                    ${quote.request_id}
-                </p>
+            <p>
+                <strong>FrostTech Margin:</strong>
+                ${data.frosttech_margin_percent}%
+            </p>
 
-                <p>
-                    <strong>Supplier ID:</strong>
-                    ${quote.supplier_id}
-                </p>
+            <p>
+                <strong>FrostTech Margin Amount:</strong>
+                ₦${Number(data.frosttech_margin_amount).toLocaleString()}
+            </p>
 
-                <p>
-                    <strong>Product ID:</strong>
-                    ${quote.product_id}
-                </p>
+            <p>
+                <strong>Customer Total:</strong>
+                ₦${Number(data.customer_total).toLocaleString()}
+            </p>
 
-                <p>
-                    <strong>Quantity:</strong>
-                    ${quote.quantity}
-                </p>
+            <p>
+                <strong>Status:</strong>
+                ${data.status}
+            </p>
 
-                <p>
-                    <strong>Supplier Unit Price:</strong>
-                    ₦${Number(
-                        quote.supplier_unit_price || 0
-                    ).toLocaleString()}
-                </p>
+            <p>
+                <strong>Customer Quote Status:</strong>
+                ${data.customer_quote_status}
+            </p>
 
-                <p>
-                    <strong>Supplier Total:</strong>
-                    ₦${Number(
-                        quote.supplier_total || 0
-                    ).toLocaleString()}
-                </p>
+            <hr>
 
-                <p>
-                    <strong>Delivery Cost:</strong>
-                    ₦${Number(
-                        quote.delivery_cost || 0
-                    ).toLocaleString()}
-                </p>
+            <h3>STEP 3F SUCCESS</h3>
 
-                <p>
-                    <strong>FrostTech Margin:</strong>
-                    ${quote.frosttech_margin_percent || 0}%
-                </p>
-
-                <p>
-                    <strong>Margin Amount:</strong>
-                    ₦${Number(
-                        quote.frosttech_margin_amount || 0
-                    ).toLocaleString()}
-                </p>
-
-                <p>
-                    <strong>Customer Total:</strong>
-                    ₦${Number(
-                        quote.customer_total || 0
-                    ).toLocaleString()}
-                </p>
-
-                <p>
-                    <strong>Status:</strong>
-                    ${quote.status}
-                </p>
-
-                <button
-                    type="button"
-                    onclick="selectSupplierQuote('${quote.id}')">
-                    Select This Supplier
-                </button>
-
-            `;
-
-
-            quoteArea.appendChild(card);
-
-        });
-
+            <p>
+                The selected supplier quotation has been loaded successfully.
+            </p>
+        `;
 
     } catch (error) {
 
-        status.innerHTML =
-            "STEP 3F ERROR: " + error.message;
+        result.innerHTML = `
+            <h3>STEP 3F ERROR</h3>
+            <p>${error.message}</p>
+        `;
 
+        console.error(error);
     }
-
-}
-
-
-async function selectSupplierQuote(quoteId) {
-
-    const status =
-        document.getElementById("status");
-
-
-    status.innerHTML =
-        "Selecting supplier quotation...";
-
-
-    try {
-
-        const { data, error } =
-            await supabaseClient
-                .from("supplier_quotes")
-                .update({
-                    status: "selected"
-                })
-                .eq("id", quoteId)
-                .select();
-
-
-        if (error) {
-            throw error;
-        }
-
-
-        status.innerHTML =
-            "Supplier quotation selected successfully.";
-
-
-        console.log(data);
-
-
-    } catch (error) {
-
-        status.innerHTML =
-            "SELECTION ERROR: " + error.message;
-
-    }
-
 }
 
 
 document
-    .getElementById("loadButton")
-    .addEventListener(
-        "click",
-        loadSupplierQuote
-    );
+    .getElementById("loadQuoteBtn")
+    .addEventListener("click", loadSupplierQuote);
 
-</script>
-
-</body>
+</script></body>
 </html>
