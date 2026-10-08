@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FrostTech Step 3K</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+
+<h1>FrostTech Step 3K</h1>
+
+<h2>Admin Fee Payment Test</h2>
+
+<button id="loadBtn">Load Admin Fee</button>
+
+<div id="result">
+    Waiting for test...
+</div>
+
+<script>
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient =
+    supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+
+// Current FrostTech test quote request
+const REQUEST_ID =
+    "694e5ec3-5ceb-4238-b20d-326f1c07760e";
+
+
+async function loadAdminFee() {
+
+    const result = document.getElementById("result");
+
+    result.innerHTML = "Loading admin fee...";
+
+    try {
+
+        const { data, error } = await supabaseClient
+            .from("quote_requests")
+            .select(`
+                id,
+                request_number,
+                title,
+                admin_fee,
+                admin_fee_status,
+                admin_fee_transaction_reference,
+                admin_fee_paid_at
+            `)
+            .eq("id", REQUEST_ID)
+            .single();
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        result.innerHTML = `
+
+            <hr>
+
+            <p><strong>Request Number:</strong>
+            ${data.request_number}</p>
+
+            <p><strong>Request:</strong>
+            ${data.title}</p>
+
+            <p><strong>Admin Fee:</strong>
+            ₦${Number(data.admin_fee).toLocaleString()}</p>
+
+            <p><strong>Status:</strong>
+            ${data.admin_fee_status}</p>
+
+            <p><strong>Transaction Reference:</strong>
+            ${data.admin_fee_transaction_reference || "None"}</p>
+
+            <p><strong>Paid At:</strong>
+            ${data.admin_fee_paid_at || "Not paid"}</p>
+
+            <br>
+
+            <button id="paidBtn">
+                Test Mark Admin Fee as Paid
+            </button>
+
+        `;
+
+
+        document
+            .getElementById("paidBtn")
+            .addEventListener("click", markAsPaid);
+
+    }
+
+    catch (error) {
+
+        result.innerHTML =
+            "<strong>STEP 3K ERROR:</strong> " +
+            error.message;
+    }
+}
+
+
+
+async function markAsPaid() {
+
+    const result = document.getElementById("result");
+
+    result.innerHTML =
+        "Recording test payment...";
+
+
+    const testReference =
+        "TEST-ADMIN-" + Date.now();
+
+
+    const paidTime =
+        new Date().toISOString();
+
+
+    try {
+
+        const { error } = await supabaseClient
+
+            .from("quote_requests")
+
+            .update({
+
+                admin_fee_status: "paid",
+
+                admin_fee_transaction_reference:
+                    testReference,
+
+                admin_fee_paid_at:
+                    paidTime
+
+            })
+
+            .eq("id", REQUEST_ID);
+
+
+        if (error) {
+            throw error;
+        }
+
+
+        // Read the record back
+        const { data, error: readError } =
+            await supabaseClient
+
+                .from("quote_requests")
+
+                .select(`
+                    id,
+                    request_number,
+                    admin_fee,
+                    admin_fee_status,
+                    admin_fee_transaction_reference,
+                    admin_fee_paid_at
+                `)
+
+                .eq("id", REQUEST_ID)
+
+                .single();
+
+
+        if (readError) {
+            throw readError;
+        }
+
+
+        result.innerHTML = `
+
+            <h3>STEP 3K SUCCESS</h3>
+
+            <p><strong>Request:</strong>
+            ${data.request_number}</p>
+
+            <p><strong>Admin Fee:</strong>
+            ₦${Number(data.admin_fee).toLocaleString()}</p>
+
+            <p><strong>Payment Status:</strong>
+            ${data.admin_fee_status}</p>
+
+            <p><strong>Transaction Reference:</strong>
+            ${data.admin_fee_transaction_reference}</p>
+
+            <p><strong>Paid At:</strong>
+            ${data.admin_fee_paid_at}</p>
+
+            <hr>
+
+            <p>
+            The customer admin fee has been recorded as PAID.
+            </p>
+
+            <p>
+            This is only a database test.
+            No real payment was made.
+            </p>
+
+        `;
+
+    }
+
+    catch (error) {
+
+        result.innerHTML =
+            "<strong>STEP 3K ERROR:</strong> " +
+            error.message;
+    }
+
+}
+
+
+document
+    .getElementById("loadBtn")
+    .addEventListener("click", loadAdminFee);
+
+</script>
+
+</body>
+</html>
