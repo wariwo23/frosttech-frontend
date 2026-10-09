@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Payments</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      margin: 0;
+      padding: 20px;
+      color: #1e293b;
+    }
+
+    .container {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      color: #075985;
+      font-size: 25px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      font-weight: bold;
+    }
+
+    input, select, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 13px;
+      margin-top: 8px;
+      font-size: 16px;
+      border-radius: 6px;
+    }
+
+    input, select {
+      border: 1px solid #cbd5e1;
+    }
+
+    button {
+      border: none;
+      background: #075985;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #message {
+      margin-top: 18px;
+      padding: 12px;
+      background: #f1f5f9;
+      border-radius: 6px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .notice {
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h1>FrostTech Payments</h1>
+
+    <p>Secure payment setup for FrostTech HVAC and Refrigeration.</p>
+
+    <p class="notice">
+      This page is a payment interface prototype. Payment initialization
+      must be connected to a trusted server before accepting payments.
+      Do not enter card details on this page.
+    </p>
+
+    <form id="paymentForm">
+      <label for="purpose">Payment purpose</label>
+
+      <select id="purpose" required>
+        <option value="admin_fee">Admin fee</option>
+        <option value="customer_order">Customer order</option>
+      </select>
+
+      <label for="amount">Amount in naira (₦)</label>
+
+      <input
+        id="amount"
+        type="number"
+        min="1"
+        step="1"
+        value="5000"
+        required
+      >
+
+      <label for="email">Customer email</label>
+
+      <input
+        id="email"
+        type="email"
+        placeholder="Enter your email address"
+        required
+      >
+
+      <button id="continueButton" type="submit">
+        Continue to Payment
+      </button>
+    </form>
+
+    <div id="message" role="status" aria-live="polite">
+      Ready. No payment has been initiated.
+    </div>
+  </main>
+
+  <script>
+    const form = document.getElementById("paymentForm");
+    const amountInput = document.getElementById("amount");
+    const purposeInput = document.getElementById("purpose");
+    const message = document.getElementById("message");
+    const button = document.getElementById("continueButton");
+
+    purposeInput.addEventListener("change", function () {
+      amountInput.value =
+        purposeInput.value === "admin_fee" ? "5000" : "";
+    });
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+
+      const amount = Number(amountInput.value);
+      const email = document.getElementById("email").value.trim();
+      const purpose = purposeInput.value;
+
+      if (!Number.isSafeInteger(amount) || amount <= 0) {
+        message.textContent = "Enter a valid amount in whole naira.";
+        return;
+      }
+
+      if (!email) {
+        message.textContent = "Enter a valid email address.";
+        return;
+      }
+
+      message.textContent =
+        "Payment details captured successfully.\n\n" +
+        "Purpose: " + purpose + "\n" +
+        "Amount: ₦" + amount.toLocaleString("en-NG") + "\n" +
+        "Email: " + email + "\n\n" +
+        "Payment has NOT been initiated. The next step is to connect " +
+        "this page to a secure server-side Paystack initialization " +
+        "function that creates and stores a payment reference.";
+
+      button.textContent = "Awaiting Secure Payment Setup";
+      button.disabled = true;
+    });
+  </script>
+</body>
+</html>
