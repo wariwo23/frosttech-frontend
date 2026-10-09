@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FrostTech Payment Verification Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      background: #f4f7fb;
+      color: #222;
+    }
+
+    .card {
+      background: white;
+      padding: 22px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+    }
+
+    h1 {
+      color: #075985;
+      font-size: 24px;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
+      font-weight: bold;
+    }
+
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      font-size: 16px;
+    }
+
+    button {
+      background: #075985;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 12px;
+      background: #eef2f7;
+      border-radius: 5px;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+
+    .warning {
+      color: #92400e;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>FrostTech Payment Verification</h1>
+
+    <p>
+      This page tests the deployed FrostTech payment verification
+      function using a Paystack transaction reference.
+    </p>
+
+    <p class="warning">
+      Use only a genuine Paystack TEST transaction reference that
+      corresponds to an existing FrostTech payment and order record.
+      Do not enter a live payment reference for this test.
+    </p>
+
+    <form id="paymentForm">
+      <label for="reference">Paystack Transaction Reference</label>
+      <input
+        id="reference"
+        type="text"
+        maxlength="200"
+        required
+        autocomplete="off"
+        placeholder="Enter test transaction reference"
+      >
+
+      <button id="verifyButton" type="submit">
+        Verify Test Payment
+      </button>
+    </form>
+
+    <div id="result" role="status" aria-live="polite">
+      Ready to test.
+    </div>
+  </div>
+
+  <script>
+    const functionUrl =
+      "https://nftxptjpgidcsgtaltjn.supabase.co/functions/v1/verify-paystack-payment";
+
+    const form = document.getElementById("paymentForm");
+    const button = document.getElementById("verifyButton");
+    const resultBox = document.getElementById("result");
+
+    form.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      const reference =
+        document.getElementById("reference").value.trim();
+
+      if (!reference) {
+        resultBox.textContent = "Please enter a transaction reference.";
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = "Verifying...";
+      resultBox.textContent = "Contacting FrostTech payment verification...";
+
+      try {
+        const response = await fetch(functionUrl, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ reference })
+        });
+
+        const data = await response.json();
+
+        resultBox.textContent =
+          "HTTP status: " + response.status + "\n\n" +
+          JSON.stringify(data, null, 2);
+
+      } catch (error) {
+        resultBox.textContent =
+          "Could not contact the verification function.\n\n" +
+          "Check your internet connection and function deployment.\n" +
+          "Details: " + error.message;
+      } finally {
+        button.disabled = false;
+        button.textContent = "Verify Test Payment";
+      }
+    });
+  </script>
+</body>
+</html>
