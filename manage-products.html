@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manage Products | FrostTech HVAC and Refrigeration</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+    }
+
+    header {
+      background: #082f49;
+      color: white;
+      padding: 18px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 23px;
+    }
+
+    header p {
+      margin: 0;
+    }
+
+    nav {
+      background: #075985;
+      padding: 12px;
+      text-align: center;
+    }
+
+    nav a {
+      color: white;
+      margin: 0 8px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
+      padding: 5px;
+    }
+
+    main {
+      max-width: 900px;
+      margin: 20px auto;
+      padding: 0 12px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #00000012;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #075985;
+    }
+
+    label {
+      display: block;
+      margin-top: 14px;
+      margin-bottom: 6px;
+      font-weight: bold;
+    }
+
+    input,
+    textarea,
+    select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 90px;
+      resize: vertical;
+    }
+
+    button {
+      padding: 12px 16px;
+      border: 0;
+      border-radius: 6px;
+      background: #0284c7;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 15px;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .secondary {
+      background: #475569;
+    }
+
+    .danger {
+      background: #b91c1c;
+    }
+
+    .full {
+      width: 100%;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .notice {
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      overflow-wrap: anywhere;
+    }
+
+    .success {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    .error {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .info {
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .preview {
+      display: block;
+      max-width: 100%;
+      width: 260px;
+      max-height: 220px;
+      object-fit: contain;
+      margin-top: 12px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #f8fafc;
+    }
+
+    .product {
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      padding: 14px;
+      margin-top: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .product img {
+      width: 100%;
+      max-width: 180px;
+      height: 130px;
+      object-fit: contain;
+      background: #f8fafc;
+      border-radius: 6px;
+    }
+
+    .product h3 {
+      margin-bottom: 5px;
+    }
+
+    .muted {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .price {
+      font-size: 18px;
+      font-weight: bold;
+      color: #047857;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .row {
+        grid-template-columns: 1fr;
+      }
+
+      .card {
+        padding: 15px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>❄️ FrostTech HVAC and Refrigeration</h1>
+  <p>Product Catalogue Management</p>
+</header>
+
+<nav>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalogue</a>
+  <a href="admin.html">Admin Dashboard</a>
+</nav>
+
+<main>
+
+  <section id="loginSection" class="card">
+    <h2>Administrator Login</h2>
+
+    <p class="muted">
+      Sign in with your existing FrostTech administrator account.
+    </p>
+
+    <div id="loginMessage" aria-live="polite"></div>
+
+    <form id="loginForm">
+      <label for="email">Administrator Email</label>
+      <input
+        id="email"
+        type="email"
+        autocomplete="username"
+        required
+      >
+
+      <label for="password">Password</label>
+      <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        required
+      >
+
+      <button id="loginBtn" type="submit" class="full">
+        Sign In
+      </button>
+    </form>
+  </section>
+
+  <section id="dashboard" class="hidden">
+
+    <div class="card">
+      <h2>Administrator Dashboard</h2>
+      <p>Signed in as: <strong id="loggedUser"></strong></p>
+      <button id="logoutBtn" class="secondary">Sign Out</button>
+    </div>
+
+    <div class="card">
+      <h2 id="formTitle">Add a New Product</h2>
+
+      <div id="formMessage" aria-live="polite"></div>
+
+      <form id="productForm">
+
+        <label for="existingProduct">
+          Edit an Existing Product (Optional)
+        </label>
+
+        <select id="existingProduct">
+          <option value="">Add a new product</option>
+        </select>
+
+        <p class="muted">
+          Select an existing product to edit it, or leave this blank
+          to create a new product.
+        </p>
+
+        <label for="name">Product Name *</label>
+        <input
+          id="name"
+          type="text"
+          maxlength="200"
+          placeholder="e.g. LG 1.5HP Split Air Conditioner"
+          required
+        >
+
+        <div class="row">
+          <div>
+            <label for="category">Category *</label>
+            <input
+              id="category"
+              list="categoryOptions"
+              maxlength="100"
+              placeholder="e.g. Air Conditioners"
+              required
+            >
+
+            <datalist id="categoryOptions">
+              <option value="Air Conditioners">
+              <option value="Refrigeration Parts">
+              <option value="HVAC Accessories">
+              <option value="HVAC Services">
+              <option value="Compressors">
+              <option value="Copper Pipes">
+              <option value="Refrigerants">
+              <option value="Freezers">
+              <option value="Tools and Equipment">
+            </datalist>
+          </div>
+
+          <div>
+            <label for="brand">Brand</label>
+            <input
+              id="brand"
+              type="text"
+              maxlength="100"
+              placeholder="e.g. LG"
+            >
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="model">Model</label>
+            <input
+              id="model"
+              type="text"
+              maxlength="150"
+              placeholder="Product model"
+            >
+          </div>
+
+          <div>
+            <label for="sku">SKU / Product Code</label>
+            <input
+              id="sku"
+              type="text"
+              maxlength="100"
+              placeholder="Optional"
+            >
+          </div>
+        </div>
+
+        <label for="description">Product Description</label>
+        <textarea
+          id="description"
+          maxlength="5000"
+          placeholder="Describe the product, capacity, features and applications."
+        ></textarea>
+
+        <div class="row">
+          <div>
+            <label for="sellingPrice">Selling Price (₦)</label>
+            <input
+              id="sellingPrice"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Leave blank if price is not confirmed"
+            >
+          </div>
+
+          <div>
+            <label for="supplierCost">Supplier Cost (₦)</label>
+            <input
+              id="supplierCost"
+              type="number"
+              min="0"
+              step="0.01"
+              placeholder="Optional"
+            >
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="stock">Stock Quantity</label>
+            <input
+              id="stock"
+              type="number"
+              min="0"
+              step="1"
+              value="0"
+              required
+            >
+          </div>
+
+          <div>
+            <label for="minStock">Minimum Stock Level</label>
+            <input
+              id="minStock"
+              type="number"
+              min="0"
+              step="1"
+              value="0"
+              required
+            >
+          </div>
+        </div>
+
+        <label for="unit">Unit</label>
+        <select id="unit">
+          <option value="piece">Piece</option>
+          <option value="set">Set</option>
+          <option value="pack">Pack</option>
+          <option value="metre">Metre</option>
+          <option value="roll">Roll</option>
+          <option value="kg">Kilogram</option>
+          <option value="litre">Litre</option>
+          <option value="service">Service</option>
+        </select>
+
+        <label for="productImage">Product Picture</label>
+        <input
+          id="productImage"
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+        >
+
+        <p class="muted">
+          Accepted formats: JPG, PNG and WebP. Maximum size: 5 MB.
+          You can leave this empty when editing a product to keep
+          its existing picture.
+        </p>
+
+        <img
+          id="imagePreview"
+          class="preview hidden"
+          alt="Product picture preview"
+        >
+
+        <label for="imageUrl">Current Image URL</label>
+        <input
+          id="imageUrl"
+          type="url"
+          readonly
+          placeholder="Uploaded image URL will appear here"
+        >
+
+        <label for="active">Catalogue Visibility</label>
+        <select id="active">
+          <option value="true">Active — show in catalogue</option>
+          <option value="false">Inactive — hide from catalogue</option>
+        </select>
+
+        <button id="saveBtn" type="submit" class="full">
+          Save Product
+        </button>
+
+        <button
+          id="resetBtn"
+          type="button"
+          class="secondary full"
+        >
+          Clear Form / New Product
+        </button>
+
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Saved Products</h2>
+
+      <button id="refreshBtn" class="secondary">
+        Refresh Products
+      </button>
+
+      <div id="productsMessage" aria-live="polite"></div>
+      <div id="productsList"></div>
+    </div>
+
+  </section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+  const BUCKET = "product-images";
+  const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
+
+  const client = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  const $ = (id) => document.getElementById(id);
+
+  let currentAdmin = null;
+  let products = [];
+  let originalImageUrl = "";
+
+  function showMessage(id, message, type) {
+    const element = $(id);
+    element.replaceChildren();
+
+    if (!message) return;
+
+    const box = document.createElement("div");
+    box.className = "notice " + (type || "info");
+    box.textContent = message;
+    element.appendChild(box);
+  }
+
+  function formatNaira(value) {
+    if (value === null || value === undefined || value === "") {
+      return "Price on request";
+    }
+
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      maximumFractionDigits: 2
+    }).format(Number(value));
+  }
+
+  function validOptionalNumber(value, label) {
+    if (value === "") return null;
+
+    const number = Number(value);
+
+    if (!Number.isFinite(number) || number < 0) {
+      throw new Error(label + " must be zero or greater.");
+    }
+
+    return number;
+  }
+
+  function safeImageName(fileName) {
+    const extension = fileName.split(".").pop().toLowerCase();
+
+    const allowed = {
+      jpg: "jpg",
+      jpeg: "jpg",
+      png: "png",
+      webp: "webp"
+    };
+
+    if (!allowed[extension]) {
+      throw new Error("Please choose a JPG, PNG or WebP image.");
+    }
+
+    return crypto.randomUUID() + "." + allowed[extension];
+  }
+
+  async function verifyAdmin() {
+    const { data: sessionData, error: sessionError } =
+      await client.auth.getSession();
+
+    if (sessionError) throw sessionError;
+
+    const user = sessionData.session?.user;
+
+    if (!user) {
+      currentAdmin = null;
+      showLogin();
+      return false;
+    }
+
+    const { data: profile, error } = await client
+      .from("profiles")
+      .select("id, full_name, role, is_active")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error) throw error;
+
+    if (
+      !profile ||
+      profile.role !== "admin" ||
+      profile.is_active !== true
+    ) {
+      await client.auth.signOut();
+
+      currentAdmin = null;
+      showLogin();
+
+      showMessage(
+        "loginMessage",
+        "Access denied. An active FrostTech administrator account is required.",
+        "error"
+      );
+
+      return false;
+    }
+
+    currentAdmin = user;
+
+    $("loggedUser").textContent = user.email || profile.full_name || "";
+    $("loginSection").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+
+    return true;
+  }
+
+  function showLogin() {
+    $("dashboard").classList.add("hidden");
+    $("loginSection").classList.remove("hidden");
+  }
+
+  async function loadProducts() {
+    showMessage("productsMessage", "Loading products...", "info");
+
+    const { data, error } = await client
+      .from("products")
+      .select(
+        "id, name, category, brand, model, description, sku, unit, supplier_cost, selling_price, stock_quantity, min_stock_level, image_url, is_active"
+      )
+      .order("created_at", { ascending: false });
+
+    if (error) throw error;
+
+    products = data || [];
+
+    const selector = $("existingProduct");
+    const previousValue = selector.value;
+
+    selector.replaceChildren();
+
+    const newOption = document.createElement("option");
+    newOption.value = "";
+    newOption.textContent = "Add a new product";
+    selector.appendChild(newOption);
+
+    products.forEach((product) => {
+      const option = document.createElement("option");
+      option.value = product.id;
+      option.textContent = product.name;
+      selector.appendChild(option);
+    });
+
+    if (products.some((p) => p.id === previousValue)) {
+      selector.value = previousValue;
+    }
+
+    renderProducts();
+
+    showMessage(
+      "productsMessage",
+      products.length + " product(s) loaded.",
+      "success"
+    );
+  }
+
+  function renderProducts() {
+    const container = $("productsList");
+    container.replaceChildren();
+
+    if (!products.length) {
+      const message = document.createElement("p");
+      message.textContent = "No products found.";
+      container.appendChild(message);
+      return;
+    }
+
+    products.forEach((product) => {
+      const card = document.createElement("div");
+      card.className = "product";
+
+      if (product.image_url) {
+        const image = document.createElement("img");
+        image.src = product.image_url;
+        image.alt = product.name;
+        image.loading = "lazy";
+        card.appendChild(image);
+      }
+
+      const title = document.createElement("h3");
+      title.textContent = product.name;
+      card.appendChild(title);
+
+      const category = document.createElement("p");
+      category.textContent = product.category || "Uncategorised";
+      card.appendChild(category);
+
+      const price = document.createElement("p");
+      price.className = "price";
+      price.textContent = formatNaira(product.selling_price);
+      card.appendChild(price);
+
+      const stock = document.createElement("p");
+      stock.textContent =
+        "Stock: " + (product.stock_quantity ?? 0);
+      card.appendChild(stock);
+
+      const status = document.createElement("p");
+      status.textContent = product.is_active
+        ? "Active — visible in catalogue"
+        : "Inactive — hidden from catalogue";
+      card.appendChild(status);
+
+      const editButton = document.createElement("button");
+      editButton.textContent = "Edit Product";
+      editButton.addEventListener("click", () => {
+        $("existingProduct").value = product.id;
+        fillForm(product);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+
+      card.appendChild(editButton);
+      container.appendChild(card);
+    });
+  }
+
+  function fillForm(product) {
+    $("formTitle").textContent = "Edit Product";
+
+    $("name").value = product.name || "";
+    $("category").value = product.category || "";
+    $("brand").value = product.brand || "";
+    $("model").value = product.model || "";
+    $("sku").value = product.sku || "";
+    $("description").value = product.description || "";
+    $("sellingPrice").value = product.selling_price ?? "";
+    $("supplierCost").value = product.supplier_cost ?? "";
+    $("stock").value = product.stock_quantity ?? 0;
+    $("minStock").value = product.min_stock_level ?? 0;
+    $("unit").value = product.unit || "piece";
+    $("active").value = String(product.is_active === true);
+
+    originalImageUrl = product.image_url || "";
+    $("imageUrl").value = originalImageUrl;
+    $("productImage").value = "";
+
+    if (originalImageUrl) {
+      $("imagePreview").src = originalImageUrl;
+      $("imagePreview").classList.remove("hidden");
+    } else {
+      $("imagePreview").removeAttribute("src");
+      $("imagePreview").classList.add("hidden");
+    }
+
+    showMessage("formMessage", "", "");
+  }
+
+  function resetForm() {
+    $("productForm").reset();
+
+    $("existingProduct").value = "";
+    $("formTitle").textContent = "Add a New Product";
+
+    $("stock").value = "0";
+    $("minStock").value = "0";
+    $("unit").value = "piece";
+    $("active").value = "true";
+
+    originalImageUrl = "";
+
+    $("imageUrl").value = "";
+    $("imagePreview").removeAttribute("src");
+    $("imagePreview").classList.add("hidden");
+
+    showMessage("formMessage", "", "");
+  }
+
+  async function uploadImage(file) {
+    if (!file) return originalImageUrl || null;
+
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      throw new Error("Choose a JPG, PNG or WebP picture.");
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      throw new Error("The picture is too large. Maximum size is 5 MB.");
+    }
+
+    if (file.size === 0) {
+      throw new Error("The selected image is empty.");
+    }
+
+    const fileName = safeImageName(file.name);
+    const filePath = "products/" + fileName;
+
+    const { error } = await client.storage
+      .from(BUCKET)
+      .upload(filePath, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type
+      });
+
+    if (error) throw error;
+
+    const { data } = client.storage
+      .from(BUCKET)
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  }
+
+  $("loginForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const button = $("loginBtn");
+    button.disabled = true;
+
+    showMessage("loginMessage", "Signing in...", "info");
+
+    try {
+      const { error } = await client.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) throw error;
+
+      const allowed = await verifyAdmin();
+
+      if (allowed) {
+        showMessage("loginMessage", "", "");
+        await loadProducts();
+      }
+    } catch (error) {
+      showMessage(
+        "loginMessage",
+        error.message || "Login failed.",
+        "error"
+      );
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("existingProduct").addEventListener("change", function () {
+    const product = products.find((p) => p.id === this.value);
+
+    if (product) {
+      fillForm(product);
+    } else {
+      resetForm();
+    }
+  });
+
+  $("productImage").addEventListener("change", function () {
+    const file = this.files?.[0];
+
+    if (!file) {
+      if (originalImageUrl) {
+        $("imagePreview").src = originalImageUrl;
+        $("imagePreview").classList.remove("hidden");
+      }
+      return;
+    }
+
+    if (file.size > MAX_IMAGE_SIZE) {
+      showMessage(
+        "formMessage",
+        "The picture is too large. Maximum size is 5 MB.",
+        "error"
+      );
+      this.value = "";
+      return;
+    }
+
+    const allowedTypes = [
+      "image/jpeg",
+      "image/png",
+      "image/webp"
+    ];
+
+    if (!allowedTypes.includes(file.type)) {
+      showMessage(
+        "formMessage",
+        "Choose a JPG, PNG or WebP picture.",
+        "error"
+      );
+      this.value = "";
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = function () {
+      $("imagePreview").src = reader.result;
+      $("imagePreview").classList.remove("hidden");
+    };
+
+    reader.readAsDataURL(file);
+    showMessage("formMessage", "", "");
+  });
+
+  $("productForm").addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const button = $("saveBtn");
+    button.disabled = true;
+
+    let uploadedImageUrl = null;
+
+    try {
+      const allowed = await verifyAdmin();
+
+      if (!allowed) {
+        throw new Error("Please sign in as an active administrator.");
+      }
+
+      const name = $("name").value.trim();
+      const category = $("category").value.trim();
+      const stock = Number($("stock").value);
+      const minStock = Number($("minStock").value);
+
+      if (!name || !category) {
+        throw new Error("Product name and category are required.");
+      }
+
+      if (
+        !Number.isInteger(stock) ||
+        stock < 0 ||
+        !Number.isInteger(minStock) ||
+        minStock < 0
+      ) {
+        throw new Error("Stock values must be whole numbers of zero or greater.");
+      }
+
+      const sellingPrice = validOptionalNumber(
+        $("sellingPrice").value,
+        "Selling price"
+      );
+
+      const supplierCost = validOptionalNumber(
+        $("supplierCost").value,
+        "Supplier cost"
+      );
+
+      showMessage("formMessage", "Saving product...", "info");
+
+      const file = $("productImage").files?.[0];
+
+      if (file) {
+        uploadedImageUrl = await uploadImage(file);
+      }
+
+      const selectedId = $("existingProduct").value;
+
+      const productData = {
+        name: name,
+        category: category,
+        brand: $("brand").value.trim() || null,
+        model: $("model").value.trim() || null,
+        sku: $("sku").value.trim() || null,
+        description: $("description").value.trim() || null,
+        selling_price: sellingPrice,
+        supplier_cost: supplierCost,
+        stock_quantity: stock,
+        min_stock_level: minStock,
+        unit: $("unit").value,
+        image_url: uploadedImageUrl || originalImageUrl || null,
+        is_active: $("active").value === "true"
+      };
+
+      let result;
+
+      if (selectedId) {
+        result = await client
+          .from("products")
+          .update(productData)
+          .eq("id", selectedId)
+          .select("id")
+          .single();
+      } else {
+        result = await client
+          .from("products")
+          .insert(productData)
+          .select("id")
+          .single();
+      }
+
+      if (result.error) throw result.error;
+
+      showMessage(
+        "formMessage",
+        selectedId
+          ? "Product updated successfully."
+          : "New product added successfully.",
+        "success"
+      );
+
+      resetForm();
+      await loadProducts();
+
+    } catch (error) {
+      let message = error.message || "Could not save product.";
+
+      if (error.message && error.message.toLowerCase().includes("row-level security")) {
+        message += " Check the Storage and products table security policies.";
+      }
+
+      showMessage("formMessage", message, "error");
+
+    } finally {
+      button.disabled = false;
+    }
+  });
+
+  $("resetBtn").addEventListener("click", resetForm);
+
+  $("refreshBtn").addEventListener("click", async function () {
+    try {
+      await loadProducts();
+    } catch (error) {
+      showMessage(
+        "productsMessage",
+        error.message || "Could not load products.",
+        "error"
+      );
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", async function () {
+    const { error } = await client.auth.signOut();
+
+    if (error) {
+      showMessage("formMessage", error.message, "error");
+      return;
+    }
+
+    currentAdmin = null;
+    resetForm();
+    showLogin();
+  });
+
+  client.auth.onAuthStateChange(function () {
+    // The page checks the current session when loaded and during actions.
+  });
+
+  async function start() {
+    try {
+      const allowed = await verifyAdmin();
+
+      if (allowed) {
+        await loadProducts();
+      }
+    } catch (error) {
+      showLogin();
+
+      showMessage(
+        "loginMessage",
+        error.message || "Could not check administrator access.",
+        "error"
+      );
+    }
+  }
+
+  start();
+
+})();
+</script>
+
+</body>
+</html>
