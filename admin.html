@@ -1,7 +1,14 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FrostTech Admin Dashboard</title><meta name="robots" content="noindex,nofollow"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FrostTech Admin Dashboard</title>
+<meta name="robots" content="noindex,nofollow">
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<style>
 :root {
     --green: #075e2a;
     --light-green: #e8f5e9;
@@ -24,9 +31,14 @@ body {
     line-height: 1.5;
 }
 
-header {
+header, footer, .container {
     max-width: 1100px;
-    margin: 0 auto 20px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+header {
+    margin-bottom: 20px;
     padding: 20px;
     color: white;
     background: var(--green);
@@ -40,11 +52,6 @@ header h1 {
 
 header p {
     margin-bottom: 0;
-}
-
-.container {
-    max-width: 1100px;
-    margin: 0 auto;
 }
 
 .panel {
@@ -65,9 +72,7 @@ label {
     font-weight: bold;
 }
 
-input,
-select,
-textarea {
+input, select, textarea {
     display: block;
     width: 100%;
     padding: 12px;
@@ -183,8 +188,7 @@ button:disabled {
 }
 
 footer {
-    max-width: 1100px;
-    margin: 25px auto;
+    margin-top: 25px;
     text-align: center;
     color: #666;
 }
@@ -202,17 +206,28 @@ footer {
         font-size: 21px;
     }
 }
-</style></head><body><header>
+</style>
+</head>
+
+<body>
+
+<header>
     <h1>FrostTech Admin Dashboard</h1>
     <p>HVAC and Refrigeration Marketplace</p>
     <p id="account-label">Administrator access</p>
-</header><main class="container"><!-- LOGIN -->
+</header>
+
+<main class="container">
+
+<!-- LOGIN -->
 <section id="login-panel" class="panel">
     <h2>Administrator Login</h2>
 
     <p>Sign in with your authorized FrostTech administrator account.</p>
 
-    <form id="login-form">
+    <!-- No form submission: login is handled by the button click. -->
+    <form id="login-form" onsubmit="return false;">
+
         <label for="login-email">Email Address</label>
         <input
             id="login-email"
@@ -229,7 +244,7 @@ footer {
             required
         >
 
-        <button id="login-button" type="submit">
+        <button id="login-button" type="button">
             Login
         </button>
     </form>
@@ -248,10 +263,7 @@ footer {
     <div class="panel">
         <h2>Dashboard Overview</h2>
 
-        <p>
-            Signed in as:
-            <strong id="admin-email"></strong>
-        </p>
+        <p>Signed in as: <strong id="admin-email"></strong></p>
 
         <button id="refresh-button" type="button">
             Refresh Dashboard
@@ -299,11 +311,9 @@ footer {
         <div class="toolbar">
             <div>
                 <label for="request-search">Search Requests</label>
-                <input
-                    id="request-search"
-                    type="search"
-                    placeholder="Reference, product, address..."
-                >
+                <input id="request-search"
+                       type="search"
+                       placeholder="Reference, product, address...">
             </div>
 
             <div>
@@ -329,17 +339,14 @@ footer {
         <h2>Supplier Quotations</h2>
 
         <p class="muted">
-            Review quotations submitted by suppliers. Selecting a
-            quotation marks it as selected in the supplier_quotes table.
-            Customer-facing quotations and payments are separate steps.
+            Review supplier quotations. Selecting a quotation updates its
+            status. This action does not send a customer quote or authorize
+            payment.
         </p>
 
         <div class="toolbar">
             <div>
-                <label for="supplier-quote-filter">
-                    Filter by Status
-                </label>
-
+                <label for="supplier-quote-filter">Filter by Status</label>
                 <select id="supplier-quote-filter">
                     <option value="">All statuses</option>
                     <option value="draft">Draft</option>
@@ -351,15 +358,10 @@ footer {
             </div>
 
             <div>
-                <label for="supplier-quote-search">
-                    Search Quotations
-                </label>
-
-                <input
-                    id="supplier-quote-search"
-                    type="search"
-                    placeholder="Request ID or supplier ID..."
-                >
+                <label for="supplier-quote-search">Search Quotations</label>
+                <input id="supplier-quote-search"
+                       type="search"
+                       placeholder="Request ID or supplier ID...">
             </div>
         </div>
 
@@ -370,55 +372,59 @@ footer {
 
 </section>
 
-</main><footer>
+</main>
+
+<footer>
     <p>
         &copy; <span id="year"></span>
         FrostTech HVAC and Refrigeration.
     </p>
-</footer><script>
+</footer>
+
+<script>
 "use strict";
 
-/*
- * FrostTech configuration.
- * Uses the public/publishable key, never a service-role key.
- */
+/* =========================================================
+   FROSTTECH SUPABASE CONFIGURATION
+   Use only the public/publishable key in browser code.
+   Never put a service-role key in this file.
+   ========================================================= */
+
 const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-const supabaseClient = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-);
-
-const $ = function (id) {
-    return document.getElementById(id);
-};
-
+let supabaseClient = null;
 let currentUser = null;
 let customerRequests = [];
 let supplierQuotes = [];
-let requestLoadError = false;
-let supplierQuoteLoadError = false;
+
+/* =========================================================
+   UTILITIES
+   ========================================================= */
+
+const $ = id => document.getElementById(id);
 
 $("year").textContent = new Date().getFullYear();
 
-function setMessage(elementId, message, type) {
-    const element = $(elementId);
+function setMessage(id, message, type = "") {
+    const element = $(id);
 
     element.textContent = message;
     element.className = "status-message";
 
     if (type === "error") {
         element.classList.add("error");
-    } else if (type === "success") {
+    }
+
+    if (type === "success") {
         element.classList.add("success");
     }
 }
 
-function createElement(tag, text, className) {
+function createElement(tag, text, className = "") {
     const element = document.createElement(tag);
 
     element.textContent =
@@ -435,8 +441,8 @@ function createElement(tag, text, className) {
 
 function addLine(parent, label, value) {
     const paragraph = document.createElement("p");
-
     const strong = document.createElement("strong");
+
     strong.textContent = label + ": ";
 
     paragraph.append(
@@ -470,35 +476,53 @@ function formatNaira(value) {
 }
 
 function formatDate(value) {
-    if (!value) {
-        return "Not provided";
-    }
+    if (!value) return "Not provided";
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-        return String(value);
-    }
-
-    return date.toLocaleString("en-NG");
+    return Number.isNaN(date.getTime())
+        ? String(value)
+        : date.toLocaleString("en-NG");
 }
 
 function showLogin() {
     $("login-panel").classList.remove("hidden");
     $("dashboard").classList.add("hidden");
+    $("account-label").textContent = "Administrator access";
 }
 
 function showDashboard() {
     $("login-panel").classList.add("hidden");
     $("dashboard").classList.remove("hidden");
-    $("admin-email").textContent = currentUser.email || "";
+    $("admin-email").textContent = currentUser?.email || "";
     $("account-label").textContent = "Authenticated administrator";
 }
 
+/* =========================================================
+   INITIALIZE SUPABASE SAFELY
+   ========================================================= */
+
+function initializeSupabase() {
+    if (
+        !window.supabase ||
+        typeof window.supabase.createClient !== "function"
+    ) {
+        throw new Error(
+            "Supabase library did not load. Check your internet connection."
+        );
+    }
+
+    supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+    );
+}
+
+/* =========================================================
+   ADMINISTRATOR VERIFICATION
+   ========================================================= */
+
 async function verifyAdministrator(user) {
-    /*
-     * profiles.id is the Supabase Auth user ID.
-     */
     const { data: profile, error } = await supabaseClient
         .from("profiles")
         .select("id, full_name, role, is_active")
@@ -507,8 +531,7 @@ async function verifyAdministrator(user) {
 
     if (error) {
         throw new Error(
-            "Could not verify your administrator profile: " +
-            error.message
+            "Could not verify administrator profile: " + error.message
         );
     }
 
@@ -527,11 +550,15 @@ async function verifyAdministrator(user) {
     return profile;
 }
 
-async function handleLogin(event) {
-    event.preventDefault();
+/* =========================================================
+   LOGIN
+   The button is type=button, so it cannot submit the form.
+   ========================================================= */
 
+async function handleLogin() {
     const email = $("login-email").value.trim();
     const password = $("login-password").value;
+    const button = $("login-button");
 
     if (!email || !password) {
         setMessage(
@@ -542,28 +569,35 @@ async function handleLogin(event) {
         return;
     }
 
-    const button = $("login-button");
+    if (!supabaseClient) {
+        setMessage(
+            "login-message",
+            "Supabase is not initialized. Reload the page and try again.",
+            "error"
+        );
+        return;
+    }
+
     button.disabled = true;
     button.textContent = "Signing in...";
 
     setMessage(
         "login-message",
-        "Authenticating and checking administrator access...",
+        "Checking your login details...",
         ""
     );
 
     try {
-        const { data, error } = await supabaseClient.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
+        const { data, error } =
+            await supabaseClient.auth.signInWithPassword({
+                email,
+                password
+            });
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
         if (!data.user) {
-            throw new Error("Supabase did not return an authenticated user.");
+            throw new Error("Authentication returned no user.");
         }
 
         try {
@@ -594,9 +628,11 @@ async function handleLogin(event) {
     }
 }
 
-async function loadCustomerRequests() {
-    requestLoadError = false;
+/* =========================================================
+   CUSTOMER QUOTE REQUESTS
+   ========================================================= */
 
+async function loadCustomerRequests() {
     const { data, error } = await supabaseClient
         .from("quote_requests")
         .select(
@@ -606,7 +642,6 @@ async function loadCustomerRequests() {
         .limit(200);
 
     if (error) {
-        requestLoadError = true;
         throw new Error(
             "Could not load customer requests: " + error.message
         );
@@ -626,8 +661,8 @@ function renderCustomerRequests() {
     const search = $("request-search").value.trim().toLowerCase();
     const filter = $("request-filter").value;
 
-    const filtered = customerRequests.filter(function (request) {
-        const text = [
+    const filtered = customerRequests.filter(request => {
+        const searchable = [
             request.request_number,
             request.title,
             request.description,
@@ -637,13 +672,11 @@ function renderCustomerRequests() {
             request.product_id
         ].join(" ").toLowerCase();
 
-        const matchesSearch = !search || text.includes(search);
-        const matchesStatus = !filter || request.status === filter;
-
-        return matchesSearch && matchesStatus;
+        return (!search || searchable.includes(search)) &&
+               (!filter || request.status === filter);
     });
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
         container.appendChild(
             createElement(
                 "p",
@@ -654,23 +687,16 @@ function renderCustomerRequests() {
         return;
     }
 
-    filtered.forEach(function (request) {
+    filtered.forEach(request => {
         const card = document.createElement("article");
         card.className = "record";
 
         card.appendChild(
-            createElement(
-                "h3",
-                request.title || "Customer Quote Request"
-            )
+            createElement("h3", request.title || "Customer Quote Request")
         );
 
         card.appendChild(
-            createElement(
-                "span",
-                request.status || "Status not set",
-                "badge"
-            )
+            createElement("span", request.status || "Status not set", "badge")
         );
 
         addLine(card, "Reference", request.request_number);
@@ -686,10 +712,8 @@ function renderCustomerRequests() {
         const actions = document.createElement("div");
         actions.className = "record-actions";
 
-        const statusLabel = document.createElement("label");
-        statusLabel.textContent = "Update request status";
-
-        const statusSelect = document.createElement("select");
+        const label = createElement("label", "Update request status");
+        const select = document.createElement("select");
 
         [
             "pending",
@@ -697,58 +721,55 @@ function renderCustomerRequests() {
             "quoted",
             "completed",
             "rejected"
-        ].forEach(function (status) {
+        ].forEach(status => {
             const option = document.createElement("option");
             option.value = status;
             option.textContent = status;
-            statusSelect.appendChild(option);
+            select.appendChild(option);
         });
 
         if (
             request.status &&
-            !Array.from(statusSelect.options).some(function (option) {
-                return option.value === request.status;
-            })
+            !Array.from(select.options).some(
+                option => option.value === request.status
+            )
         ) {
             const option = document.createElement("option");
             option.value = request.status;
             option.textContent = request.status;
-            statusSelect.appendChild(option);
+            select.appendChild(option);
         }
 
-        statusSelect.value = request.status || "pending";
+        select.value = request.status || "pending";
 
-        const saveButton = document.createElement("button");
-        saveButton.type = "button";
-        saveButton.textContent = "Save Status";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Save Status";
 
-        saveButton.addEventListener("click", async function () {
-            saveButton.disabled = true;
-            saveButton.textContent = "Saving...";
+        button.addEventListener("click", async () => {
+            button.disabled = true;
+            button.textContent = "Saving...";
 
             try {
                 const { error } = await supabaseClient
                     .from("quote_requests")
-                    .update({ status: statusSelect.value })
+                    .update({ status: select.value })
                     .eq("id", request.id);
 
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
 
-                request.status = statusSelect.value;
+                request.status = select.value;
 
                 setMessage(
                     "dashboard-message",
-                    "Request " + (request.request_number || request.id) +
-                    " updated to " + statusSelect.value + ".",
+                    "Customer request status updated.",
                     "success"
                 );
 
                 renderCustomerRequests();
 
             } catch (error) {
-                console.error("Request status update error:", error);
+                console.error(error);
 
                 setMessage(
                     "dashboard-message",
@@ -757,20 +778,22 @@ function renderCustomerRequests() {
                 );
 
             } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = "Save Status";
+                button.disabled = false;
+                button.textContent = "Save Status";
             }
         });
 
-        actions.append(statusLabel, statusSelect, saveButton);
+        actions.append(label, select, button);
         card.appendChild(actions);
         container.appendChild(card);
     });
 }
 
-async function loadSupplierQuotes() {
-    supplierQuoteLoadError = false;
+/* =========================================================
+   SUPPLIER QUOTATIONS
+   ========================================================= */
 
+async function loadSupplierQuotes() {
     const { data, error } = await supabaseClient
         .from("supplier_quotes")
         .select(
@@ -780,7 +803,6 @@ async function loadSupplierQuotes() {
         .limit(200);
 
     if (error) {
-        supplierQuoteLoadError = true;
         throw new Error(
             "Could not load supplier quotations: " + error.message
         );
@@ -791,9 +813,7 @@ async function loadSupplierQuotes() {
     $("supplier-quote-count").textContent = supplierQuotes.length;
 
     $("submitted-count").textContent = supplierQuotes.filter(
-        function (quote) {
-            return quote.status === "submitted";
-        }
+        quote => quote.status === "submitted"
     ).length;
 
     renderSupplierQuotes();
@@ -806,8 +826,8 @@ function renderSupplierQuotes() {
     const search = $("supplier-quote-search").value.trim().toLowerCase();
     const filter = $("supplier-quote-filter").value;
 
-    const filtered = supplierQuotes.filter(function (quote) {
-        const text = [
+    const filtered = supplierQuotes.filter(quote => {
+        const searchable = [
             quote.id,
             quote.request_id,
             quote.supplier_id,
@@ -817,11 +837,11 @@ function renderSupplierQuotes() {
             quote.notes
         ].join(" ").toLowerCase();
 
-        return (!search || text.includes(search)) &&
+        return (!search || searchable.includes(search)) &&
                (!filter || quote.status === filter);
     });
 
-    if (filtered.length === 0) {
+    if (!filtered.length) {
         container.appendChild(
             createElement(
                 "p",
@@ -832,23 +852,13 @@ function renderSupplierQuotes() {
         return;
     }
 
-    filtered.forEach(function (quote) {
+    filtered.forEach(quote => {
         const card = document.createElement("article");
         card.className = "record";
 
+        card.appendChild(createElement("h3", "Supplier Quotation"));
         card.appendChild(
-            createElement(
-                "h3",
-                "Supplier Quotation"
-            )
-        );
-
-        card.appendChild(
-            createElement(
-                "span",
-                quote.status || "Status not set",
-                "badge"
-            )
+            createElement("span", quote.status || "Status not set", "badge")
         );
 
         addLine(card, "Quotation ID", quote.id);
@@ -856,21 +866,10 @@ function renderSupplierQuotes() {
         addLine(card, "Supplier ID", quote.supplier_id);
         addLine(card, "Product ID", quote.product_id);
         addLine(card, "Quantity", quote.quantity);
-        addLine(
-            card,
-            "Supplier unit price",
-            formatNaira(quote.supplier_unit_price)
-        );
-        addLine(
-            card,
-            "Supplier total",
-            formatNaira(quote.supplier_total)
-        );
-        addLine(
-            card,
-            "Delivery cost",
-            formatNaira(quote.delivery_cost)
-        );
+        addLine(card, "Supplier unit price", formatNaira(quote.supplier_unit_price));
+        addLine(card, "Supplier total", formatNaira(quote.supplier_total));
+        addLine(card, "Delivery cost", formatNaira(quote.delivery_cost));
+
         addLine(
             card,
             "FrostTech margin",
@@ -878,21 +877,15 @@ function renderSupplierQuotes() {
                 ? "Not calculated"
                 : quote.frosttech_margin_percent + "%"
         );
+
         addLine(
             card,
             "FrostTech margin amount",
             formatNaira(quote.frosttech_margin_amount)
         );
-        addLine(
-            card,
-            "Customer total",
-            formatNaira(quote.customer_total)
-        );
-        addLine(
-            card,
-            "Customer quote status",
-            quote.customer_quote_status
-        );
+
+        addLine(card, "Customer total", formatNaira(quote.customer_total));
+        addLine(card, "Customer quote status", quote.customer_quote_status);
         addLine(card, "Valid until", formatDate(quote.valid_until));
         addLine(card, "Supplier notes", quote.notes);
         addLine(card, "Submitted", formatDate(quote.created_at));
@@ -900,41 +893,39 @@ function renderSupplierQuotes() {
         const actions = document.createElement("div");
         actions.className = "record-actions";
 
-        const updateLabel = document.createElement("label");
-        updateLabel.textContent = "Quotation status";
-
-        const statusSelect = document.createElement("select");
+        const label = createElement("label", "Quotation status");
+        const select = document.createElement("select");
 
         ["draft", "submitted", "selected", "rejected", "expired"]
-            .forEach(function (status) {
+            .forEach(status => {
                 const option = document.createElement("option");
                 option.value = status;
                 option.textContent = status;
-                statusSelect.appendChild(option);
+                select.appendChild(option);
             });
 
-        statusSelect.value = quote.status || "submitted";
+        select.value = quote.status || "submitted";
 
-        const saveButton = document.createElement("button");
-        saveButton.type = "button";
-        saveButton.textContent = "Save Quotation Status";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = "Save Quotation Status";
 
-        saveButton.addEventListener("click", async function () {
-            const nextStatus = statusSelect.value;
+        button.addEventListener("click", async () => {
+            const nextStatus = select.value;
 
             if (
                 nextStatus === "selected" &&
                 !window.confirm(
                     "Select this supplier quotation? This records your selection. " +
-                    "It does not yet send a customer quote or authorize payment."
+                    "It does not send a customer quote or authorize payment."
                 )
             ) {
-                statusSelect.value = quote.status || "submitted";
+                select.value = quote.status || "submitted";
                 return;
             }
 
-            saveButton.disabled = true;
-            saveButton.textContent = "Saving...";
+            button.disabled = true;
+            button.textContent = "Saving...";
 
             try {
                 const { error } = await supabaseClient
@@ -942,11 +933,13 @@ function renderSupplierQuotes() {
                     .update({ status: nextStatus })
                     .eq("id", quote.id);
 
-                if (error) {
-                    throw error;
-                }
+                if (error) throw error;
 
                 quote.status = nextStatus;
+
+                $("submitted-count").textContent = supplierQuotes.filter(
+                    item => item.status === "submitted"
+                ).length;
 
                 setMessage(
                     "dashboard-message",
@@ -956,13 +949,8 @@ function renderSupplierQuotes() {
 
                 renderSupplierQuotes();
 
-                $("submitted-count").textContent =
-                    supplierQuotes.filter(function (item) {
-                        return item.status === "submitted";
-                    }).length;
-
             } catch (error) {
-                console.error("Supplier quotation update error:", error);
+                console.error(error);
 
                 setMessage(
                     "dashboard-message",
@@ -971,16 +959,20 @@ function renderSupplierQuotes() {
                 );
 
             } finally {
-                saveButton.disabled = false;
-                saveButton.textContent = "Save Quotation Status";
+                button.disabled = false;
+                button.textContent = "Save Quotation Status";
             }
         });
 
-        actions.append(updateLabel, statusSelect, saveButton);
+        actions.append(label, select, button);
         card.appendChild(actions);
         container.appendChild(card);
     });
 }
+
+/* =========================================================
+   DASHBOARD LOADING
+   ========================================================= */
 
 async function loadDashboard() {
     setMessage(
@@ -995,19 +987,11 @@ async function loadDashboard() {
     ]);
 
     const errors = results
-        .filter(function (result) {
-            return result.status === "rejected";
-        })
-        .map(function (result) {
-            return result.reason.message || "Unknown error";
-        });
+        .filter(result => result.status === "rejected")
+        .map(result => result.reason?.message || "Unknown error");
 
-    if (errors.length > 0) {
-        setMessage(
-            "dashboard-message",
-            errors.join(" | "),
-            "error"
-        );
+    if (errors.length) {
+        setMessage("dashboard-message", errors.join(" | "), "error");
     } else {
         setMessage(
             "dashboard-message",
@@ -1017,15 +1001,18 @@ async function loadDashboard() {
     }
 }
 
+/* =========================================================
+   LOGOUT
+   ========================================================= */
+
 async function handleLogout() {
-    $("logout-button").disabled = true;
+    const button = $("logout-button");
+    button.disabled = true;
 
     try {
         const { error } = await supabaseClient.auth.signOut();
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
         currentUser = null;
         customerRequests = [];
@@ -1033,6 +1020,10 @@ async function handleLogout() {
 
         $("requests-list").replaceChildren();
         $("supplier-quotes-list").replaceChildren();
+
+        $("request-count").textContent = "0";
+        $("supplier-quote-count").textContent = "0";
+        $("submitted-count").textContent = "0";
 
         showLogin();
 
@@ -1050,48 +1041,43 @@ async function handleLogout() {
         );
 
     } finally {
-        $("logout-button").disabled = false;
+        button.disabled = false;
     }
 }
 
-/* Event handlers */
-$("login-form").addEventListener("submit", handleLogin);
+/* =========================================================
+   EVENT LISTENERS
+   ========================================================= */
+
+$("login-button").addEventListener("click", handleLogin);
+
+$("login-form").addEventListener("submit", event => {
+    event.preventDefault();
+});
 
 $("refresh-button").addEventListener("click", loadDashboard);
 
 $("logout-button").addEventListener("click", handleLogout);
 
 $("request-search").addEventListener("input", renderCustomerRequests);
-
 $("request-filter").addEventListener("change", renderCustomerRequests);
 
-$("supplier-quote-search").addEventListener(
-    "input",
-    renderSupplierQuotes
-);
+$("supplier-quote-search").addEventListener("input", renderSupplierQuotes);
+$("supplier-quote-filter").addEventListener("change", renderSupplierQuotes);
 
-$("supplier-quote-filter").addEventListener(
-    "change",
-    renderSupplierQuotes
-);
+/* =========================================================
+   RESTORE EXISTING SESSION
+   ========================================================= */
 
-/* Restore an existing session, but always verify administrator access. */
 async function initializeAdmin() {
     try {
-        if (
-            !window.supabase ||
-            typeof window.supabase.createClient !== "function"
-        ) {
-            throw new Error("Supabase JavaScript library did not load.");
-        }
+        initializeSupabase();
 
         const { data, error } = await supabaseClient.auth.getSession();
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
-        if (!data.session || !data.session.user) {
+        if (!data.session?.user) {
             showLogin();
 
             setMessage(
@@ -1105,7 +1091,6 @@ async function initializeAdmin() {
 
         try {
             await verifyAdministrator(data.session.user);
-
         } catch (verificationError) {
             await supabaseClient.auth.signOut();
             throw verificationError;
@@ -1131,5 +1116,7 @@ async function initializeAdmin() {
 }
 
 initializeAdmin();
-</script></body>
+</script>
+
+</body>
 </html>
