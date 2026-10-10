@@ -1,114 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Product | FrostTech HVAC and Refrigeration</title>  <link rel="stylesheet" href="style.css">  <!-- Load Supabase library before our configuration -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script></head><body><header class="topbar">
+  <div class="container nav"><div class="logo">
+  <span>❄</span> FrostTech
+</div>
 
-  <title>Product | FrostTech HVAC and Refrigeration</title>
-
-  <link rel="stylesheet" href="style.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
-</head>
-
-<body>
-
-<header class="topbar">
-
-  <div class="container nav">
-
-    <div class="logo">
-      <span>❄</span> FrostTech
-    </div>
-
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="index.html#categories">Categories</a>
-      <a href="index.html#products">Products</a>
-      <a href="index.html#quote">Request Quote</a>
-    </nav>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="index.html#categories">Categories</a>
+  <a href="index.html#products">Products</a>
+  <a href="index.html#quote">Request Quote</a>
+</nav>
 
   </div>
-
-</header>
-
-
-<main>
-
+</header><main>
   <section class="section">
+    <div class="container">  <p>
+    <a href="index.html#products">← Back to Products</a>
+  </p>
 
-    <div class="container">
+  <div id="product-details">
+    <p id="product-status">Loading product...</p>
+  </div>
 
-      <p>
-        <a href="index.html#products">← Back to Products</a>
-      </p>
-
-      <div id="product-details">
-
-        <p id="product-status">
-          Loading product...
-        </p>
-
-      </div>
-
-    </div>
+</div>
 
   </section>
+</main><footer>
+  <div class="container footer-content"><div>
+  <h2>❄ FrostTech</h2>
+  <p>HVAC and Refrigeration Marketplace</p>
+</div>
 
-</main>
+<div>
+  <p>Website: frosttechonline.com</p>
+  <p>WhatsApp: +234 803 200 8635</p>
+</div>
 
-
-<footer>
-
-  <div class="container footer-content">
-
-    <div>
-
-      <h2>❄ FrostTech</h2>
-
-      <p>
-        HVAC and Refrigeration Marketplace
-      </p>
-
-    </div>
-
-
-    <div>
-
-      <p>
-        Website: frosttechonline.com
-      </p>
-
-      <p>
-        WhatsApp: +234 803 200 8635
-      </p>
-
-    </div>
-
-  </div>
-
-
-  <div class="copyright">
-
+  </div>  <div class="copyright">
     © 2026 FrostTech HVAC and Refrigeration.
     All rights reserved.
-
   </div>
+</footer><script>
+"use strict";
 
-</footer>
+/*
+ * Use the client created by supabase.js.
+ * Do not create a second Supabase client here.
+ */
+const supabaseClient = window.supabaseClient;
 
+/* Display errors clearly on the page. */
+function showPageError(message) {
+  const status = document.getElementById("product-status");
 
-<script>
+  if (status) {
+    status.textContent = message;
+  }
+}
 
+/* Load and display the selected product. */
 async function loadProduct() {
-
   const productDetails =
     document.getElementById("product-details");
 
   const productStatus =
     document.getElementById("product-status");
 
+  if (!window.supabase || !window.supabase.createClient) {
+    showPageError(
+      "Supabase library failed to load. Please refresh the page and try again."
+    );
+    console.error("Supabase JavaScript library is unavailable.");
+    return;
+  }
+
+  if (!supabaseClient) {
+    showPageError(
+      "Supabase client not found. Please check supabase.js and confirm that window.supabaseClient is configured."
+    );
+    console.error("window.supabaseClient is unavailable.");
+    return;
+  }
 
   const params =
     new URLSearchParams(window.location.search);
@@ -116,19 +90,14 @@ async function loadProduct() {
   const productId =
     params.get("id");
 
-
   if (!productId) {
-
     productStatus.textContent =
-      "No product was selected.";
-
+      "No product was selected. Please return to the Products page and select a product.";
     return;
-
   }
 
-
-  const { data, error } =
-    await supabaseClient
+  try {
+    const { data, error } = await supabaseClient
       .from("products")
       .select(`
         id,
@@ -145,175 +114,155 @@ async function loadProduct() {
       .eq("is_active", true)
       .single();
 
+    if (error) {
+      console.error("Product loading error:", error);
 
-  if (error) {
+      productStatus.textContent =
+        error.code === "PGRST116"
+          ? "This product was not found or is no longer available."
+          : "Unable to load product. Please try again later.";
 
-    console.error(error);
+      return;
+    }
 
-    productStatus.textContent =
-      "Unable to load product.";
+    if (!data) {
+      productStatus.textContent =
+        "This product is currently unavailable.";
+      return;
+    }
 
-    return;
+    productStatus.remove();
 
-  }
+    productDetails.innerHTML = `
+      <div class="product-detail-card">
 
-
-  productStatus.remove();
-
-
-  productDetails.innerHTML = `
-
-    <div class="product-detail-card">
-
-      <div class="product-detail-image">
-
-        ${
-          data.image_url
-            ? `<img
-                 src="${data.image_url}"
-                 alt="${data.name}">`
-            : "❄"
-        }
-
-      </div>
-
-
-      <div class="product-detail-info">
-
-        <p class="small-title">
-          ${data.category || "HVAC PRODUCT"}
-        </p>
-
-
-        <h1>
-          ${data.name}
-        </h1>
-
-
-        <p>
-          <strong>Brand:</strong>
-          ${data.brand || "Not specified"}
-        </p>
-
-
-        <p>
-          <strong>Model:</strong>
-          ${data.model || "Not specified"}
-        </p>
-
-
-        <p>
-          ${data.description || "No description available."}
-        </p>
-
-
-        <h2>
-          ₦${Number(
-            data.selling_price || 0
-          ).toLocaleString()}
-        </h2>
-
-
-        <p>
+        <div class="product-detail-image">
           ${
-            Number(data.stock_quantity || 0) > 0
-              ? "In Stock"
-              : "Currently unavailable"
+            data.image_url
+              ? `<img
+                   src="${escapeHTML(data.image_url)}"
+                   alt="${escapeHTML(data.name || "HVAC product")}">`
+              : "❄"
           }
-        </p>
-
-
-        <div class="hero-buttons">
-
-          <button
-            type="button"
-            class="primary-btn"
-            id="request-quote-button">
-            Request a Quote
-          </button>
-
-
-          <button
-            type="button"
-            class="secondary-btn"
-            id="whatsapp-button">
-            WhatsApp
-          </button>
-
         </div>
 
+        <div class="product-detail-info">
+
+          <p class="small-title">
+            ${escapeHTML(data.category || "HVAC PRODUCT")}
+          </p>
+
+          <h1>${escapeHTML(data.name || "Product")}</h1>
+
+          <p>
+            <strong>Brand:</strong>
+            ${escapeHTML(data.brand || "Not specified")}
+          </p>
+
+          <p>
+            <strong>Model:</strong>
+            ${escapeHTML(data.model || "Not specified")}
+          </p>
+
+          <p>
+            ${escapeHTML(data.description || "No description available.")}
+          </p>
+
+          <h2>
+            ₦${Number(data.selling_price || 0).toLocaleString("en-NG")}
+          </h2>
+
+          <p>
+            ${
+              Number(data.stock_quantity || 0) > 0
+                ? "In Stock"
+                : "Currently unavailable"
+            }
+          </p>
+
+          <div class="hero-buttons">
+
+            <button
+              type="button"
+              class="primary-btn"
+              id="request-quote-button">
+              Request a Quote
+            </button>
+
+            <button
+              type="button"
+              class="secondary-btn"
+              id="whatsapp-button">
+              WhatsApp
+            </button>
+
+          </div>
+
+        </div>
       </div>
+    `;
 
-    </div>
+    document
+      .getElementById("request-quote-button")
+      .addEventListener("click", function () {
+        showQuoteForm(data);
+      });
 
-  `;
+    document
+      .getElementById("whatsapp-button")
+      .addEventListener("click", function () {
+        contactWhatsApp(data.name);
+      });
 
+  } catch (error) {
+    console.error("Unexpected product loading error:", error);
 
-  document
-    .getElementById("request-quote-button")
-    .addEventListener("click", function() {
-
-      showQuoteForm(data);
-
-    });
-
-
-  document
-    .getElementById("whatsapp-button")
-    .addEventListener("click", function() {
-
-      contactWhatsApp(data.name);
-
-    });
-
+    productStatus.textContent =
+      "An unexpected error occurred while loading this product. Please refresh and try again.";
+  }
 }
 
+/* Escape text before displaying database values in HTML. */
+function escapeHTML(value) {
+  return String(value).replace(/[&<>"']/g, function (character) {
+    const replacements = {
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    };
 
+    return replacements[character];
+  });
+}
+
+/* Display the customer quote request form. */
 function showQuoteForm(product) {
-
   const productDetails =
     document.getElementById("product-details");
-
 
   const existingForm =
     document.getElementById("quote-form-box");
 
-
   if (existingForm) {
-
-    existingForm.scrollIntoView({
-      behavior: "smooth"
-    });
-
+    existingForm.scrollIntoView({ behavior: "smooth" });
     return;
-
   }
-
 
   const formBox =
     document.createElement("div");
 
-
-  formBox.id =
-    "quote-form-box";
-
-
-  formBox.className =
-    "quote-form-box";
-
+  formBox.id = "quote-form-box";
+  formBox.className = "quote-form-box";
 
   formBox.innerHTML = `
-
-    <h2>
-      Request a Quote
-    </h2>
-
+    <h2>Request a Quote</h2>
 
     <p>
       Request a quotation for
-      <strong>${product.name}</strong>
+      <strong>${escapeHTML(product.name)}</strong>
     </p>
-
 
     <form id="quote-form">
 
@@ -321,17 +270,15 @@ function showQuoteForm(product) {
         type="text"
         id="customer-name"
         placeholder="Your full name"
-        required
-      >
-
+        autocomplete="name"
+        required>
 
       <input
         type="tel"
         id="customer-phone"
         placeholder="Phone / WhatsApp number"
-        required
-      >
-
+        autocomplete="tel"
+        required>
 
       <input
         type="number"
@@ -339,228 +286,162 @@ function showQuoteForm(product) {
         placeholder="Quantity"
         min="1"
         value="1"
-        required
-      >
-
+        required>
 
       <input
         type="number"
         id="budget"
         placeholder="Your budget (₦)"
-        min="0"
-      >
-
+        min="0">
 
       <input
         type="text"
         id="delivery-address"
         placeholder="Delivery address"
-        required
-      >
-
+        autocomplete="street-address"
+        required>
 
       <textarea
         id="description"
         placeholder="Additional requirements"
-        rows="5">
-      </textarea>
+        rows="5"></textarea>  <button
+    type="submit"
+    class="primary-btn">
+    Submit Quote Request
+  </button>
 
+</form>
 
-      <button
-        type="submit"
-        class="primary-btn">
+<p id="quote-message" role="status" aria-live="polite"></p>
 
-        Submit Quote Request
+`;
 
-      </button>
+productDetails.appendChild(formBox);
 
-    </form>
+document
+.getElementById("quote-form")
+.addEventListener("submit", async function (event) {
+event.preventDefault();
+await submitQuoteRequest(product);
+});
 
+formBox.scrollIntoView({ behavior: "smooth" });
+}
 
-    <p id="quote-message"></p>
+/* Submit the quote request to Supabase. */
+async function submitQuoteRequest(product) {
+const message =
+document.getElementById("quote-message");
 
-  `;
+const form =
+document.getElementById("quote-form");
 
+const submitButton =
+form.querySelector('button[type="submit"]');
 
-  productDetails.appendChild(formBox);
+if (!supabaseClient) {
+message.textContent =
+"Unable to submit request because the database connection is unavailable.";
+return;
+}
 
+const name =
+document.getElementById("customer-name").value.trim();
 
-  document
-    .getElementById("quote-form")
-    .addEventListener("submit", function(event) {
+const phone =
+document.getElementById("customer-phone").value.trim();
 
-      event.preventDefault();
+const quantity =
+Number(document.getElementById("quantity").value);
 
-      submitQuoteRequest(product);
+const budgetValue =
+document.getElementById("budget").value;
 
-    });
+const budget =
+budgetValue ? Number(budgetValue) : null;
 
+const deliveryAddress =
+document.getElementById("delivery-address").value.trim();
 
-  formBox.scrollIntoView({
-    behavior: "smooth"
+const description =
+document.getElementById("description").value.trim();
+
+if (!name || !phone || !deliveryAddress || quantity < 1) {
+message.textContent =
+"Please complete all required fields and enter a valid quantity.";
+return;
+}
+
+message.textContent = "Submitting your request...";
+submitButton.disabled = true;
+
+const requestNumber =
+"FT-" + Date.now();
+
+try {
+const { error } = await supabaseClient
+.from("quote_requests")
+.insert({
+request_number: requestNumber,
+
+    title:
+      "Quote Request - " + product.name,
+
+    description:
+      "Customer: " + name +
+      "\nPhone: " + phone +
+      "\nProduct: " + product.name +
+      "\nRequirements: " + description,
+
+    product_id: product.id,
+    quantity: quantity,
+    preferred_brand: product.brand || null,
+    budget: budget,
+    delivery_address: deliveryAddress,
+    status: "pending"
   });
 
-}
-
-
-async function submitQuoteRequest(product) {
-
-  const message =
-    document.getElementById("quote-message");
-
-
-  const name =
-    document
-      .getElementById("customer-name")
-      .value
-      .trim();
-
-
-  const phone =
-    document
-      .getElementById("customer-phone")
-      .value
-      .trim();
-
-
-  const quantity =
-    Number(
-      document
-        .getElementById("quantity")
-        .value
-    );
-
-
-  const budgetValue =
-    document
-      .getElementById("budget")
-      .value;
-
-
-  const budget =
-    budgetValue
-      ? Number(budgetValue)
-      : null;
-
-
-  const deliveryAddress =
-    document
-      .getElementById("delivery-address")
-      .value
-      .trim();
-
-
-  const description =
-    document
-      .getElementById("description")
-      .value
-      .trim();
-
+if (error) {
+  console.error("Quote request submission error:", error);
 
   message.textContent =
-    "Submitting your request...";
+    "Unable to submit request: " + error.message;
 
-
-  const requestNumber =
-    "FT-" + Date.now();
-
-
-  const { error } =
-    await supabaseClient
-      .from("quote_requests")
-      .insert({
-
-        request_number:
-          requestNumber,
-
-        title:
-          "Quote Request - " +
-          product.name,
-
-        description:
-          "Customer: " +
-          name +
-          "\nPhone: " +
-          phone +
-          "\nProduct: " +
-          product.name +
-          "\nRequirements: " +
-          description,
-
-        product_id:
-          product.id,
-
-        quantity:
-          quantity,
-
-        preferred_brand:
-          product.brand || null,
-
-        budget:
-          budget,
-
-        delivery_address:
-          deliveryAddress,
-
-        status:
-          "pending"
-
-      });
-
-
-  if (error) {
-
-    console.error(
-      "Quote request error:",
-      error
-    );
-
-
-    message.textContent =
-      "Unable to submit request: " +
-      error.message;
-
-
-    return;
-
-  }
-
-
-  message.textContent =
-    "Quote request submitted successfully! " +
-    "Reference: " +
-    requestNumber;
-
-
-  document
-    .getElementById("quote-form")
-    .reset();
-
+  return;
 }
 
+message.textContent =
+  "Quote request submitted successfully! Reference number: " +
+  requestNumber +
+  ". Please keep this number for your records.";
 
+form.reset();
+
+} catch (error) {
+console.error("Unexpected quote submission error:", error);
+
+message.textContent =
+  "A connection error occurred. Please try again.";
+
+} finally {
+submitButton.disabled = false;
+}
+}
+
+/* Open WhatsApp with the selected product name. */
 function contactWhatsApp(productName) {
+const message =
+"Hello FrostTech, I am interested in: " + productName;
 
-  const message =
-    "Hello FrostTech, I am interested in: " +
-    productName;
+const url =
+"https://wa.me/2348032008635?text=" +
+encodeURIComponent(message);
 
-
-  const url =
-    "https://wa.me/2348032008635?text=" +
-    encodeURIComponent(message);
-
-
-  window.open(
-    url,
-    "_blank"
-  );
-
+window.open(url, "_blank", "noopener,noreferrer");
 }
 
-
+/* Start the product page. */
 loadProduct();
-
 </script>
 
 </body>
