@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Product Catalogue | FrostTech HVAC and Refrigeration</title>
+
+  <meta name="description"
+        content="Browse air conditioners, refrigeration parts, HVAC accessories and services at FrostTech.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    .catalogue-page {
+      max-width: 1200px;
+      margin: auto;
+      padding: 25px 16px 50px;
+    }
+
+    .catalogue-heading {
+      text-align: center;
+      margin: 25px 0;
+    }
+
+    .catalogue-heading h1 {
+      margin-bottom: 10px;
+    }
+
+    .catalogue-tools {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 12px;
+      margin: 25px 0;
+    }
+
+    .catalogue-tools input,
+    .catalogue-tools select {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      font-size: 16px;
+      background: white;
+      box-sizing: border-box;
+    }
+
+    .catalogue-status {
+      text-align: center;
+      padding: 25px 10px;
+    }
+
+    .catalogue-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .catalogue-card {
+      border: 1px solid #e1e5e9;
+      border-radius: 12px;
+      overflow: hidden;
+      background: white;
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.06);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .catalogue-image {
+      width: 100%;
+      height: 220px;
+      background: #f2f6fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      font-size: 45px;
+      color: #1473a5;
+    }
+
+    .catalogue-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .catalogue-info {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+    }
+
+    .catalogue-info h2 {
+      font-size: 18px;
+      margin: 0 0 10px;
+      overflow-wrap: anywhere;
+    }
+
+    .catalogue-category {
+      font-size: 13px;
+      color: #1473a5;
+      margin-bottom: 8px;
+    }
+
+    .catalogue-details {
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 12px;
+    }
+
+    .catalogue-price {
+      font-size: 19px;
+      font-weight: bold;
+      margin: 8px 0 16px;
+    }
+
+    .catalogue-actions {
+      display: grid;
+      gap: 9px;
+      margin-top: auto;
+    }
+
+    .catalogue-actions a {
+      display: block;
+      text-align: center;
+      text-decoration: none;
+      padding: 12px;
+      border-radius: 7px;
+      font-weight: bold;
+    }
+
+    .view-product-btn {
+      background: #075985;
+      color: white;
+    }
+
+    .request-quote-btn {
+      background: #e8f3fa;
+      color: #075985;
+      border: 1px solid #075985;
+    }
+
+    .catalogue-count {
+      margin-bottom: 18px;
+      color: #555;
+    }
+
+    .catalogue-empty {
+      text-align: center;
+      padding: 35px 10px;
+      grid-column: 1 / -1;
+    }
+
+    @media (max-width: 800px) {
+      .catalogue-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .catalogue-image {
+        height: 180px;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .catalogue-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .catalogue-tools {
+        grid-template-columns: 1fr;
+      }
+
+      .catalogue-image {
+        height: 230px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="container nav">
+
+    <div class="logo">
+      <span>❄</span> FrostTech
+    </div>
+
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="catalog.html">Catalogue</a>
+      <a href="quote.html">Request Quote</a>
+      <a href="admin.html">Admin</a>
+    </nav>
+
+  </div>
+</header>
+
+<main class="catalogue-page">
+
+  <section class="catalogue-heading">
+    <p class="small-title">FROSTTECH HVAC & REFRIGERATION</p>
+
+    <h1>Our Product Catalogue</h1>
+
+    <p>
+      Browse air conditioners, refrigeration parts,
+      accessories and other HVAC products.
+    </p>
+  </section>
+
+  <section class="catalogue-tools">
+
+    <input
+      type="search"
+      id="catalogue-search"
+      placeholder="Search products, brands or models..."
+      aria-label="Search products">
+
+    <select
+      id="catalogue-category"
+      aria-label="Filter by category">
+
+      <option value="">All Categories</option>
+
+    </select>
+
+  </section>
+
+  <p id="catalogue-count" class="catalogue-count">
+    Loading products...
+  </p>
+
+  <section
+    id="catalogue-grid"
+    class="catalogue-grid"
+    aria-live="polite">
+
+    <p class="catalogue-status">
+      Loading FrostTech products...
+    </p>
+
+  </section>
+
+</main>
+
+<footer>
+  <div class="container footer-content">
+
+    <div>
+      <h2>❄ FrostTech</h2>
+      <p>HVAC and Refrigeration Marketplace</p>
+    </div>
+
+    <div>
+      <p>Website: frosttechonline.com</p>
+      <p>WhatsApp: +234 803 200 8635</p>
+    </div>
+
+  </div>
+
+  <div class="copyright">
+    © 2026 FrostTech HVAC and Refrigeration.
+    All rights reserved.
+  </div>
+</footer>
+
+<script>
+  const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+  const SUPABASE_PUBLISHABLE_KEY =
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkc2NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
+  const supabaseClient = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+  );
+
+  let allProducts = [];
+
+  const grid = document.getElementById("catalogue-grid");
+  const searchInput = document.getElementById("catalogue-search");
+  const categorySelect = document.getElementById("catalogue-category");
+  const countDisplay = document.getElementById("catalogue-count");
+
+  async function loadCatalogue() {
+    countDisplay.textContent = "Loading products...";
+
+    try {
+      const { data, error } = await supabaseClient
+        .from("products")
+        .select(
+          "id, name, category, brand, model, description, selling_price, image_url"
+        )
+        .eq("is_active", true)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Catalogue loading error:", error);
+
+        countDisplay.textContent = "Unable to load products.";
+
+        grid.innerHTML = `
+          <div class="catalogue-empty">
+            <h2>Products could not be loaded</h2>
+            <p>Please refresh the page and try again.</p>
+          </div>
+        `;
+
+        return;
+      }
+
+      allProducts = data || [];
+
+      loadCategories();
+      displayCatalogue(allProducts);
+
+    } catch (error) {
+      console.error("Unexpected catalogue error:", error);
+
+      countDisplay.textContent = "Something went wrong.";
+
+      grid.innerHTML = `
+        <div class="catalogue-empty">
+          <p>Please refresh the page and try again.</p>
+        </div>
+      `;
+    }
+  }
+
+  function loadCategories() {
+    const categories = [
+      ...new Set(
+        allProducts
+          .map(product => product.category)
+          .filter(Boolean)
+      )
+    ].sort();
+
+    categorySelect.innerHTML =
+      '<option value="">All Categories</option>';
+
+    categories.forEach(category => {
+      const option = document.createElement("option");
+
+      option.value = category;
+      option.textContent = category;
+
+      categorySelect.appendChild(option);
+    });
+  }
+
+  function displayCatalogue(products) {
+    grid.innerHTML = "";
+
+    countDisplay.textContent =
+      products.length + (
+        products.length === 1
+          ? " product found"
+          : " products found"
+      );
+
+    if (products.length === 0) {
+      grid.innerHTML = `
+        <div class="catalogue-empty">
+          <h2>No products found</h2>
+          <p>Try another search or select a different category.</p>
+        </div>
+      `;
+
+      return;
+    }
+
+    products.forEach(product => {
+      const card = document.createElement("article");
+      card.className = "catalogue-card";
+
+      const imageContainer = document.createElement("div");
+      imageContainer.className = "catalogue-image";
+
+      if (product.image_url) {
+        const image = document.createElement("img");
+
+        image.src = product.image_url;
+        image.alt = product.name || "FrostTech product";
+        image.loading = "lazy";
+
+        image.onerror = function() {
+          image.remove();
+          imageContainer.textContent = "❄";
+        };
+
+        imageContainer.appendChild(image);
+      } else {
+        imageContainer.textContent = "❄";
+      }
+
+      const info = document.createElement("div");
+      info.className = "catalogue-info";
+
+      const category = document.createElement("div");
+      category.className = "catalogue-category";
+      category.textContent = product.category || "HVAC Product";
+
+      const name = document.createElement("h2");
+      name.textContent = product.name || "Unnamed Product";
+
+      const details = document.createElement("p");
+      details.className = "catalogue-details";
+
+      details.textContent = [
+        product.brand,
+        product.model
+      ].filter(Boolean).join(" • ");
+
+      const price = document.createElement("div");
+      price.className = "catalogue-price";
+
+      const amount = Number(product.selling_price);
+
+      price.textContent =
+        product.selling_price !== null &&
+        product.selling_price !== "" &&
+        Number.isFinite(amount) &&
+        amount > 0
+          ? "₦" + amount.toLocaleString("en-NG", {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            })
+          : "Price on request";
+
+      const actions = document.createElement("div");
+      actions.className = "catalogue-actions";
+
+      const viewButton = document.createElement("a");
+      viewButton.className = "view-product-btn";
+      viewButton.href =
+        "product.html?id=" + encodeURIComponent(product.id);
+      viewButton.textContent = "View Product";
+
+      const quoteButton = document.createElement("a");
+      quoteButton.className = "request-quote-btn";
+      quoteButton.href = "quote.html";
+      quoteButton.textContent = "Request a Quote";
+
+      actions.appendChild(viewButton);
+      actions.appendChild(quoteButton);
+
+      info.appendChild(category);
+      info.appendChild(name);
+
+      if (details.textContent) {
+        info.appendChild(details);
+      }
+
+      info.appendChild(price);
+      info.appendChild(actions);
+
+      card.appendChild(imageContainer);
+      card.appendChild(info);
+
+      grid.appendChild(card);
+    });
+  }
+
+  function filterCatalogue() {
+    const term = searchInput.value.trim().toLowerCase();
+    const selectedCategory = categorySelect.value;
+
+    const filtered = allProducts.filter(product => {
+      const searchableText = [
+        product.name,
+        product.category,
+        product.brand,
+        product.model,
+        product.description
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      const matchesSearch = searchableText.includes(term);
+
+      const matchesCategory =
+        !selectedCategory ||
+        product.category === selectedCategory;
+
+      return matchesSearch && matchesCategory;
+    });
+
+    displayCatalogue(filtered);
+  }
+
+  searchInput.addEventListener("input", filterCatalogue);
+
+  categorySelect.addEventListener("change", filterCatalogue);
+
+  loadCatalogue();
+</script>
+
+</body>
+</html>
