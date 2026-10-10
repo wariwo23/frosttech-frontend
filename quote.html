@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .quote-container {
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 24px;
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .quote-container h1 {
+      text-align: center;
+      margin-bottom: 10px;
+    }
+
+    .quote-container p {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+
+    .quote-form label {
+      display: block;
+      margin-top: 15px;
+      font-weight: bold;
+    }
+
+    .quote-form input,
+    .quote-form select,
+    .quote-form textarea {
+      width: 100%;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #cccccc;
+      border-radius: 5px;
+      box-sizing: border-box;
+      font-size: 16px;
+    }
+
+    .quote-form button {
+      width: 100%;
+      margin-top: 24px;
+      padding: 14px;
+      border: none;
+      border-radius: 5px;
+      background: #075985;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .quote-form button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #formMessage {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 5px;
+      display: none;
+      overflow-wrap: anywhere;
+    }
+
+    #formMessage.success {
+      display: block;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    #formMessage.error {
+      display: block;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <h2>FrostTech HVAC and Refrigeration</h2>
+    <nav>
+      <a href="index.html">Home</a> |
+      <a href="product.html">Products</a> |
+      <a href="quote.html">Request a Quote</a>
+    </nav>
+  </header>
+
+  <main class="quote-container">
+    <h1>Request a Quote</h1>
+
+    <p>
+      Tell us what HVAC or refrigeration product you need.
+      Our team will review your request.
+    </p>
+
+    <form id="quoteForm" class="quote-form">
+
+      <label for="customerName">Full Name *</label>
+      <input
+        type="text"
+        id="customerName"
+        required
+        maxlength="150"
+        autocomplete="name"
+      >
+
+      <label for="customerEmail">Email Address</label>
+      <input
+        type="email"
+        id="customerEmail"
+        maxlength="254"
+        autocomplete="email"
+      >
+
+      <label for="customerPhone">Phone / WhatsApp *</label>
+      <input
+        type="tel"
+        id="customerPhone"
+        required
+        maxlength="30"
+        autocomplete="tel"
+      >
+
+      <label for="productName">Product Needed *</label>
+      <input
+        type="text"
+        id="productName"
+        required
+        maxlength="200"
+        placeholder="e.g. LG 1.5HP Split Air Conditioner"
+      >
+
+      <label for="quantity">Quantity *</label>
+      <input
+        type="number"
+        id="quantity"
+        required
+        min="1"
+        max="10000"
+        step="1"
+        value="1"
+      >
+
+      <label for="preferredBrand">Preferred Brand</label>
+      <input
+        type="text"
+        id="preferredBrand"
+        maxlength="100"
+        placeholder="e.g. LG, Samsung, Daikin"
+      >
+
+      <label for="deliveryAddress">Delivery Address *</label>
+      <textarea
+        id="deliveryAddress"
+        required
+        maxlength="1000"
+        rows="3"
+        placeholder="Enter your delivery address"
+      ></textarea>
+
+      <label for="additionalDetails">Additional Information</label>
+      <textarea
+        id="additionalDetails"
+        maxlength="2000"
+        rows="4"
+        placeholder="Describe any specifications or requirements"
+      ></textarea>
+
+      <button type="submit" id="submitButton">
+        Submit Quote Request
+      </button>
+
+      <div id="formMessage" role="status" aria-live="polite"></div>
+
+    </form>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    const quoteForm = document.getElementById("quoteForm");
+    const submitButton = document.getElementById("submitButton");
+    const formMessage = document.getElementById("formMessage");
+
+    function showMessage(message, type) {
+      formMessage.textContent = message;
+      formMessage.className = type;
+    }
+
+    function getSupabaseClient() {
+      // Reuse the existing client created in supabase.js.
+      if (window.supabaseClient) {
+        return window.supabaseClient;
+      }
+
+      if (window.supabase && typeof window.supabase.createClient === "function") {
+        const url = window.SUPABASE_URL;
+        const key = window.SUPABASE_ANON_KEY ||
+                    window.SUPABASE_PUBLISHABLE_KEY;
+
+        if (url && key) {
+          window.supabaseClient = window.supabase.createClient(url, key);
+          return window.supabaseClient;
+        }
+      }
+
+      throw new Error(
+        "Supabase configuration was not found. Check supabase.js."
+      );
+    }
+
+    quoteForm.addEventListener("submit", async function (event) {
+      event.preventDefault();
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+      formMessage.className = "";
+      formMessage.style.display = "none";
+
+      try {
+        const client = getSupabaseClient();
+
+        const customerName =
+          document.getElementById("customerName").value.trim();
+
+        const customerEmail =
+          document.getElementById("customerEmail").value.trim();
+
+        const customerPhone =
+          document.getElementById("customerPhone").value.trim();
+
+        const productName =
+          document.getElementById("productName").value.trim();
+
+        const quantity = Number(
+          document.getElementById("quantity").value
+        );
+
+        const preferredBrand =
+          document.getElementById("preferredBrand").value.trim();
+
+        const deliveryAddress =
+          document.getElementById("deliveryAddress").value.trim();
+
+        const additionalDetails =
+          document.getElementById("additionalDetails").value.trim();
+
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+          throw new Error("Enter a valid quantity.");
+        }
+
+        /*
+          IMPORTANT:
+          The destination table is quote_requests.
+          The column names below must match your actual database schema.
+        */
+        const requestData = {
+          customer_name: customerName,
+          customer_email: customerEmail || null,
+          customer_phone: customerPhone,
+          product_name: productName,
+          quantity: quantity,
+          preferred_brand: preferredBrand || null,
+          delivery_address: deliveryAddress,
+          description: additionalDetails || null,
+          status: "pending"
+        };
+
+        const { data, error } = await client
+          .from("quote_requests")
+          .insert(requestData)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("Supabase quote request error:", error);
+          throw new Error(error.message);
+        }
+
+        showMessage(
+          "Your quote request was submitted successfully! Our team will review it.",
+          "success"
+        );
+
+        quoteForm.reset();
+
+        document.getElementById("quantity").value = "1";
+
+        console.log("Quote request created:", data);
+
+      } catch (error) {
+        console.error("Quote submission failed:", error);
+
+        showMessage(
+          "Unable to submit request: " + error.message,
+          "error"
+        );
+
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Quote Request";
+      }
+    });
+  </script>
+
+</body>
+</html>
