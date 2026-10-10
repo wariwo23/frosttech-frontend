@@ -319,11 +319,25 @@ function showQuoteForm(product) {
 productDetails.appendChild(formBox);
 
 document
-.getElementById("quote-form")
-.addEventListener("submit", async function (event) {
-event.preventDefault();
-await submitQuoteRequest(product);
-});
+  .getElementById("quote-form")
+  .addEventListener("submit", async function (event) {
+    event.preventDefault();
+
+    const message = document.getElementById("quote-message");
+
+    message.textContent = "Button works. Processing your request...";
+
+    console.log("Quote form submitted.");
+
+    try {
+      await submitQuoteRequest(product);
+    } catch (error) {
+      console.error("Quote submission failed:", error);
+
+      message.textContent =
+        "Error: " + (error.message || "Please try again.");
+    }
+  });
 
 formBox.scrollIntoView({ behavior: "smooth" });
 }
