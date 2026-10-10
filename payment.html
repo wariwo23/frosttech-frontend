@@ -3,135 +3,356 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>FrostTech Secure Payment</title>
+
   <style>
     body {
       font-family: Arial, sans-serif;
-      max-width: 500px;
-      margin: 40px auto;
+      background: #f3f6fa;
+      margin: 0;
       padding: 20px;
-      background: #f4f7fb;
-      color: #183153;
+      color: #172033;
     }
-    .card {
+
+    .container {
+      max-width: 520px;
+      margin: 30px auto;
       background: white;
-      padding: 25px;
+      padding: 24px;
       border-radius: 12px;
-      box-shadow: 0 3px 12px #0001;
+      box-shadow: 0 4px 18px rgba(0,0,0,0.08);
     }
-    h1 { color: #0755a5; }
-    .amount {
-      font-size: 28px;
+
+    h1 {
+      margin-top: 0;
+      color: #075985;
+      font-size: 25px;
+    }
+
+    p {
+      line-height: 1.6;
+    }
+
+    label {
+      display: block;
+      margin-top: 18px;
       font-weight: bold;
-      margin: 20px 0;
     }
+
+    input {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 12px;
+      margin-top: 8px;
+      border: 1px solid #ccd5e0;
+      border-radius: 7px;
+      font-size: 15px;
+    }
+
     button {
       width: 100%;
       padding: 14px;
-      background: #0755a5;
+      margin-top: 18px;
+      border: none;
+      border-radius: 7px;
+      background: #087443;
       color: white;
-      border: 0;
-      border-radius: 6px;
       font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
     }
-    button:disabled { opacity: 0.6; }
-    #message { overflow-wrap: anywhere; }
+
+    button:disabled {
+      background: #8795a5;
+      cursor: not-allowed;
+    }
+
+    #message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 7px;
+      overflow-wrap: anywhere;
+      white-space: pre-wrap;
+    }
+
+    .info {
+      background: #e8f3ff;
+    }
+
+    .success {
+      background: #e3f8e9;
+      color: #14532d;
+    }
+
+    .error {
+      background: #fee8e7;
+      color: #991b1b;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .small {
+      color: #64748b;
+      font-size: 13px;
+    }
   </style>
 </head>
+
 <body>
-  <div class="card">
-    <h1>FrostTech HVAC and Refrigeration</h1>
-    <h2>Order Payment</h2>
+  <main class="container">
+    <h1>FrostTech Secure Payment</h1>
 
-    <p>Order number: FT-ORD-cc57bf9c9f0c</p>
-    <p>Order total:</p>
-    <div class="amount">₦125,000.00</div>
+    <p>
+      Use this page to pay for an existing FrostTech order
+      through Paystack.
+    </p>
 
-    <p>Continue to Paystack to complete your payment securely.</p>
+    <div id="message" class="info" role="status" aria-live="polite">
+      Checking your payment session...
+    </div>
 
-    <button id="payButton" type="button" onclick="startPayment()">
-      Continue to Payment
-    </button>
+    <form id="paymentForm" class="hidden">
+      <label for="orderId">FrostTech Order ID</label>
 
-    <p id="message" role="status"></p>
-  </div>
+      <input
+        id="orderId"
+        type="text"
+        placeholder="Enter your order UUID"
+        autocomplete="off"
+        required
+      >
 
-  <script type="module">
-    import { createClient } from
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+      <button id="payButton" type="submit">
+        Continue to Paystack
+      </button>
+    </form>
 
-    const SUPABASE_URL =
-      "https://nftxptjpgidcsgtaltjn.supabase.co";
+    <p class="small">
+      Payments are verified by FrostTech's server.
+      Do not share your login credentials or payment details.
+    </p>
+  </main>
 
-    // Paste the public/publishable key from your supabase.js file.
-    // Never use the service-role key here.
-    const SUPABASE_PUBLIC_KEY = "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+  <!-- Load the Supabase JavaScript library first. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLIC_KEY
-    );
+  <!-- Load your existing FrostTech Supabase configuration. -->
+  <script src="supabase.js"></script>
 
-    const ORDER_ID = "4ebdc043-9878-4147-bec5-edcfc4207ead";
+  <script>
+    const FUNCTION_BASE =
+      "https://nftxptjpgidcsgtaltjn.supabase.co/functions/v1";
 
-    window.startPayment = async function () {
-      const button = document.getElementById("payButton");
-      const message = document.getElementById("message");
+    const PUBLISHABLE_KEY =
+      "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-      button.disabled = true;
-      message.textContent = "Preparing your payment...";
+    const messageBox = document.getElementById("message");
+    const paymentForm = document.getElementById("paymentForm");
+    const orderIdInput = document.getElementById("orderId");
+    const payButton = document.getElementById("payButton");
+
+    const supabaseClient = window.supabaseClient;
+
+    function showMessage(message, type = "info") {
+      messageBox.textContent = message;
+      messageBox.className = type;
+    }
+
+    function validUUID(value) {
+      return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        .test(value);
+    }
+
+    async function getAccessToken() {
+      const {
+        data: { session },
+        error
+      } = await supabaseClient.auth.getSession();
+
+      if (error) {
+        throw new Error("Unable to check your login session.");
+      }
+
+      if (!session || !session.access_token) {
+        throw new Error(
+          "Please sign in to your FrostTech customer account before continuing."
+        );
+      }
+
+      return session.access_token;
+    }
+
+    async function callPaymentFunction(functionName, payload) {
+      const token = await getAccessToken();
+
+      const response = await fetch(
+        `${FUNCTION_BASE}/${functionName}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": PUBLISHABLE_KEY,
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify(payload)
+        }
+      );
+
+      const result = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        throw new Error(
+          result.error || "The payment service returned an error."
+        );
+      }
+
+      return result;
+    }
+
+    async function verifyReturnedPayment() {
+      const params = new URLSearchParams(window.location.search);
+
+      const reference =
+        params.get("reference") ||
+        params.get("trxref");
+
+      if (!reference) {
+        return false;
+      }
+
+      paymentForm.classList.add("hidden");
+
+      showMessage(
+        "Checking your transaction with Paystack. Please wait..."
+      );
 
       try {
-        const { data: sessionData, error: sessionError } =
-          await supabase.auth.getSession();
-
-        if (sessionError) throw sessionError;
-
-        const session = sessionData.session;
-
-        if (!session) {
-          message.textContent =
-            "Please sign in to your FrostTech account before paying.";
-          button.disabled = false;
-          return;
-        }
-
-        const response = await fetch(
-          SUPABASE_URL +
-          "/functions/v1/initialize-paystack-payment",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "apikey": SUPABASE_PUBLIC_KEY,
-              "Authorization": "Bearer " + session.access_token
-            },
-            body: JSON.stringify({
-              order_id: ORDER_ID
-            })
-          }
+        const result = await callPaymentFunction(
+          "verify-paystack-payment",
+          { reference }
         );
 
-        const result = await response.json();
+        if (result.success) {
+          showMessage(
+            "Payment verified successfully.\n\n" +
+            "Payment ID: " + (result.payment_id || "Recorded") +
+            "\nOrder ID: " + (result.order_id || "Not provided") +
+            "\nStatus: " + (result.payment_status || "Already verified"),
+            "success"
+          );
 
-        if (!response.ok || !result.success) {
+          // Remove the transaction reference from the address bar.
+          // The payment reference remains in the database.
+          window.history.replaceState(
+            {},
+            document.title,
+            window.location.pathname
+          );
+
+          return true;
+        }
+
+        throw new Error(
+          result.message || "The payment has not been confirmed."
+        );
+      } catch (error) {
+        showMessage(
+          "Payment verification could not be completed.\n\n" +
+          error.message +
+          "\n\nDo not pay again. Please contact FrostTech to check the transaction.",
+          "error"
+        );
+
+        return true;
+      }
+    }
+
+    paymentForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
+
+      const orderId = orderIdInput.value.trim();
+
+      if (!validUUID(orderId)) {
+        showMessage(
+          "Enter a valid FrostTech order ID.",
+          "error"
+        );
+        return;
+      }
+
+      payButton.disabled = true;
+      payButton.textContent = "Connecting to Paystack...";
+
+      try {
+        showMessage("Preparing your secure payment...");
+
+        const result = await callPaymentFunction(
+          "initialize-paystack-payment",
+          { order_id: orderId }
+        );
+
+        if (!result.success || !result.authorization_url) {
           throw new Error(
-            result.message || "Payment initialization failed."
+            result.error || "Paystack checkout could not be started."
           );
         }
 
-        if (!result.authorization_url) {
-          throw new Error("Paystack did not return a payment link.");
+        showMessage("Opening Paystack secure checkout...");
+
+        window.location.assign(result.authorization_url);
+      } catch (error) {
+        showMessage(
+          error.message || "Unable to initialize payment.",
+          "error"
+        );
+
+        payButton.disabled = false;
+        payButton.textContent = "Continue to Paystack";
+      }
+    });
+
+    async function initializePage() {
+      if (!supabaseClient) {
+        showMessage(
+          "Supabase client not found. Check supabase.js.",
+          "error"
+        );
+        return;
+      }
+
+      try {
+        await getAccessToken();
+
+        const params = new URLSearchParams(window.location.search);
+        const orderId = params.get("order_id");
+
+        if (orderId && validUUID(orderId)) {
+          orderIdInput.value = orderId;
         }
 
-        message.textContent = "Opening Paystack...";
-        window.location.href = result.authorization_url;
+        const returnedFromPaystack =
+          await verifyReturnedPayment();
 
+        if (!returnedFromPaystack) {
+          showMessage(
+            "You are signed in. Enter your existing order ID to continue."
+          );
+
+          paymentForm.classList.remove("hidden");
+        }
       } catch (error) {
-        message.textContent = "Payment could not start: " + error.message;
-        button.disabled = false;
+        showMessage(
+          error.message ||
+          "Please sign in to your FrostTech customer account.",
+          "error"
+        );
       }
-    };
+    }
+
+    initializePage();
   </script>
 </body>
 </html>
