@@ -1,632 +1,546 @@
-<!DOCTYPE html>
-<html lang="en">
-
+<!DOCTYPE html><html lang="en">
 <head>
-
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+  <meta name="description" content="Request a quotation for HVAC products, refrigeration parts, accessories, and services from FrostTech.">  <link rel="stylesheet" href="style.css">  <!-- Inter font -->  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">  <!-- Supabase -->  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script>  <style>
+    * {
+      box-sizing: border-box;
+    }
 
-  <meta name="viewport"
-        content="width=device-width, initial-scale=1.0">
+    html {
+      scroll-behavior: smooth;
+    }
 
-  <title>Request a Quote | FrostTech</title>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Inter', Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
+      line-height: 1.6;
+    }
 
-  <link rel="stylesheet" href="style.css">
+    .topbar {
+      background: #ffffff;
+      border-bottom: 1px solid #e2e8f0;
+    }
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    .topbar .container {
+      width: 100%;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 14px 20px;
+    }
 
-  <script src="supabase.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  
-<style>
-/* FrostTech Request Quote - Professional Layout */
+    .nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
 
-* {
-    box-sizing: border-box;
-}
+    .logo {
+      color: #075985;
+      font-size: 21px;
+      font-weight: 800;
+    }
 
-body {
-    margin: 0;
-    padding: 0;
-    font-family: Arial, Helvetica, sans-serif;
-    background: #f1f5f9;
-    color: #1e293b;
-    line-height: 1.6;
-}
+    .logo span {
+      color: #0284c7;
+    }
 
-main {
-    width: 100%;
-    max-width: 760px;
-    margin: 0 auto;
-    padding: 28px 18px;
-}
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
 
-/* Form heading */
-h1 {
-    color: #075985;
-    font-size: 28px;
-    line-height: 1.3;
-    margin: 0 0 10px;
-}
+    nav a {
+      color: #334155;
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+    }
 
-h2 {
-    color: #075985;
-}
+    nav a:hover {
+      color: #0284c7;
+    }
 
-/* Form container */
-form {
-    width: 100%;
-    background: #ffffff;
-    padding: 28px;
-    border-radius: 16px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-}
-
-/* Form labels */
-form label {
-    display: block;
-    margin: 18px 0 7px;
-    font-size: 14px;
-    font-weight: 700;
-    color: #334155;
-}
-
-/* Input fields */
-form input,
-form select,
-form textarea {
-    display: block;
-    width: 100%;
-    max-width: 100%;
-    min-height: 48px;
-    padding: 12px 14px;
-    margin: 0 0 6px;
-    border: 1px solid #cbd5e1;
-    border-radius: 9px;
-    background: #ffffff;
-    color: #1e293b;
-    font-family: inherit;
-    font-size: 16px;
-    line-height: 1.5;
-    outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-/* Text area */
-form textarea {
-    min-height: 120px;
-    resize: vertical;
-}
-
-/* Highlight the active field */
-form input:focus,
-form select:focus,
-form textarea:focus {
-    border-color: #0284c7;
-    box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
-}
-
-/* Submit button */
-form button[type="submit"],
-form input[type="submit"] {
-    width: 100%;
-    min-height: 52px;
-    margin-top: 24px;
-    padding: 14px 18px;
-    border: none;
-    border-radius: 10px;
-    background: #075985;
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-}
-
-form button[type="submit"]:hover,
-form input[type="submit"]:hover {
-    background: #0369a1;
-}
-
-/* Keep the form comfortable on mobile */
-@media (max-width: 600px) {
     main {
-        padding: 20px 14px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 32px 18px 44px;
+    }
+
+    .section-heading {
+      margin-bottom: 24px;
+    }
+
+    .section-heading > p:first-child {
+      color: #0284c7;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
     }
 
     h1 {
-        font-size: 24px;
+      margin: 8px 0 12px;
+      color: #075985;
+      font-size: 30px;
+      line-height: 1.3;
+      font-weight: 800;
     }
 
-    form {
+    .section-heading p {
+      color: #475569;
+    }
+
+    .quote-form-card {
+      width: 100%;
+      padding: 28px;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
+    }
+
+    #quote-form {
+      width: 100%;
+    }
+
+    #quote-form label {
+      display: block;
+      margin: 18px 0 7px;
+      color: #334155;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    #quote-form label:first-child {
+      margin-top: 0;
+    }
+
+    #quote-form input,
+    #quote-form select,
+    #quote-form textarea {
+      display: block;
+      width: 100%;
+      min-height: 48px;
+      margin: 0;
+      padding: 12px 14px;
+      border: 1px solid #cbd5e1;
+      border-radius: 9px;
+      background: #ffffff;
+      color: #1e293b;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 16px;
+      line-height: 1.5;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    #quote-form textarea {
+      min-height: 120px;
+      resize: vertical;
+    }
+
+    #quote-form input:focus,
+    #quote-form select:focus,
+    #quote-form textarea:focus {
+      border-color: #0284c7;
+      box-shadow: 0 0 0 3px rgba(2, 132, 199, 0.12);
+    }
+
+    #quote-form input::placeholder,
+    #quote-form textarea::placeholder {
+      color: #94a3b8;
+    }
+
+    #quote-form .primary-btn {
+      display: block;
+      width: 100%;
+      min-height: 52px;
+      margin-top: 26px;
+      padding: 14px 18px;
+      border: none;
+      border-radius: 10px;
+      background: #075985;
+      color: #ffffff;
+      font-family: 'Inter', Arial, sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    #quote-form .primary-btn:hover {
+      background: #0369a1;
+    }
+
+    #quote-form .primary-btn:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
+    #form-status {
+      margin: 18px 0 0;
+      overflow-wrap: anywhere;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    #form-status:empty {
+      display: none;
+    }
+
+    #form-status.success {
+      padding: 12px;
+      border-radius: 8px;
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    #form-status.error {
+      padding: 12px;
+      border-radius: 8px;
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    #form-status.info {
+      color: #075985;
+    }
+
+    footer {
+      margin-top: 20px;
+      background: #0f172a;
+      color: #e2e8f0;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      flex-wrap: wrap;
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 28px 20px;
+    }
+
+    .footer-content h2 {
+      margin-top: 0;
+      color: #ffffff;
+      font-size: 20px;
+    }
+
+    .footer-content p {
+      margin: 6px 0;
+      font-size: 14px;
+    }
+
+    .copyright {
+      padding: 16px 20px;
+      border-top: 1px solid #334155;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .topbar .container {
+        padding: 14px 16px;
+      }
+
+      .nav {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      nav {
+        gap: 16px;
+      }
+
+      nav a {
+        font-size: 13px;
+      }
+
+      main {
+        padding: 24px 14px 32px;
+      }
+
+      h1 {
+        font-size: 25px;
+      }
+
+      .quote-form-card {
         padding: 20px 16px;
         border-radius: 13px;
-    }
+      }
 
-    form label {
+      #quote-form label {
         margin-top: 16px;
+      }
+
+      .footer-content {
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px 16px;
+      }
     }
-}
-</style>
-  
-</head>
+  </style></head><body>  <header class="topbar">
+    <div class="container nav">
+      <div class="logo">
+        <span>❄</span> FrostTech
+      </div>  <nav aria-label="Main navigation">
+    <a href="index.html">Home</a>
+    <a href="index.html#categories">Categories</a>
+    <a href="catalog.html">Products</a>
+  </nav>
+</div>
 
+  </header>  <main>
+    <section class="section">
+      <div class="section-heading">
+        <p>FROSTTECH HVAC &amp; REFRIGERATION</p>
+        <h1>Request a Quote</h1>
+        <p>Tell us what HVAC or refrigeration product or service you need. Our team will review your request.</p>
+      </div>  <div class="quote-form-card">
+    <form id="quote-form">
 
-<body>
+      <label for="title">What do you need?</label>
+      <input
+        type="text"
+        id="title"
+        name="title"
+        placeholder="e.g. 1.5HP Split AC"
+        maxlength="200"
+        required
+      >
 
+      <label for="description">Description</label>
+      <textarea
+        id="description"
+        name="description"
+        rows="5"
+        placeholder="Describe the product or service you need..."
+        required
+      ></textarea>
 
-<header class="topbar">
+      <label for="category">Category</label>
+      <select id="category" name="category" required>
+        <option value="">Select category</option>
+        <option value="Air Conditioners">Air Conditioners</option>
+        <option value="Refrigeration Parts">Refrigeration Parts</option>
+        <option value="HVAC Accessories">HVAC Accessories</option>
+        <option value="HVAC Services">HVAC Services</option>
+      </select>
 
-  <div class="container nav">
+      <label for="quantity">Quantity</label>
+      <input
+        type="number"
+        id="quantity"
+        name="quantity"
+        min="1"
+        max="100000"
+        step="1"
+        value="1"
+        required
+      >
 
-    <div class="logo">
-      <span>❄</span> FrostTech
-    </div>
+      <label for="preferred_brand">Preferred Brand (optional)</label>
+      <input
+        type="text"
+        id="preferred_brand"
+        name="preferred_brand"
+        placeholder="e.g. LG, Samsung, Daikin"
+        maxlength="100"
+      >
 
-    <nav>
+      <label for="budget">Budget in Naira (optional)</label>
+      <input
+        type="number"
+        id="budget"
+        name="budget"
+        min="0"
+        step="0.01"
+        placeholder="Enter your budget in ₦"
+      >
 
-      <a href="index.html">
-        Home
-      </a>
+      <label for="delivery_address">Delivery Address</label>
+      <textarea
+        id="delivery_address"
+        name="delivery_address"
+        rows="3"
+        placeholder="Enter your delivery address, town and state..."
+        required
+      ></textarea>
 
-      <a href="index.html#categories">
-        Categories
-      </a>
+      <button type="submit" class="primary-btn" id="submit-button">
+        Submit Quote Request
+      </button>
 
-      <a href="index.html#products">
-        Products
-      </a>
-
-    </nav>
-
+      <p id="form-status" role="status" aria-live="polite"></p>
+    </form>
   </div>
-
-</header>
-
-
-
-<main>
-
-<section class="section">
-
-  <div class="container">
-
-
-    <div class="section-heading">
-
-      <p>
-        FROSTTECH HVAC & REFRIGERATION
-      </p>
-
-      <h1>
-        Request a Quote
-      </h1>
-
-      <p>
-        Tell us what HVAC or refrigeration
-        product or service you need.
-      </p>
-
-    </div>
-
-
-
-    <div class="quote-form-card">
-
-
-      <form id="quote-form">
-
-
-        <label for="title">
-          What do you need?
-        </label>
-
-        <input
-          type="text"
-          id="title"
-          placeholder="e.g. 1.5HP Split AC"
-          required
-        >
-
-
-
-        <label for="description">
-          Description
-        </label>
-
-        <textarea
-          id="description"
-          rows="5"
-          placeholder="Describe the product or service you need..."
-          required
-        ></textarea>
-
-
-
-        <label for="category">
-          Category
-        </label>
-
-        <select id="category" required>
-
-          <option value="">
-            Select category
-          </option>
-
-          <option value="Air Conditioners">
-            Air Conditioners
-          </option>
-
-          <option value="Refrigeration Parts">
-            Refrigeration Parts
-          </option>
-
-          <option value="HVAC Accessories">
-            HVAC Accessories
-          </option>
-
-          <option value="HVAC Services">
-            HVAC Services
-          </option>
-
-        </select>
-
-
-
-        <label for="quantity">
-          Quantity
-        </label>
-
-        <input
-          type="number"
-          id="quantity"
-          min="1"
-          value="1"
-          required
-        >
-
-
-
-        <label for="preferred_brand">
-          Preferred Brand
-        </label>
-
-        <input
-          type="text"
-          id="preferred_brand"
-          placeholder="e.g. LG, Samsung, Daikin"
-        >
-
-
-
-        <label for="budget">
-          Budget (₦)
-        </label>
-
-        <input
-          type="number"
-          id="budget"
-          min="0"
-          placeholder="Optional"
-        >
-
-
-
-        <label for="delivery_address">
-          Delivery Address
-        </label>
-
-        <textarea
-          id="delivery_address"
-          rows="3"
-          placeholder="Where should the product be delivered?"
-          required
-        ></textarea>
-
-
-
-        <button
-          type="submit"
-          class="primary-btn"
-        >
-
-          Submit Quote Request
-
-        </button>
-
-
-        <p id="form-status"></p>
-
-
-      </form>
-
-
-    </div>
-
-
-  </div>
-
 </section>
 
-</main>
-
-
-
-<footer>
-
-
-  <div class="container footer-content">
-
-
-    <div>
-
-      <h2>
-        ❄ FrostTech
-      </h2>
-
-      <p>
-        HVAC and Refrigeration Marketplace
-      </p>
-
-    </div>
-
-
-
-    <div>
-
-      <p>
-        Website: frosttechonline.com
-      </p>
-
-      <p>
-        WhatsApp: +234 803 200 8635
-      </p>
-
-    </div>
-
-
+  </main>  <footer>
+    <div class="footer-content">
+      <div>
+        <h2>❄ FrostTech</h2>
+        <p>HVAC and Refrigeration Marketplace</p>
+      </div>  <div>
+    <p>Website: frosttechonline.com</p>
+    <p>WhatsApp: +234 803 200 8635</p>
   </div>
+</div>
 
+<div class="copyright">
+  © 2026 FrostTech HVAC and Refrigeration. All rights reserved.
+</div>
 
+  </footer>  <script>
+    const quoteForm = document.getElementById("quote-form");
+    const formStatus = document.getElementById("form-status");
+    const submitButton = document.getElementById("submit-button");
 
-  <div class="copyright">
-
-    © 2026 FrostTech HVAC and Refrigeration.
-    All rights reserved.
-
-  </div>
-
-
-</footer>
-
-
-
-<script>
-
-
-async function submitQuote(event) {
-
-  event.preventDefault();
-
-
-  const status =
-    document.getElementById("form-status");
-
-
-  status.textContent =
-    "Submitting your quote request...";
-
-
-  try {
-
-
-    /* Check logged-in customer */
-
-    const {
-
-      data: { user },
-
-      error: userError
-
-    } =
-      await supabaseClient.auth.getUser();
-
-
-
-    if (userError || !user) {
-
-      status.textContent =
-        "Please log in before submitting a quote request.";
-
-      return;
-
+    function showStatus(message, type) {
+      formStatus.textContent = message;
+      formStatus.className = type || "";
     }
 
+    async function submitQuote(event) {
+      event.preventDefault();
 
+      if (submitButton.disabled) {
+        return;
+      }
 
-    /* Get form values */
+      if (typeof supabaseClient === "undefined" || !supabaseClient) {
+        showStatus(
+          "The database connection is not ready. Please refresh the page and try again.",
+          "error"
+        );
+        return;
+      }
 
-    const title =
-      document
-        .getElementById("title")
-        .value
-        .trim();
+      submitButton.disabled = true;
+      submitButton.textContent = "Submitting...";
+      showStatus("Submitting your quote request...", "info");
 
+      try {
+        // A customer must be logged in to submit a quote.
+        const {
+          data: { user },
+          error: userError
+        } = await supabaseClient.auth.getUser();
 
-    const description =
-      document
-        .getElementById("description")
-        .value
-        .trim();
+        if (userError) {
+          throw userError;
+        }
 
+        if (!user) {
+          showStatus(
+            "Please log in to your FrostTech customer account before submitting a quote request.",
+            "error"
+          );
+          return;
+        }
 
-    const category =
-      document
-        .getElementById("category")
-        .value;
+        // Read and validate the form fields.
+        const title = document.getElementById("title").value.trim();
+        const description = document.getElementById("description").value.trim();
+        const category = document.getElementById("category").value;
+        const quantity = Number(document.getElementById("quantity").value);
+        const preferredBrand = document.getElementById("preferred_brand").value.trim();
+        const budgetValue = document.getElementById("budget").value.trim();
+        const deliveryAddress = document.getElementById("delivery_address").value.trim();
 
+        if (!title || !description || !category || !deliveryAddress) {
+          showStatus("Please complete all required fields.", "error");
+          return;
+        }
 
-    const quantity =
-      Number(
-        document
-          .getElementById("quantity")
-          .value
-      );
+        if (!Number.isInteger(quantity) || quantity < 1) {
+          showStatus("Quantity must be a whole number of at least 1.", "error");
+          return;
+        }
 
+        let budget = null;
 
-    const preferredBrand =
-      document
-        .getElementById("preferred_brand")
-        .value
-        .trim();
+        if (budgetValue !== "") {
+          budget = Number(budgetValue);
 
+          if (!Number.isFinite(budget) || budget < 0) {
+            showStatus("Please enter a valid budget.", "error");
+            return;
+          }
+        }
 
-    const budgetValue =
-      document
-        .getElementById("budget")
-        .value;
+        // Keep the selected category with the description.
+        const fullDescription =
+          "Category: " + category + "\n\n" + description;
 
+        // Generate a unique customer-facing request number.
+        const requestNumber = "FT-" + Date.now();
 
-    const deliveryAddress =
-      document
-        .getElementById("delivery_address")
-        .value
-        .trim();
+        // Save to the existing FrostTech quote_requests table.
+        const {
+          data,
+          error
+        } = await supabaseClient
+          .from("quote_requests")
+          .insert([{
+            customer_id: user.id,
+            request_number: requestNumber,
+            title: title,
+            description: fullDescription,
+            quantity: quantity,
+            preferred_brand: preferredBrand || null,
+            budget: budget,
+            delivery_address: deliveryAddress,
+            status: "pending"
+          }])
+          .select("id, request_number")
+          .single();
 
+        if (error) {
+          console.error("FrostTech quote submission error:", error);
+          throw error;
+        }
 
+        showStatus(
+          "Your quote request was submitted successfully! Reference number: " +
+          data.request_number +
+          ". Please keep this number for your records.",
+          "success"
+        );
 
-    const budget =
-      budgetValue === ""
-        ? null
-        : Number(budgetValue);
+        quoteForm.reset();
 
+      } catch (error) {
+        console.error("FrostTech quote request error:", error);
 
+        let message =
+          "We could not submit your request. Please try again.";
 
-    /* Create request number */
+        if (error && error.message) {
+          message += " Details: " + error.message;
+        }
 
-    const requestNumber =
-      "FT-" + Date.now();
+        showStatus(message, "error");
 
-
-
-    /* Save request to Supabase */
-
-    const {
-
-      data,
-
-      error
-
-    } =
-      await supabaseClient
-
-        .from("customer-requests")
-
-        .insert([{
-
-          customer_id:
-            user.id,
-
-          request_number:
-            requestNumber,
-
-          title:
-            title,
-
-          description:
-            description,
-
-          category:
-            category,
-
-          quantity:
-            quantity,
-
-          preferred_brand:
-            preferredBrand || null,
-
-          budget:
-            budget,
-
-          delivery_address:
-            deliveryAddress,
-
-          status:
-            "pending"
-
-        }])
-
-        .select()
-
-        .single();
-
-
-
-    /* Check for database error */
-
-    if (error) {
-
-      console.error(error);
-
-
-      status.textContent =
-        "Unable to submit request: " +
-        error.message;
-
-
-      return;
-
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Submit Quote Request";
+      }
     }
 
-
-
-    /* Success */
-
-    status.textContent =
-      "Quote request submitted successfully! " +
-      "Request number: " +
-      data.request_number;
-
-
-
-    document
-      .getElementById("quote-form")
-      .reset();
-
-
-  }
-
-  catch (error) {
-
-
-    console.error(error);
-
-
-    status.textContent =
-      "Something went wrong. Please try again.";
-
-
-  }
-
-}
-
-
-
-/* Form submit event */
-
-document
-
-  .getElementById("quote-form")
-
-  .addEventListener(
-    "submit",
-    submitQuote
-  );
-
-
-</script>
-
-
-
-</body>
-
-          </html>
+    quoteForm.addEventListener("submit", submitQuote);
+  </script></body>
+</html>
