@@ -7,7 +7,7 @@
   <title>Product Catalogue | FrostTech HVAC and Refrigeration</title>
 
   <meta name="description"
-        content="Browse air conditioners, refrigeration parts, HVAC accessories and services at FrostTech.">
+        content="Browse air conditioners, refrigeration parts, HVAC accessories and products at FrostTech.">
 
   <link rel="stylesheet" href="style.css">
 
@@ -47,9 +47,24 @@
       box-sizing: border-box;
     }
 
+    .catalogue-count {
+      margin-bottom: 18px;
+      color: #555;
+    }
+
     .catalogue-status {
       text-align: center;
       padding: 25px 10px;
+    }
+
+    .catalogue-error {
+      background: #fff0f0;
+      color: #9b1c1c;
+      border: 1px solid #e5a3a3;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 15px 0;
+      overflow-wrap: anywhere;
     }
 
     .catalogue-grid {
@@ -141,11 +156,6 @@
       background: #e8f3fa;
       color: #075985;
       border: 1px solid #075985;
-    }
-
-    .catalogue-count {
-      margin-bottom: 18px;
-      color: #555;
     }
 
     .catalogue-empty {
@@ -269,28 +279,64 @@
 </footer>
 
 <script>
+  "use strict";
+
   const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
   const SUPABASE_PUBLISHABLE_KEY =
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5mdHhwdGpwZ2lkc2NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
-
-  const supabaseClient = supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_PUBLISHABLE_KEY
-  );
-
-  let allProducts = [];
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6Im5mdHhwdGpwZ2lkc2NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
 
   const grid = document.getElementById("catalogue-grid");
   const searchInput = document.getElementById("catalogue-search");
   const categorySelect = document.getElementById("catalogue-category");
   const countDisplay = document.getElementById("catalogue-count");
 
+  let supabaseClient;
+  let allProducts = [];
+
+  function showError(message) {
+    console.error("FrostTech catalogue error:", message);
+
+    countDisplay.textContent = "Unable to load products.";
+
+    grid.innerHTML = "";
+
+    const errorBox = document.createElement("div");
+    errorBox.className = "catalogue-error";
+
+    const heading = document.createElement("h2");
+    heading.textContent = "Products could not be loaded";
+
+    const explanation = document.createElement("p");
+    explanation.textContent = String(message);
+
+    const instruction = document.createElement("p");
+    instruction.textContent =
+      "Please record the error message and share it with FrostTech support.";
+
+    errorBox.appendChild(heading);
+    errorBox.appendChild(explanation);
+    errorBox.appendChild(instruction);
+
+    grid.appendChild(errorBox);
+  }
+
   async function loadCatalogue() {
     countDisplay.textContent = "Loading products...";
 
     try {
+      if (!window.supabase) {
+        throw new Error(
+          "The Supabase library did not load. Check your internet connection and refresh the page."
+        );
+      }
+
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+
       const { data, error } = await supabaseClient
         .from("products")
         .select(
@@ -300,35 +346,26 @@
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Catalogue loading error:", error);
-
-        countDisplay.textContent = "Unable to load products.";
-
-        grid.innerHTML = `
-          <div class="catalogue-empty">
-            <h2>Products could not be loaded</h2>
-            <p>Please refresh the page and try again.</p>
-          </div>
-        `;
-
+        showError(
+          "Database error: " +
+          error.message +
+          " | Code: " +
+          (error.code || "not provided")
+        );
         return;
       }
 
       allProducts = data || [];
 
       loadCategories();
-      displayCatalogue(allProducts);
+      filterCatalogue();
 
     } catch (error) {
-      console.error("Unexpected catalogue error:", error);
-
-      countDisplay.textContent = "Something went wrong.";
-
-      grid.innerHTML = `
-        <div class="catalogue-empty">
-          <p>Please refresh the page and try again.</p>
-        </div>
-      `;
+      showError(
+        error && error.message
+          ? error.message
+          : String(error)
+      );
     }
   }
 
@@ -358,19 +395,28 @@
     grid.innerHTML = "";
 
     countDisplay.textContent =
-      products.length + (
-        products.length === 1
-          ? " product found"
-          : " products found"
-      );
+      products.length +
+      (products.length === 1
+        ? " product found"
+        : " products found");
 
     if (products.length === 0) {
-      grid.innerHTML = `
-        <div class="catalogue-empty">
-          <h2>No products found</h2>
-          <p>Try another search or select a different category.</p>
-        </div>
-      `;
+      const empty = document.createElement("div");
+      empty.className = "catalogue-empty";
+
+      const heading = document.createElement("h2");
+      heading.textContent = allProducts.length === 0
+        ? "No active products available"
+        : "No matching products found";
+
+      const message = document.createElement("p");
+      message.textContent = allProducts.length === 0
+        ? "Products will appear here when active products are available."
+        : "Try another search or select a different category.";
+
+      empty.appendChild(heading);
+      empty.appendChild(message);
+      grid.appendChild(empty);
 
       return;
     }
@@ -389,7 +435,7 @@
         image.alt = product.name || "FrostTech product";
         image.loading = "lazy";
 
-        image.onerror = function() {
+        image.onerror = function () {
           image.remove();
           imageContainer.textContent = "❄";
         };
@@ -496,7 +542,6 @@
   }
 
   searchInput.addEventListener("input", filterCatalogue);
-
   categorySelect.addEventListener("change", filterCatalogue);
 
   loadCatalogue();
