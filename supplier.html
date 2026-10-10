@@ -1,0 +1,696 @@
+<!DOCTYPE html><html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Supplier Portal | FrostTech HVAC and Refrigeration</title>  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f6fa;
+      color: #1f2937;
+    }
+
+    header {
+      background: #073b66;
+      color: white;
+      padding: 20px 15px;
+      text-align: center;
+    }
+
+    header h1 {
+      margin: 0 0 8px;
+      font-size: 23px;
+    }
+
+    header p { margin: 0; }
+
+    main {
+      max-width: 950px;
+      margin: 22px auto;
+      padding: 0 14px 30px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 10px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+    }
+
+    h2 { margin-top: 0; color: #073b66; }
+
+    label {
+      display: block;
+      margin: 14px 0 6px;
+      font-weight: bold;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+      background: white;
+    }
+
+    textarea {
+      min-height: 85px;
+      resize: vertical;
+    }
+
+    button {
+      width: 100%;
+      margin-top: 16px;
+      padding: 13px;
+      border: 0;
+      border-radius: 6px;
+      background: #087443;
+      color: white;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      background: #94a3b8;
+      cursor: not-allowed;
+    }
+
+    .secondary { background: #073b66; }
+    .hidden { display: none !important; }
+
+    .message {
+      padding: 12px;
+      border-radius: 6px;
+      margin: 12px 0;
+      overflow-wrap: anywhere;
+    }
+
+    .success { background: #dcfce7; color: #166534; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .info { background: #dbeafe; color: #1e40af; }
+
+    .request {
+      border: 1px solid #dbe3ec;
+      border-radius: 8px;
+      padding: 15px;
+      margin: 12px 0;
+    }
+
+    .request h3 { margin-top: 0; }
+
+    .muted {
+      color: #64748b;
+      font-size: 14px;
+    }
+
+    .totals {
+      background: #eff6ff;
+      padding: 14px;
+      margin-top: 15px;
+      border-radius: 7px;
+      line-height: 1.9;
+    }
+
+    .money {
+      font-weight: bold;
+      color: #087443;
+      font-size: 18px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-size: 13px;
+    }
+  </style></head><body>
+<header>
+  <h1>FrostTech HVAC and Refrigeration</h1>
+  <p>Supplier Quotation Portal</p>
+</header><main>
+  <div id="pageMessage" class="message info">
+    Connecting to the FrostTech database...
+  </div>  <section id="loginSection" class="card hidden">
+    <h2>Supplier Login</h2>
+    <p>Sign in with your registered supplier account.</p><form id="loginForm">
+  <label for="email">Email address</label>
+  <input id="email" type="email" autocomplete="username" required>
+
+  <label for="password">Password</label>
+  <input id="password" type="password"
+         autocomplete="current-password" required>
+
+  <button id="loginButton" type="submit">Log In</button>
+</form>
+
+  </section>  <section id="portalSection" class="hidden">
+    <div class="card">
+      <h2>Supplier Dashboard</h2>
+      <p id="supplierWelcome"></p>
+      <button id="refreshButton" class="secondary" type="button">
+        Refresh Customer Requests
+      </button>
+      <button id="logoutButton" class="secondary" type="button">
+        Log Out
+      </button>
+    </div><div class="card">
+  <h2>Open Customer Requests</h2>
+  <p class="muted">
+    Select a request and submit your best supply price.
+    Quotations are submitted to FrostTech for review.
+  </p>
+  <div id="requestsList">Loading requests...</div>
+</div>
+
+<div class="card">
+  <h2>Submit a Supplier Quotation</h2>
+
+  <form id="quotationForm">
+    <label for="requestSelect">Customer request</label>
+    <select id="requestSelect" required>
+      <option value="">Select a customer request</option>
+    </select>
+
+    <label for="unitPrice">Supplier price per unit (₦)</label>
+    <input id="unitPrice" type="number" min="0.01"
+           step="0.01" required>
+
+    <label for="deliveryCost">Delivery cost (₦)</label>
+    <input id="deliveryCost" type="number" min="0"
+           step="0.01" value="0" required>
+
+    <label for="marginPercent">FrostTech margin (%)</label>
+    <input id="marginPercent" type="number" min="0"
+           max="100" step="0.01" value="15" required>
+
+    <label for="validUntil">Quotation expiry date (optional)</label>
+    <input id="validUntil" type="date">
+
+    <label for="notes">Notes or product specifications</label>
+    <textarea id="notes"
+      placeholder="Brand, model, warranty, availability, or other details"></textarea>
+
+    <div class="totals">
+      <div>Requested quantity: <strong id="quantityDisplay">—</strong></div>
+      <div>Supplier total: <strong id="supplierTotal">₦0.00</strong></div>
+      <div>FrostTech margin: <strong id="marginAmount">₦0.00</strong></div>
+      <div>Delivery cost: <strong id="deliveryDisplay">₦0.00</strong></div>
+      <div>Indicative customer total:
+        <strong id="customerTotal" class="money">₦0.00</strong>
+      </div>
+      <p class="muted">
+        This calculation is indicative. FrostTech will review the
+        quotation before issuing a final customer price.
+      </p>
+    </div>
+
+    <button id="submitQuoteButton" type="submit">
+      Submit Supplier Quotation
+    </button>
+  </form>
+
+  <div id="formMessage" aria-live="polite"></div>
+</div>
+
+<div class="card">
+  <h2>My Submitted Quotations</h2>
+  <div id="myQuotesList">Loading your quotations...</div>
+</div>
+
+  </section>
+</main><footer>
+  FrostTech HVAC and Refrigeration Marketplace
+</footer><!-- Load Supabase before the FrostTech configuration file. --><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script><script>
+(function () {
+  "use strict";
+
+  let db = null;
+  let currentUser = null;
+  let currentSupplier = null;
+  let requests = [];
+  let productsById = {};
+  let myQuotes = [];
+  let busy = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  function showPageMessage(message, type) {
+    const el = $("pageMessage");
+    el.textContent = message;
+    el.className = "message " + (type || "info");
+    el.classList.remove("hidden");
+  }
+
+  function showFormMessage(message, type) {
+    const el = $("formMessage");
+    el.textContent = message;
+    el.className = "message " + (type || "info");
+  }
+
+  function naira(value) {
+    return "₦" + Number(value || 0).toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function escapeHtml(value) {
+    return String(value == null ? "" : value).replace(/[&<>"']/g, function (c) {
+      return {
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#39;"
+      }[c];
+    });
+  }
+
+  function getProductName(productId) {
+    return productsById[productId]?.name || "Product details to be confirmed";
+  }
+
+  function getRequestText(request) {
+    const number = request.request_number || request.id;
+    return number + " — " +
+      (request.title || getProductName(request.product_id)) +
+      " (Qty: " + Number(request.quantity || 1) + ")";
+  }
+
+  async function initialize() {
+    db = window.supabaseClient || window.supabase;
+
+    if (!db || !db.auth || !db.from) {
+      showPageMessage(
+        "Supabase client not found. Check that supabase.js creates window.supabaseClient and loads after the Supabase CDN.",
+        "error"
+      );
+      return;
+    }
+
+    $("loginForm").addEventListener("submit", loginSupplier);
+    $("logoutButton").addEventListener("click", logoutSupplier);
+    $("refreshButton").addEventListener("click", loadPortalData);
+    $("quotationForm").addEventListener("submit", submitQuotation);
+
+    ["requestSelect", "unitPrice", "deliveryCost", "marginPercent"]
+      .forEach(id => $(id).addEventListener("input", updateTotals));
+
+    const { data, error } = await db.auth.getSession();
+
+    if (error) {
+      showPageMessage("Unable to check your login: " + error.message, "error");
+      $("loginSection").classList.remove("hidden");
+      return;
+    }
+
+    if (data.session) {
+      currentUser = data.session.user;
+      await openSupplierPortal();
+    } else {
+      showPageMessage("Please log in with your registered supplier account.");
+      $("loginSection").classList.remove("hidden");
+    }
+  }
+
+  async function loginSupplier(event) {
+    event.preventDefault();
+
+    const button = $("loginButton");
+    button.disabled = true;
+    button.textContent = "Signing in...";
+    showPageMessage("Checking your supplier login...");
+
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) throw error;
+
+      currentUser = data.user;
+      $("loginSection").classList.add("hidden");
+      await openSupplierPortal();
+    } catch (error) {
+      showPageMessage("Login failed: " + error.message, "error");
+      $("loginSection").classList.remove("hidden");
+    } finally {
+      button.disabled = false;
+      button.textContent = "Log In";
+    }
+  }
+
+  async function openSupplierPortal() {
+    showPageMessage("Checking your supplier account...");
+
+    const { data: supplier, error } = await db
+      .from("suppliers")
+      .select("id, user_id, business_name, contact_name, is_verified, is_active")
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if (error) {
+      showPageMessage(
+        "Could not load your supplier profile: " + error.message,
+        "error"
+      );
+      $("loginSection").classList.remove("hidden");
+      return;
+    }
+
+    if (!supplier) {
+      showPageMessage(
+        "Your login is valid, but no supplier profile is linked to this account. Ask FrostTech to link your supplier record to your user account.",
+        "error"
+      );
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    if (!supplier.is_active || !supplier.is_verified) {
+      showPageMessage(
+        "Your supplier account must be active and verified before you can submit quotations. Please contact FrostTech.",
+        "error"
+      );
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    currentSupplier = supplier;
+    $("supplierWelcome").textContent =
+      "Welcome, " + (supplier.business_name || supplier.contact_name || "Supplier") + ".";
+
+    $("loginSection").classList.add("hidden");
+    $("portalSection").classList.remove("hidden");
+    await loadPortalData();
+  }
+
+  async function loadPortalData() {
+    if (!currentSupplier || !currentUser) return;
+
+    showPageMessage("Loading customer requests and your quotations...");
+
+    const [requestResult, productResult, quoteResult] = await Promise.all([
+      db.from("quote_requests")
+        .select("id, request_number, title, description, product_id, quantity, preferred_brand, budget, delivery_address, status, created_at")
+        .in("status", ["pending", "reviewing"])
+        .order("created_at", { ascending: false })
+        .limit(100),
+
+      db.from("products")
+        .select("id, name, brand, model"),
+
+      db.from("supplier_quotes")
+        .select("id, request_id, product_id, quantity, supplier_unit_price, supplier_total, delivery_cost, notes, valid_until, status, created_at, frosttech_margin_percent, frosttech_margin_amount, customer_total")
+        .eq("supplier_id", currentSupplier.id)
+        .order("created_at", { ascending: false })
+        .limit(100)
+    ]);
+
+    if (requestResult.error) {
+      showPageMessage("Could not load customer requests: " + requestResult.error.message, "error");
+      return;
+    }
+
+    if (productResult.error) {
+      showPageMessage("Could not load product names: " + productResult.error.message, "error");
+      return;
+    }
+
+    if (quoteResult.error) {
+      showPageMessage("Could not load your quotations: " + quoteResult.error.message, "error");
+      return;
+    }
+
+    requests = requestResult.data || [];
+    productsById = {};
+
+    (productResult.data || []).forEach(product => {
+      productsById[product.id] = product;
+    });
+
+    myQuotes = quoteResult.data || [];
+
+    renderRequests();
+    renderRequestOptions();
+    renderMyQuotes();
+    updateTotals();
+
+    showPageMessage(
+      "Supplier portal ready. Open requests: " + requests.length +
+      ". Your submitted quotations: " + myQuotes.length + ".",
+      "success"
+    );
+  }
+
+  function renderRequests() {
+    const container = $("requestsList");
+
+    if (!requests.length) {
+      container.textContent = "There are currently no open customer requests.";
+      return;
+    }
+
+    container.innerHTML = requests.map(request => {
+      const product = getProductName(request.product_id);
+      const existing = myQuotes.some(q => q.request_id === request.id);
+
+      return `
+        <article class="request">
+          <h3>${escapeHtml(request.title || product)}</h3>
+          <p><strong>Request number:</strong> ${escapeHtml(request.request_number || request.id)}</p>
+          <p><strong>Product:</strong> ${escapeHtml(product)}</p>
+          <p><strong>Quantity:</strong> ${Number(request.quantity || 1)}</p>
+          <p><strong>Preferred brand:</strong> ${escapeHtml(request.preferred_brand || "Not specified")}</p>
+          <p><strong>Delivery location:</strong> ${escapeHtml(request.delivery_address || "Confirm with FrostTech")}</p>
+          <p><strong>Request details:</strong> ${escapeHtml(request.description || "No extra details supplied")}</p>
+          <p><strong>Status:</strong> ${escapeHtml(request.status || "open")}</p>
+          ${existing ? '<p class="muted">You have already submitted a quotation for this request.</p>' : ""}
+          <button type="button" class="secondary chooseRequest"
+            data-request-id="${escapeHtml(request.id)}"
+            ${existing ? "disabled" : ""}>
+            ${existing ? "Quotation Already Submitted" : "Prepare Quotation"}
+          </button>
+        </article>
+      `;
+    }).join("");
+
+    container.querySelectorAll(".chooseRequest").forEach(button => {
+      button.addEventListener("click", () => {
+        $("requestSelect").value = button.dataset.requestId;
+        updateTotals();
+        $("quotationForm").scrollIntoView({ behavior: "smooth", block: "start" });
+      });
+    });
+  }
+
+  function renderRequestOptions() {
+    const select = $("requestSelect");
+    const previousValue = select.value;
+
+    select.innerHTML = '<option value="">Select a customer request</option>';
+
+    requests.forEach(request => {
+      const alreadyQuoted = myQuotes.some(q => q.request_id === request.id);
+      if (alreadyQuoted) return;
+
+      const option = document.createElement("option");
+      option.value = request.id;
+      option.textContent = getRequestText(request);
+      select.appendChild(option);
+    });
+
+    if (requests.some(r => r.id === previousValue &&
+        !myQuotes.some(q => q.request_id === r.id))) {
+      select.value = previousValue;
+    }
+  }
+
+  function selectedRequest() {
+    return requests.find(request => request.id === $("requestSelect").value);
+  }
+
+  function updateTotals() {
+    const request = selectedRequest();
+    const quantity = Number(request?.quantity || 1);
+    const unitPrice = Number($("unitPrice").value || 0);
+    const delivery = Number($("deliveryCost").value || 0);
+    const marginPercent = Number($("marginPercent").value || 0);
+
+    const supplierTotal = quantity * unitPrice;
+    const marginAmount = supplierTotal * marginPercent / 100;
+    const customerTotal = supplierTotal + delivery + marginAmount;
+
+    $("quantityDisplay").textContent = request ? quantity : "—";
+    $("supplierTotal").textContent = naira(supplierTotal);
+    $("marginAmount").textContent = naira(marginAmount);
+    $("deliveryDisplay").textContent = naira(delivery);
+    $("customerTotal").textContent = naira(customerTotal);
+  }
+
+  async function submitQuotation(event) {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const request = selectedRequest();
+
+    if (!currentSupplier || !currentUser) {
+      showFormMessage("Please log in to your supplier account.", "error");
+      return;
+    }
+
+    if (!request) {
+      showFormMessage("Please select a customer request.", "error");
+      return;
+    }
+
+    if (myQuotes.some(q => q.request_id === request.id)) {
+      showFormMessage(
+        "You have already submitted a quotation for this request. Duplicate submissions are blocked.",
+        "error"
+      );
+      return;
+    }
+
+    const unitPrice = Number($("unitPrice").value);
+    const deliveryCost = Number($("deliveryCost").value);
+    const marginPercent = Number($("marginPercent").value);
+    const quantity = Number(request.quantity || 1);
+
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      showFormMessage("Enter a valid supplier price greater than zero.", "error");
+      return;
+    }
+
+    if (!Number.isFinite(deliveryCost) || deliveryCost < 0) {
+      showFormMessage("Enter a valid delivery cost.", "error");
+      return;
+    }
+
+    if (!Number.isFinite(marginPercent) ||
+        marginPercent < 0 || marginPercent > 100) {
+      showFormMessage("The FrostTech margin must be between 0 and 100%.", "error");
+      return;
+    }
+
+    const supplierTotal = quantity * unitPrice;
+    const marginAmount = supplierTotal * marginPercent / 100;
+    const customerTotal = supplierTotal + deliveryCost + marginAmount;
+    const dateValue = $("validUntil").value;
+
+    const payload = {
+      request_id: request.id,
+      supplier_id: currentSupplier.id,
+      product_id: request.product_id || null,
+      quantity: quantity,
+      supplier_unit_price: unitPrice,
+      supplier_total: supplierTotal,
+      delivery_cost: deliveryCost,
+      notes: $("notes").value.trim() || null,
+      valid_until: dateValue ? new Date(dateValue + "T23:59:59").toISOString() : null,
+      status: "submitted",
+      frosttech_margin_percent: marginPercent,
+      frosttech_margin_amount: marginAmount,
+      customer_total: customerTotal,
+      customer_quote_status: "draft"
+    };
+
+    busy = true;
+    const button = $("submitQuoteButton");
+    button.disabled = true;
+    button.textContent = "Submitting...";
+    showFormMessage("Submitting your quotation to FrostTech...");
+
+    try {
+      const { data, error } = await db
+        .from("supplier_quotes")
+        .insert(payload)
+        .select("id, status")
+        .single();
+
+      if (error) throw error;
+
+      showFormMessage(
+        "Quotation submitted successfully. Reference: " +
+        data.id + ". FrostTech will review it before sending a final price to the customer.",
+        "success"
+      );
+
+      $("quotationForm").reset();
+      $("deliveryCost").value = "0";
+      $("marginPercent").value = "15";
+
+      await loadPortalData();
+    } catch (error) {
+      showFormMessage(
+        "Quotation could not be saved: " + error.message +
+        ". If the error mentions row-level security or permission denied, stop and show FrostTech the exact error so the database policy can be checked safely.",
+        "error"
+      );
+    } finally {
+      busy = false;
+      button.disabled = false;
+      button.textContent = "Submit Supplier Quotation";
+      updateTotals();
+    }
+  }
+
+  function renderMyQuotes() {
+    const container = $("myQuotesList");
+
+    if (!myQuotes.length) {
+      container.textContent = "You have not submitted any quotations yet.";
+      return;
+    }
+
+    container.innerHTML = myQuotes.map(quote => `
+      <article class="request">
+        <h3>${escapeHtml(getProductName(quote.product_id))}</h3>
+        <p><strong>Request ID:</strong> ${escapeHtml(quote.request_id || "Not linked")}</p>
+        <p><strong>Quantity:</strong> ${Number(quote.quantity || 0)}</p>
+        <p><strong>Your unit price:</strong> ${naira(quote.supplier_unit_price)}</p>
+        <p><strong>Your total:</strong> ${naira(quote.supplier_total)}</p>
+        <p><strong>Delivery:</strong> ${naira(quote.delivery_cost)}</p>
+        <p><strong>Indicative customer total:</strong> ${naira(quote.customer_total)}</p>
+        <p><strong>Status:</strong> ${escapeHtml(quote.status)}</p>
+        <p class="muted">Submitted: ${escapeHtml(
+          quote.created_at ? new Date(quote.created_at).toLocaleString() : "Unknown"
+        )}</p>
+      </article>
+    `).join("");
+  }
+
+  async function logoutSupplier() {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+      showPageMessage("Could not log out: " + error.message, "error");
+      return;
+    }
+
+    currentUser = null;
+    currentSupplier = null;
+    requests = [];
+    myQuotes = [];
+
+    $("portalSection").classList.add("hidden");
+    $("loginSection").classList.remove("hidden");
+    $("password").value = "";
+
+    showPageMessage("You have logged out successfully.", "success");
+  }
+
+  initialize().catch(error => {
+    showPageMessage("Portal initialization failed: " + error.message, "error");
+    $("loginSection").classList.remove("hidden");
+  });
+})();
+</script></body>
+</html>
