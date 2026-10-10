@@ -202,7 +202,7 @@
     <nav>
       <a href="index.html">Home</a>
       <a href="catalog.html">Catalogue</a>
-      <a href="quote.html">Request Quote</a>
+      <a href="quote_requests.html">Request Quote</a>
       <a href="admin.html">Admin</a>
     </nav>
 
@@ -285,7 +285,8 @@
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
   const SUPABASE_PUBLISHABLE_KEY =
-    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJIUzI1NiIsInJlZiI6Im5mdHhwdGpwZ2lkc2NndGFsdGpuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA3NjI2NTUsImV4cCI6MjEwNjMzODY1NX0.TJc8bkEqdyc_yuv8oTiKQApd3L5j2ppASi-9zr-WtP0";
+
   const grid = document.getElementById("catalogue-grid");
   const searchInput = document.getElementById("catalogue-search");
   const categorySelect = document.getElementById("catalogue-category");
@@ -312,7 +313,7 @@
 
     const instruction = document.createElement("p");
     instruction.textContent =
-      "Please record the error message and share it with FrostTech support.";
+      "Please record this error message and share it with FrostTech support.";
 
     errorBox.appendChild(heading);
     errorBox.appendChild(explanation);
@@ -410,7 +411,7 @@
 
       const message = document.createElement("p");
       message.textContent = allProducts.length === 0
-        ? "Products will appear here when active products are available."
+        ? "Active products will appear here when available."
         : "Try another search or select a different category.";
 
       empty.appendChild(heading);
@@ -489,7 +490,7 @@
 
       const quoteButton = document.createElement("a");
       quoteButton.className = "request-quote-btn";
-      quoteButton.href = "quote.html";
+      quoteButton.href = "quote_requests.html";
       quoteButton.textContent = "Request a Quote";
 
       actions.appendChild(viewButton);
