@@ -1,79 +1,1135 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>FrostTech Admin Dashboard</title><meta name="robots" content="noindex,nofollow"><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><style>
+:root {
+    --green: #075e2a;
+    --light-green: #e8f5e9;
+    --background: #f4f6f8;
+    --border: #dce2e7;
+    --red: #b00020;
+    --blue: #eaf3ff;
+}
 
-    <title>FrostTech Admin</title>
+* {
+    box-sizing: border-box;
+}
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-            background: #f4f6f8;
-        }
+body {
+    margin: 0;
+    padding: 16px;
+    font-family: Arial, sans-serif;
+    background: var(--background);
+    color: #222;
+    line-height: 1.5;
+}
 
-        .container {
-            max-width: 700px;
-            margin: 40px auto;
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-        }
+header {
+    max-width: 1100px;
+    margin: 0 auto 20px;
+    padding: 20px;
+    color: white;
+    background: var(--green);
+    border-radius: 10px;
+}
 
-        .status {
-            margin-top: 20px;
-            padding: 15px;
-            background: #eef6ff;
-            border-radius: 6px;
-        }
-    </style>
-</head>
+header h1 {
+    margin: 0;
+    font-size: 25px;
+}
 
-<body>
+header p {
+    margin-bottom: 0;
+}
 
-<div class="container">
+.container {
+    max-width: 1100px;
+    margin: 0 auto;
+}
 
-    <h1>FrostTech Admin</h1>
+.panel {
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
 
-    <p>HVAC and Refrigeration Marketplace</p>
+.hidden {
+    display: none !important;
+}
 
-    <div class="status" id="status">
-        Initializing Supabase...
-    </div>
+label {
+    display: block;
+    margin-top: 12px;
+    font-weight: bold;
+}
 
-</div>
+input,
+select,
+textarea {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    margin-top: 5px;
+    border: 1px solid #cbd2d9;
+    border-radius: 6px;
+    background: white;
+    font-size: 16px;
+}
 
-<!-- Supabase library -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+button {
+    padding: 11px 15px;
+    margin: 6px 5px 6px 0;
+    border: none;
+    border-radius: 6px;
+    background: var(--green);
+    color: white;
+    font-size: 15px;
+    cursor: pointer;
+}
 
-<script>
+button.secondary {
+    background: #34495e;
+}
 
-    const SUPABASE_URL =
-        "https://nftxptjpgidcsgtaltjn.supabase.co";
+button.danger {
+    background: var(--red);
+}
 
-    const SUPABASE_KEY =
-        "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
 
-    try {
+.status-message {
+    margin: 12px 0;
+    padding: 12px;
+    background: var(--blue);
+    border-radius: 6px;
+    overflow-wrap: anywhere;
+}
 
-        const frosttechSupabase =
-            window.supabase.createClient(
-                SUPABASE_URL,
-                SUPABASE_KEY
-            );
+.error {
+    color: var(--red);
+    background: #fff0f0;
+}
 
-        document.getElementById("status").innerHTML =
-            "<strong>Step 2C:</strong> Supabase client initialized successfully.";
+.success {
+    color: var(--green);
+    background: var(--light-green);
+}
 
-    } catch (error) {
+.toolbar {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 10px;
+    align-items: end;
+}
 
-        document.getElementById("status").innerHTML =
-            "<strong>Step 2C ERROR:</strong> " + error.message;
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    gap: 12px;
+}
 
+.stat {
+    padding: 15px;
+    background: #f8fafb;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 25px;
+    color: var(--green);
+}
+
+.record {
+    padding: 17px;
+    margin: 14px 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: white;
+    overflow-wrap: anywhere;
+}
+
+.record h3 {
+    margin-top: 0;
+}
+
+.record p {
+    margin: 8px 0;
+}
+
+.record-actions {
+    margin-top: 15px;
+    padding-top: 10px;
+    border-top: 1px solid #eee;
+}
+
+.badge {
+    display: inline-block;
+    padding: 4px 9px;
+    border-radius: 15px;
+    background: #e8edf2;
+    font-size: 13px;
+    font-weight: bold;
+}
+
+.muted {
+    color: #666;
+}
+
+footer {
+    max-width: 1100px;
+    margin: 25px auto;
+    text-align: center;
+    color: #666;
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 9px;
     }
 
-</script>
+    .panel {
+        padding: 14px;
+    }
 
-</body>
+    header h1 {
+        font-size: 21px;
+    }
+}
+</style></head><body><header>
+    <h1>FrostTech Admin Dashboard</h1>
+    <p>HVAC and Refrigeration Marketplace</p>
+    <p id="account-label">Administrator access</p>
+</header><main class="container"><!-- LOGIN -->
+<section id="login-panel" class="panel">
+    <h2>Administrator Login</h2>
+
+    <p>Sign in with your authorized FrostTech administrator account.</p>
+
+    <form id="login-form">
+        <label for="login-email">Email Address</label>
+        <input
+            id="login-email"
+            type="email"
+            autocomplete="username"
+            required
+        >
+
+        <label for="login-password">Password</label>
+        <input
+            id="login-password"
+            type="password"
+            autocomplete="current-password"
+            required
+        >
+
+        <button id="login-button" type="submit">
+            Login
+        </button>
+    </form>
+
+    <div id="login-message"
+         class="status-message"
+         role="status"
+         aria-live="polite">
+        Please log in to continue.
+    </div>
+</section>
+
+<!-- DASHBOARD -->
+<section id="dashboard" class="hidden">
+
+    <div class="panel">
+        <h2>Dashboard Overview</h2>
+
+        <p>
+            Signed in as:
+            <strong id="admin-email"></strong>
+        </p>
+
+        <button id="refresh-button" type="button">
+            Refresh Dashboard
+        </button>
+
+        <button id="logout-button"
+                class="danger"
+                type="button">
+            Logout
+        </button>
+
+        <div id="dashboard-message"
+             class="status-message"
+             role="status"
+             aria-live="polite">
+            Loading dashboard...
+        </div>
+    </div>
+
+    <div class="panel">
+        <h2>Overview</h2>
+
+        <div class="grid">
+            <div class="stat">
+                Customer Requests
+                <strong id="request-count">0</strong>
+            </div>
+
+            <div class="stat">
+                Supplier Quotations
+                <strong id="supplier-quote-count">0</strong>
+            </div>
+
+            <div class="stat">
+                Submitted Quotations
+                <strong id="submitted-count">0</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- CUSTOMER REQUESTS -->
+    <section class="panel">
+        <h2>Customer Quote Requests</h2>
+
+        <div class="toolbar">
+            <div>
+                <label for="request-search">Search Requests</label>
+                <input
+                    id="request-search"
+                    type="search"
+                    placeholder="Reference, product, address..."
+                >
+            </div>
+
+            <div>
+                <label for="request-filter">Filter by Status</label>
+                <select id="request-filter">
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="reviewing">Reviewing</option>
+                    <option value="quoted">Quoted</option>
+                    <option value="completed">Completed</option>
+                    <option value="rejected">Rejected</option>
+                </select>
+            </div>
+        </div>
+
+        <div id="requests-list">
+            <p class="muted">Customer requests will appear here.</p>
+        </div>
+    </section>
+
+    <!-- SUPPLIER QUOTATIONS -->
+    <section class="panel">
+        <h2>Supplier Quotations</h2>
+
+        <p class="muted">
+            Review quotations submitted by suppliers. Selecting a
+            quotation marks it as selected in the supplier_quotes table.
+            Customer-facing quotations and payments are separate steps.
+        </p>
+
+        <div class="toolbar">
+            <div>
+                <label for="supplier-quote-filter">
+                    Filter by Status
+                </label>
+
+                <select id="supplier-quote-filter">
+                    <option value="">All statuses</option>
+                    <option value="draft">Draft</option>
+                    <option value="submitted">Submitted</option>
+                    <option value="selected">Selected</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="expired">Expired</option>
+                </select>
+            </div>
+
+            <div>
+                <label for="supplier-quote-search">
+                    Search Quotations
+                </label>
+
+                <input
+                    id="supplier-quote-search"
+                    type="search"
+                    placeholder="Request ID or supplier ID..."
+                >
+            </div>
+        </div>
+
+        <div id="supplier-quotes-list">
+            <p class="muted">Supplier quotations will appear here.</p>
+        </div>
+    </section>
+
+</section>
+
+</main><footer>
+    <p>
+        &copy; <span id="year"></span>
+        FrostTech HVAC and Refrigeration.
+    </p>
+</footer><script>
+"use strict";
+
+/*
+ * FrostTech configuration.
+ * Uses the public/publishable key, never a service-role key.
+ */
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+
+const $ = function (id) {
+    return document.getElementById(id);
+};
+
+let currentUser = null;
+let customerRequests = [];
+let supplierQuotes = [];
+let requestLoadError = false;
+let supplierQuoteLoadError = false;
+
+$("year").textContent = new Date().getFullYear();
+
+function setMessage(elementId, message, type) {
+    const element = $(elementId);
+
+    element.textContent = message;
+    element.className = "status-message";
+
+    if (type === "error") {
+        element.classList.add("error");
+    } else if (type === "success") {
+        element.classList.add("success");
+    }
+}
+
+function createElement(tag, text, className) {
+    const element = document.createElement(tag);
+
+    element.textContent =
+        text === null || text === undefined || text === ""
+            ? "Not provided"
+            : String(text);
+
+    if (className) {
+        element.className = className;
+    }
+
+    return element;
+}
+
+function addLine(parent, label, value) {
+    const paragraph = document.createElement("p");
+
+    const strong = document.createElement("strong");
+    strong.textContent = label + ": ";
+
+    paragraph.append(
+        strong,
+        document.createTextNode(
+            value === null || value === undefined || value === ""
+                ? "Not provided"
+                : String(value)
+        )
+    );
+
+    parent.appendChild(paragraph);
+}
+
+function formatNaira(value) {
+    if (value === null || value === undefined || value === "") {
+        return "Not provided";
+    }
+
+    const number = Number(value);
+
+    if (!Number.isFinite(number)) {
+        return "Not provided";
+    }
+
+    return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 2
+    }).format(number);
+}
+
+function formatDate(value) {
+    if (!value) {
+        return "Not provided";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleString("en-NG");
+}
+
+function showLogin() {
+    $("login-panel").classList.remove("hidden");
+    $("dashboard").classList.add("hidden");
+}
+
+function showDashboard() {
+    $("login-panel").classList.add("hidden");
+    $("dashboard").classList.remove("hidden");
+    $("admin-email").textContent = currentUser.email || "";
+    $("account-label").textContent = "Authenticated administrator";
+}
+
+async function verifyAdministrator(user) {
+    /*
+     * profiles.id is the Supabase Auth user ID.
+     */
+    const { data: profile, error } = await supabaseClient
+        .from("profiles")
+        .select("id, full_name, role, is_active")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (error) {
+        throw new Error(
+            "Could not verify your administrator profile: " +
+            error.message
+        );
+    }
+
+    if (!profile) {
+        throw new Error(
+            "No administrator profile was found for this account."
+        );
+    }
+
+    if (profile.role !== "admin" || profile.is_active !== true) {
+        throw new Error(
+            "Access denied. An active administrator account is required."
+        );
+    }
+
+    return profile;
+}
+
+async function handleLogin(event) {
+    event.preventDefault();
+
+    const email = $("login-email").value.trim();
+    const password = $("login-password").value;
+
+    if (!email || !password) {
+        setMessage(
+            "login-message",
+            "Enter your email address and password.",
+            "error"
+        );
+        return;
+    }
+
+    const button = $("login-button");
+    button.disabled = true;
+    button.textContent = "Signing in...";
+
+    setMessage(
+        "login-message",
+        "Authenticating and checking administrator access...",
+        ""
+    );
+
+    try {
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
+            email: email,
+            password: password
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.user) {
+            throw new Error("Supabase did not return an authenticated user.");
+        }
+
+        try {
+            await verifyAdministrator(data.user);
+        } catch (verificationError) {
+            await supabaseClient.auth.signOut();
+            throw verificationError;
+        }
+
+        currentUser = data.user;
+
+        showDashboard();
+
+        await loadDashboard();
+
+    } catch (error) {
+        console.error("FrostTech login error:", error);
+
+        setMessage(
+            "login-message",
+            error.message || "Login failed. Please try again.",
+            "error"
+        );
+
+    } finally {
+        button.disabled = false;
+        button.textContent = "Login";
+    }
+}
+
+async function loadCustomerRequests() {
+    requestLoadError = false;
+
+    const { data, error } = await supabaseClient
+        .from("quote_requests")
+        .select(
+            "id, request_number, title, description, product_id, quantity, preferred_brand, budget, delivery_address, status, created_at"
+        )
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+    if (error) {
+        requestLoadError = true;
+        throw new Error(
+            "Could not load customer requests: " + error.message
+        );
+    }
+
+    customerRequests = data || [];
+
+    $("request-count").textContent = customerRequests.length;
+
+    renderCustomerRequests();
+}
+
+function renderCustomerRequests() {
+    const container = $("requests-list");
+    container.replaceChildren();
+
+    const search = $("request-search").value.trim().toLowerCase();
+    const filter = $("request-filter").value;
+
+    const filtered = customerRequests.filter(function (request) {
+        const text = [
+            request.request_number,
+            request.title,
+            request.description,
+            request.delivery_address,
+            request.preferred_brand,
+            request.status,
+            request.product_id
+        ].join(" ").toLowerCase();
+
+        const matchesSearch = !search || text.includes(search);
+        const matchesStatus = !filter || request.status === filter;
+
+        return matchesSearch && matchesStatus;
+    });
+
+    if (filtered.length === 0) {
+        container.appendChild(
+            createElement(
+                "p",
+                "No matching customer requests were found.",
+                "muted"
+            )
+        );
+        return;
+    }
+
+    filtered.forEach(function (request) {
+        const card = document.createElement("article");
+        card.className = "record";
+
+        card.appendChild(
+            createElement(
+                "h3",
+                request.title || "Customer Quote Request"
+            )
+        );
+
+        card.appendChild(
+            createElement(
+                "span",
+                request.status || "Status not set",
+                "badge"
+            )
+        );
+
+        addLine(card, "Reference", request.request_number);
+        addLine(card, "Request ID", request.id);
+        addLine(card, "Product ID", request.product_id);
+        addLine(card, "Quantity", request.quantity);
+        addLine(card, "Preferred brand", request.preferred_brand);
+        addLine(card, "Budget", formatNaira(request.budget));
+        addLine(card, "Delivery address", request.delivery_address);
+        addLine(card, "Description", request.description);
+        addLine(card, "Date submitted", formatDate(request.created_at));
+
+        const actions = document.createElement("div");
+        actions.className = "record-actions";
+
+        const statusLabel = document.createElement("label");
+        statusLabel.textContent = "Update request status";
+
+        const statusSelect = document.createElement("select");
+
+        [
+            "pending",
+            "reviewing",
+            "quoted",
+            "completed",
+            "rejected"
+        ].forEach(function (status) {
+            const option = document.createElement("option");
+            option.value = status;
+            option.textContent = status;
+            statusSelect.appendChild(option);
+        });
+
+        if (
+            request.status &&
+            !Array.from(statusSelect.options).some(function (option) {
+                return option.value === request.status;
+            })
+        ) {
+            const option = document.createElement("option");
+            option.value = request.status;
+            option.textContent = request.status;
+            statusSelect.appendChild(option);
+        }
+
+        statusSelect.value = request.status || "pending";
+
+        const saveButton = document.createElement("button");
+        saveButton.type = "button";
+        saveButton.textContent = "Save Status";
+
+        saveButton.addEventListener("click", async function () {
+            saveButton.disabled = true;
+            saveButton.textContent = "Saving...";
+
+            try {
+                const { error } = await supabaseClient
+                    .from("quote_requests")
+                    .update({ status: statusSelect.value })
+                    .eq("id", request.id);
+
+                if (error) {
+                    throw error;
+                }
+
+                request.status = statusSelect.value;
+
+                setMessage(
+                    "dashboard-message",
+                    "Request " + (request.request_number || request.id) +
+                    " updated to " + statusSelect.value + ".",
+                    "success"
+                );
+
+                renderCustomerRequests();
+
+            } catch (error) {
+                console.error("Request status update error:", error);
+
+                setMessage(
+                    "dashboard-message",
+                    "Could not update request: " + error.message,
+                    "error"
+                );
+
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = "Save Status";
+            }
+        });
+
+        actions.append(statusLabel, statusSelect, saveButton);
+        card.appendChild(actions);
+        container.appendChild(card);
+    });
+}
+
+async function loadSupplierQuotes() {
+    supplierQuoteLoadError = false;
+
+    const { data, error } = await supabaseClient
+        .from("supplier_quotes")
+        .select(
+            "id, request_id, supplier_id, product_id, quantity, supplier_unit_price, supplier_total, delivery_cost, notes, valid_until, status, created_at, frosttech_margin_percent, frosttech_margin_amount, customer_total, customer_quote_status"
+        )
+        .order("created_at", { ascending: false })
+        .limit(200);
+
+    if (error) {
+        supplierQuoteLoadError = true;
+        throw new Error(
+            "Could not load supplier quotations: " + error.message
+        );
+    }
+
+    supplierQuotes = data || [];
+
+    $("supplier-quote-count").textContent = supplierQuotes.length;
+
+    $("submitted-count").textContent = supplierQuotes.filter(
+        function (quote) {
+            return quote.status === "submitted";
+        }
+    ).length;
+
+    renderSupplierQuotes();
+}
+
+function renderSupplierQuotes() {
+    const container = $("supplier-quotes-list");
+    container.replaceChildren();
+
+    const search = $("supplier-quote-search").value.trim().toLowerCase();
+    const filter = $("supplier-quote-filter").value;
+
+    const filtered = supplierQuotes.filter(function (quote) {
+        const text = [
+            quote.id,
+            quote.request_id,
+            quote.supplier_id,
+            quote.product_id,
+            quote.status,
+            quote.customer_quote_status,
+            quote.notes
+        ].join(" ").toLowerCase();
+
+        return (!search || text.includes(search)) &&
+               (!filter || quote.status === filter);
+    });
+
+    if (filtered.length === 0) {
+        container.appendChild(
+            createElement(
+                "p",
+                "No matching supplier quotations were found.",
+                "muted"
+            )
+        );
+        return;
+    }
+
+    filtered.forEach(function (quote) {
+        const card = document.createElement("article");
+        card.className = "record";
+
+        card.appendChild(
+            createElement(
+                "h3",
+                "Supplier Quotation"
+            )
+        );
+
+        card.appendChild(
+            createElement(
+                "span",
+                quote.status || "Status not set",
+                "badge"
+            )
+        );
+
+        addLine(card, "Quotation ID", quote.id);
+        addLine(card, "Customer request ID", quote.request_id);
+        addLine(card, "Supplier ID", quote.supplier_id);
+        addLine(card, "Product ID", quote.product_id);
+        addLine(card, "Quantity", quote.quantity);
+        addLine(
+            card,
+            "Supplier unit price",
+            formatNaira(quote.supplier_unit_price)
+        );
+        addLine(
+            card,
+            "Supplier total",
+            formatNaira(quote.supplier_total)
+        );
+        addLine(
+            card,
+            "Delivery cost",
+            formatNaira(quote.delivery_cost)
+        );
+        addLine(
+            card,
+            "FrostTech margin",
+            quote.frosttech_margin_percent == null
+                ? "Not calculated"
+                : quote.frosttech_margin_percent + "%"
+        );
+        addLine(
+            card,
+            "FrostTech margin amount",
+            formatNaira(quote.frosttech_margin_amount)
+        );
+        addLine(
+            card,
+            "Customer total",
+            formatNaira(quote.customer_total)
+        );
+        addLine(
+            card,
+            "Customer quote status",
+            quote.customer_quote_status
+        );
+        addLine(card, "Valid until", formatDate(quote.valid_until));
+        addLine(card, "Supplier notes", quote.notes);
+        addLine(card, "Submitted", formatDate(quote.created_at));
+
+        const actions = document.createElement("div");
+        actions.className = "record-actions";
+
+        const updateLabel = document.createElement("label");
+        updateLabel.textContent = "Quotation status";
+
+        const statusSelect = document.createElement("select");
+
+        ["draft", "submitted", "selected", "rejected", "expired"]
+            .forEach(function (status) {
+                const option = document.createElement("option");
+                option.value = status;
+                option.textContent = status;
+                statusSelect.appendChild(option);
+            });
+
+        statusSelect.value = quote.status || "submitted";
+
+        const saveButton = document.createElement("button");
+        saveButton.type = "button";
+        saveButton.textContent = "Save Quotation Status";
+
+        saveButton.addEventListener("click", async function () {
+            const nextStatus = statusSelect.value;
+
+            if (
+                nextStatus === "selected" &&
+                !window.confirm(
+                    "Select this supplier quotation? This records your selection. " +
+                    "It does not yet send a customer quote or authorize payment."
+                )
+            ) {
+                statusSelect.value = quote.status || "submitted";
+                return;
+            }
+
+            saveButton.disabled = true;
+            saveButton.textContent = "Saving...";
+
+            try {
+                const { error } = await supabaseClient
+                    .from("supplier_quotes")
+                    .update({ status: nextStatus })
+                    .eq("id", quote.id);
+
+                if (error) {
+                    throw error;
+                }
+
+                quote.status = nextStatus;
+
+                setMessage(
+                    "dashboard-message",
+                    "Supplier quotation status updated successfully.",
+                    "success"
+                );
+
+                renderSupplierQuotes();
+
+                $("submitted-count").textContent =
+                    supplierQuotes.filter(function (item) {
+                        return item.status === "submitted";
+                    }).length;
+
+            } catch (error) {
+                console.error("Supplier quotation update error:", error);
+
+                setMessage(
+                    "dashboard-message",
+                    "Could not update supplier quotation: " + error.message,
+                    "error"
+                );
+
+            } finally {
+                saveButton.disabled = false;
+                saveButton.textContent = "Save Quotation Status";
+            }
+        });
+
+        actions.append(updateLabel, statusSelect, saveButton);
+        card.appendChild(actions);
+        container.appendChild(card);
+    });
+}
+
+async function loadDashboard() {
+    setMessage(
+        "dashboard-message",
+        "Loading customer requests and supplier quotations...",
+        ""
+    );
+
+    const results = await Promise.allSettled([
+        loadCustomerRequests(),
+        loadSupplierQuotes()
+    ]);
+
+    const errors = results
+        .filter(function (result) {
+            return result.status === "rejected";
+        })
+        .map(function (result) {
+            return result.reason.message || "Unknown error";
+        });
+
+    if (errors.length > 0) {
+        setMessage(
+            "dashboard-message",
+            errors.join(" | "),
+            "error"
+        );
+    } else {
+        setMessage(
+            "dashboard-message",
+            "Dashboard loaded successfully.",
+            "success"
+        );
+    }
+}
+
+async function handleLogout() {
+    $("logout-button").disabled = true;
+
+    try {
+        const { error } = await supabaseClient.auth.signOut();
+
+        if (error) {
+            throw error;
+        }
+
+        currentUser = null;
+        customerRequests = [];
+        supplierQuotes = [];
+
+        $("requests-list").replaceChildren();
+        $("supplier-quotes-list").replaceChildren();
+
+        showLogin();
+
+        setMessage(
+            "login-message",
+            "You have logged out successfully.",
+            "success"
+        );
+
+    } catch (error) {
+        setMessage(
+            "dashboard-message",
+            "Logout error: " + error.message,
+            "error"
+        );
+
+    } finally {
+        $("logout-button").disabled = false;
+    }
+}
+
+/* Event handlers */
+$("login-form").addEventListener("submit", handleLogin);
+
+$("refresh-button").addEventListener("click", loadDashboard);
+
+$("logout-button").addEventListener("click", handleLogout);
+
+$("request-search").addEventListener("input", renderCustomerRequests);
+
+$("request-filter").addEventListener("change", renderCustomerRequests);
+
+$("supplier-quote-search").addEventListener(
+    "input",
+    renderSupplierQuotes
+);
+
+$("supplier-quote-filter").addEventListener(
+    "change",
+    renderSupplierQuotes
+);
+
+/* Restore an existing session, but always verify administrator access. */
+async function initializeAdmin() {
+    try {
+        if (
+            !window.supabase ||
+            typeof window.supabase.createClient !== "function"
+        ) {
+            throw new Error("Supabase JavaScript library did not load.");
+        }
+
+        const { data, error } = await supabaseClient.auth.getSession();
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.session || !data.session.user) {
+            showLogin();
+
+            setMessage(
+                "login-message",
+                "Please log in with your FrostTech administrator account.",
+                ""
+            );
+
+            return;
+        }
+
+        try {
+            await verifyAdministrator(data.session.user);
+
+        } catch (verificationError) {
+            await supabaseClient.auth.signOut();
+            throw verificationError;
+        }
+
+        currentUser = data.session.user;
+
+        showDashboard();
+
+        await loadDashboard();
+
+    } catch (error) {
+        console.error("FrostTech initialization error:", error);
+
+        showLogin();
+
+        setMessage(
+            "login-message",
+            error.message || "Could not initialize the admin dashboard.",
+            "error"
+        );
+    }
+}
+
+initializeAdmin();
+</script></body>
 </html>
