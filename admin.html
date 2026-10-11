@@ -3,19 +3,18 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FrostTech Admin Dashboard</title>
-<meta name="robots" content="noindex,nofollow">
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>FrostTech Administration</title>
 
 <style>
 :root {
-    --green: #075e2a;
-    --light-green: #e8f5e9;
-    --background: #f4f6f8;
-    --border: #dce2e7;
-    --red: #b00020;
-    --blue: #eaf3ff;
+    --primary: #063b70;
+    --secondary: #0879c9;
+    --background: #f3f6fa;
+    --border: #dce3eb;
+    --success: #16803c;
+    --danger: #c62828;
+    --warning: #a76500;
 }
 
 * {
@@ -24,186 +23,239 @@
 
 body {
     margin: 0;
-    padding: 16px;
     font-family: Arial, sans-serif;
     background: var(--background);
-    color: #222;
-    line-height: 1.5;
-}
-
-header, footer, .container {
-    max-width: 1100px;
-    margin-left: auto;
-    margin-right: auto;
+    color: #172333;
 }
 
 header {
-    margin-bottom: 20px;
-    padding: 20px;
+    background: var(--primary);
     color: white;
-    background: var(--green);
-    border-radius: 10px;
+    padding: 18px;
 }
 
 header h1 {
-    margin: 0;
-    font-size: 25px;
+    margin: 0 0 8px;
+    font-size: 23px;
 }
 
 header p {
-    margin-bottom: 0;
+    margin: 0;
 }
 
-.panel {
+main {
+    max-width: 1200px;
+    margin: auto;
+    padding: 16px;
+}
+
+.card {
     background: white;
     border: 1px solid var(--border);
     border-radius: 10px;
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 18px;
+    margin-bottom: 18px;
+    box-shadow: 0 2px 5px rgba(0,0,0,.04);
+}
+
+h2 {
+    color: var(--primary);
+    margin-top: 0;
+}
+
+h3 {
+    margin-bottom: 8px;
+}
+
+input,
+select,
+textarea,
+button {
+    font: inherit;
+    width: 100%;
+    padding: 11px;
+    margin: 5px 0;
+    border-radius: 6px;
+}
+
+input,
+select,
+textarea {
+    border: 1px solid #bdc9d6;
+    background: white;
+}
+
+textarea {
+    min-height: 70px;
+    resize: vertical;
+}
+
+button {
+    border: none;
+    background: var(--secondary);
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+
+button.danger {
+    background: var(--danger);
+}
+
+button.success {
+    background: var(--success);
+}
+
+button.warning {
+    background: var(--warning);
+}
+
+button.neutral {
+    background: #596579;
+}
+
+.small-button {
+    width: auto;
+    padding: 8px 12px;
+    margin-right: 4px;
 }
 
 .hidden {
     display: none !important;
 }
 
-label {
-    display: block;
-    margin-top: 12px;
-    font-weight: bold;
-}
-
-input, select, textarea {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    margin-top: 5px;
-    border: 1px solid #cbd2d9;
+.message {
+    padding: 10px;
     border-radius: 6px;
-    background: white;
-    font-size: 16px;
-}
-
-button {
-    padding: 11px 15px;
-    margin: 6px 5px 6px 0;
-    border: none;
-    border-radius: 6px;
-    background: var(--green);
-    color: white;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-button.secondary {
-    background: #34495e;
-}
-
-button.danger {
-    background: var(--red);
-}
-
-button:disabled {
-    opacity: 0.55;
-    cursor: not-allowed;
-}
-
-.status-message {
-    margin: 12px 0;
-    padding: 12px;
-    background: var(--blue);
-    border-radius: 6px;
+    margin: 10px 0;
     overflow-wrap: anywhere;
 }
 
+.info {
+    background: #e8f3ff;
+    color: #06477c;
+}
+
 .error {
-    color: var(--red);
-    background: #fff0f0;
+    background: #ffebee;
+    color: #a11919;
 }
 
-.success {
-    color: var(--green);
-    background: var(--light-green);
+.success-message {
+    background: #e8f5e9;
+    color: #166534;
 }
 
-.toolbar {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 10px;
-    align-items: end;
+.warning-message {
+    background: #fff5dc;
+    color: #805000;
 }
 
 .grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 12px;
 }
 
 .stat {
-    padding: 15px;
-    background: #f8fafb;
-    border: 1px solid var(--border);
+    background: #edf5ff;
     border-radius: 8px;
+    padding: 15px;
 }
 
 .stat strong {
     display: block;
     font-size: 25px;
-    color: var(--green);
+    color: var(--primary);
+    margin-top: 5px;
 }
 
-.record {
-    padding: 17px;
-    margin: 14px 0;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: white;
+.table-wrap {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 650px;
+}
+
+th,
+td {
+    border-bottom: 1px solid var(--border);
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
     overflow-wrap: anywhere;
 }
 
-.record h3 {
-    margin-top: 0;
-}
-
-.record p {
-    margin: 8px 0;
-}
-
-.record-actions {
-    margin-top: 15px;
-    padding-top: 10px;
-    border-top: 1px solid #eee;
+th {
+    background: #edf3fa;
 }
 
 .badge {
     display: inline-block;
-    padding: 4px 9px;
-    border-radius: 15px;
-    background: #e8edf2;
-    font-size: 13px;
+    padding: 5px 8px;
+    border-radius: 5px;
+    background: #e8edf3;
+    font-size: 12px;
     font-weight: bold;
 }
 
-.muted {
-    color: #666;
+.badge.approved,
+.badge.selected,
+.badge.completed {
+    background: #d8f3df;
+    color: #176532;
+}
+
+.badge.pending,
+.badge.in_review,
+.badge.more_info,
+.badge.reviewing {
+    background: #fff0c2;
+    color: #805500;
+}
+
+.badge.rejected,
+.badge.suspended,
+.badge.expired {
+    background: #ffe0e0;
+    color: #a21d1d;
+}
+
+.supplier-actions {
+    min-width: 220px;
 }
 
 footer {
-    margin-top: 25px;
     text-align: center;
-    color: #666;
+    padding: 20px;
+    color: #64748b;
 }
 
-@media (max-width: 480px) {
-    body {
-        padding: 9px;
+label {
+    display: block;
+    margin-top: 8px;
+    font-weight: bold;
+}
+
+@media (max-width: 600px) {
+    main {
+        padding: 10px;
     }
 
-    .panel {
-        padding: 14px;
+    .card {
+        padding: 13px;
     }
 
     header h1 {
-        font-size: 21px;
+        font-size: 20px;
     }
 }
 </style>
@@ -212,183 +264,202 @@ footer {
 <body>
 
 <header>
-    <h1>FrostTech Admin Dashboard</h1>
-    <p>HVAC and Refrigeration Marketplace</p>
-    <p id="account-label">Administrator access</p>
+    <h1>FrostTech HVAC and Refrigeration</h1>
+    <p>Marketplace Administration Dashboard</p>
 </header>
 
-<main class="container">
+<main>
 
-<!-- LOGIN -->
-<section id="login-panel" class="panel">
-    <h2>Administrator Login</h2>
-
-    <p>Sign in with your authorized FrostTech administrator account.</p>
-
-    <!-- No form submission: login is handled by the button click. -->
-    <form id="login-form" onsubmit="return false;">
-
-        <label for="login-email">Email Address</label>
-        <input
-            id="login-email"
-            type="email"
-            autocomplete="username"
-            required
-        >
-
-        <label for="login-password">Password</label>
-        <input
-            id="login-password"
-            type="password"
-            autocomplete="current-password"
-            required
-        >
-
-        <button id="login-button" type="button">
-            Login
-        </button>
-    </form>
-
-    <div id="login-message"
-         class="status-message"
-         role="status"
-         aria-live="polite">
-        Please log in to continue.
-    </div>
-</section>
-
-<!-- DASHBOARD -->
-<section id="dashboard" class="hidden">
-
-    <div class="panel">
-        <h2>Dashboard Overview</h2>
-
-        <p>Signed in as: <strong id="admin-email"></strong></p>
-
-        <button id="refresh-button" type="button">
-            Refresh Dashboard
-        </button>
-
-        <button id="logout-button"
-                class="danger"
-                type="button">
-            Logout
-        </button>
-
-        <div id="dashboard-message"
-             class="status-message"
-             role="status"
-             aria-live="polite">
-            Loading dashboard...
-        </div>
+    <div id="systemStatus" class="message info">
+        Connecting to FrostTech...
     </div>
 
-    <div class="panel">
-        <h2>Overview</h2>
+    <!-- ADMIN LOGIN -->
 
-        <div class="grid">
-            <div class="stat">
-                Customer Requests
-                <strong id="request-count">0</strong>
-            </div>
+    <section id="loginSection" class="card">
+        <h2>Administrator Login</h2>
 
-            <div class="stat">
-                Supplier Quotations
-                <strong id="supplier-quote-count">0</strong>
-            </div>
-
-            <div class="stat">
-                Submitted Quotations
-                <strong id="submitted-count">0</strong>
-            </div>
-        </div>
-    </div>
-
-    <!-- CUSTOMER REQUESTS -->
-    <section class="panel">
-        <h2>Customer Quote Requests</h2>
-
-        <div class="toolbar">
-            <div>
-                <label for="request-search">Search Requests</label>
-                <input id="request-search"
-                       type="search"
-                       placeholder="Reference, product, address...">
-            </div>
-
-            <div>
-                <label for="request-filter">Filter by Status</label>
-                <select id="request-filter">
-                    <option value="">All statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="reviewing">Reviewing</option>
-                    <option value="quoted">Quoted</option>
-                    <option value="completed">Completed</option>
-                    <option value="rejected">Rejected</option>
-                </select>
-            </div>
-        </div>
-
-        <div id="requests-list">
-            <p class="muted">Customer requests will appear here.</p>
-        </div>
-    </section>
-
-    <!-- SUPPLIER QUOTATIONS -->
-    <section class="panel">
-        <h2>Supplier Quotations</h2>
-
-        <p class="muted">
-            Review supplier quotations. Selecting a quotation updates its
-            status. This action does not send a customer quote or authorize
-            payment.
+        <p>
+            Sign in using your authorized FrostTech administrator account.
         </p>
 
-        <div class="toolbar">
-            <div>
-                <label for="supplier-quote-filter">Filter by Status</label>
-                <select id="supplier-quote-filter">
-                    <option value="">All statuses</option>
-                    <option value="draft">Draft</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="selected">Selected</option>
-                    <option value="rejected">Rejected</option>
-                    <option value="expired">Expired</option>
-                </select>
-            </div>
+        <form id="loginForm">
+            <label for="email">Administrator Email</label>
+            <input
+                id="email"
+                type="email"
+                autocomplete="username"
+                required
+            >
 
-            <div>
-                <label for="supplier-quote-search">Search Quotations</label>
-                <input id="supplier-quote-search"
-                       type="search"
-                       placeholder="Request ID or supplier ID...">
-            </div>
-        </div>
+            <label for="password">Password</label>
+            <input
+                id="password"
+                type="password"
+                autocomplete="current-password"
+                required
+            >
 
-        <div id="supplier-quotes-list">
-            <p class="muted">Supplier quotations will appear here.</p>
-        </div>
+            <button id="loginBtn" type="submit">
+                Login
+            </button>
+        </form>
+
+        <div id="loginMessage" role="status"></div>
     </section>
 
-</section>
+    <!-- ADMIN DASHBOARD -->
+
+    <section id="dashboard" class="hidden">
+
+        <section class="card">
+            <h2>Administration Overview</h2>
+
+            <p>
+                Signed in as:
+                <strong id="loggedUser"></strong>
+            </p>
+
+            <button id="refreshBtn" type="button">
+                Refresh Dashboard
+            </button>
+
+            <button id="logoutBtn" type="button" class="danger">
+                Logout
+            </button>
+
+            <div id="message" role="status"></div>
+        </section>
+
+        <!-- SUMMARY -->
+
+        <section class="card">
+            <h2>Marketplace Summary</h2>
+
+            <div class="grid">
+                <div class="stat">
+                    Customer Quote Requests
+                    <strong id="requestCount">0</strong>
+                </div>
+
+                <div class="stat">
+                    Supplier Applications
+                    <strong id="supplierCount">0</strong>
+                </div>
+
+                <div class="stat">
+                    Pending Supplier Reviews
+                    <strong id="pendingSupplierCount">0</strong>
+                </div>
+
+                <div class="stat">
+                    Supplier Quotations
+                    <strong id="quotationCount">0</strong>
+                </div>
+            </div>
+        </section>
+
+        <!-- CUSTOMER REQUESTS -->
+
+        <section class="card">
+            <h2>Customer Quote Requests</h2>
+
+            <p>
+                Review customer requirements and track quotation progress.
+            </p>
+
+            <div id="requestMessage" role="status"></div>
+
+            <div id="quoteRequests">
+                Loading customer requests...
+            </div>
+        </section>
+
+        <!-- SUPPLIER QUOTATIONS -->
+
+        <section class="card">
+            <h2>Saved Supplier Quotations</h2>
+
+            <p>
+                Review supplier pricing, delivery costs, FrostTech margins,
+                and proposed customer totals.
+            </p>
+
+            <div id="quotationMessage" role="status"></div>
+
+            <div id="supplierQuotes">
+                Loading supplier quotations...
+            </div>
+        </section>
+
+        <!-- SUPPLIER MANAGEMENT -->
+
+        <section class="card" id="supplierManagement">
+
+            <h2>Supplier Management</h2>
+
+            <p>
+                FrostTech administrators have final authority over supplier
+                approval. Email confirmation and verification checks do not
+                automatically approve an application.
+            </p>
+
+            <div class="message warning-message">
+                Review the business details and supporting evidence before
+                making a decision. Approve a supplier only after you have
+                explicitly decided to approve that application.
+            </div>
+
+            <button id="loadSuppliersBtn" type="button">
+                Load Supplier Applications
+            </button>
+
+            <div id="supplierManagementMessage" role="status"></div>
+
+            <div id="supplierManagementRows">
+                Supplier applications will appear here.
+            </div>
+        </section>
+
+        <!-- PAYMENTS -->
+
+        <section class="card">
+            <h2>Payment Records</h2>
+
+            <p>
+                View payment records available to the administrator.
+                This section does not initiate payments or change payment
+                statuses.
+            </p>
+
+            <button id="loadPaymentsBtn" type="button">
+                Load Payment Records
+            </button>
+
+            <div id="paymentMessage" role="status"></div>
+
+            <div id="paymentRecords">
+                Tap the button to load payment records.
+            </div>
+        </section>
+
+    </section>
 
 </main>
 
 <footer>
-    <p>
-        &copy; <span id="year"></span>
-        FrostTech HVAC and Refrigeration.
-    </p>
+    FrostTech HVAC and Refrigeration Marketplace
 </footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 "use strict";
 
-/* =========================================================
-   FROSTTECH SUPABASE CONFIGURATION
-   Use only the public/publishable key in browser code.
-   Never put a service-role key in this file.
-   ========================================================= */
+/*
+ * FrostTech Supabase configuration.
+ * Uses the existing project and publishable key.
+ */
 
 const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -396,726 +467,1058 @@ const SUPABASE_URL =
 const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-let supabaseClient = null;
-let currentUser = null;
-let customerRequests = [];
-let supplierQuotes = [];
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 
-/* =========================================================
-   UTILITIES
-   ========================================================= */
+let currentAdmin = null;
+let currentRequests = [];
+let currentSuppliers = [];
+let currentSupplierQuotes = [];
 
-const $ = id => document.getElementById(id);
 
-$("year").textContent = new Date().getFullYear();
+/* GENERAL HELPERS */
 
-function setMessage(id, message, type = "") {
-    const element = $(id);
-
-    element.textContent = message;
-    element.className = "status-message";
-
-    if (type === "error") {
-        element.classList.add("error");
-    }
-
-    if (type === "success") {
-        element.classList.add("success");
-    }
+function el(id) {
+    return document.getElementById(id);
 }
 
-function createElement(tag, text, className = "") {
-    const element = document.createElement(tag);
-
-    element.textContent =
-        text === null || text === undefined || text === ""
-            ? "Not provided"
-            : String(text);
-
-    if (className) {
-        element.className = className;
-    }
-
-    return element;
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, function(char) {
+        return {
+            "&": "&amp;",
+            "<": "&lt;",
+            ">": "&gt;",
+            '"': "&quot;",
+            "'": "&#39;"
+        }[char];
+    });
 }
 
-function addLine(parent, label, value) {
-    const paragraph = document.createElement("p");
-    const strong = document.createElement("strong");
+function money(value) {
+    const amount = Number(value ?? 0);
 
-    strong.textContent = label + ": ";
-
-    paragraph.append(
-        strong,
-        document.createTextNode(
-            value === null || value === undefined || value === ""
-                ? "Not provided"
-                : String(value)
-        )
-    );
-
-    parent.appendChild(paragraph);
-}
-
-function formatNaira(value) {
-    if (value === null || value === undefined || value === "") {
-        return "Not provided";
-    }
-
-    const number = Number(value);
-
-    if (!Number.isFinite(number)) {
-        return "Not provided";
-    }
-
-    return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency: "NGN",
+    return "₦" + amount.toLocaleString("en-NG", {
+        minimumFractionDigits: 2,
         maximumFractionDigits: 2
-    }).format(number);
+    });
 }
 
-function formatDate(value) {
-    if (!value) return "Not provided";
+function dateText(value) {
+    if (!value) return "Not recorded";
 
     const date = new Date(value);
 
-    return Number.isNaN(date.getTime())
-        ? String(value)
-        : date.toLocaleString("en-NG");
-}
-
-function showLogin() {
-    $("login-panel").classList.remove("hidden");
-    $("dashboard").classList.add("hidden");
-    $("account-label").textContent = "Administrator access";
-}
-
-function showDashboard() {
-    $("login-panel").classList.add("hidden");
-    $("dashboard").classList.remove("hidden");
-    $("admin-email").textContent = currentUser?.email || "";
-    $("account-label").textContent = "Authenticated administrator";
-}
-
-/* =========================================================
-   INITIALIZE SUPABASE SAFELY
-   ========================================================= */
-
-function initializeSupabase() {
-    if (
-        !window.supabase ||
-        typeof window.supabase.createClient !== "function"
-    ) {
-        throw new Error(
-            "Supabase library did not load. Check your internet connection."
-        );
+    if (Number.isNaN(date.getTime())) {
+        return escapeHtml(value);
     }
 
-    supabaseClient = window.supabase.createClient(
-        SUPABASE_URL,
-        SUPABASE_PUBLISHABLE_KEY
-    );
+    return date.toLocaleString("en-NG");
 }
 
-/* =========================================================
-   ADMINISTRATOR VERIFICATION
-   ========================================================= */
+function badge(status) {
+    const safeStatus = String(status || "unknown")
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
 
-async function verifyAdministrator(user) {
-    const { data: profile, error } = await supabaseClient
+    return '<span class="badge ' + safeStatus + '">' +
+        escapeHtml(status || "unknown") +
+        '</span>';
+}
+
+function showMessage(id, text, type = "info") {
+    const target = el(id);
+
+    if (!target) return;
+
+    target.className = "message " + type;
+    target.textContent = text;
+}
+
+function clearMessage(id) {
+    const target = el(id);
+
+    if (!target) return;
+
+    target.textContent = "";
+    target.className = "";
+}
+
+function errorText(error) {
+    return error?.message || String(error || "Unknown error");
+}
+
+
+/* LOGIN AND ADMIN AUTHORIZATION */
+
+el("loginForm").addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const email = el("email").value.trim();
+    const password = el("password").value;
+    const button = el("loginBtn");
+
+    button.disabled = true;
+
+    showMessage(
+        "loginMessage",
+        "Checking administrator credentials...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db.auth.signInWithPassword({
+            email,
+            password
+        });
+
+        if (error) throw error;
+
+        const result = await checkAdminProfile(data.user);
+
+        if (!result) {
+            await db.auth.signOut();
+
+            showMessage(
+                "loginMessage",
+                "Access denied. This account is not an active FrostTech administrator.",
+                "error"
+            );
+
+            return;
+        }
+
+        await openDashboard(data.user);
+
+    } catch (error) {
+        showMessage(
+            "loginMessage",
+            "Login failed: " + errorText(error),
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+    }
+});
+
+
+async function checkAdminProfile(user) {
+    if (!user) return false;
+
+    const { data, error } = await db
         .from("profiles")
         .select("id, full_name, role, is_active")
         .eq("id", user.id)
         .maybeSingle();
 
     if (error) {
-        throw new Error(
-            "Could not verify administrator profile: " + error.message
-        );
+        throw error;
     }
 
-    if (!profile) {
-        throw new Error(
-            "No administrator profile was found for this account."
-        );
+    if (
+        !data ||
+        data.role !== "admin" ||
+        data.is_active !== true
+    ) {
+        return false;
     }
 
-    if (profile.role !== "admin" || profile.is_active !== true) {
-        throw new Error(
-            "Access denied. An active administrator account is required."
-        );
-    }
+    currentAdmin = {
+        id: user.id,
+        email: user.email,
+        full_name: data.full_name
+    };
 
-    return profile;
+    return true;
 }
 
-/* =========================================================
-   LOGIN
-   The button is type=button, so it cannot submit the form.
-   ========================================================= */
 
-async function handleLogin() {
-    const email = $("login-email").value.trim();
-    const password = $("login-password").value;
-    const button = $("login-button");
+async function openDashboard(user) {
+    const authorized = await checkAdminProfile(user);
 
-    if (!email || !password) {
-        setMessage(
-            "login-message",
-            "Enter your email address and password.",
+    if (!authorized) {
+        await db.auth.signOut();
+
+        el("loginSection").classList.remove("hidden");
+        el("dashboard").classList.add("hidden");
+
+        showMessage(
+            "loginMessage",
+            "Your account does not have active administrator access.",
             "error"
         );
+
         return;
     }
 
-    if (!supabaseClient) {
-        setMessage(
-            "login-message",
-            "Supabase is not initialized. Reload the page and try again.",
-            "error"
-        );
-        return;
-    }
+    el("loginSection").classList.add("hidden");
+    el("dashboard").classList.remove("hidden");
 
-    button.disabled = true;
-    button.textContent = "Signing in...";
+    el("loggedUser").textContent =
+        currentAdmin.full_name || currentAdmin.email;
 
-    setMessage(
-        "login-message",
-        "Checking your login details...",
-        ""
+    showMessage(
+        "systemStatus",
+        "Connected. Administrator access verified.",
+        "success-message"
     );
 
+    await loadDashboard();
+}
+
+
+async function checkExistingSession() {
     try {
-        const { data, error } =
-            await supabaseClient.auth.signInWithPassword({
-                email,
-                password
-            });
+        const { data, error } = await db.auth.getSession();
 
         if (error) throw error;
 
-        if (!data.user) {
-            throw new Error("Authentication returned no user.");
+        if (data.session?.user) {
+            await openDashboard(data.session.user);
+        } else {
+            el("loginSection").classList.remove("hidden");
+            el("dashboard").classList.add("hidden");
+
+            showMessage(
+                "systemStatus",
+                "Please log in as an administrator.",
+                "info"
+            );
         }
-
-        try {
-            await verifyAdministrator(data.user);
-        } catch (verificationError) {
-            await supabaseClient.auth.signOut();
-            throw verificationError;
-        }
-
-        currentUser = data.user;
-
-        showDashboard();
-
-        await loadDashboard();
-
     } catch (error) {
-        console.error("FrostTech login error:", error);
+        showMessage(
+            "systemStatus",
+            "Connection or session error: " + errorText(error),
+            "error"
+        );
+    }
+}
 
-        setMessage(
-            "login-message",
-            error.message || "Login failed. Please try again.",
+
+el("logoutBtn").addEventListener("click", async function() {
+    const { error } = await db.auth.signOut();
+
+    if (error) {
+        showMessage(
+            "message",
+            "Logout error: " + errorText(error),
             "error"
         );
 
-    } finally {
-        button.disabled = false;
-        button.textContent = "Login";
-    }
-}
-
-/* =========================================================
-   CUSTOMER QUOTE REQUESTS
-   ========================================================= */
-
-async function loadCustomerRequests() {
-    const { data, error } = await supabaseClient
-        .from("quote_requests")
-        .select(
-            "id, request_number, title, description, product_id, quantity, preferred_brand, budget, delivery_address, status, created_at"
-        )
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-    if (error) {
-        throw new Error(
-            "Could not load customer requests: " + error.message
-        );
-    }
-
-    customerRequests = data || [];
-
-    $("request-count").textContent = customerRequests.length;
-
-    renderCustomerRequests();
-}
-
-function renderCustomerRequests() {
-    const container = $("requests-list");
-    container.replaceChildren();
-
-    const search = $("request-search").value.trim().toLowerCase();
-    const filter = $("request-filter").value;
-
-    const filtered = customerRequests.filter(request => {
-        const searchable = [
-            request.request_number,
-            request.title,
-            request.description,
-            request.delivery_address,
-            request.preferred_brand,
-            request.status,
-            request.product_id
-        ].join(" ").toLowerCase();
-
-        return (!search || searchable.includes(search)) &&
-               (!filter || request.status === filter);
-    });
-
-    if (!filtered.length) {
-        container.appendChild(
-            createElement(
-                "p",
-                "No matching customer requests were found.",
-                "muted"
-            )
-        );
         return;
     }
 
-    filtered.forEach(request => {
-        const card = document.createElement("article");
-        card.className = "record";
+    currentAdmin = null;
 
-        card.appendChild(
-            createElement("h3", request.title || "Customer Quote Request")
-        );
+    el("dashboard").classList.add("hidden");
+    el("loginSection").classList.remove("hidden");
 
-        card.appendChild(
-            createElement("span", request.status || "Status not set", "badge")
-        );
-
-        addLine(card, "Reference", request.request_number);
-        addLine(card, "Request ID", request.id);
-        addLine(card, "Product ID", request.product_id);
-        addLine(card, "Quantity", request.quantity);
-        addLine(card, "Preferred brand", request.preferred_brand);
-        addLine(card, "Budget", formatNaira(request.budget));
-        addLine(card, "Delivery address", request.delivery_address);
-        addLine(card, "Description", request.description);
-        addLine(card, "Date submitted", formatDate(request.created_at));
-
-        const actions = document.createElement("div");
-        actions.className = "record-actions";
-
-        const label = createElement("label", "Update request status");
-        const select = document.createElement("select");
-
-        [
-            "pending",
-            "reviewing",
-            "quoted",
-            "completed",
-            "rejected"
-        ].forEach(status => {
-            const option = document.createElement("option");
-            option.value = status;
-            option.textContent = status;
-            select.appendChild(option);
-        });
-
-        if (
-            request.status &&
-            !Array.from(select.options).some(
-                option => option.value === request.status
-            )
-        ) {
-            const option = document.createElement("option");
-            option.value = request.status;
-            option.textContent = request.status;
-            select.appendChild(option);
-        }
-
-        select.value = request.status || "pending";
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = "Save Status";
-
-        button.addEventListener("click", async () => {
-            button.disabled = true;
-            button.textContent = "Saving...";
-
-            try {
-                const { error } = await supabaseClient
-                    .from("quote_requests")
-                    .update({ status: select.value })
-                    .eq("id", request.id);
-
-                if (error) throw error;
-
-                request.status = select.value;
-
-                setMessage(
-                    "dashboard-message",
-                    "Customer request status updated.",
-                    "success"
-                );
-
-                renderCustomerRequests();
-
-            } catch (error) {
-                console.error(error);
-
-                setMessage(
-                    "dashboard-message",
-                    "Could not update request: " + error.message,
-                    "error"
-                );
-
-            } finally {
-                button.disabled = false;
-                button.textContent = "Save Status";
-            }
-        });
-
-        actions.append(label, select, button);
-        card.appendChild(actions);
-        container.appendChild(card);
-    });
-}
-
-/* =========================================================
-   SUPPLIER QUOTATIONS
-   ========================================================= */
-
-async function loadSupplierQuotes() {
-    const { data, error } = await supabaseClient
-        .from("supplier_quotes")
-        .select(
-            "id, request_id, supplier_id, product_id, quantity, supplier_unit_price, supplier_total, delivery_cost, notes, valid_until, status, created_at, frosttech_margin_percent, frosttech_margin_amount, customer_total, customer_quote_status"
-        )
-        .order("created_at", { ascending: false })
-        .limit(200);
-
-    if (error) {
-        throw new Error(
-            "Could not load supplier quotations: " + error.message
-        );
-    }
-
-    supplierQuotes = data || [];
-
-    $("supplier-quote-count").textContent = supplierQuotes.length;
-
-    $("submitted-count").textContent = supplierQuotes.filter(
-        quote => quote.status === "submitted"
-    ).length;
-
-    renderSupplierQuotes();
-}
-
-function renderSupplierQuotes() {
-    const container = $("supplier-quotes-list");
-    container.replaceChildren();
-
-    const search = $("supplier-quote-search").value.trim().toLowerCase();
-    const filter = $("supplier-quote-filter").value;
-
-    const filtered = supplierQuotes.filter(quote => {
-        const searchable = [
-            quote.id,
-            quote.request_id,
-            quote.supplier_id,
-            quote.product_id,
-            quote.status,
-            quote.customer_quote_status,
-            quote.notes
-        ].join(" ").toLowerCase();
-
-        return (!search || searchable.includes(search)) &&
-               (!filter || quote.status === filter);
-    });
-
-    if (!filtered.length) {
-        container.appendChild(
-            createElement(
-                "p",
-                "No matching supplier quotations were found.",
-                "muted"
-            )
-        );
-        return;
-    }
-
-    filtered.forEach(quote => {
-        const card = document.createElement("article");
-        card.className = "record";
-
-        card.appendChild(createElement("h3", "Supplier Quotation"));
-        card.appendChild(
-            createElement("span", quote.status || "Status not set", "badge")
-        );
-
-        addLine(card, "Quotation ID", quote.id);
-        addLine(card, "Customer request ID", quote.request_id);
-        addLine(card, "Supplier ID", quote.supplier_id);
-        addLine(card, "Product ID", quote.product_id);
-        addLine(card, "Quantity", quote.quantity);
-        addLine(card, "Supplier unit price", formatNaira(quote.supplier_unit_price));
-        addLine(card, "Supplier total", formatNaira(quote.supplier_total));
-        addLine(card, "Delivery cost", formatNaira(quote.delivery_cost));
-
-        addLine(
-            card,
-            "FrostTech margin",
-            quote.frosttech_margin_percent == null
-                ? "Not calculated"
-                : quote.frosttech_margin_percent + "%"
-        );
-
-        addLine(
-            card,
-            "FrostTech margin amount",
-            formatNaira(quote.frosttech_margin_amount)
-        );
-
-        addLine(card, "Customer total", formatNaira(quote.customer_total));
-        addLine(card, "Customer quote status", quote.customer_quote_status);
-        addLine(card, "Valid until", formatDate(quote.valid_until));
-        addLine(card, "Supplier notes", quote.notes);
-        addLine(card, "Submitted", formatDate(quote.created_at));
-
-        const actions = document.createElement("div");
-        actions.className = "record-actions";
-
-        const label = createElement("label", "Quotation status");
-        const select = document.createElement("select");
-
-        ["draft", "submitted", "selected", "rejected", "expired"]
-            .forEach(status => {
-                const option = document.createElement("option");
-                option.value = status;
-                option.textContent = status;
-                select.appendChild(option);
-            });
-
-        select.value = quote.status || "submitted";
-
-        const button = document.createElement("button");
-        button.type = "button";
-        button.textContent = "Save Quotation Status";
-
-        button.addEventListener("click", async () => {
-            const nextStatus = select.value;
-
-            if (
-                nextStatus === "selected" &&
-                !window.confirm(
-                    "Select this supplier quotation? This records your selection. " +
-                    "It does not send a customer quote or authorize payment."
-                )
-            ) {
-                select.value = quote.status || "submitted";
-                return;
-            }
-
-            button.disabled = true;
-            button.textContent = "Saving...";
-
-            try {
-                const { error } = await supabaseClient
-                    .from("supplier_quotes")
-                    .update({ status: nextStatus })
-                    .eq("id", quote.id);
-
-                if (error) throw error;
-
-                quote.status = nextStatus;
-
-                $("submitted-count").textContent = supplierQuotes.filter(
-                    item => item.status === "submitted"
-                ).length;
-
-                setMessage(
-                    "dashboard-message",
-                    "Supplier quotation status updated successfully.",
-                    "success"
-                );
-
-                renderSupplierQuotes();
-
-            } catch (error) {
-                console.error(error);
-
-                setMessage(
-                    "dashboard-message",
-                    "Could not update supplier quotation: " + error.message,
-                    "error"
-                );
-
-            } finally {
-                button.disabled = false;
-                button.textContent = "Save Quotation Status";
-            }
-        });
-
-        actions.append(label, select, button);
-        card.appendChild(actions);
-        container.appendChild(card);
-    });
-}
-
-/* =========================================================
-   DASHBOARD LOADING
-   ========================================================= */
-
-async function loadDashboard() {
-    setMessage(
-        "dashboard-message",
-        "Loading customer requests and supplier quotations...",
-        ""
+    showMessage(
+        "systemStatus",
+        "You have logged out.",
+        "info"
     );
-
-    const results = await Promise.allSettled([
-        loadCustomerRequests(),
-        loadSupplierQuotes()
-    ]);
-
-    const errors = results
-        .filter(result => result.status === "rejected")
-        .map(result => result.reason?.message || "Unknown error");
-
-    if (errors.length) {
-        setMessage("dashboard-message", errors.join(" | "), "error");
-    } else {
-        setMessage(
-            "dashboard-message",
-            "Dashboard loaded successfully.",
-            "success"
-        );
-    }
-}
-
-/* =========================================================
-   LOGOUT
-   ========================================================= */
-
-async function handleLogout() {
-    const button = $("logout-button");
-    button.disabled = true;
-
-    try {
-        const { error } = await supabaseClient.auth.signOut();
-
-        if (error) throw error;
-
-        currentUser = null;
-        customerRequests = [];
-        supplierQuotes = [];
-
-        $("requests-list").replaceChildren();
-        $("supplier-quotes-list").replaceChildren();
-
-        $("request-count").textContent = "0";
-        $("supplier-quote-count").textContent = "0";
-        $("submitted-count").textContent = "0";
-
-        showLogin();
-
-        setMessage(
-            "login-message",
-            "You have logged out successfully.",
-            "success"
-        );
-
-    } catch (error) {
-        setMessage(
-            "dashboard-message",
-            "Logout error: " + error.message,
-            "error"
-        );
-
-    } finally {
-        button.disabled = false;
-    }
-}
-
-/* =========================================================
-   EVENT LISTENERS
-   ========================================================= */
-
-$("login-button").addEventListener("click", handleLogin);
-
-$("login-form").addEventListener("submit", event => {
-    event.preventDefault();
 });
 
-$("refresh-button").addEventListener("click", loadDashboard);
 
-$("logout-button").addEventListener("click", handleLogout);
+db.auth.onAuthStateChange(function(event, session) {
+    if (event === "SIGNED_OUT") {
+        currentAdmin = null;
 
-$("request-search").addEventListener("input", renderCustomerRequests);
-$("request-filter").addEventListener("change", renderCustomerRequests);
+        el("dashboard").classList.add("hidden");
+        el("loginSection").classList.remove("hidden");
+    }
+});
 
-$("supplier-quote-search").addEventListener("input", renderSupplierQuotes);
-$("supplier-quote-filter").addEventListener("change", renderSupplierQuotes);
 
-/* =========================================================
-   RESTORE EXISTING SESSION
-   ========================================================= */
+/* DASHBOARD REFRESH */
 
-async function initializeAdmin() {
-    try {
-        initializeSupabase();
+el("refreshBtn").addEventListener("click", loadDashboard);
 
-        const { data, error } = await supabaseClient.auth.getSession();
+async function loadDashboard() {
+    if (!currentAdmin) return;
 
-        if (error) throw error;
+    showMessage(
+        "message",
+        "Refreshing FrostTech dashboard...",
+        "info"
+    );
 
-        if (!data.session?.user) {
-            showLogin();
+    await Promise.allSettled([
+        loadCustomerRequests(),
+        loadSupplierQuotations(),
+        loadSupplierManagement()
+    ]);
 
-            setMessage(
-                "login-message",
-                "Please log in with your FrostTech administrator account.",
-                ""
+    showMessage(
+        "message",
+        "Dashboard refresh completed. Check individual section messages for errors.",
+        "success-message"
+    );
+}
+
+
+/* CUSTOMER QUOTE REQUESTS */
+
+async function loadCustomerRequests() {
+    const target = el("quoteRequests");
+
+    target.textContent = "Loading customer quote requests...";
+
+    let data = [];
+    let error = null;
+
+    const primary = await db
+        .from("quote_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    data = primary.data || [];
+    error = primary.error;
+
+    if (error) {
+        const fallback = await db
+            .from("customer_requests")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (fallback.error) {
+            target.textContent =
+                "Could not load requests: " +
+                errorText(fallback.error);
+
+            showMessage(
+                "requestMessage",
+                "Check the quote_requests table permissions and schema.",
+                "error"
             );
+
+            el("requestCount").textContent = "—";
 
             return;
         }
 
-        try {
-            await verifyAdministrator(data.session.user);
-        } catch (verificationError) {
-            await supabaseClient.auth.signOut();
-            throw verificationError;
-        }
-
-        currentUser = data.session.user;
-
-        showDashboard();
-
-        await loadDashboard();
-
-    } catch (error) {
-        console.error("FrostTech initialization error:", error);
-
-        showLogin();
-
-        setMessage(
-            "login-message",
-            error.message || "Could not initialize the admin dashboard.",
-            "error"
-        );
+        data = fallback.data || [];
     }
+
+    currentRequests = data;
+
+    el("requestCount").textContent = data.length;
+
+    if (!data.length) {
+        target.textContent = "No customer quote requests found.";
+
+        clearMessage("requestMessage");
+
+        return;
+    }
+
+    target.innerHTML = data.map(function(request) {
+        const requestId = request.id;
+
+        const reference =
+            request.request_number ||
+            request.request_no ||
+            requestId;
+
+        const customer =
+            request.customer_name ||
+            request.full_name ||
+            request.name ||
+            "Customer details available on request";
+
+        const product =
+            request.product_name ||
+            request.title ||
+            request.product ||
+            request.description ||
+            request.product_id ||
+            "Product not specified";
+
+        const quantity = request.quantity ?? "Not specified";
+
+        const address =
+            request.delivery_address ||
+            request.address ||
+            "Not provided";
+
+        const status = request.status || "pending";
+
+        const allowedStatuses = [
+            "pending",
+            "reviewing",
+            "quoted",
+            "completed",
+            "rejected",
+            "cancelled"
+        ];
+
+        const statusOptions = allowedStatuses.map(function(item) {
+            return '<option value="' + item + '"' +
+                (status === item ? " selected" : "") +
+                '>' + item + '</option>';
+        }).join("");
+
+        return `
+        <article class="card">
+            <h3>${escapeHtml(reference)}</h3>
+
+            <p><strong>Customer:</strong>
+                ${escapeHtml(customer)}</p>
+
+            <p><strong>Product / Request:</strong>
+                ${escapeHtml(product)}</p>
+
+            <p><strong>Quantity:</strong>
+                ${escapeHtml(quantity)}</p>
+
+            <p><strong>Delivery Address:</strong>
+                ${escapeHtml(address)}</p>
+
+            <p><strong>Current Status:</strong>
+                ${badge(status)}</p>
+
+            <p><strong>Date:</strong>
+                ${dateText(request.created_at)}</p>
+
+            <label for="requestStatus_${requestId}">
+                Update Request Status
+            </label>
+
+            <select id="requestStatus_${requestId}">
+                ${statusOptions}
+            </select>
+
+            <button type="button"
+                data-request-save="${escapeHtml(requestId)}">
+                Save Request Status
+            </button>
+        </article>`;
+    }).join("");
+
+    target.querySelectorAll("[data-request-save]")
+        .forEach(function(button) {
+            button.addEventListener("click", function() {
+                saveRequestStatus(button.dataset.requestSave);
+            });
+        });
+
+    clearMessage("requestMessage");
 }
 
-initializeAdmin();
+
+async function saveRequestStatus(requestId) {
+    const select = el("requestStatus_" + requestId);
+
+    if (!select) return;
+
+    const newStatus = select.value;
+
+    const { error } = await db
+        .from("quote_requests")
+        .update({
+            status: newStatus,
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", requestId);
+
+    if (error) {
+        showMessage(
+            "requestMessage",
+            "Could not update the request. " + errorText(error),
+            "error"
+        );
+
+        return;
+    }
+
+    showMessage(
+        "requestMessage",
+        "Request status updated.",
+        "success-message"
+    );
+
+    await loadCustomerRequests();
+}
+
+
+/* SUPPLIER QUOTATIONS */
+
+async function loadSupplierQuotations() {
+    const target = el("supplierQuotes");
+
+    target.textContent = "Loading supplier quotations...";
+
+    const { data, error } = await db
+        .from("supplier_quotes")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent =
+            "Could not load supplier quotations: " +
+            errorText(error);
+
+        el("quotationCount").textContent = "—";
+
+        return;
+    }
+
+    currentSupplierQuotes = data || [];
+
+    el("quotationCount").textContent =
+        currentSupplierQuotes.length;
+
+    if (!currentSupplierQuotes.length) {
+        target.textContent = "No supplier quotations found.";
+
+        return;
+    }
+
+    target.innerHTML = currentSupplierQuotes.map(function(quote) {
+        const status = quote.status || "draft";
+
+        return `
+        <article class="card">
+            <h3>Supplier Quotation</h3>
+
+            <p><strong>Quotation ID:</strong>
+                ${escapeHtml(quote.id)}</p>
+
+            <p><strong>Request ID:</strong>
+                ${escapeHtml(quote.request_id)}</p>
+
+            <p><strong>Supplier ID:</strong>
+                ${escapeHtml(quote.supplier_id)}</p>
+
+            <p><strong>Product ID:</strong>
+                ${escapeHtml(quote.product_id)}</p>
+
+            <p><strong>Quantity:</strong>
+                ${escapeHtml(quote.quantity)}</p>
+
+            <p><strong>Supplier Total:</strong>
+                ${money(quote.supplier_total)}</p>
+
+            <p><strong>Delivery Cost:</strong>
+                ${money(quote.delivery_cost)}</p>
+
+            <p><strong>FrostTech Margin:</strong>
+                ${money(quote.frosttech_margin_amount)}</p>
+
+            <p><strong>Customer Total:</strong>
+                ${money(quote.customer_total)}</p>
+
+            <p><strong>Customer Quote Status:</strong>
+                ${badge(quote.customer_quote_status || "draft")}</p>
+
+            <p><strong>Supplier Quote Status:</strong>
+                ${badge(status)}</p>
+
+            <p><strong>Valid Until:</strong>
+                ${dateText(quote.valid_until)}</p>
+
+            <p><strong>Notes:</strong>
+                ${escapeHtml(quote.notes || "None")}</p>
+
+            <button type="button" class="success"
+                data-quote-select="${escapeHtml(quote.id)}">
+                Select Quotation
+            </button>
+
+            <button type="button" class="danger"
+                data-quote-reject="${escapeHtml(quote.id)}">
+                Reject Quotation
+            </button>
+        </article>`;
+    }).join("");
+
+    target.querySelectorAll("[data-quote-select]")
+        .forEach(function(button) {
+            button.addEventListener("click", function() {
+                selectSupplierQuotation(
+                    button.dataset.quoteSelect
+                );
+            });
+        });
+
+    target.querySelectorAll("[data-quote-reject]")
+        .forEach(function(button) {
+            button.addEventListener("click", function() {
+                rejectSupplierQuotation(
+                    button.dataset.quoteReject
+                );
+            });
+        });
+}
+
+
+async function selectSupplierQuotation(quoteId) {
+    const quote = currentSupplierQuotes.find(
+        item => item.id === quoteId
+    );
+
+    if (!quote) return;
+
+    const confirmed = window.confirm(
+        "Select this supplier quotation? " +
+        "The customer quote will remain a draft until you prepare it."
+    );
+
+    if (!confirmed) return;
+
+    const { error: rejectError } = await db
+        .from("supplier_quotes")
+        .update({
+            status: "rejected",
+            updated_at: new Date().toISOString()
+        })
+        .eq("request_id", quote.request_id)
+        .neq("id", quoteId)
+        .eq("status", "submitted");
+
+    if (rejectError) {
+        showMessage(
+            "quotationMessage",
+            "Could not update competing quotations: " +
+            errorText(rejectError),
+            "error"
+        );
+
+        return;
+    }
+
+    const { error } = await db
+        .from("supplier_quotes")
+        .update({
+            status: "selected",
+            customer_quote_status: "draft",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", quoteId);
+
+    if (error) {
+        showMessage(
+            "quotationMessage",
+            "Could not select quotation: " + errorText(error),
+            "error"
+        );
+
+        return;
+    }
+
+    showMessage(
+        "quotationMessage",
+        "Quotation selected. Customer quote status remains draft.",
+        "success-message"
+    );
+
+    await loadSupplierQuotations();
+}
+
+
+async function rejectSupplierQuotation(quoteId) {
+    const confirmed = window.confirm(
+        "Are you sure you want to reject this supplier quotation?"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await db
+        .from("supplier_quotes")
+        .update({
+            status: "rejected",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", quoteId);
+
+    if (error) {
+        showMessage(
+            "quotationMessage",
+            "Could not reject quotation: " + errorText(error),
+            "error"
+        );
+
+        return;
+    }
+
+    showMessage(
+        "quotationMessage",
+        "Supplier quotation rejected.",
+        "success-message"
+    );
+
+    await loadSupplierQuotations();
+}
+
+
+/* SUPPLIER MANAGEMENT */
+
+el("loadSuppliersBtn").addEventListener(
+    "click",
+    loadSupplierManagement
+);
+
+
+async function loadSupplierManagement() {
+    const target = el("supplierManagementRows");
+
+    target.textContent = "Loading supplier applications...";
+
+    const { data, error } = await db
+        .from("suppliers")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent =
+            "Could not load suppliers: " + errorText(error);
+
+        showMessage(
+            "supplierManagementMessage",
+            "Check administrator access and suppliers table permissions.",
+            "error"
+        );
+
+        return;
+    }
+
+    currentSuppliers = data || [];
+
+    el("supplierCount").textContent =
+        currentSuppliers.length;
+
+    el("pendingSupplierCount").textContent =
+        currentSuppliers.filter(function(supplier) {
+            return ![
+                "approved",
+                "rejected",
+                "suspended"
+            ].includes(supplier.review_status || "pending");
+        }).length;
+
+    if (!currentSuppliers.length) {
+        target.textContent = "No supplier applications found.";
+
+        clearMessage("supplierManagementMessage");
+
+        return;
+    }
+
+    target.innerHTML = currentSuppliers.map(function(supplier) {
+        const status = supplier.review_status ||
+            (supplier.is_verified ? "approved" : "pending");
+
+        const identity =
+            supplier.id;
+
+        return `
+        <article class="card">
+            <h3>${escapeHtml(supplier.business_name)}</h3>
+
+            <p><strong>Supplier ID:</strong>
+                ${escapeHtml(supplier.id)}</p>
+
+            <p><strong>Business Email:</strong>
+                ${escapeHtml(supplier.email || "Not provided")}</p>
+
+            <p><strong>Contact Person:</strong>
+                ${escapeHtml(supplier.contact_name || "Not provided")}</p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(supplier.phone || "Not provided")}</p>
+
+            <p><strong>Address:</strong>
+                ${escapeHtml(supplier.address || "Not provided")}</p>
+
+            <p><strong>City / State:</strong>
+                ${escapeHtml(supplier.city || "Not provided")},
+                ${escapeHtml(supplier.state || "Not provided")}</p>
+
+            <p><strong>Registered:</strong>
+                ${dateText(supplier.created_at)}</p>
+
+            <p><strong>Review Status:</strong>
+                ${badge(status)}</p>
+
+            <p><strong>Email / Supplier Verification Flag:</strong>
+                ${supplier.is_verified ? "Verified" : "Not verified"}</p>
+
+            <p><strong>Account Active:</strong>
+                ${supplier.is_active ? "Yes" : "No"}</p>
+
+            <p><strong>Previous Review Reason:</strong>
+                ${escapeHtml(supplier.review_reason || "None recorded")}</p>
+
+            <label for="reviewReason_${identity}">
+                Review Reason / Notes
+            </label>
+
+            <textarea
+                id="reviewReason_${identity}"
+                placeholder="Record your reason or instructions">
+            </textarea>
+
+            <div class="supplier-actions">
+
+                <button type="button" class="success"
+                    data-supplier-decision="approved"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Approve Supplier
+                </button>
+
+                <button type="button" class="danger"
+                    data-supplier-decision="rejected"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Reject Application
+                </button>
+
+                <button type="button" class="warning"
+                    data-supplier-decision="more_info"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Request More Information
+                </button>
+
+                <button type="button" class="warning"
+                    data-supplier-decision="in_review"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Mark In Review
+                </button>
+
+                <button type="button" class="danger"
+                    data-supplier-decision="suspended"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Suspend Supplier
+                </button>
+
+                <button type="button" class="neutral"
+                    data-supplier-decision="pending"
+                    data-supplier-id="${escapeHtml(identity)}">
+                    Return to Pending
+                </button>
+
+            </div>
+        </article>`;
+    }).join("");
+
+    target.querySelectorAll("[data-supplier-decision]")
+        .forEach(function(button) {
+            button.addEventListener("click", function() {
+                reviewSupplier(
+                    button.dataset.supplierId,
+                    button.dataset.supplierDecision
+                );
+            });
+        });
+
+    showMessage(
+        "supplierManagementMessage",
+        "Supplier applications loaded. Review each application before deciding.",
+        "success-message"
+    );
+}
+
+
+async function reviewSupplier(supplierId, newStatus) {
+    if (!currentAdmin) {
+        showMessage(
+            "supplierManagementMessage",
+            "Administrator login is required.",
+            "error"
+        );
+
+        return;
+    }
+
+    const supplier = currentSuppliers.find(
+        item => item.id === supplierId
+    );
+
+    if (!supplier) {
+        showMessage(
+            "supplierManagementMessage",
+            "Supplier record not found. Refresh the list.",
+            "error"
+        );
+
+        return;
+    }
+
+    const reasonField = el("reviewReason_" + supplierId);
+
+    const reason = reasonField
+        ? reasonField.value.trim()
+        : "";
+
+    if (
+        ["rejected", "suspended"].includes(newStatus) &&
+        !reason
+    ) {
+        showMessage(
+            "supplierManagementMessage",
+            "Enter a reason before rejecting or suspending a supplier.",
+            "error"
+        );
+
+        if (reasonField) reasonField.focus();
+
+        return;
+    }
+
+    const actionLabels = {
+        approved: "approve",
+        rejected: "reject",
+        more_info: "request more information from",
+        in_review: "mark as under review",
+        suspended: "suspend",
+        pending: "return to pending review"
+    };
+
+    const confirmed = window.confirm(
+        "Are you sure you want to " +
+        actionLabels[newStatus] +
+        " " + supplier.business_name + "?"
+    );
+
+    if (!confirmed) return;
+
+    showMessage(
+        "supplierManagementMessage",
+        "Submitting administrator decision...",
+        "info"
+    );
+
+    /*
+     * This calls the protected database function.
+     * It does not update is_verified directly from the browser.
+     */
+
+    const { data, error } = await db.rpc(
+        "admin_review_supplier",
+        {
+            target_supplier_id: supplierId,
+            new_status: newStatus,
+            reason: reason || null
+        }
+    );
+
+    if (error) {
+        showMessage(
+            "supplierManagementMessage",
+            "The decision was not completed: " +
+            errorText(error),
+            "error"
+        );
+
+        return;
+    }
+
+    showMessage(
+        "supplierManagementMessage",
+        "Administrator decision saved: " +
+        supplier.business_name + " — " + newStatus,
+        "success-message"
+    );
+
+    await loadSupplierManagement();
+}
+
+
+/* PAYMENT VISIBILITY */
+
+el("loadPaymentsBtn").addEventListener(
+    "click",
+    loadPaymentRecords
+);
+
+
+async function loadPaymentRecords() {
+    const target = el("paymentRecords");
+
+    target.textContent = "Loading payment records...";
+
+    const { data, error } = await db
+        .from("payments")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent =
+            "Payment records could not be loaded: " +
+            errorText(error);
+
+        showMessage(
+            "paymentMessage",
+            "No payment was initiated or modified. Check the payments table permissions.",
+            "error"
+        );
+
+        return;
+    }
+
+    if (!data || !data.length) {
+        target.textContent = "No payment records found.";
+
+        showMessage(
+            "paymentMessage",
+            "Payment records loaded successfully.",
+            "success-message"
+        );
+
+        return;
+    }
+
+    const columns = Object.keys(data[0]);
+
+    target.innerHTML = `
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        ${columns.map(function(column) {
+                            return "<th>" +
+                                escapeHtml(column) +
+                                "</th>";
+                        }).join("")}
+                    </tr>
+                </thead>
+
+                <tbody>
+                    ${data.map(function(row) {
+                        return "<tr>" +
+                            columns.map(function(column) {
+                                const value = row[column];
+
+                                return "<td>" +
+                                    escapeHtml(
+                                        value === null
+                                            ? ""
+                                            : typeof value === "object"
+                                                ? JSON.stringify(value)
+                                                : value
+                                    ) +
+                                    "</td>";
+                            }).join("") +
+                            "</tr>";
+                    }).join("")}
+                </tbody>
+            </table>
+        </div>
+    `;
+
+    showMessage(
+        "paymentMessage",
+        "Payment records loaded. No payment statuses were changed.",
+        "success-message"
+    );
+}
+
+
+/* STARTUP */
+
+checkExistingSession();
+
 </script>
 
 </body>
