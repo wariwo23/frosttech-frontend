@@ -348,7 +348,9 @@
 
   async function openSupplierPortal() {
     showPageMessage("Checking your supplier account...");
-
+    
+console.log("Current login user ID:", currentUser?.id);
+console.log("Supabase client available:", !!db);
     const { data: supplier, error } = await db
       .from("suppliers")
       .select("id, user_id, business_name, contact_name, is_verified, is_active")
