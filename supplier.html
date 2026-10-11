@@ -447,3 +447,784 @@
   &copy; 2026 FrostTech HVAC and Refrigeration.
   All rights reserved.
 </footer>
+  <!-- SUPABASE LIBRARY AND PROJECT CONNECTION -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  let db = null;
+  let currentUser = null;
+  let currentSupplier = null;
+  let requests = [];
+  let productsById = {};
+  let myQuotes = [];
+  let busy = false;
+
+  const $ = (id) => document.getElementById(id);
+
+  function showPageMessage(message, type = "info") {
+    const box = $("pageMessage");
+
+    box.textContent = message;
+    box.className = "message " + type;
+    box.classList.remove("hidden");
+  }
+
+  function showDiagnostic(details) {
+    const section = $("diagnosticSection");
+    const box = $("diagnosticDetails");
+
+    box.replaceChildren();
+
+    Object.entries(details).forEach(([label, value]) => {
+      const row = document.createElement("p");
+      const heading = document.createElement("strong");
+
+      heading.textContent = label + ": ";
+      row.appendChild(heading);
+      row.appendChild(
+        document.createTextNode(
+          value === null || value === undefined || value === ""
+            ? "Not available"
+            : String(value)
+        )
+      );
+
+      box.appendChild(row);
+    });
+
+    section.classList.remove("hidden");
+  }
+
+  function hideDiagnostic() {
+    $("diagnosticSection").classList.add("hidden");
+  }
+
+  async function initialize() {
+    /*
+      IMPORTANT:
+      supabase.js must create window.supabaseClient.
+      The Supabase CDN library by itself is not the connected client.
+    */
+
+    db = window.supabaseClient || null;
+
+    if (!db || !db.auth || !db.from) {
+      showPageMessage(
+        "Supabase client not found. Check that supabase.js creates " +
+        "window.supabaseClient and contains the correct project URL " +
+        "and publishable key.",
+        "error"
+      );
+
+      $("loginSection").classList.remove("hidden");
+      return;
+    }
+
+    $("loginForm").addEventListener("submit", loginSupplier);
+
+    $("logoutButton").addEventListener("click", logoutSupplier);
+
+    $("refreshButton").addEventListener("click", loadPortalData);
+
+    $("retryButton").addEventListener(
+      "click",
+      openSupplierPortal
+    );
+
+    $("showLoginButton").addEventListener(
+      "click",
+      returnToLogin
+    );
+
+    $("quotationForm").addEventListener(
+      "submit",
+      submitQuotation
+    );
+
+    [
+      "requestSelect",
+      "unitPrice",
+      "deliveryCost",
+      "marginPercent"
+    ].forEach((id) => {
+      $(id).addEventListener("input", updateTotals);
+      $(id).addEventListener("change", updateTotals);
+    });
+
+    showPageMessage("Checking your login...");
+
+    try {
+      const { data, error } = await db.auth.getSession();
+
+      if (error) {
+        throw error;
+      }
+
+      if (data.session && data.session.user) {
+        currentUser = data.session.user;
+
+        await openSupplierPortal();
+      } else {
+        $("loginSection").classList.remove("hidden");
+
+        showPageMessage(
+          "Please log in with your registered supplier account."
+        );
+      }
+    } catch (error) {
+      console.error("Supplier portal initialization failed:", error);
+
+      showPageMessage(
+        "Unable to initialize the supplier portal: " + error.message,
+        "error"
+      );
+
+      $("loginSection").classList.remove("hidden");
+    }
+  }
+
+  async function loginSupplier(event) {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const button = $("loginButton");
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+
+    showPageMessage("Checking your supplier login...");
+
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      currentUser = data.user;
+
+      if (!currentUser) {
+        throw new Error(
+          "Login succeeded, but no user account was returned."
+        );
+      }
+
+      $("loginSection").classList.add("hidden");
+
+      await openSupplierPortal();
+
+    } catch (error) {
+      console.error("Supplier login failed:", error);
+
+      showPageMessage(
+        "Login failed: " + error.message,
+        "error"
+      );
+
+      $("loginSection").classList.remove("hidden");
+
+    } finally {
+      button.disabled = false;
+      button.textContent = "Log In";
+    }
+  }
+
+  async function openSupplierPortal() {
+    if (!db) {
+      showPageMessage(
+        "Supabase is not connected. Check supabase.js.",
+        "error"
+      );
+      return;
+    }
+
+    if (!currentUser) {
+      showPageMessage(
+        "No logged-in account was found. Please log in again.",
+        "error"
+      );
+
+      $("loginSection").classList.remove("hidden");
+      return;
+    }
+
+    $("portalSection").classList.add("hidden");
+
+    showPageMessage(
+      "Checking the supplier profile for your logged-in account..."
+    );
+
+    const loginEmail = currentUser.email || "Email unavailable";
+    const loginUserId = currentUser.id || "User ID unavailable";
+
+    /*
+      Query the supplier record linked to the current Auth user.
+
+      If no row is returned, it may mean:
+      1. The wrong account is logged in.
+      2. The supplier record is not linked correctly.
+      3. Row Level Security is preventing the query from seeing the row.
+    */
+
+    let supplier = null;
+    let queryError = null;
+
+    try {
+      const result = await db
+        .from("suppliers")
+        .select(
+          "id, user_id, business_name, contact_name, email, " +
+          "is_verified, is_active, review_status"
+        )
+        .eq("user_id", currentUser.id)
+        .maybeSingle();
+
+      supplier = result.data;
+      queryError = result.error;
+
+    } catch (error) {
+      queryError = error;
+    }
+
+    console.log("FROSTTECH SUPPLIER DIAGNOSTIC", {
+      loginEmail: loginEmail,
+      loginUserId: loginUserId,
+      supplierFound: !!supplier,
+      supplierId: supplier?.id || null,
+      supplierEmail: supplier?.email || null,
+      supplierUserId: supplier?.user_id || null,
+      queryError: queryError?.message || null
+    });
+
+    if (queryError) {
+      showDiagnostic({
+        "Logged-in email": loginEmail,
+        "Authentication user ID": loginUserId,
+        "Supplier record found": "Could not complete query",
+        "Database error": queryError.message,
+        "Next step":
+          "Check the suppliers table SELECT policy and its permissions."
+      });
+
+      showPageMessage(
+        "We could not read your supplier profile. The diagnostic " +
+        "details below show the database error.",
+        "error"
+      );
+
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    if (!supplier) {
+      showDiagnostic({
+        "Logged-in email": loginEmail,
+        "Authentication user ID": loginUserId,
+        "Supplier record found": "No",
+        "Database error": "No error was returned.",
+        "Next step":
+          "Check that this exact user ID appears in suppliers.user_id. " +
+          "If it does, the suppliers SELECT policy may be hiding the row."
+      });
+
+      showPageMessage(
+        "Your login is valid, but the portal cannot see a supplier " +
+        "record linked to this account. See the diagnostic details below.",
+        "error"
+      );
+
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    hideDiagnostic();
+
+    if (supplier.is_active !== true) {
+      showDiagnostic({
+        "Logged-in email": loginEmail,
+        "Supplier business": supplier.business_name,
+        "Supplier record ID": supplier.id,
+        "Account active": supplier.is_active,
+        "Account verified": supplier.is_verified,
+        "Review status": supplier.review_status,
+        "Next step":
+          "Ask FrostTech to check your supplier account status."
+      });
+
+      showPageMessage(
+        "Your supplier profile was found, but the account is not active.",
+        "error"
+      );
+
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    if (
+      supplier.is_verified !== true ||
+      supplier.review_status !== "approved"
+    ) {
+      showDiagnostic({
+        "Logged-in email": loginEmail,
+        "Supplier business": supplier.business_name,
+        "Supplier record ID": supplier.id,
+        "Account active": supplier.is_active,
+        "Account verified": supplier.is_verified,
+        "Review status": supplier.review_status,
+        "Next step":
+          "Your supplier account must be approved and verified by FrostTech."
+      });
+
+      showPageMessage(
+        "Your supplier profile was found, but it is not yet fully approved.",
+        "error"
+      );
+
+      $("loginSection").classList.add("hidden");
+      return;
+    }
+
+    currentSupplier = supplier;
+
+    $("supplierWelcome").textContent =
+      "Welcome, " +
+      (supplier.business_name ||
+       supplier.contact_name ||
+       "Supplier") +
+      ".";
+
+    $("loginSection").classList.add("hidden");
+    $("portalSection").classList.remove("hidden");
+
+    showPageMessage(
+      "Supplier account verified. Welcome to the FrostTech portal.",
+      "success"
+    );
+
+    await loadPortalData();
+  }
+
+  async function returnToLogin() {
+    $("portalSection").classList.add("hidden");
+    $("diagnosticSection").classList.add("hidden");
+    $("loginSection").classList.remove("hidden");
+
+    currentSupplier = null;
+
+    showPageMessage(
+      "Please log in using the email address belonging to your supplier account."
+    );
+  }
+
+  async function logoutSupplier() {
+    if (!db) return;
+
+    try {
+      const { error } = await db.auth.signOut();
+
+      if (error) throw error;
+
+      currentUser = null;
+      currentSupplier = null;
+      requests = [];
+      productsById = {};
+      myQuotes = [];
+
+      $("portalSection").classList.add("hidden");
+      $("diagnosticSection").classList.add("hidden");
+      $("loginSection").classList.remove("hidden");
+
+      $("password").value = "";
+
+      showPageMessage("You have been logged out successfully.");
+
+    } catch (error) {
+      console.error("Supplier logout failed:", error);
+
+      showPageMessage(
+        "Could not complete logout: " + error.message,
+        "error"
+      );
+    }
+  }
+
+  /*
+    Sections 3 and 4 will add:
+    - Loading customer requests and products
+    - Displaying supplier quotations
+    - Calculating quotation totals
+    - Submitting quotations securely
+  */
+
+  <script>
+/* ==========================================
+   SECTION 3 OF 4
+   SUPPLIER REQUESTS AND QUOTATION MANAGEMENT
+   ========================================== */
+
+let requests = [];
+let myQuotes = [];
+let productsById = {};
+
+/* Show a message on the page */
+function showPageMessage(message, type = "info") {
+    const box = document.getElementById("pageMessage");
+
+    if (!box) return;
+
+    box.textContent = message;
+    box.className = "message " + type;
+    box.classList.remove("hidden");
+}
+
+/* Safely display text received from the database */
+function safeText(value) {
+    return String(value ?? "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+/* Format Nigerian naira */
+function formatNaira(value) {
+    return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 2
+    }).format(Number(value) || 0);
+}
+
+/* ==========================================
+   LOAD OPEN CUSTOMER REQUESTS
+   ========================================== */
+
+async function loadOpenRequests() {
+    const container = document.getElementById("requestsList");
+
+    if (!container) return;
+
+    container.innerHTML = "<p>Loading available requests...</p>";
+
+    try {
+        /*
+         * IMPORTANT:
+         * Use the secure database function.
+         * Do not retrieve customer personal details
+         * directly from the customers table.
+         */
+        const { data, error } = await db.rpc(
+            "supplier_get_open_requests"
+        );
+
+        if (error) {
+            console.error("Request loading error:", error);
+
+            container.innerHTML =
+                "<p>Unable to load requests. Please refresh and try again.</p>";
+
+            return;
+        }
+
+        requests = data || [];
+
+        if (requests.length === 0) {
+            container.innerHTML =
+                "<p>No open customer requests are available at the moment.</p>";
+
+            updateRequestDropdown();
+            return;
+        }
+
+        container.innerHTML = requests.map(request => `
+            <div class="request-item">
+
+                <h3>${safeText(
+                    request.title || "Customer quotation request"
+                )}</h3>
+
+                <p>
+                    <strong>Request number:</strong>
+                    ${safeText(request.request_number || "Pending")}
+                </p>
+
+                <p>
+                    <strong>Category:</strong>
+                    ${safeText(request.category || "Not specified")}
+                </p>
+
+                <p>
+                    <strong>Description:</strong>
+                    ${safeText(request.description || "No description provided")}
+                </p>
+
+                <p>
+                    <strong>Quantity:</strong>
+                    ${safeText(request.quantity || 1)}
+                </p>
+
+                <p>
+                    <strong>Preferred brand:</strong>
+                    ${safeText(request.preferred_brand || "Any suitable brand")}
+                </p>
+
+                <p>
+                    <strong>Status:</strong>
+                    <span class="status">
+                        ${safeText(request.status || "Open")}
+                    </span>
+                </p>
+
+                <button
+                    type="button"
+                    class="secondary-button"
+                    onclick="selectRequest('${safeText(request.id)}')">
+                    Prepare Quotation
+                </button>
+
+            </div>
+        `).join("");
+
+        updateRequestDropdown();
+
+    } catch (error) {
+        console.error("Unexpected request error:", error);
+
+        container.innerHTML =
+            "<p>An unexpected error occurred while loading requests.</p>";
+    }
+}
+
+/* ==========================================
+   UPDATE REQUEST DROPDOWN
+   ========================================== */
+
+function updateRequestDropdown() {
+    const select = document.getElementById("requestSelect");
+
+    if (!select) return;
+
+    select.innerHTML =
+        '<option value="">Select a customer request</option>';
+
+    requests.forEach(request => {
+        const option = document.createElement("option");
+
+        option.value = request.id;
+
+        option.textContent =
+            (request.request_number || "Request") +
+            " — " +
+            (request.title || "Quotation request");
+
+        select.appendChild(option);
+    });
+}
+
+/* ==========================================
+   SELECT A REQUEST
+   ========================================== */
+
+function selectRequest(requestId) {
+    const select = document.getElementById("requestSelect");
+
+    if (!select) return;
+
+    select.value = requestId;
+
+    const form = document.getElementById("quotationForm");
+
+    if (form) {
+        form.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+
+    calculateQuotation();
+}
+
+/* ==========================================
+   CALCULATE QUOTATION TOTALS
+   ========================================== */
+
+function calculateQuotation() {
+    const unitPrice =
+        Number(document.getElementById("unitPrice")?.value) || 0;
+
+    const deliveryCost =
+        Number(document.getElementById("deliveryCost")?.value) || 0;
+
+    const marginPercent =
+        Number(document.getElementById("marginPercent")?.value) || 0;
+
+    const quantity =
+        Number(
+            requests.find(
+                request =>
+                    request.id ===
+                    document.getElementById("requestSelect")?.value
+            )?.quantity
+        ) || 1;
+
+    const estimatedCost = unitPrice * quantity;
+
+    const estimatedMargin =
+        estimatedCost * (marginPercent / 100);
+
+    const estimatedTotal =
+        estimatedCost + deliveryCost + estimatedMargin;
+
+    const quantityDisplay =
+        document.getElementById("requestedQuantity");
+
+    const costDisplay =
+        document.getElementById("estimatedCost");
+
+    const marginDisplay =
+        document.getElementById("estimatedMargin");
+
+    const totalDisplay =
+        document.getElementById("estimatedTotal");
+
+    if (quantityDisplay) {
+        quantityDisplay.textContent = quantity;
+    }
+
+    if (costDisplay) {
+        costDisplay.textContent = formatNaira(estimatedCost);
+    }
+
+    if (marginDisplay) {
+        marginDisplay.textContent = formatNaira(estimatedMargin);
+    }
+
+    if (totalDisplay) {
+        totalDisplay.textContent = formatNaira(estimatedTotal);
+    }
+
+    return {
+        quantity,
+        unitPrice,
+        deliveryCost,
+        marginPercent,
+        estimatedCost,
+        estimatedMargin,
+        estimatedTotal
+    };
+}
+
+/* ==========================================
+   LOAD MY SUBMITTED QUOTATIONS
+   ========================================== */
+
+async function loadMyQuotations() {
+    const container = document.getElementById("myQuotesList");
+
+    if (!container || !currentSupplier) return;
+
+    container.innerHTML = "<p>Loading your quotations...</p>";
+
+    try {
+        const { data, error } = await db
+            .from("supplier_quotes")
+            .select("*")
+            .eq("supplier_id", currentSupplier.id)
+            .order("created_at", { ascending: false });
+
+        if (error) {
+            console.error("Quotation loading error:", error);
+
+            container.innerHTML =
+                "<p>Unable to load your quotations.</p>";
+
+            return;
+        }
+
+        myQuotes = data || [];
+
+        if (myQuotes.length === 0) {
+            container.innerHTML =
+                "<p>You have not submitted any quotations yet.</p>";
+
+            return;
+        }
+
+        container.innerHTML = myQuotes.map(quote => `
+            <div class="quote-item">
+
+                <h3>
+                    Quotation ${safeText(
+                        quote.id
+                            ? quote.id.substring(0, 8)
+                            : "Pending"
+                    )}
+                </h3>
+
+                <p>
+                    <strong>Unit price:</strong>
+                    ${formatNaira(quote.unit_price)}
+                </p>
+
+                <p>
+                    <strong>Delivery cost:</strong>
+                    ${formatNaira(quote.delivery_cost)}
+                </p>
+
+                <p>
+                    <strong>Quotation status:</strong>
+                    ${safeText(quote.status || "Submitted")}
+                </p>
+
+                <p>
+                    <strong>Customer quote status:</strong>
+                    ${safeText(quote.customer_quote_status || "Pending")}
+                </p>
+
+            </div>
+        `).join("");
+
+    } catch (error) {
+        console.error("Unexpected quotation error:", error);
+
+        container.innerHTML =
+            "<p>An unexpected error occurred while loading quotations.</p>";
+    }
+}
+
+/* ==========================================
+   REFRESH SUPPLIER PORTAL DATA
+   ========================================== */
+
+async function refreshSupplierData() {
+    await loadOpenRequests();
+    await loadMyQuotations();
+}
+</script>
+
+  <!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Section 1: Page settings and styles -->
+</head>
+
+<body>
+
+    <!-- Section 2: Supplier portal layout -->
+
+    <!-- Section 3: Supplier requests and quotations -->
+
+    <!-- PASTE SECTION 4 HERE -->
+
+</body>
+</html>
