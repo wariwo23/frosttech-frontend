@@ -21,7 +21,7 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
+      font-family: Inter, Arial, sans-serif;
       background: #f4f7f5;
       color: #222;
     }
@@ -156,636 +156,654 @@
 
 <body>
 
-  <header>
-    <h1>FrostTech HVAC and Refrigeration</h1>
-    <p>Your HVAC and Refrigeration Marketplace</p>
+<header>
+  <h1>FrostTech HVAC and Refrigeration</h1>
+  <p>Your HVAC and Refrigeration Marketplace</p>
 
-    <nav>
-      <a href="index.html">Home</a> |
-      <a href="index.html#products">Products</a> |
-      <a href="quote.html">Request a Quote</a>
-    </nav>
-  </header>
+  <nav>
+    <a href="index.html">Home</a> |
+    <a href="index.html#products">Products</a> |
+    <a href="quote.html">Request a Quote</a>
+  </nav>
+</header>
 
-  <main class="product-container">
+<main class="product-container">
 
-    <p id="page-message" role="status" aria-live="polite">
-      Loading product details...
+  <p id="page-message" role="status" aria-live="polite">
+    Loading product details...
+  </p>
+
+  <section id="product-details" class="product-card hidden">
+
+    <img
+      id="product-image"
+      class="product-image hidden"
+      alt="Product image"
+    >
+
+    <h2 id="product-name"></h2>
+
+    <p>
+      <strong>Category:</strong>
+      <span id="product-category"></span>
     </p>
 
-    <section id="product-details" class="product-card hidden">
+    <p>
+      <strong>Brand:</strong>
+      <span id="product-brand"></span>
+    </p>
 
-      <img
-        id="product-image"
-        class="product-image hidden"
-        alt="Product image"
+    <p>
+      <strong>Model:</strong>
+      <span id="product-model"></span>
+    </p>
+
+    <p id="product-description"></p>
+
+    <p class="product-price">
+      Price: <span id="product-price"></span>
+    </p>
+
+    <p>
+      <strong>Availability:</strong>
+      <span id="product-stock"></span>
+    </p>
+
+    <button
+      id="request-quote-button"
+      class="product-button quote-button"
+      type="button"
+    >
+      Request a Quote
+    </button>
+
+    <button
+      id="whatsapp-button"
+      class="product-button whatsapp-button"
+      type="button"
+    >
+      Contact FrostTech on WhatsApp
+    </button>
+
+  </section>
+
+  <section id="quote-section" class="quote-form hidden">
+
+    <h2>Request a Product Quote</h2>
+
+    <p>
+      Complete this form so FrostTech can prepare a quotation.
+    </p>
+
+    <form id="quote-form">
+
+      <label for="customer-name">Full Name *</label>
+      <input
+        id="customer-name"
+        name="customer_name"
+        type="text"
+        autocomplete="name"
+        required
       >
 
-      <h2 id="product-name"></h2>
-
-      <p>
-        <strong>Category:</strong>
-        <span id="product-category"></span>
-      </p>
-
-      <p>
-        <strong>Brand:</strong>
-        <span id="product-brand"></span>
-      </p>
-
-      <p>
-        <strong>Model:</strong>
-        <span id="product-model"></span>
-      </p>
-
-      <p id="product-description"></p>
-
-      <p class="product-price">
-        Price: <span id="product-price"></span>
-      </p>
-
-      <p>
-        <strong>Availability:</strong>
-        <span id="product-stock"></span>
-      </p>
-
-      <button
-        id="request-quote-button"
-        class="product-button quote-button"
-        type="button"
+      <label for="customer-email">Email Address</label>
+      <input
+        id="customer-email"
+        name="customer_email"
+        type="email"
+        autocomplete="email"
       >
-        Request a Quote
-      </button>
 
-      <button
-        id="whatsapp-button"
-        class="product-button whatsapp-button"
-        type="button"
+      <label for="customer-phone">Phone Number *</label>
+      <input
+        id="customer-phone"
+        name="customer_phone"
+        type="tel"
+        autocomplete="tel"
+        required
       >
-        Contact FrostTech on WhatsApp
-      </button>
 
-    </section>
+      <label for="quote-quantity">Product Quantity *</label>
+      <input
+        id="quote-quantity"
+        name="quantity"
+        type="number"
+        min="1"
+        step="1"
+        value="1"
+        required
+      >
 
-    <section id="quote-section" class="quote-form hidden">
+      <label for="preferred-brand">Preferred Brand</label>
+      <input
+        id="preferred-brand"
+        name="preferred_brand"
+        type="text"
+      >
 
-      <h2>Request a Product Quote</h2>
+      <div id="installation-options"
+           class="installation-options hidden">
 
-      <p>
-        Complete this form so FrostTech can prepare a quotation.
-      </p>
+        <h3>Air Conditioner Installation Requirements</h3>
 
-      <form id="quote-form">
+        <label for="installation-kit-quantity">
+          Installation Kit Quantity
+        </label>
 
-        <label for="customer-name">Full Name *</label>
         <input
-          id="customer-name"
-          name="customer_name"
-          type="text"
-          required
-          autocomplete="name"
-        >
-
-        <label for="customer-email">Email Address</label>
-        <input
-          id="customer-email"
-          name="customer_email"
-          type="email"
-          autocomplete="email"
-        >
-
-        <label for="customer-phone">Phone Number *</label>
-        <input
-          id="customer-phone"
-          name="customer_phone"
-          type="tel"
-          required
-          autocomplete="tel"
-        >
-
-        <label for="quote-quantity">Air Conditioner / Product Quantity *</label>
-        <input
-          id="quote-quantity"
-          name="quantity"
-          type="number"
-          min="1"
-          step="1"
-          value="1"
-          required
-        >
-
-        <!-- Section 2 will continue here. -->
-                <label for="preferred-brand">Preferred Brand</label>
-        <input
-          id="preferred-brand"
-          name="preferred_brand"
-          type="text"
-        >
-
-        <div id="installation-options" class="installation-options hidden">
-          <h3>Air Conditioner Installation Requirements</h3>
-
-          <label for="installation-kit-quantity">
-            Installation Kit Quantity
-          </label>
-          <input
-            id="installation-kit-quantity"
-            name="installation_kit_quantity"
-            type="number"
-            min="0"
-            step="1"
-            value="0"
-            required
-          >
-
-          <label for="installation-service">
-            Split AC Installation Service
-          </label>
-          <select
-            id="installation-service"
-            name="installation_service"
-            required
-          >
-            <option value="false">No, I do not need installation</option>
-            <option value="true">Yes, I need installation</option>
-          </select>
-
-          <label for="outdoor-bracket-quantity">
-            AC Bracket Outdoor Quantity
-          </label>
-          <input
-            id="outdoor-bracket-quantity"
-            name="outdoor_bracket_quantity"
-            type="number"
-            min="0"
-            step="1"
-            value="0"
-            required
-          >
-        </div>
-
-        <label for="customer-budget">Budget (₦)</label>
-        <input
-          id="customer-budget"
-          name="budget"
+          id="installation-kit-quantity"
+          name="installation_kit_quantity"
           type="number"
           min="0"
-          step="0.01"
-        >
-
-        <label for="delivery-address">Delivery / Installation Address *</label>
-        <textarea
-          id="delivery-address"
-          name="delivery_address"
-          rows="3"
+          step="1"
+          value="0"
           required
-        ></textarea>
-
-        <label for="customer-notes">Additional Requirements</label>
-        <textarea
-          id="customer-notes"
-          name="customer_notes"
-          rows="3"
-        ></textarea>
-
-        <button
-          id="submit-quote-button"
-          class="product-button quote-button"
-          type="submit"
         >
-          Submit Quote Request
-        </button>
 
-        <p
-          id="quote-message"
-          class="quote-message"
-          role="status"
-          aria-live="polite"
-        ></p>
+        <label for="installation-service">
+          Split AC Installation Service
+        </label>
 
-      </form>
-    </section>
+        <select
+          id="installation-service"
+          name="installation_service"
+          required
+        >
+          <option value="false">
+            No, I do not need installation
+          </option>
+          <option value="true">
+            Yes, I need installation
+          </option>
+        </select>
 
-  </main>
+        <label for="outdoor-bracket-quantity">
+          AC Bracket Outdoor Quantity
+        </label>
 
-  <footer>
-    <p>
-      &copy; <span id="current-year"></span>
-      FrostTech HVAC and Refrigeration.
-    </p>
-  </footer>
+        <input
+          id="outdoor-bracket-quantity"
+          name="outdoor_bracket_quantity"
+          type="number"
+          min="0"
+          step="1"
+          value="0"
+          required
+        >
 
-  <script>
-    "use strict";
+      </div>
 
-    let supabaseClient = null;
-    let currentProduct = null;
-    let isSubmittingQuote = false;
+      <label for="customer-budget">Budget (₦)</label>
+      <input
+        id="customer-budget"
+        name="budget"
+        type="number"
+        min="0"
+        step="0.01"
+      >
 
-    const pageMessage = document.getElementById("page-message");
-    const productDetails = document.getElementById("product-details");
-    const quoteSection = document.getElementById("quote-section");
-    const quoteForm = document.getElementById("quote-form");
-    const quoteMessage = document.getElementById("quote-message");
-    const submitQuoteButton = document.getElementById("submit-quote-button");
+      <label for="delivery-address">
+        Delivery / Installation Address *
+      </label>
 
-    document.getElementById("current-year").textContent =
-      new Date().getFullYear();
+      <textarea
+        id="delivery-address"
+        name="delivery_address"
+        rows="3"
+        required
+      ></textarea>
 
-    function showPageError(message) {
-      pageMessage.textContent = message;
-      pageMessage.classList.remove("hidden");
-      pageMessage.classList.add("error-message");
-    }
+      <label for="customer-notes">
+        Additional Requirements
+      </label>
 
-    function showQuoteMessage(message, type) {
-      quoteMessage.textContent = message;
-      quoteMessage.classList.remove(
-        "error-message",
-        "success-message"
+      <textarea
+        id="customer-notes"
+        name="customer_notes"
+        rows="3"
+      ></textarea>
+
+      <button
+        id="submit-quote-button"
+        class="product-button quote-button"
+        type="submit"
+      >
+        Submit Quote Request
+      </button>
+
+      <p
+        id="quote-message"
+        class="quote-message"
+        role="status"
+        aria-live="polite"
+      ></p>
+
+    </form>
+
+  </section>
+
+</main>
+
+<footer>
+  <p>
+    &copy; <span id="current-year"></span>
+    FrostTech HVAC and Refrigeration.
+  </p>
+</footer>
+
+<script>
+"use strict";
+
+let currentProduct = null;
+let isSubmittingQuote = false;
+
+const pageMessage = document.getElementById("page-message");
+const productDetails = document.getElementById("product-details");
+const quoteSection = document.getElementById("quote-section");
+const quoteForm = document.getElementById("quote-form");
+const quoteMessage = document.getElementById("quote-message");
+const submitQuoteButton = document.getElementById("submit-quote-button");
+
+document.getElementById("current-year").textContent =
+  new Date().getFullYear();
+
+function showPageError(message) {
+  pageMessage.textContent = message;
+  pageMessage.classList.remove("hidden");
+  pageMessage.classList.add("error-message");
+}
+
+function showQuoteMessage(message, type) {
+  quoteMessage.textContent = message;
+  quoteMessage.classList.remove("error-message", "success-message");
+
+  if (type) {
+    quoteMessage.classList.add(type);
+  }
+}
+
+function formatNaira(amount) {
+  if (amount === null || amount === undefined || amount === "") {
+    return "Contact us for pricing";
+  }
+
+  const number = Number(amount);
+
+  if (!Number.isFinite(number)) {
+    return "Contact us for pricing";
+  }
+
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    maximumFractionDigits: 2
+  }).format(number);
+}
+
+function getProductId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("id");
+}
+
+function isAirConditioner(product) {
+  const category = String(product.category || "").toLowerCase();
+  return category.includes("air conditioner");
+}
+
+async function loadProduct() {
+  try {
+    if (
+      !window.supabase ||
+      typeof window.supabase.createClient !== "function"
+    ) {
+      throw new Error(
+        "The Supabase library did not load. Check your internet connection."
       );
-
-      if (type) {
-        quoteMessage.classList.add(type);
-      }
     }
 
-    function formatNaira(amount) {
-      if (amount === null || amount === undefined || amount === "") {
-        return "Contact us for pricing";
-      }
+    const client = window.supabaseClient;
 
-      const number = Number(amount);
-
-      if (!Number.isFinite(number)) {
-        return "Contact us for pricing";
-      }
-
-      return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency: "NGN",
-        maximumFractionDigits: 2
-      }).format(number);
+    if (!client || typeof client.from !== "function") {
+      throw new Error(
+        "Supabase client not found. Please check supabase.js."
+      );
     }
 
-    function getProductId() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get("id");
+    const productId = getProductId();
+
+    if (!productId) {
+      throw new Error(
+        "No product ID was provided. Open this page from the product catalogue."
+      );
     }
 
-    function isAirConditioner(product) {
-      const category = String(product.category || "").toLowerCase();
-      return category.includes("air conditioner");
+    const { data, error } = await client
+      .from("products")
+      .select(
+        "id, name, category, brand, model, description, selling_price, stock_quantity, image_url, is_active"
+      )
+      .eq("id", productId)
+      .eq("is_active", true)
+      .single();
+
+    if (error) {
+      throw error;
     }
 
-    async function loadProduct() {
-      try {
-        if (
-          !window.supabase ||
-          typeof window.supabase.createClient !== "function"
-        ) {
-          throw new Error(
-            "The Supabase library did not load. Check your internet connection."
-          );
-        }
-
-        supabaseClient = window.supabaseClient;
-
-        if (
-          !supabaseClient ||
-          typeof supabaseClient.from !== "function"
-        ) {
-          throw new Error(
-            "Supabase client not found. Check supabase.js."
-          );
-        }
-
-        const productId = getProductId();
-
-        if (!productId) {
-          throw new Error(
-            "No product ID was provided. Open this page from the product catalogue."
-          );
-        }
-
-        const { data, error } = await supabaseClient
-          .from("products")
-          .select(
-            "id, name, category, brand, model, description, selling_price, stock_quantity, image_url, is_active"
-          )
-          .eq("id", productId)
-          .eq("is_active", true)
-          .single();
-
-        if (error) {
-          throw error;
-        }
-
-        if (!data) {
-          throw new Error("This product could not be found.");
-        }
-
-        currentProduct = data;
-
-        document.getElementById("product-name").textContent =
-          data.name || "Product";
-
-        document.getElementById("product-category").textContent =
-          data.category || "Not specified";
-
-        document.getElementById("product-brand").textContent =
-          data.brand || "Not specified";
-
-        document.getElementById("product-model").textContent =
-          data.model || "Not specified";
-
-        document.getElementById("product-description").textContent =
-          data.description || "Contact FrostTech for more information.";
-
-        document.getElementById("product-price").textContent =
-          formatNaira(data.selling_price);
-
-        const stock = Number(data.stock_quantity);
-
-        document.getElementById("product-stock").textContent =
-          data.stock_quantity === null ||
-          data.stock_quantity === undefined
-            ? "Contact us to confirm"
-            : stock > 0
-              ? "Available"
-              : "Please confirm availability";
-
-        const imageElement = document.getElementById("product-image");
-
-        if (data.image_url) {
-          imageElement.src = data.image_url;
-          imageElement.alt = data.name || "Product image";
-          imageElement.classList.remove("hidden");
-
-          imageElement.onerror = function () {
-            imageElement.classList.add("hidden");
-          };
-        }
-
-        document.getElementById("preferred-brand").value =
-          data.brand || "";
-
-        if (isAirConditioner(data)) {
-          document.getElementById("installation-options")
-            .classList.remove("hidden");
-        }
-
-        pageMessage.classList.add("hidden");
-        productDetails.classList.remove("hidden");
-
-      } catch (error) {
-        console.error("FrostTech product loading error:", error);
-
-        showPageError(
-          "Unable to load product: " +
-          (error.message || "Please refresh and try again.")
-        );
-      }
+    if (!data) {
+      throw new Error("This product could not be found.");
     }
 
-    function openQuoteForm() {
-      if (!currentProduct) {
-        alert("Product details are still loading. Please try again.");
-        return;
-      }
+    currentProduct = data;
 
-      quoteSection.classList.remove("hidden");
+    document.getElementById("product-name").textContent =
+      data.name || "Product";
 
-      quoteSection.scrollIntoView({
-        behavior: "smooth",
-        block: "start"
-      });
-    }
+    document.getElementById("product-category").textContent =
+      data.category || "Not specified";
 
-    function contactWhatsApp() {
-      if (!currentProduct) {
-        alert("Please wait for the product to finish loading.");
-        return;
-      }
+    document.getElementById("product-brand").textContent =
+      data.brand || "Not specified";
 
-      const whatsappNumber = "2348000000000";
+    document.getElementById("product-model").textContent =
+      data.model || "Not specified";
 
-      const message =
-        "Hello FrostTech, I am interested in " +
-        currentProduct.name +
-        ". Please provide more information and a quotation.";
+    document.getElementById("product-description").textContent =
+      data.description || "Contact FrostTech for more information.";
 
-      const url =
-        "https://wa.me/" +
-        whatsappNumber +
-        "?text=" +
-        encodeURIComponent(message);
+    document.getElementById("product-price").textContent =
+      formatNaira(data.selling_price);
 
-      window.open(url, "_blank", "noopener,noreferrer");
-    }
+    const stock = Number(data.stock_quantity);
 
-        // Submit a customer quotation request
-    async function submitQuoteRequest(product) {
-      const messageBox = document.getElementById("quote-message");
-      const submitButton = document.getElementById("submit-quote-button");
+    document.getElementById("product-stock").textContent =
+      data.stock_quantity === null ||
+      data.stock_quantity === undefined
+        ? "Contact us to confirm"
+        : stock > 0
+          ? "Available"
+          : "Please confirm availability";
 
-      if (!product) {
-        messageBox.textContent =
-          "The product has not loaded yet. Please refresh and try again.";
-        return;
-      }
+    const imageElement = document.getElementById("product-image");
 
-      const customerName =
-        document.getElementById("customer-name").value.trim();
+    if (data.image_url) {
+      imageElement.src = data.image_url;
+      imageElement.alt = data.name || "Product image";
+      imageElement.classList.remove("hidden");
 
-      const customerEmail =
-        document.getElementById("customer-email").value.trim();
-
-      const customerPhone =
-        document.getElementById("customer-phone").value.trim();
-
-      const quantity =
-        Number(document.getElementById("quote-quantity").value);
-
-      const preferredBrand =
-        document.getElementById("preferred-brand").value.trim();
-
-      const budgetInput =
-        document.getElementById("budget").value.trim();
-
-      const deliveryAddress =
-        document.getElementById("delivery-address").value.trim();
-
-      const customerNotes =
-        document.getElementById("customer-notes").value.trim();
-
-      const installationKitQuantity =
-        isAirConditioner(product)
-          ? Number(document.getElementById("installation-kit-quantity").value)
-          : 0;
-
-      const installationService =
-        isAirConditioner(product)
-          ? document.getElementById("installation-service").value === "true"
-          : false;
-
-      const outdoorBracketQuantity =
-        isAirConditioner(product)
-          ? Number(document.getElementById("outdoor-bracket-quantity").value)
-          : 0;
-
-      if (!customerName || !customerPhone || !deliveryAddress) {
-        messageBox.textContent =
-          "Please enter your name, phone number, and delivery address.";
-        return;
-      }
-
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        messageBox.textContent =
-          "Please enter a valid product quantity.";
-        return;
-      }
-
-      if (
-        !Number.isInteger(installationKitQuantity) ||
-        installationKitQuantity < 0 ||
-        !Number.isInteger(outdoorBracketQuantity) ||
-        outdoorBracketQuantity < 0
-      ) {
-        messageBox.textContent =
-          "Installation kit and bracket quantities must be zero or greater.";
-        return;
-      }
-
-      if (
-        budgetInput !== "" &&
-        (!Number.isFinite(Number(budgetInput)) || Number(budgetInput) < 0)
-      ) {
-        messageBox.textContent =
-          "Please enter a valid budget, or leave the budget field empty.";
-        return;
-      }
-
-      if (!window.supabaseClient) {
-        messageBox.textContent =
-          "Connection to the database is unavailable. Please refresh and try again.";
-        return;
-      }
-
-      const requestNumber =
-        "FT-" + Date.now();
-
-      const requestData = {
-        request_number: requestNumber,
-        title: "Quote request for " + product.name,
-
-        // Keep customer contact details in their own columns.
-        // Do not put phone numbers, names, or emails in this description.
-        description:
-          "Product: " + product.name +
-          "\nAdditional requirements: " + (customerNotes || "None"),
-
-        customer_name: customerName,
-        customer_email: customerEmail || null,
-        customer_phone: customerPhone,
-
-        product_id: product.id,
-        quantity: quantity,
-        preferred_brand: preferredBrand || null,
-        budget: budgetInput === "" ? null : Number(budgetInput),
-        delivery_address: deliveryAddress,
-
-        installation_kit_quantity: installationKitQuantity,
-        installation_service: installationService,
-        outdoor_bracket_quantity: outdoorBracketQuantity,
-
-        status: "pending"
+      imageElement.onerror = function () {
+        imageElement.classList.add("hidden");
       };
-
-      submitButton.disabled = true;
-      submitButton.textContent = "Submitting...";
-      messageBox.textContent = "Submitting your quotation request...";
-
-      try {
-        const { data, error } = await window.supabaseClient
-          .from("quote_requests")
-          .insert([requestData])
-          .select("id, request_number")
-          .single();
-
-        if (error) {
-          console.error("Quote request error:", error);
-          throw error;
-        }
-
-        messageBox.textContent =
-          "Your request was submitted successfully! Reference: " +
-          (data.request_number || requestNumber) +
-          ". FrostTech will review your requirements.";
-
-        document.getElementById("quote-form").reset();
-
-        document.getElementById("quote-quantity").value = 1;
-        document.getElementById("installation-kit-quantity").value = 0;
-        document.getElementById("installation-service").value = "false";
-        document.getElementById("outdoor-bracket-quantity").value = 0;
-
-        if (currentProduct && currentProduct.brand) {
-          document.getElementById("preferred-brand").value =
-            currentProduct.brand;
-        }
-
-      } catch (error) {
-        console.error("Unable to submit quote request:", error);
-
-        messageBox.textContent =
-          "We could not submit your request. Please check your internet connection and try again. If the problem continues, the database may need an adjustment.";
-      } finally {
-        submitButton.disabled = false;
-        submitButton.textContent = "Submit Quote Request";
-      }
     }
 
-    // Show the quotation form
-    document
-      .getElementById("request-quote-button")
-      .addEventListener("click", function () {
-        document.getElementById("quote-section").scrollIntoView({
-          behavior: "smooth"
-        });
-      });
+    document.getElementById("preferred-brand").value =
+      data.brand || "";
 
-    // WhatsApp contact button
-    document
-      .getElementById("contact-whatsapp-button")
-      .addEventListener("click", contactWhatsApp);
+    if (isAirConditioner(data)) {
+      document.getElementById("installation-options")
+        .classList.remove("hidden");
+    }
 
-    // Validate and submit the quotation form
-    document
-      .getElementById("quote-form")
-      .addEventListener("submit", async function (event) {
-        event.preventDefault();
+    pageMessage.classList.add("hidden");
+    productDetails.classList.remove("hidden");
 
-        const form = event.currentTarget;
+  } catch (error) {
+    console.error("FrostTech product loading error:", error);
 
-        if (!form.reportValidity()) {
-          return;
-        }
+    showPageError(
+      "Unable to load product: " +
+      (error.message || "Please refresh and try again.")
+    );
+  }
+}
 
-        if (isSubmittingQuote) {
-          return;
-        }
+function openQuoteForm() {
+  if (!currentProduct) {
+    alert("Product details are still loading. Please try again.");
+    return;
+  }
 
-        isSubmittingQuote = true;
+  quoteSection.classList.remove("hidden");
 
-        try {
-          await submitQuoteRequest(currentProduct);
-        } finally {
-          isSubmittingQuote = false;
-        }
-      });
+  quoteSection.scrollIntoView({
+    behavior: "smooth",
+    block: "start"
+  });
+}
 
-        loadProduct();
-  </script>
+function contactWhatsApp() {
+  if (!currentProduct) {
+    alert("Please wait for the product to finish loading.");
+    return;
+  }
+
+  /*
+    IMPORTANT:
+    Replace this placeholder with FrostTech's real WhatsApp
+    number in international format, without + or spaces.
+  */
+  const whatsappNumber = "2348000000000";
+
+  const message =
+    "Hello FrostTech, I am interested in " +
+    currentProduct.name +
+    ". Please provide more information and a quotation.";
+
+  const url =
+    "https://wa.me/" +
+    whatsappNumber +
+    "?text=" +
+    encodeURIComponent(message);
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+async function submitQuoteRequest(product) {
+  if (!product) {
+    showQuoteMessage(
+      "The product has not loaded. Please refresh and try again.",
+      "error-message"
+    );
+    return;
+  }
+
+  const customerName =
+    document.getElementById("customer-name").value.trim();
+
+  const customerEmail =
+    document.getElementById("customer-email").value.trim();
+
+  const customerPhone =
+    document.getElementById("customer-phone").value.trim();
+
+  const quantity =
+    Number(document.getElementById("quote-quantity").value);
+
+  const preferredBrand =
+    document.getElementById("preferred-brand").value.trim();
+
+  const budgetInput =
+    document.getElementById("customer-budget").value.trim();
+
+  const deliveryAddress =
+    document.getElementById("delivery-address").value.trim();
+
+  const customerNotes =
+    document.getElementById("customer-notes").value.trim();
+
+  const installationKitQuantity = isAirConditioner(product)
+    ? Number(document.getElementById("installation-kit-quantity").value)
+    : 0;
+
+  const installationService = isAirConditioner(product)
+    ? document.getElementById("installation-service").value === "true"
+    : false;
+
+  const outdoorBracketQuantity = isAirConditioner(product)
+    ? Number(document.getElementById("outdoor-bracket-quantity").value)
+    : 0;
+
+  if (!customerName || !customerPhone || !deliveryAddress) {
+    showQuoteMessage(
+      "Please enter your name, phone number, and delivery address.",
+      "error-message"
+    );
+    return;
+  }
+
+  if (!Number.isInteger(quantity) || quantity < 1) {
+    showQuoteMessage(
+      "Please enter a valid product quantity.",
+      "error-message"
+    );
+    return;
+  }
+
+  if (
+    !Number.isInteger(installationKitQuantity) ||
+    installationKitQuantity < 0 ||
+    !Number.isInteger(outdoorBracketQuantity) ||
+    outdoorBracketQuantity < 0
+  ) {
+    showQuoteMessage(
+      "Installation kit and bracket quantities must be zero or greater.",
+      "error-message"
+    );
+    return;
+  }
+
+  if (
+    budgetInput !== "" &&
+    (!Number.isFinite(Number(budgetInput)) || Number(budgetInput) < 0)
+  ) {
+    showQuoteMessage(
+      "Please enter a valid budget or leave it empty.",
+      "error-message"
+    );
+    return;
+  }
+
+  const client = window.supabaseClient;
+
+  if (!client || typeof client.from !== "function") {
+    showQuoteMessage(
+      "The database connection is unavailable. Please refresh the page.",
+      "error-message"
+    );
+    return;
+  }
+
+  const requestNumber = "FT-" + Date.now();
+
+  const requestData = {
+    request_number: requestNumber,
+    title: "Quote request for " + product.name,
+
+    // Customer contact information is stored separately.
+    // Do not add names, phone numbers, or email addresses here.
+    description:
+      "Product: " + product.name +
+      "\nAdditional requirements: " + (customerNotes || "None"),
+
+    customer_name: customerName,
+    customer_email: customerEmail || null,
+    customer_phone: customerPhone,
+
+    product_id: product.id,
+    quantity: quantity,
+    preferred_brand: preferredBrand || null,
+    budget: budgetInput === "" ? null : Number(budgetInput),
+    delivery_address: deliveryAddress,
+
+    installation_kit_quantity: installationKitQuantity,
+    installation_service: installationService,
+    outdoor_bracket_quantity: outdoorBracketQuantity,
+
+    status: "pending"
+  };
+
+  submitQuoteButton.disabled = true;
+  submitQuoteButton.textContent = "Submitting...";
+
+  showQuoteMessage("Submitting your quotation request...", "");
+
+  try {
+    const { data, error } = await client
+      .from("quote_requests")
+      .insert([requestData])
+      .select("id, request_number")
+      .single();
+
+    if (error) {
+      console.error("Quote request database error:", error);
+      throw error;
+    }
+
+    showQuoteMessage(
+      "Your request was submitted successfully! Reference: " +
+      (data.request_number || requestNumber) +
+      ". FrostTech will review your requirements.",
+      "success-message"
+    );
+
+    quoteForm.reset();
+
+    document.getElementById("quote-quantity").value = 1;
+    document.getElementById("installation-kit-quantity").value = 0;
+    document.getElementById("installation-service").value = "false";
+    document.getElementById("outdoor-bracket-quantity").value = 0;
+
+    document.getElementById("preferred-brand").value =
+      product.brand || "";
+
+  } catch (error) {
+    console.error("Unable to submit quotation request:", error);
+
+    showQuoteMessage(
+      "We could not submit your request. Please try again. If the problem continues, check the database error in the browser console or the Supabase logs.",
+      "error-message"
+    );
+
+  } finally {
+    submitQuoteButton.disabled = false;
+    submitQuoteButton.textContent = "Submit Quote Request";
+  }
+}
+
+/* Correct HTML button IDs are used here. */
+
+document
+  .getElementById("request-quote-button")
+  .addEventListener("click", openQuoteForm);
+
+document
+  .getElementById("whatsapp-button")
+  .addEventListener("click", contactWhatsApp);
+
+quoteForm.addEventListener("submit", async function (event) {
+  event.preventDefault();
+
+  if (!quoteForm.reportValidity()) {
+    return;
+  }
+
+  if (isSubmittingQuote) {
+    return;
+  }
+
+  isSubmittingQuote = true;
+
+  try {
+    await submitQuoteRequest(currentProduct);
+  } finally {
+    isSubmittingQuote = false;
+  }
+});
+
+/* Start loading the product after the event handlers are registered. */
+loadProduct();
+
+</script>
+
 </body>
 </html>
