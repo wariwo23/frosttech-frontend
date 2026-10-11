@@ -742,27 +742,86 @@ el("loginForm").addEventListener("submit", async function(event) {
 
 
 async function checkAdminProfile(user) {
-    if (!user) return false;
+    // Reset administrator details before checking access.
+    currentAdmin = null;
 
-    const { data, error } = await db
-        .from("profiles")
-        .select("id,full_name,role,is_active")
-        .eq("id", user.id)
-        .maybeSingle();
-
-    if (error) throw error;
-
-    if (!data || data.role !== "admin" || data.is_active !== true) {
+    // A valid signed-in user is required.
+    if (!user || !user.id) {
+        console.error("ADMIN CHECK: No authenticated user was provided.");
         return false;
     }
 
-    currentAdmin = {
-        id: user.id,
-        email: user.email,
-        full_name: data.full_name
-    };
+    try {
+        // Read the profile belonging to the signed-in user.
+        const { data, error } = await db
+            .from("profiles")
+            .select("id, full_name, role, is_active")
+            .eq("id", user.id)
+            .maybeSingle();
 
-    return true;
+        // Log diagnostic information for troubleshooting.
+        console.log("ADMIN PROFILE CHECK:", {
+            loggedInUserId: user.id,
+            loggedInEmail: user.email,
+            profileData: data,
+            profileError: error
+                ? {
+                    message: error.message,
+                    code: error.code,
+                    details: error.details,
+                    hint: error.hint
+                }
+                : null
+        });
+
+        // Stop if Supabase reports a database or access error.
+        if (error) {
+            console.error("ADMIN CHECK FAILED: Profile query error.", error);
+            return false;
+        }
+
+        // Stop if the user has no matching profile.
+        if (!data) {
+            console.error(
+                "ADMIN CHECK FAILED: No profile matches the signed-in user ID.",
+                user.id
+            );
+            return false;
+        }
+
+        // Check the administrator role.
+        if (data.role !== "admin") {
+            console.error(
+                "ADMIN CHECK FAILED: User role is not admin.",
+                data.role
+            );
+            return false;
+        }
+
+        // Check whether administrator access is active.
+        if (data.is_active !== true) {
+            console.error(
+                "ADMIN CHECK FAILED: Administrator account is not active.",
+                data.is_active
+            );
+            return false;
+        }
+
+        // All checks passed. Save the administrator details.
+        currentAdmin = {
+            id: user.id,
+            email: user.email,
+            full_name: data.full_name
+        };
+
+        console.log("ADMIN CHECK PASSED:", currentAdmin);
+
+        return true;
+
+    } catch (error) {
+        console.error("ADMIN CHECK FAILED: Unexpected error.", error);
+        return false;
+    }
 }
 
 
