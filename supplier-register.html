@@ -1,420 +1,466 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Supplier Registration | FrostTech HVAC and Refrigeration</title>  <style>
+
+  <title>Supplier Registration | FrostTech HVAC and Refrigeration</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f2f5f9;
       margin: 0;
-      padding: 20px;
-      color: #243447;
+      padding: 20px 12px;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #1e293b;
     }
 
     .container {
-      max-width: 540px;
+      max-width: 520px;
       margin: 20px auto;
       padding: 25px;
-      background: #fff;
+      background: white;
       border-radius: 12px;
-      box-shadow: 0 4px 18px rgba(0,0,0,.08);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    .brand {
+      text-align: center;
+      color: #075985;
+      font-size: 25px;
+      font-weight: bold;
+      margin-bottom: 8px;
     }
 
     h1 {
-      color: #123d67;
-      font-size: 25px;
+      text-align: center;
+      font-size: 23px;
+      margin-bottom: 10px;
+    }
+
+    .intro {
+      text-align: center;
+      color: #64748b;
+      line-height: 1.6;
+      font-size: 14px;
+      margin-bottom: 22px;
     }
 
     label {
       display: block;
       margin-top: 15px;
+      margin-bottom: 6px;
       font-weight: bold;
-    }
-
-    input, button {
-      width: 100%;
-      box-sizing: border-box;
-      padding: 13px;
-      margin-top: 6px;
-      font-size: 16px;
-      border-radius: 6px;
+      font-size: 14px;
     }
 
     input {
+      width: 100%;
+      padding: 12px;
       border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 16px;
+      background: #fff;
+    }
+
+    input:focus {
+      outline: 2px solid #0284c7;
+      border-color: #0284c7;
     }
 
     button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
       border: none;
-      background: #123d67;
+      border-radius: 6px;
+      background: #0369a1;
       color: white;
+      font-size: 16px;
       font-weight: bold;
       cursor: pointer;
-      margin-top: 22px;
     }
 
     button:disabled {
-      opacity: .6;
-      cursor: wait;
+      background: #94a3b8;
+      cursor: not-allowed;
     }
 
-    .message {
+    #message {
       display: none;
-      padding: 13px;
       margin-top: 18px;
+      padding: 13px;
       border-radius: 6px;
-      line-height: 1.5;
+      line-height: 1.6;
+      font-size: 14px;
       overflow-wrap: anywhere;
     }
 
     .success {
-      display: block;
-      background: #e5f8eb;
+      display: block !important;
+      background: #dcfce7;
       color: #166534;
     }
 
     .error {
-      display: block;
+      display: block !important;
       background: #fee2e2;
       color: #991b1b;
     }
 
     .info {
-      display: block;
-      background: #eaf2ff;
-      color: #123d67;
+      display: block !important;
+      background: #e0f2fe;
+      color: #075985;
+    }
+
+    .links {
+      margin-top: 22px;
+      text-align: center;
+      line-height: 2;
+      font-size: 14px;
     }
 
     a {
-      color: #123d67;
+      color: #0369a1;
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
     }
 
     .small {
-      font-size: 13px;
       color: #64748b;
+      font-size: 12px;
+      margin-top: 7px;
     }
-  </style></head><body>
-  <main class="container">
-    <h1>FrostTech Supplier Registration</h1><p>
-  Join FrostTech HVAC and Refrigeration Marketplace as a supplier
-  of air conditioners, refrigeration equipment, spare parts and accessories.
-</p>
+  </style>
+</head>
 
-<p>
-  Your supplier account must be reviewed and approved by FrostTech
-  before you can submit quotations.
-</p>
+<body>
 
-<form id="registrationForm">
-  <label for="businessName">Business Name *</label>
-  <input id="businessName" required maxlength="150">
+  <div class="container">
 
-  <label for="contactName">Contact Person *</label>
-  <input id="contactName" required maxlength="150">
+    <div class="brand">FrostTech</div>
 
-  <label for="email">Business Email *</label>
-  <input id="email" type="email" required autocomplete="email">
+    <h1>Supplier Registration</h1>
 
-  <label for="phone">Phone Number *</label>
-  <input id="phone" type="tel" required maxlength="30">
+    <p class="intro">
+      Join FrostTech HVAC and Refrigeration Marketplace as a supplier
+      of air conditioners, refrigeration equipment, spare parts and
+      accessories.
+      <br><br>
+      Your supplier account must be reviewed and approved by FrostTech
+      before you can submit quotations.
+    </p>
 
-  <label for="address">Business Address *</label>
-  <input id="address" required maxlength="250">
+    <form id="registrationForm">
 
-  <label for="city">City *</label>
-  <input id="city" required maxlength="100">
+      <label for="business_name">Business Name *</label>
+      <input
+        id="business_name"
+        name="business_name"
+        type="text"
+        autocomplete="organization"
+        required
+      >
 
-  <label for="state">State *</label>
-  <input id="state" required maxlength="100">
+      <label for="contact_name">Contact Person *</label>
+      <input
+        id="contact_name"
+        name="contact_name"
+        type="text"
+        autocomplete="name"
+        required
+      >
 
-  <label for="password">Password *</label>
-  <input
-    id="password"
-    type="password"
-    required
-    minlength="8"
-    autocomplete="new-password"
-  >
-  <p class="small">Use at least 8 characters.</p>
+      <label for="email">Business Email *</label>
+      <input
+        id="email"
+        name="email"
+        type="email"
+        autocomplete="email"
+        required
+      >
 
-  <label for="confirmPassword">Confirm Password *</label>
-  <input
-    id="confirmPassword"
-    type="password"
-    required
-    minlength="8"
-    autocomplete="new-password"
-  >
+      <label for="phone">Phone Number *</label>
+      <input
+        id="phone"
+        name="phone"
+        type="tel"
+        autocomplete="tel"
+        required
+      >
 
-  <button id="registerButton" type="submit">
-    Register as Supplier
-  </button>
-</form>
+      <label for="address">Business Address *</label>
+      <input
+        id="address"
+        name="address"
+        type="text"
+        autocomplete="street-address"
+        required
+      >
 
-<div id="message" class="message" role="status" aria-live="polite"></div>
+      <label for="city">City *</label>
+      <input
+        id="city"
+        name="city"
+        type="text"
+        autocomplete="address-level2"
+        required
+      >
 
-<p>Already registered? <a href="supplier.html">Supplier Login</a></p>
-<p><a href="index.html">Return to Marketplace</a></p>
+      <label for="state">State *</label>
+      <input
+        id="state"
+        name="state"
+        type="text"
+        autocomplete="address-level1"
+        required
+      >
 
-  </main>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script>  <script>
-    const form = document.getElementById("registrationForm");
-    const button = document.getElementById("registerButton");
-    const messageBox = document.getElementById("message");
+      <label for="password">Password *</label>
+      <input
+        id="password"
+        name="password"
+        type="password"
+        autocomplete="new-password"
+        minlength="8"
+        required
+      >
 
-    const PENDING_KEY = "frosttech_pending_supplier_registration";
+      <div class="small">
+        Use at least 8 characters.
+      </div>
+
+      <label for="confirm_password">Confirm Password *</label>
+      <input
+        id="confirm_password"
+        name="confirm_password"
+        type="password"
+        autocomplete="new-password"
+        minlength="8"
+        required
+      >
+
+      <button id="registerButton" type="submit">
+        Register as Supplier
+      </button>
+
+    </form>
+
+    <div id="message" role="status" aria-live="polite"></div>
+
+    <div class="links">
+      Already registered?
+      <a href="supplier.html">Supplier Login</a>
+      <br>
+      <a href="index.html">Return to Marketplace</a>
+    </div>
+
+  </div>
+
+  <!-- Load the existing FrostTech Supabase configuration. -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabase.js"></script>
+
+  <script>
+    const registrationForm =
+      document.getElementById("registrationForm");
+
+    const registerButton =
+      document.getElementById("registerButton");
+
+    const messageBox =
+      document.getElementById("message");
 
     function showMessage(message, type) {
       messageBox.textContent = message;
-      messageBox.className = "message " + type;
+      messageBox.className = type;
     }
 
-    function setBusy(busy, text) {
-      button.disabled = busy;
-      button.textContent = text || "Register as Supplier";
-    }
-
-    function getDatabase() {
-      if (!window.supabaseClient) {
-        throw new Error(
-          "Supabase is not connected. Please refresh the page and try again."
-        );
-      }
-
-      return window.supabaseClient;
-    }
-
-    async function createSupplierProfile(session, profile) {
-      if (!session || !session.access_token || !session.user) {
-        throw new Error(
-          "A confirmed, authenticated supplier session is required."
-        );
+    function getSupabaseClient() {
+      if (
+        typeof window.supabaseClient !== "undefined" &&
+        window.supabaseClient
+      ) {
+        return window.supabaseClient;
       }
 
       if (
-        !profile ||
-        !profile.email ||
-        session.user.email.toLowerCase() !== profile.email.toLowerCase()
+        typeof supabaseClient !== "undefined" &&
+        supabaseClient
       ) {
-        throw new Error(
-          "The signed-in account does not match the supplier registration. Please sign in with the registered email address."
-        );
+        return supabaseClient;
       }
 
-      const db = getDatabase();
-
-      const { data, error } = await db.functions.invoke(
-        "register-supplier",
-        {
-          body: {
-            business_name: profile.business_name,
-            contact_name: profile.contact_name,
-            email: profile.email,
-            phone: profile.phone,
-            address: profile.address,
-            city: profile.city,
-            state: profile.state
-          }
-        }
-      );
-
-      if (error) {
-        console.error("register-supplier function error:", error);
-        throw new Error(
-          "Your email account is confirmed, but FrostTech could not finish creating your supplier profile. Please try again or contact FrostTech support. Details: " +
-          error.message
-        );
-      }
-
-      console.log("Supplier registration function response:", data);
-
-      localStorage.removeItem(PENDING_KEY);
-
-      form.reset();
-
-      showMessage(
-        "Registration completed successfully. Your supplier profile has been submitted for FrostTech review. You must wait for admin approval before submitting quotations.",
-        "success"
-      );
+      return null;
     }
 
-    async function finishPendingRegistration() {
-      const saved = localStorage.getItem(PENDING_KEY);
+    registrationForm.addEventListener("submit", async function(event) {
+      event.preventDefault();
 
-      if (!saved) {
-        return;
-      }
+      messageBox.textContent = "";
+      messageBox.className = "";
 
-      let profile;
+      const business_name =
+        document.getElementById("business_name").value.trim();
 
-      try {
-        profile = JSON.parse(saved);
-      } catch {
-        localStorage.removeItem(PENDING_KEY);
-        return;
-      }
+      const contact_name =
+        document.getElementById("contact_name").value.trim();
 
-      const db = getDatabase();
-      const { data, error } = await db.auth.getSession();
+      const email =
+        document.getElementById("email").value.trim().toLowerCase();
 
-      if (error) {
-        throw error;
-      }
+      const phone =
+        document.getElementById("phone").value.trim();
 
-      if (!data.session) {
+      const address =
+        document.getElementById("address").value.trim();
+
+      const city =
+        document.getElementById("city").value.trim();
+
+      const state =
+        document.getElementById("state").value.trim();
+
+      const password =
+        document.getElementById("password").value;
+
+      const confirm_password =
+        document.getElementById("confirm_password").value;
+
+      if (password.length < 8) {
         showMessage(
-          "Your registration details are saved in this browser. Please confirm your email using the link sent by Supabase. If confirmation has already been completed, sign in with the registered account to finish your supplier profile.",
-          "info"
-        );
-        return;
-      }
-
-      if (
-        !data.session.user.email ||
-        data.session.user.email.toLowerCase() !== profile.email.toLowerCase()
-      ) {
-        showMessage(
-          "A different account is signed in. Sign out and sign in with the email address used for this supplier registration.",
+          "Your password must contain at least 8 characters.",
           "error"
         );
         return;
       }
 
-      setBusy(true, "Completing Registration...");
-
-      try {
-        await createSupplierProfile(data.session, profile);
-      } finally {
-        setBusy(false);
-      }
-    }
-
-    form.addEventListener("submit", async function(event) {
-      event.preventDefault();
-
-      if (button.disabled) return;
-
-      const profile = {
-        business_name: document.getElementById("businessName").value.trim(),
-        contact_name: document.getElementById("contactName").value.trim(),
-        email: document.getElementById("email").value.trim().toLowerCase(),
-        phone: document.getElementById("phone").value.trim(),
-        address: document.getElementById("address").value.trim(),
-        city: document.getElementById("city").value.trim(),
-        state: document.getElementById("state").value.trim()
-      };
-
-      const password = document.getElementById("password").value;
-      const confirmPassword =
-        document.getElementById("confirmPassword").value;
-
-      if (password !== confirmPassword) {
-        showMessage("Your passwords do not match.", "error");
+      if (password !== confirm_password) {
+        showMessage(
+          "The passwords do not match. Please check them.",
+          "error"
+        );
         return;
       }
 
-      if (password.length < 8) {
-        showMessage("Your password must contain at least 8 characters.", "error");
+      const client = getSupabaseClient();
+
+      if (!client) {
+        showMessage(
+          "The FrostTech database client could not be loaded. " +
+          "Please check supabase.js before trying again.",
+          "error"
+        );
         return;
       }
 
-      setBusy(true, "Registering...");
-      messageBox.className = "message";
+      registerButton.disabled = true;
+      registerButton.textContent = "Registering...";
+      
+      showMessage(
+        "Submitting your supplier registration. Please wait.",
+        "info"
+      );
 
       try {
-        const db = getDatabase();
+        const { data, error } = await client.functions.invoke(
+          "register-supplier",
+          {
+            body: {
+              business_name,
+              contact_name,
+              email,
+              phone,
+              address,
+              city,
+              state,
+              password
+            }
+          }
+        );
 
-        const { data: sessionData, error: sessionError } =
-          await db.auth.getSession();
+        if (error) {
+          let details = "";
 
-        if (sessionError) throw sessionError;
+          if (error.context) {
+            try {
+              if (typeof error.context.json === "function") {
+                const responseBody = await error.context.json();
 
-        if (sessionData.session) {
-          showMessage(
-            "Please sign out of the existing account before registering a new supplier.",
-            "info"
+                details =
+                  responseBody.error ||
+                  responseBody.message ||
+                  "";
+              }
+            } catch (_) {
+              // Use the general error message if the response
+              // does not contain readable JSON.
+            }
+          }
+
+          console.error(
+            "FrostTech supplier registration error:",
+            error
           );
+
+          showMessage(
+            details ||
+            "Registration could not be completed. " +
+            "Please try again. If the problem continues, " +
+            "contact FrostTech with the error details.",
+            "error"
+          );
+
           return;
         }
 
-        /*
-         * Keep business details temporarily so they remain available
-         * when the supplier returns from email confirmation.
-         * The password is never saved in localStorage.
-         */
-        localStorage.setItem(PENDING_KEY, JSON.stringify(profile));
-
-        const { data, error } = await db.auth.signUp({
-          email: profile.email,
-          password: password,
-          options: {
-            emailRedirectTo:
-              window.location.origin +
-              window.location.pathname
-          }
-        });
-
-        if (error) throw error;
-
-        if (data.session && data.user) {
-          await createSupplierProfile(data.session, profile);
-        } else {
+        if (!data || data.success !== true) {
           showMessage(
-            "Your login account has been created. Check your email inbox and spam folder for the Supabase confirmation email. Open the confirmation link, return to this page if necessary, and sign in with the registered email to complete your supplier profile. Do not register a second time. Your supplier account must be approved by FrostTech before you can submit quotations.",
-            "success"
+            data && data.error
+              ? data.error
+              : "Registration could not be completed.",
+            "error"
           );
+
+          return;
         }
 
-      } catch (error) {
-        console.error("Supplier registration error:", error);
+        registrationForm.reset();
 
         showMessage(
-          error.message ||
-          "Registration failed. Please check your details and try again.",
+          data.message ||
+          "Your registration has been submitted successfully. " +
+          "Please follow the account confirmation instructions " +
+          "and wait for FrostTech approval.",
+          "success"
+        );
+
+      } catch (error) {
+        console.error(
+          "Unexpected supplier registration error:",
+          error
+        );
+
+        showMessage(
+          "We could not reach the registration service. " +
+          "Please check your internet connection and try again.",
           "error"
         );
+
       } finally {
-        setBusy(false);
+        registerButton.disabled = false;
+        registerButton.textContent = "Register as Supplier";
       }
     });
+  </script>
 
-    /*
-     * When the supplier returns from email confirmation, check whether
-     * a pending registration can now be completed.
-     */
-    window.addEventListener("load", async function() {
-      try {
-        await finishPendingRegistration();
-      } catch (error) {
-        console.error("Registration completion error:", error);
-        showMessage(
-          error.message ||
-          "We could not complete your supplier registration. Please try again.",
-          "error"
-        );
-      }
-    });
-
-    /*
-     * If Supabase establishes the session after loading the confirmation
-     * link, try to finish the saved registration.
-     */
-    if (window.supabaseClient) {
-      window.supabaseClient.auth.onAuthStateChange(function(event, session) {
-        if (
-          session &&
-          (event === "SIGNED_IN" || event === "INITIAL_SESSION")
-        ) {
-          setTimeout(function() {
-            finishPendingRegistration().catch(function(error) {
-              console.error(error);
-              showMessage(
-                error.message || "Unable to complete supplier registration.",
-                "error"
-              );
-            });
-          }, 0);
-        }
-      });
-    }
-  </script></body>
+</body>
 </html>
