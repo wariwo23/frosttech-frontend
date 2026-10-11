@@ -2,260 +2,269 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>FrostTech Administration</title>
 
 <style>
 :root {
-    --primary: #063b70;
-    --secondary: #0879c9;
-    --background: #f3f6fa;
-    --border: #dce3eb;
-    --success: #16803c;
-    --danger: #c62828;
-    --warning: #a76500;
+    --primary:#063b70;
+    --secondary:#0879c9;
+    --background:#f3f6fa;
+    --border:#dce3eb;
+    --success:#16803c;
+    --danger:#c62828;
+    --warning:#a76500;
 }
 
 * {
-    box-sizing: border-box;
+    box-sizing:border-box;
 }
 
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--background);
-    color: #172333;
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:var(--background);
+    color:#172333;
 }
 
 header {
-    background: var(--primary);
-    color: white;
-    padding: 18px;
+    background:var(--primary);
+    color:white;
+    padding:18px;
 }
 
 header h1 {
-    margin: 0 0 8px;
-    font-size: 23px;
-}
-
-header p {
-    margin: 0;
+    margin:0 0 8px;
+    font-size:23px;
 }
 
 main {
-    max-width: 1200px;
-    margin: auto;
-    padding: 16px;
+    max-width:1200px;
+    margin:auto;
+    padding:16px;
 }
 
 .card {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px;
-    margin-bottom: 18px;
-    box-shadow: 0 2px 5px rgba(0,0,0,.04);
+    background:white;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    margin-bottom:18px;
+    box-shadow:0 2px 5px rgba(0,0,0,.04);
 }
 
 h2 {
-    color: var(--primary);
-    margin-top: 0;
+    color:var(--primary);
+    margin-top:0;
 }
 
 h3 {
-    margin-bottom: 8px;
+    margin-bottom:8px;
 }
 
-input,
-select,
-textarea,
-button {
-    font: inherit;
-    width: 100%;
-    padding: 11px;
-    margin: 5px 0;
-    border-radius: 6px;
+input,select,textarea,button {
+    width:100%;
+    font:inherit;
+    padding:11px;
+    margin:5px 0;
+    border-radius:6px;
 }
 
-input,
-select,
-textarea {
-    border: 1px solid #bdc9d6;
-    background: white;
+input,select,textarea {
+    border:1px solid #bdc9d6;
+    background:white;
 }
 
 textarea {
-    min-height: 70px;
-    resize: vertical;
+    min-height:70px;
+    resize:vertical;
 }
 
 button {
-    border: none;
-    background: var(--secondary);
-    color: white;
-    font-weight: bold;
-    cursor: pointer;
+    border:0;
+    background:var(--secondary);
+    color:white;
+    font-weight:bold;
+    cursor:pointer;
 }
 
 button:disabled {
-    opacity: .6;
-    cursor: wait;
-}
-
-button.danger {
-    background: var(--danger);
+    opacity:.6;
+    cursor:wait;
 }
 
 button.success {
-    background: var(--success);
+    background:var(--success);
+}
+
+button.danger {
+    background:var(--danger);
 }
 
 button.warning {
-    background: var(--warning);
+    background:var(--warning);
 }
 
 button.neutral {
-    background: #596579;
-}
-
-.small-button {
-    width: auto;
-    padding: 8px 12px;
-    margin-right: 4px;
+    background:#596579;
 }
 
 .hidden {
-    display: none !important;
+    display:none!important;
 }
 
 .message {
-    padding: 10px;
-    border-radius: 6px;
-    margin: 10px 0;
-    overflow-wrap: anywhere;
+    padding:10px;
+    border-radius:6px;
+    margin:10px 0;
+    overflow-wrap:anywhere;
 }
 
 .info {
-    background: #e8f3ff;
-    color: #06477c;
+    background:#e8f3ff;
+    color:#06477c;
 }
 
 .error {
-    background: #ffebee;
-    color: #a11919;
+    background:#ffebee;
+    color:#a11919;
 }
 
 .success-message {
-    background: #e8f5e9;
-    color: #166534;
+    background:#e8f5e9;
+    color:#166534;
 }
 
 .warning-message {
-    background: #fff5dc;
-    color: #805000;
+    background:#fff5dc;
+    color:#805000;
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 12px;
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(240px,1fr));
+    gap:12px;
 }
 
 .stat {
-    background: #edf5ff;
-    border-radius: 8px;
-    padding: 15px;
+    background:#edf5ff;
+    border-radius:8px;
+    padding:15px;
 }
 
 .stat strong {
-    display: block;
-    font-size: 25px;
-    color: var(--primary);
-    margin-top: 5px;
+    display:block;
+    font-size:25px;
+    color:var(--primary);
+    margin-top:5px;
+}
+
+label {
+    display:block;
+    margin-top:8px;
+    font-weight:bold;
 }
 
 .table-wrap {
-    overflow-x: auto;
+    overflow-x:auto;
 }
 
 table {
-    border-collapse: collapse;
-    width: 100%;
-    min-width: 650px;
+    border-collapse:collapse;
+    width:100%;
+    min-width:650px;
 }
 
-th,
-td {
-    border-bottom: 1px solid var(--border);
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    overflow-wrap: anywhere;
+th,td {
+    border-bottom:1px solid var(--border);
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+    overflow-wrap:anywhere;
 }
 
 th {
-    background: #edf3fa;
+    background:#edf3fa;
 }
 
 .badge {
-    display: inline-block;
-    padding: 5px 8px;
-    border-radius: 5px;
-    background: #e8edf3;
-    font-size: 12px;
-    font-weight: bold;
+    display:inline-block;
+    padding:5px 8px;
+    border-radius:5px;
+    background:#e8edf3;
+    font-size:12px;
+    font-weight:bold;
 }
 
 .badge.approved,
 .badge.selected,
-.badge.completed {
-    background: #d8f3df;
-    color: #176532;
+.badge.completed,
+.badge.submitted,
+.badge.active {
+    background:#d8f3df;
+    color:#176532;
 }
 
 .badge.pending,
+.badge.draft,
+.badge.reviewing,
 .badge.in_review,
-.badge.more_info,
-.badge.reviewing {
-    background: #fff0c2;
-    color: #805500;
+.badge.more_info {
+    background:#fff0c2;
+    color:#805500;
 }
 
 .badge.rejected,
 .badge.suspended,
-.badge.expired {
-    background: #ffe0e0;
-    color: #a21d1d;
+.badge.expired,
+.badge.cancelled {
+    background:#ffe0e0;
+    color:#a21d1d;
 }
 
-.supplier-actions {
-    min-width: 220px;
+.product-image {
+    max-width:120px;
+    max-height:100px;
+    object-fit:contain;
+    display:block;
+    margin:8px 0;
+}
+
+.action-row {
+    display:flex;
+    flex-wrap:wrap;
+    gap:6px;
+}
+
+.action-row button {
+    width:auto;
+    flex:1 1 140px;
+}
+
+hr {
+    border:0;
+    border-top:1px solid var(--border);
+    margin:22px 0;
 }
 
 footer {
-    text-align: center;
-    padding: 20px;
-    color: #64748b;
+    text-align:center;
+    padding:20px;
+    color:#64748b;
 }
 
-label {
-    display: block;
-    margin-top: 8px;
-    font-weight: bold;
-}
-
-@media (max-width: 600px) {
+@media(max-width:600px) {
     main {
-        padding: 10px;
+        padding:10px;
     }
 
     .card {
-        padding: 13px;
+        padding:13px;
     }
 
     header h1 {
-        font-size: 20px;
+        font-size:20px;
     }
 }
 </style>
@@ -270,196 +279,328 @@ label {
 
 <main>
 
-    <div id="systemStatus" class="message info">
-        Connecting to FrostTech...
-    </div>
+<div id="systemStatus" class="message info">
+    Connecting to FrostTech...
+</div>
 
-    <!-- ADMIN LOGIN -->
+<section id="loginSection" class="card">
+    <h2>Administrator Login</h2>
 
-    <section id="loginSection" class="card">
-        <h2>Administrator Login</h2>
+    <form id="loginForm">
+        <label for="email">Administrator Email</label>
+        <input id="email" type="email" autocomplete="username" required>
+
+        <label for="password">Password</label>
+        <input id="password" type="password"
+               autocomplete="current-password" required>
+
+        <button id="loginBtn" type="submit">Login</button>
+    </form>
+
+    <div id="loginMessage" role="status"></div>
+</section>
+
+<section id="dashboard" class="hidden">
+
+    <section class="card">
+        <h2>Administration Overview</h2>
+
+        <p>Signed in as: <strong id="loggedUser"></strong></p>
+
+        <div class="action-row">
+            <button id="refreshBtn" type="button">Refresh Dashboard</button>
+            <button id="logoutBtn" type="button" class="danger">Logout</button>
+        </div>
+
+        <div id="message" role="status"></div>
+    </section>
+
+    <section class="card">
+        <h2>Marketplace Summary</h2>
+
+        <div class="grid">
+            <div class="stat">
+                Products
+                <strong id="productCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Customer Requests
+                <strong id="requestCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Supplier Applications
+                <strong id="supplierCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Pending Supplier Reviews
+                <strong id="pendingSupplierCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Supplier Quotations
+                <strong id="quotationCount">0</strong>
+            </div>
+
+            <div class="stat">
+                Direct Quotations
+                <strong id="directQuoteCount">0</strong>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRODUCT MANAGEMENT -->
+
+    <section class="card" id="productManagement">
+        <h2>Product Management</h2>
 
         <p>
-            Sign in using your authorized FrostTech administrator account.
+            Add catalogue products, set selling prices, upload pictures,
+            and manage stock.
         </p>
 
-        <form id="loginForm">
-            <label for="email">Administrator Email</label>
-            <input
-                id="email"
-                type="email"
-                autocomplete="username"
-                required
-            >
+        <div id="productMessage" role="status"></div>
 
-            <label for="password">Password</label>
-            <input
-                id="password"
-                type="password"
-                autocomplete="current-password"
-                required
-            >
+        <h3 id="productFormTitle">Add Product</h3>
 
-            <button id="loginBtn" type="submit">
-                Login
-            </button>
+        <form id="productForm">
+
+            <input type="hidden" id="productId">
+
+            <label for="productName">Product Name *</label>
+            <input id="productName" required
+                   placeholder="LG 1.5HP Split Air Conditioner">
+
+            <label for="productCategory">Category</label>
+            <select id="productCategory">
+                <option value="">Select category</option>
+                <option>Air Conditioners</option>
+                <option>Refrigeration Parts</option>
+                <option>HVAC Accessories</option>
+                <option>HVAC Services</option>
+            </select>
+
+            <label for="productBrand">Brand</label>
+            <input id="productBrand" placeholder="LG">
+
+            <label for="productModel">Model</label>
+            <input id="productModel">
+
+            <label for="productSku">SKU / Product Code</label>
+            <input id="productSku">
+
+            <label for="productUnit">Unit</label>
+            <select id="productUnit">
+                <option value="piece">Piece</option>
+                <option value="set">Set</option>
+                <option value="pack">Pack</option>
+                <option value="meter">Meter</option>
+                <option value="service">Service</option>
+            </select>
+
+            <label for="productDescription">Description</label>
+            <textarea id="productDescription"></textarea>
+
+            <label for="productSellingPrice">Selling Price (₦) *</label>
+            <input id="productSellingPrice" type="number"
+                   min="0" step="0.01" required>
+
+            <label for="productSupplierCost">Supplier Cost (₦)</label>
+            <input id="productSupplierCost" type="number"
+                   min="0" step="0.01">
+
+            <label for="productStock">Stock Quantity *</label>
+            <input id="productStock" type="number"
+                   min="0" step="1" value="0" required>
+
+            <label for="productMinStock">Minimum Stock Level</label>
+            <input id="productMinStock" type="number"
+                   min="0" step="1" value="0" required>
+
+            <label for="productImage">Product Image</label>
+            <input id="productImage" type="file" accept="image/*">
+
+            <label for="productActive">Catalogue Visibility</label>
+            <select id="productActive">
+                <option value="true">Active — visible to customers</option>
+                <option value="false">Inactive — hidden from catalogue</option>
+            </select>
+
+            <button id="saveProductBtn" type="submit">Save Product</button>
+            <button id="cancelProductEditBtn" type="button"
+                    class="neutral hidden">Cancel Editing</button>
         </form>
 
-        <div id="loginMessage" role="status"></div>
+        <hr>
+
+        <h3>Existing Products</h3>
+        <button id="loadProductsBtn" type="button">Load Products</button>
+        <div id="productList">Load products to view the catalogue.</div>
     </section>
 
-    <!-- ADMIN DASHBOARD -->
+    <!-- ADMIN-DIRECT QUOTATIONS -->
 
-    <section id="dashboard" class="hidden">
+    <section class="card" id="directQuotationSection">
+        <h2>Admin-Direct Quotations</h2>
 
-        <section class="card">
-            <h2>Administration Overview</h2>
+        <p>
+            Prepare quotations directly for customers. Supplier participation
+            is not required.
+        </p>
 
-            <p>
-                Signed in as:
-                <strong id="loggedUser"></strong>
-            </p>
+        <div class="message info">
+            Choose a customer request below and prepare a draft or submit
+            a quotation. Submitting a quotation does not initiate payment.
+        </div>
 
-            <button id="refreshBtn" type="button">
-                Refresh Dashboard
-            </button>
+        <div id="directQuoteMessage" role="status"></div>
 
-            <button id="logoutBtn" type="button" class="danger">
-                Logout
-            </button>
+        <form id="directQuoteForm" class="hidden">
 
-            <div id="message" role="status"></div>
-        </section>
+            <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
 
-        <!-- SUMMARY -->
-
-        <section class="card">
-            <h2>Marketplace Summary</h2>
-
-            <div class="grid">
-                <div class="stat">
-                    Customer Quote Requests
-                    <strong id="requestCount">0</strong>
-                </div>
-
-                <div class="stat">
-                    Supplier Applications
-                    <strong id="supplierCount">0</strong>
-                </div>
-
-                <div class="stat">
-                    Pending Supplier Reviews
-                    <strong id="pendingSupplierCount">0</strong>
-                </div>
-
-                <div class="stat">
-                    Supplier Quotations
-                    <strong id="quotationCount">0</strong>
-                </div>
-            </div>
-        </section>
-
-        <!-- CUSTOMER REQUESTS -->
-
-        <section class="card">
-            <h2>Customer Quote Requests</h2>
+            <input type="hidden" id="directQuoteId">
+            <input type="hidden" id="directRequestId">
 
             <p>
-                Review customer requirements and track quotation progress.
+                Request reference:
+                <strong id="directRequestReference"></strong>
             </p>
 
-            <div id="requestMessage" role="status"></div>
+            <label for="directProductDescription">Product / Service *</label>
+            <textarea id="directProductDescription" required></textarea>
 
-            <div id="quoteRequests">
-                Loading customer requests...
-            </div>
-        </section>
+            <label for="directQuantity">Quantity *</label>
+            <input id="directQuantity" type="number"
+                   min="1" step="1" required value="1">
 
-        <!-- SUPPLIER QUOTATIONS -->
+            <label for="directUnitPrice">Unit Price (₦) *</label>
+            <input id="directUnitPrice" type="number"
+                   min="0" step="0.01" required>
 
-        <section class="card">
-            <h2>Saved Supplier Quotations</h2>
+            <label for="directDeliveryCost">Delivery Cost (₦)</label>
+            <input id="directDeliveryCost" type="number"
+                   min="0" step="0.01" value="0" required>
 
-            <p>
-                Review supplier pricing, delivery costs, FrostTech margins,
-                and proposed customer totals.
-            </p>
+            <label for="directAdditionalCharges">Additional Charges (₦)</label>
+            <input id="directAdditionalCharges" type="number"
+                   min="0" step="0.01" value="0" required>
 
-            <div id="quotationMessage" role="status"></div>
+            <label for="directDiscount">Discount (₦)</label>
+            <input id="directDiscount" type="number"
+                   min="0" step="0.01" value="0" required>
 
-            <div id="supplierQuotes">
-                Loading supplier quotations...
-            </div>
-        </section>
-
-        <!-- SUPPLIER MANAGEMENT -->
-
-        <section class="card" id="supplierManagement">
-
-            <h2>Supplier Management</h2>
-
-            <p>
-                FrostTech administrators have final authority over supplier
-                approval. Email confirmation and verification checks do not
-                automatically approve an application.
-            </p>
-
-            <div class="message warning-message">
-                Review the business details and supporting evidence before
-                making a decision. Approve a supplier only after you have
-                explicitly decided to approve that application.
+            <div class="stat">
+                Subtotal
+                <strong id="directSubtotal">₦0.00</strong>
+                Total
+                <strong id="directTotal">₦0.00</strong>
             </div>
 
-            <button id="loadSuppliersBtn" type="button">
-                Load Supplier Applications
-            </button>
+            <label for="directValidity">Valid Until</label>
+            <input id="directValidity" type="date">
 
-            <div id="supplierManagementMessage" role="status"></div>
+            <label for="directNotes">Notes for Customer</label>
+            <textarea id="directNotes"></textarea>
 
-            <div id="supplierManagementRows">
-                Supplier applications will appear here.
+            <div class="action-row">
+                <button id="saveDraftBtn" type="button" class="neutral">
+                    Save Draft
+                </button>
+
+                <button id="submitDirectQuoteBtn" type="button"
+                        class="success">
+                    Submit Quotation
+                </button>
+
+                <button id="cancelDirectQuoteBtn" type="button"
+                        class="danger">
+                    Cancel
+                </button>
             </div>
-        </section>
+        </form>
 
-        <!-- PAYMENTS -->
+        <hr>
 
-        <section class="card">
-            <h2>Payment Records</h2>
+        <h3>Saved Direct Quotations</h3>
 
-            <p>
-                View payment records available to the administrator.
-                This section does not initiate payments or change payment
-                statuses.
-            </p>
+        <button id="loadDirectQuotesBtn" type="button">
+            Load Direct Quotations
+        </button>
 
-            <button id="loadPaymentsBtn" type="button">
-                Load Payment Records
-            </button>
-
-            <div id="paymentMessage" role="status"></div>
-
-            <div id="paymentRecords">
-                Tap the button to load payment records.
-            </div>
-        </section>
-
+        <div id="directQuoteList">
+            Tap the button to load direct quotations.
+        </div>
     </section>
 
+    <!-- CUSTOMER REQUESTS -->
+
+    <section class="card">
+        <h2>Customer Quote Requests</h2>
+
+        <div id="requestMessage" role="status"></div>
+        <div id="quoteRequests">Loading requests...</div>
+    </section>
+
+    <!-- SUPPLIER QUOTATIONS -->
+
+    <section class="card">
+        <h2>Saved Supplier Quotations</h2>
+
+        <p>
+            Review supplier pricing and select or reject supplier quotations.
+        </p>
+
+        <div id="quotationMessage" role="status"></div>
+        <div id="supplierQuotes">Loading supplier quotations...</div>
+    </section>
+
+    <!-- SUPPLIER MANAGEMENT -->
+
+    <section class="card" id="supplierManagement">
+        <h2>Supplier Management</h2>
+
+        <p>
+            Review applications and make explicit approval decisions.
+        </p>
+
+        <button id="loadSuppliersBtn" type="button">
+            Load Supplier Applications
+        </button>
+
+        <div id="supplierManagementMessage" role="status"></div>
+        <div id="supplierManagementRows">Supplier applications will appear here.</div>
+    </section>
+
+    <!-- PAYMENTS -->
+
+    <section class="card">
+        <h2>Payment Records</h2>
+
+        <p>
+            This section displays payment records only. It does not initiate
+            payments or change payment statuses.
+        </p>
+
+        <button id="loadPaymentsBtn" type="button">
+            Load Payment Records
+        </button>
+
+        <div id="paymentMessage" role="status"></div>
+        <div id="paymentRecords">Tap the button to load payment records.</div>
+    </section>
+
+</section>
 </main>
 
-<footer>
-    FrostTech HVAC and Refrigeration Marketplace
-</footer>
+<footer>FrostTech HVAC and Refrigeration Marketplace</footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 "use strict";
-
-/*
- * FrostTech Supabase configuration.
- * Uses the existing project and publishable key.
- */
 
 const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -476,9 +617,8 @@ let currentAdmin = null;
 let currentRequests = [];
 let currentSuppliers = [];
 let currentSupplierQuotes = [];
-
-
-/* GENERAL HELPERS */
+let currentProducts = [];
+let currentDirectQuotes = [];
 
 function el(id) {
     return document.getElementById(id);
@@ -497,9 +637,7 @@ function escapeHtml(value) {
 }
 
 function money(value) {
-    const amount = Number(value ?? 0);
-
-    return "₦" + amount.toLocaleString("en-NG", {
+    return "₦" + Number(value ?? 0).toLocaleString("en-NG", {
         minimumFractionDigits: 2,
         maximumFractionDigits: 2
     });
@@ -510,26 +648,22 @@ function dateText(value) {
 
     const date = new Date(value);
 
-    if (Number.isNaN(date.getTime())) {
-        return escapeHtml(value);
-    }
-
-    return date.toLocaleString("en-NG");
+    return Number.isNaN(date.getTime())
+        ? escapeHtml(value)
+        : date.toLocaleString("en-NG");
 }
 
 function badge(status) {
-    const safeStatus = String(status || "unknown")
+    const safe = String(status || "unknown")
         .toLowerCase()
         .replace(/[^a-z0-9_-]/g, "");
 
-    return '<span class="badge ' + safeStatus + '">' +
-        escapeHtml(status || "unknown") +
-        '</span>';
+    return '<span class="badge ' + safe + '">' +
+        escapeHtml(status || "unknown") + '</span>';
 }
 
 function showMessage(id, text, type = "info") {
     const target = el(id);
-
     if (!target) return;
 
     target.className = "message " + type;
@@ -538,51 +672,55 @@ function showMessage(id, text, type = "info") {
 
 function clearMessage(id) {
     const target = el(id);
-
     if (!target) return;
 
-    target.textContent = "";
     target.className = "";
+    target.textContent = "";
 }
 
 function errorText(error) {
     return error?.message || String(error || "Unknown error");
 }
 
+function makeReference(prefix) {
+    return prefix + "-" + Date.now() + "-" +
+        Math.random().toString(36).slice(2, 7).toUpperCase();
+}
 
-/* LOGIN AND ADMIN AUTHORIZATION */
+function numericInput(id) {
+    const value = Number(el(id).value);
+
+    if (!Number.isFinite(value)) return 0;
+
+    return value;
+}
+
+
+/* AUTHENTICATION */
 
 el("loginForm").addEventListener("submit", async function(event) {
     event.preventDefault();
 
-    const email = el("email").value.trim();
-    const password = el("password").value;
-    const button = el("loginBtn");
+    el("loginBtn").disabled = true;
 
-    button.disabled = true;
-
-    showMessage(
-        "loginMessage",
-        "Checking administrator credentials...",
-        "info"
-    );
+    showMessage("loginMessage", "Checking credentials...", "info");
 
     try {
         const { data, error } = await db.auth.signInWithPassword({
-            email,
-            password
+            email: el("email").value.trim(),
+            password: el("password").value
         });
 
         if (error) throw error;
 
-        const result = await checkAdminProfile(data.user);
+        const authorized = await checkAdminProfile(data.user);
 
-        if (!result) {
+        if (!authorized) {
             await db.auth.signOut();
 
             showMessage(
                 "loginMessage",
-                "Access denied. This account is not an active FrostTech administrator.",
+                "Access denied. This account is not an active administrator.",
                 "error"
             );
 
@@ -598,7 +736,7 @@ el("loginForm").addEventListener("submit", async function(event) {
             "error"
         );
     } finally {
-        button.disabled = false;
+        el("loginBtn").disabled = false;
     }
 });
 
@@ -608,19 +746,13 @@ async function checkAdminProfile(user) {
 
     const { data, error } = await db
         .from("profiles")
-        .select("id, full_name, role, is_active")
+        .select("id,full_name,role,is_active")
         .eq("id", user.id)
         .maybeSingle();
 
-    if (error) {
-        throw error;
-    }
+    if (error) throw error;
 
-    if (
-        !data ||
-        data.role !== "admin" ||
-        data.is_active !== true
-    ) {
+    if (!data || data.role !== "admin" || data.is_active !== true) {
         return false;
     }
 
@@ -635,13 +767,11 @@ async function checkAdminProfile(user) {
 
 
 async function openDashboard(user) {
-    const authorized = await checkAdminProfile(user);
-
-    if (!authorized) {
+    if (!await checkAdminProfile(user)) {
         await db.auth.signOut();
 
-        el("loginSection").classList.remove("hidden");
         el("dashboard").classList.add("hidden");
+        el("loginSection").classList.remove("hidden");
 
         showMessage(
             "loginMessage",
@@ -677,19 +807,16 @@ async function checkExistingSession() {
         if (data.session?.user) {
             await openDashboard(data.session.user);
         } else {
-            el("loginSection").classList.remove("hidden");
-            el("dashboard").classList.add("hidden");
-
             showMessage(
                 "systemStatus",
-                "Please log in as an administrator.",
+                "Please log in as a FrostTech administrator.",
                 "info"
             );
         }
     } catch (error) {
         showMessage(
             "systemStatus",
-            "Connection or session error: " + errorText(error),
+            "Connection error: " + errorText(error),
             "error"
         );
     }
@@ -700,12 +827,7 @@ el("logoutBtn").addEventListener("click", async function() {
     const { error } = await db.auth.signOut();
 
     if (error) {
-        showMessage(
-            "message",
-            "Logout error: " + errorText(error),
-            "error"
-        );
-
+        showMessage("message", errorText(error), "error");
         return;
     }
 
@@ -714,15 +836,11 @@ el("logoutBtn").addEventListener("click", async function() {
     el("dashboard").classList.add("hidden");
     el("loginSection").classList.remove("hidden");
 
-    showMessage(
-        "systemStatus",
-        "You have logged out.",
-        "info"
-    );
+    showMessage("systemStatus", "You have logged out.", "info");
 });
 
 
-db.auth.onAuthStateChange(function(event, session) {
+db.auth.onAuthStateChange(function(event) {
     if (event === "SIGNED_OUT") {
         currentAdmin = null;
 
@@ -739,203 +857,480 @@ el("refreshBtn").addEventListener("click", loadDashboard);
 async function loadDashboard() {
     if (!currentAdmin) return;
 
-    showMessage(
-        "message",
-        "Refreshing FrostTech dashboard...",
-        "info"
-    );
+    showMessage("message", "Refreshing dashboard...", "info");
 
-    await Promise.allSettled([
+    const tasks = [
+        loadProducts(),
         loadCustomerRequests(),
         loadSupplierQuotations(),
-        loadSupplierManagement()
-    ]);
+        loadSupplierManagement(),
+        loadDirectQuotations()
+    ];
+
+    const results = await Promise.allSettled(tasks);
+
+    const failed = results.filter(result =>
+        result.status === "rejected"
+    );
 
     showMessage(
         "message",
-        "Dashboard refresh completed. Check individual section messages for errors.",
-        "success-message"
+        failed.length
+            ? "Dashboard refreshed with some errors. Check each section."
+            : "Dashboard refresh completed.",
+        failed.length ? "warning-message" : "success-message"
     );
 }
 
 
-/* CUSTOMER QUOTE REQUESTS */
+/* PRODUCT MANAGEMENT */
+
+el("productForm").addEventListener("submit", saveProduct);
+
+el("loadProductsBtn").addEventListener("click", loadProducts);
+
+el("cancelProductEditBtn").addEventListener(
+    "click",
+    resetProductForm
+);
+
+
+async function loadProducts() {
+    const target = el("productList");
+    target.textContent = "Loading products...";
+
+    const { data, error } = await db
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent = "Could not load products: " + errorText(error);
+        showMessage("productMessage", errorText(error), "error");
+        el("productCount").textContent = "—";
+        return;
+    }
+
+    currentProducts = data || [];
+    el("productCount").textContent = currentProducts.length;
+
+    if (!currentProducts.length) {
+        target.textContent = "No products found.";
+        clearMessage("productMessage");
+        return;
+    }
+
+    target.innerHTML = currentProducts.map(function(product) {
+        const image = product.image_url
+            ? '<img class="product-image" src="' +
+              escapeHtml(product.image_url) +
+              '" alt="Product image">'
+            : "";
+
+        return `
+        <article class="card">
+            <h3>${escapeHtml(product.name)}</h3>
+            ${image}
+
+            <p><strong>Category:</strong>
+                ${escapeHtml(product.category || "Not specified")}</p>
+
+            <p><strong>Brand / Model:</strong>
+                ${escapeHtml(product.brand || "")}
+                ${escapeHtml(product.model || "")}</p>
+
+            <p><strong>SKU:</strong>
+                ${escapeHtml(product.sku || "Not specified")}</p>
+
+            <p><strong>Selling Price:</strong>
+                ${money(product.selling_price)}</p>
+
+            <p><strong>Stock:</strong>
+                ${escapeHtml(product.stock_quantity)}</p>
+
+            <p><strong>Visibility:</strong>
+                ${product.is_active ? badge("active") : badge("inactive")}</p>
+
+            <div class="action-row">
+                <button type="button"
+                    data-edit-product="${escapeHtml(product.id)}">
+                    Edit Product
+                </button>
+
+                <button type="button"
+                    class="${product.is_active ? "warning" : "success"}"
+                    data-toggle-product="${escapeHtml(product.id)}">
+                    ${product.is_active ? "Deactivate" : "Activate"}
+                </button>
+            </div>
+        </article>`;
+    }).join("");
+
+    target.querySelectorAll("[data-edit-product]").forEach(button => {
+        button.addEventListener("click", () =>
+            editProduct(button.dataset.editProduct)
+        );
+    });
+
+    target.querySelectorAll("[data-toggle-product]").forEach(button => {
+        button.addEventListener("click", () =>
+            toggleProduct(button.dataset.toggleProduct)
+        );
+    });
+
+    clearMessage("productMessage");
+}
+
+
+async function saveProduct(event) {
+    event.preventDefault();
+
+    if (!currentAdmin) return;
+
+    const button = el("saveProductBtn");
+    button.disabled = true;
+
+    showMessage("productMessage", "Saving product...", "info");
+
+    try {
+        const id = el("productId").value.trim();
+        const imageFile = el("productImage").files[0];
+
+        const price = numericInput("productSellingPrice");
+        const costValue = el("productSupplierCost").value.trim();
+        const stock = numericInput("productStock");
+        const minimumStock = numericInput("productMinStock");
+
+        if (price < 0 || stock < 0 || minimumStock < 0) {
+            throw new Error("Prices and stock values cannot be negative.");
+        }
+
+        if (
+            !Number.isInteger(stock) ||
+            !Number.isInteger(minimumStock)
+        ) {
+            throw new Error("Stock values must be whole numbers.");
+        }
+
+        const record = {
+            name: el("productName").value.trim(),
+            category: el("productCategory").value || null,
+            brand: el("productBrand").value.trim() || null,
+            model: el("productModel").value.trim() || null,
+            sku: el("productSku").value.trim() || null,
+            unit: el("productUnit").value,
+            description: el("productDescription").value.trim() || null,
+            selling_price: price,
+            supplier_cost: costValue === "" ? null : Number(costValue),
+            stock_quantity: stock,
+            min_stock_level: minimumStock,
+            is_active: el("productActive").value === "true",
+            updated_at: new Date().toISOString()
+        };
+
+        if (!record.name) {
+            throw new Error("Enter the product name.");
+        }
+
+        if (
+            record.supplier_cost !== null &&
+            (!Number.isFinite(record.supplier_cost) ||
+             record.supplier_cost < 0)
+        ) {
+            throw new Error("Supplier cost must be zero or greater.");
+        }
+
+        let existing = null;
+
+        if (id) {
+            existing = currentProducts.find(product => product.id === id);
+
+            if (!existing) {
+                const result = await db
+                    .from("products")
+                    .select("id,image_url")
+                    .eq("id", id)
+                    .maybeSingle();
+
+                if (result.error) throw result.error;
+
+                existing = result.data;
+            }
+        }
+
+        if (imageFile) {
+            if (!imageFile.type.startsWith("image/")) {
+                throw new Error("Please select an image file.");
+            }
+
+            if (imageFile.size > 5 * 1024 * 1024) {
+                throw new Error("Image must be 5 MB or smaller.");
+            }
+
+            const extension = (
+                imageFile.name.split(".").pop() || "jpg"
+            ).replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+
+            const imagePath =
+                "products/" + crypto.randomUUID() + "." + extension;
+
+            const { error: uploadError } = await db.storage
+                .from("product-images")
+                .upload(imagePath, imageFile, {
+                    upsert: false,
+                    contentType: imageFile.type
+                });
+
+            if (uploadError) {
+                throw new Error(
+                    "Image upload failed: " + errorText(uploadError)
+                );
+            }
+
+            const { data: publicUrlData } = db.storage
+                .from("product-images")
+                .getPublicUrl(imagePath);
+
+            record.image_url = publicUrlData.publicUrl;
+        }
+
+        if (id) {
+            const { error } = await db
+                .from("products")
+                .update(record)
+                .eq("id", id);
+
+            if (error) throw error;
+
+            showMessage(
+                "productMessage",
+                "Product updated successfully.",
+                "success-message"
+            );
+        } else {
+            const { error } = await db
+                .from("products")
+                .insert(record);
+
+            if (error) throw error;
+
+            showMessage(
+                "productMessage",
+                "Product added successfully.",
+                "success-message"
+            );
+        }
+
+        resetProductForm();
+        await loadProducts();
+
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            "Product could not be saved: " + errorText(error),
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+function editProduct(id) {
+    const product = currentProducts.find(item => item.id === id);
+
+    if (!product) return;
+
+    el("productId").value = product.id;
+    el("productName").value = product.name || "";
+    el("productCategory").value = product.category || "";
+    el("productBrand").value = product.brand || "";
+    el("productModel").value = product.model || "";
+    el("productSku").value = product.sku || "";
+    el("productUnit").value = product.unit || "piece";
+    el("productDescription").value = product.description || "";
+    el("productSellingPrice").value = product.selling_price ?? "";
+    el("productSupplierCost").value = product.supplier_cost ?? "";
+    el("productStock").value = product.stock_quantity ?? 0;
+    el("productMinStock").value = product.min_stock_level ?? 0;
+    el("productActive").value = String(product.is_active);
+    el("productImage").value = "";
+
+    el("productFormTitle").textContent = "Edit Product";
+    el("saveProductBtn").textContent = "Update Product";
+    el("cancelProductEditBtn").classList.remove("hidden");
+
+    el("productManagement").scrollIntoView({ behavior: "smooth" });
+
+    showMessage(
+        "productMessage",
+        "Editing product. Choose a new image only if you want to replace it.",
+        "info"
+    );
+}
+
+
+function resetProductForm() {
+    el("productForm").reset();
+    el("productId").value = "";
+    el("productStock").value = 0;
+    el("productMinStock").value = 0;
+    el("productActive").value = "true";
+    el("productFormTitle").textContent = "Add Product";
+    el("saveProductBtn").textContent = "Save Product";
+    el("cancelProductEditBtn").classList.add("hidden");
+}
+
+
+async function toggleProduct(id) {
+    const product = currentProducts.find(item => item.id === id);
+
+    if (!product) return;
+
+    const action = product.is_active ? "deactivate" : "activate";
+
+    if (!confirm("Do you want to " + action + " " + product.name + "?")) {
+        return;
+    }
+
+    const { error } = await db
+        .from("products")
+        .update({
+            is_active: !product.is_active,
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", id);
+
+    if (error) {
+        showMessage("productMessage", errorText(error), "error");
+        return;
+    }
+
+    showMessage(
+        "productMessage",
+        "Product visibility updated.",
+        "success-message"
+    );
+
+    await loadProducts();
+}
+
+
+/* CUSTOMER REQUESTS */
 
 async function loadCustomerRequests() {
     const target = el("quoteRequests");
+    target.textContent = "Loading customer requests...";
 
-    target.textContent = "Loading customer quote requests...";
-
-    let data = [];
-    let error = null;
-
-    const primary = await db
+    const { data, error } = await db
         .from("quote_requests")
         .select("*")
         .order("created_at", { ascending: false });
 
-    data = primary.data || [];
-    error = primary.error;
-
     if (error) {
-        const fallback = await db
-            .from("customer_requests")
-            .select("*")
-            .order("created_at", { ascending: false });
-
-        if (fallback.error) {
-            target.textContent =
-                "Could not load requests: " +
-                errorText(fallback.error);
-
-            showMessage(
-                "requestMessage",
-                "Check the quote_requests table permissions and schema.",
-                "error"
-            );
-
-            el("requestCount").textContent = "—";
-
-            return;
-        }
-
-        data = fallback.data || [];
-    }
-
-    currentRequests = data;
-
-    el("requestCount").textContent = data.length;
-
-    if (!data.length) {
-        target.textContent = "No customer quote requests found.";
-
-        clearMessage("requestMessage");
-
+        target.textContent = "Could not load requests: " + errorText(error);
+        showMessage("requestMessage", errorText(error), "error");
+        el("requestCount").textContent = "—";
         return;
     }
 
-    target.innerHTML = data.map(function(request) {
-        const requestId = request.id;
+    currentRequests = data || [];
+    el("requestCount").textContent = currentRequests.length;
 
+    if (!currentRequests.length) {
+        target.textContent = "No customer quote requests found.";
+        clearMessage("requestMessage");
+        return;
+    }
+
+    target.innerHTML = currentRequests.map(function(request) {
         const reference =
-            request.request_number ||
-            request.request_no ||
-            requestId;
+            request.request_number || request.id;
 
-        const customer =
-            request.customer_name ||
-            request.full_name ||
-            request.name ||
-            "Customer details available on request";
-
-        const product =
-            request.product_name ||
+        const description =
             request.title ||
-            request.product ||
             request.description ||
             request.product_id ||
             "Product not specified";
-
-        const quantity = request.quantity ?? "Not specified";
-
-        const address =
-            request.delivery_address ||
-            request.address ||
-            "Not provided";
-
-        const status = request.status || "pending";
-
-        const allowedStatuses = [
-            "pending",
-            "reviewing",
-            "quoted",
-            "completed",
-            "rejected",
-            "cancelled"
-        ];
-
-        const statusOptions = allowedStatuses.map(function(item) {
-            return '<option value="' + item + '"' +
-                (status === item ? " selected" : "") +
-                '>' + item + '</option>';
-        }).join("");
 
         return `
         <article class="card">
             <h3>${escapeHtml(reference)}</h3>
 
             <p><strong>Customer:</strong>
-                ${escapeHtml(customer)}</p>
+                ${escapeHtml(request.customer_name || "Customer")}</p>
 
-            <p><strong>Product / Request:</strong>
-                ${escapeHtml(product)}</p>
+            <p><strong>Email:</strong>
+                ${escapeHtml(request.customer_email || "Not provided")}</p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(request.customer_phone || "Not provided")}</p>
+
+            <p><strong>Request:</strong>
+                ${escapeHtml(description)}</p>
 
             <p><strong>Quantity:</strong>
-                ${escapeHtml(quantity)}</p>
+                ${escapeHtml(request.quantity ?? 1)}</p>
+
+            <p><strong>Preferred Brand:</strong>
+                ${escapeHtml(request.preferred_brand || "Any")}</p>
 
             <p><strong>Delivery Address:</strong>
-                ${escapeHtml(address)}</p>
+                ${escapeHtml(request.delivery_address || "Not provided")}</p>
 
-            <p><strong>Current Status:</strong>
-                ${badge(status)}</p>
+            <p><strong>Status:</strong>
+                ${badge(request.status || "pending")}</p>
 
             <p><strong>Date:</strong>
                 ${dateText(request.created_at)}</p>
 
-            <label for="requestStatus_${requestId}">
-                Update Request Status
-            </label>
+            <div class="action-row">
+                <button type="button"
+                    data-prepare-direct="${escapeHtml(request.id)}">
+                    Prepare Direct Quotation
+                </button>
 
-            <select id="requestStatus_${requestId}">
-                ${statusOptions}
-            </select>
-
-            <button type="button"
-                data-request-save="${escapeHtml(requestId)}">
-                Save Request Status
-            </button>
+                <button type="button" class="neutral"
+                    data-mark-reviewing="${escapeHtml(request.id)}">
+                    Mark Reviewing
+                </button>
+            </div>
         </article>`;
     }).join("");
 
-    target.querySelectorAll("[data-request-save]")
-        .forEach(function(button) {
-            button.addEventListener("click", function() {
-                saveRequestStatus(button.dataset.requestSave);
-            });
-        });
+    target.querySelectorAll("[data-prepare-direct]").forEach(button => {
+        button.addEventListener("click", () =>
+            prepareDirectQuotation(button.dataset.prepareDirect)
+        );
+    });
+
+    target.querySelectorAll("[data-mark-reviewing]").forEach(button => {
+        button.addEventListener("click", () =>
+            updateRequestStatus(button.dataset.markReviewing, "reviewing")
+        );
+    });
 
     clearMessage("requestMessage");
 }
 
 
-async function saveRequestStatus(requestId) {
-    const select = el("requestStatus_" + requestId);
-
-    if (!select) return;
-
-    const newStatus = select.value;
-
+async function updateRequestStatus(requestId, status) {
     const { error } = await db
         .from("quote_requests")
         .update({
-            status: newStatus,
+            status,
             updated_at: new Date().toISOString()
         })
         .eq("id", requestId);
 
     if (error) {
-        showMessage(
-            "requestMessage",
-            "Could not update the request. " + errorText(error),
-            "error"
-        );
-
+        showMessage("requestMessage", errorText(error), "error");
         return;
     }
 
     showMessage(
         "requestMessage",
-        "Request status updated.",
+        "Customer request status updated.",
         "success-message"
     );
 
@@ -943,11 +1338,503 @@ async function saveRequestStatus(requestId) {
 }
 
 
+/* DIRECT QUOTATIONS */
+
+function calculateDirectTotal() {
+    const quantity = numericInput("directQuantity");
+    const unitPrice = numericInput("directUnitPrice");
+    const delivery = numericInput("directDeliveryCost");
+    const additional = numericInput("directAdditionalCharges");
+    const discount = numericInput("directDiscount");
+
+    const subtotal = quantity * unitPrice;
+    const total = subtotal + delivery + additional - discount;
+
+    el("directSubtotal").textContent = money(subtotal);
+    el("directTotal").textContent = money(total);
+
+    return { subtotal, total, quantity, unitPrice, delivery, additional, discount };
+}
+
+
+[
+    "directQuantity",
+    "directUnitPrice",
+    "directDeliveryCost",
+    "directAdditionalCharges",
+    "directDiscount"
+].forEach(id => {
+    el(id).addEventListener("input", calculateDirectTotal);
+});
+
+
+function prepareDirectQuotation(requestId) {
+    const request = currentRequests.find(item => item.id === requestId);
+
+    if (!request) {
+        showMessage("directQuoteMessage", "Request not found.", "error");
+        return;
+    }
+
+    el("directQuoteForm").reset();
+
+    el("directQuoteId").value = "";
+    el("directRequestId").value = request.id;
+
+    el("directRequestReference").textContent =
+        request.request_number || request.id;
+
+    el("directProductDescription").value =
+        request.title || request.description || "";
+
+    el("directQuantity").value = request.quantity || 1;
+    el("directUnitPrice").value = "";
+    el("directDeliveryCost").value = "0";
+    el("directAdditionalCharges").value = "0";
+    el("directDiscount").value = "0";
+
+    el("directQuoteFormTitle").textContent =
+        "Prepare Direct Quotation";
+
+    calculateDirectTotal();
+
+    el("directQuoteForm").classList.remove("hidden");
+
+    el("directQuotationSection").scrollIntoView({
+        behavior: "smooth"
+    });
+
+    showMessage(
+        "directQuoteMessage",
+        "Enter the price and other quotation details.",
+        "info"
+    );
+}
+
+
+el("cancelDirectQuoteBtn").addEventListener("click", function() {
+    el("directQuoteForm").classList.add("hidden");
+    el("directQuoteForm").reset();
+    clearMessage("directQuoteMessage");
+});
+
+
+el("saveDraftBtn").addEventListener("click", function() {
+    saveDirectQuotation("draft");
+});
+
+
+el("submitDirectQuoteBtn").addEventListener("click", function() {
+    if (!confirm("Submit this quotation to the customer?")) return;
+    saveDirectQuotation("submitted");
+});
+
+
+async function saveDirectQuotation(status) {
+    if (!currentAdmin) {
+        showMessage("directQuoteMessage", "Admin login required.", "error");
+        return;
+    }
+
+    const requestId = el("directRequestId").value;
+    const request = currentRequests.find(item => item.id === requestId);
+
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "Customer request not found. Refresh the requests list.",
+            "error"
+        );
+        return;
+    }
+
+    const calculation = calculateDirectTotal();
+
+    const description = el("directProductDescription").value.trim();
+
+    if (!description) {
+        showMessage(
+            "directQuoteMessage",
+            "Enter a product or service description.",
+            "error"
+        );
+        return;
+    }
+
+    if (
+        !Number.isInteger(calculation.quantity) ||
+        calculation.quantity < 1 ||
+        calculation.unitPrice < 0 ||
+        calculation.delivery < 0 ||
+        calculation.additional < 0 ||
+        calculation.discount < 0
+    ) {
+        showMessage(
+            "directQuoteMessage",
+            "Check the quantity and price fields.",
+            "error"
+        );
+        return;
+    }
+
+    if (calculation.total < 0) {
+        showMessage(
+            "directQuoteMessage",
+            "The discount cannot exceed the subtotal plus charges.",
+            "error"
+        );
+        return;
+    }
+
+    if (status === "submitted" && calculation.total === 0) {
+        showMessage(
+            "directQuoteMessage",
+            "The total must be greater than zero before submitting.",
+            "error"
+        );
+        return;
+    }
+
+    const quoteId = el("directQuoteId").value.trim();
+
+    const record = {
+        request_id: request.id,
+        customer_id: request.customer_id,
+        quotation_number: quoteId
+            ? undefined
+            : makeReference("FT-Q"),
+        product_description: description,
+        quantity: calculation.quantity,
+        unit_price: calculation.unitPrice,
+        delivery_cost: calculation.delivery,
+        additional_charges: calculation.additional,
+        discount: calculation.discount,
+        validity_date: el("directValidity").value || null,
+        notes: el("directNotes").value.trim() || null,
+        status,
+        created_by: currentAdmin.id,
+        updated_at: new Date().toISOString()
+    };
+
+    if (quoteId) {
+        delete record.quotation_number;
+        delete record.created_by;
+    }
+
+    const button = status === "draft"
+        ? el("saveDraftBtn")
+        : el("submitDirectQuoteBtn");
+
+    button.disabled = true;
+
+    showMessage(
+        "directQuoteMessage",
+        status === "draft" ? "Saving draft..." : "Submitting quotation...",
+        "info"
+    );
+
+    try {
+        let saved;
+
+        if (quoteId) {
+            const result = await db
+                .from("admin_quotations")
+                .update(record)
+                .eq("id", quoteId)
+                .select("*")
+                .single();
+
+            if (result.error) throw result.error;
+            saved = result.data;
+        } else {
+            const result = await db
+                .from("admin_quotations")
+                .insert(record)
+                .select("*")
+                .single();
+
+            if (result.error) throw result.error;
+            saved = result.data;
+        }
+
+        if (status === "submitted") {
+            /*
+             * Notify the customer's Supabase Auth account when a linked
+             * customer profile can be found. Notification failure does not
+             * undo a successfully saved quotation.
+             */
+            try {
+                const { data: customer, error: customerError } = await db
+                    .from("customers")
+                    .select("user_id")
+                    .eq("id", request.customer_id)
+                    .maybeSingle();
+
+                if (!customerError && customer?.user_id) {
+                    const { error: notificationError } = await db
+                        .from("notifications")
+                        .insert({
+                            user_id: customer.user_id,
+                            title: "FrostTech quotation available",
+                            message:
+                                "Your quotation " +
+                                saved.quotation_number +
+                                " is ready for review.",
+                            type: "quotation",
+                            reference_type: "admin_quotation",
+                            reference_id: saved.id
+                        });
+
+                    if (notificationError) {
+                        console.warn(
+                            "Quotation saved but notification failed:",
+                            notificationError.message
+                        );
+                    }
+                }
+            } catch (notificationError) {
+                console.warn("Customer notification failed.", notificationError);
+            }
+
+            await db
+                .from("quote_requests")
+                .update({
+                    status: "quoted",
+                    updated_at: new Date().toISOString()
+                })
+                .eq("id", request.id);
+        }
+
+        showMessage(
+            "directQuoteMessage",
+            status === "draft"
+                ? "Quotation draft saved: " + saved.quotation_number
+                : "Quotation submitted: " + saved.quotation_number +
+                  ". Payment has not been initiated.",
+            "success-message"
+        );
+
+        el("directQuoteForm").classList.add("hidden");
+
+        await Promise.allSettled([
+            loadDirectQuotations(),
+            loadCustomerRequests()
+        ]);
+
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            "Quotation could not be saved: " + errorText(error),
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+el("loadDirectQuotesBtn").addEventListener(
+    "click",
+    loadDirectQuotations
+);
+
+
+async function loadDirectQuotations() {
+    const target = el("directQuoteList");
+    target.textContent = "Loading direct quotations...";
+
+    const { data, error } = await db
+        .from("admin_quotations")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent = "Could not load direct quotations: " +
+            errorText(error);
+
+        showMessage("directQuoteMessage", errorText(error), "error");
+        el("directQuoteCount").textContent = "—";
+        return;
+    }
+
+    currentDirectQuotes = data || [];
+    el("directQuoteCount").textContent = currentDirectQuotes.length;
+
+    if (!currentDirectQuotes.length) {
+        target.textContent = "No direct quotations found.";
+        return;
+    }
+
+    target.innerHTML = currentDirectQuotes.map(function(quote) {
+        return `
+        <article class="card">
+            <h3>${escapeHtml(quote.quotation_number)}</h3>
+
+            <p><strong>Request ID:</strong>
+                ${escapeHtml(quote.request_id)}</p>
+
+            <p><strong>Description:</strong>
+                ${escapeHtml(quote.product_description)}</p>
+
+            <p><strong>Quantity:</strong>
+                ${escapeHtml(quote.quantity)}</p>
+
+            <p><strong>Unit Price:</strong>
+                ${money(quote.unit_price)}</p>
+
+            <p><strong>Subtotal:</strong>
+                ${money(quote.subtotal)}</p>
+
+            <p><strong>Delivery:</strong>
+                ${money(quote.delivery_cost)}</p>
+
+            <p><strong>Additional Charges:</strong>
+                ${money(quote.additional_charges)}</p>
+
+            <p><strong>Discount:</strong>
+                ${money(quote.discount)}</p>
+
+            <p><strong>Total:</strong>
+                <strong>${money(quote.total_amount)}</strong></p>
+
+            <p><strong>Status:</strong>
+                ${badge(quote.status)}</p>
+
+            <p><strong>Valid Until:</strong>
+                ${escapeHtml(quote.validity_date || "Not specified")}</p>
+
+            <p><strong>Notes:</strong>
+                ${escapeHtml(quote.notes || "None")}</p>
+
+            <p><strong>Created:</strong>
+                ${dateText(quote.created_at)}</p>
+
+            ${quote.status === "draft" ? `
+            <button type="button"
+                data-edit-direct="${escapeHtml(quote.id)}">
+                Edit Draft
+            </button>
+
+            <button type="button" class="success"
+                data-submit-direct="${escapeHtml(quote.id)}">
+                Submit Draft
+            </button>
+            ` : ""}
+        </article>`;
+    }).join("");
+
+    target.querySelectorAll("[data-edit-direct]").forEach(button => {
+        button.addEventListener("click", () =>
+            editDirectQuotation(button.dataset.editDirect)
+        );
+    });
+
+    target.querySelectorAll("[data-submit-direct]").forEach(button => {
+        button.addEventListener("click", () =>
+            submitExistingDraft(button.dataset.submitDirect)
+        );
+    });
+}
+
+
+function editDirectQuotation(id) {
+    const quote = currentDirectQuotes.find(item => item.id === id);
+
+    if (!quote || quote.status !== "draft") return;
+
+    const request = currentRequests.find(
+        item => item.id === quote.request_id
+    );
+
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "The original customer request is not loaded. Refresh requests first.",
+            "error"
+        );
+        return;
+    }
+
+    prepareDirectQuotation(request.id);
+
+    el("directQuoteId").value = quote.id;
+    el("directProductDescription").value = quote.product_description;
+    el("directQuantity").value = quote.quantity;
+    el("directUnitPrice").value = quote.unit_price;
+    el("directDeliveryCost").value = quote.delivery_cost;
+    el("directAdditionalCharges").value = quote.additional_charges;
+    el("directDiscount").value = quote.discount;
+    el("directValidity").value = quote.validity_date || "";
+    el("directNotes").value = quote.notes || "";
+
+    el("directQuoteFormTitle").textContent =
+        "Edit Draft " + quote.quotation_number;
+
+    calculateDirectTotal();
+}
+
+
+async function submitExistingDraft(id) {
+    const quote = currentDirectQuotes.find(item => item.id === id);
+
+    if (!quote || quote.status !== "draft") return;
+
+    const request = currentRequests.find(
+        item => item.id === quote.request_id
+    );
+
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "The original request is not loaded.",
+            "error"
+        );
+        return;
+    }
+
+    if (!confirm("Submit quotation " + quote.quotation_number + "?")) {
+        return;
+    }
+
+    const { error } = await db
+        .from("admin_quotations")
+        .update({
+            status: "submitted",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", id)
+        .eq("status", "draft");
+
+    if (error) {
+        showMessage("directQuoteMessage", errorText(error), "error");
+        return;
+    }
+
+    await db
+        .from("quote_requests")
+        .update({
+            status: "quoted",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", request.id);
+
+    showMessage(
+        "directQuoteMessage",
+        "Quotation submitted. Payment has not been initiated.",
+        "success-message"
+    );
+
+    await Promise.allSettled([
+        loadDirectQuotations(),
+        loadCustomerRequests()
+    ]);
+}
+
+
 /* SUPPLIER QUOTATIONS */
 
 async function loadSupplierQuotations() {
     const target = el("supplierQuotes");
-
     target.textContent = "Loading supplier quotations...";
 
     const { data, error } = await db
@@ -956,29 +1843,23 @@ async function loadSupplierQuotations() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        target.textContent =
-            "Could not load supplier quotations: " +
+        target.textContent = "Could not load supplier quotations: " +
             errorText(error);
 
         el("quotationCount").textContent = "—";
-
+        showMessage("quotationMessage", errorText(error), "error");
         return;
     }
 
     currentSupplierQuotes = data || [];
-
-    el("quotationCount").textContent =
-        currentSupplierQuotes.length;
+    el("quotationCount").textContent = currentSupplierQuotes.length;
 
     if (!currentSupplierQuotes.length) {
         target.textContent = "No supplier quotations found.";
-
         return;
     }
 
     target.innerHTML = currentSupplierQuotes.map(function(quote) {
-        const status = quote.status || "draft";
-
         return `
         <article class="card">
             <h3>Supplier Quotation</h3>
@@ -992,16 +1873,13 @@ async function loadSupplierQuotations() {
             <p><strong>Supplier ID:</strong>
                 ${escapeHtml(quote.supplier_id)}</p>
 
-            <p><strong>Product ID:</strong>
-                ${escapeHtml(quote.product_id)}</p>
-
-            <p><strong>Quantity:</strong>
-                ${escapeHtml(quote.quantity)}</p>
+            <p><strong>Supplier Unit Price:</strong>
+                ${money(quote.supplier_unit_price)}</p>
 
             <p><strong>Supplier Total:</strong>
                 ${money(quote.supplier_total)}</p>
 
-            <p><strong>Delivery Cost:</strong>
+            <p><strong>Delivery:</strong>
                 ${money(quote.delivery_cost)}</p>
 
             <p><strong>FrostTech Margin:</strong>
@@ -1010,82 +1888,60 @@ async function loadSupplierQuotations() {
             <p><strong>Customer Total:</strong>
                 ${money(quote.customer_total)}</p>
 
+            <p><strong>Status:</strong>
+                ${badge(quote.status)}</p>
+
             <p><strong>Customer Quote Status:</strong>
                 ${badge(quote.customer_quote_status || "draft")}</p>
 
-            <p><strong>Supplier Quote Status:</strong>
-                ${badge(status)}</p>
+            <div class="action-row">
+                <button type="button" class="success"
+                    data-select-supplier-quote="${escapeHtml(quote.id)}">
+                    Select
+                </button>
 
-            <p><strong>Valid Until:</strong>
-                ${dateText(quote.valid_until)}</p>
-
-            <p><strong>Notes:</strong>
-                ${escapeHtml(quote.notes || "None")}</p>
-
-            <button type="button" class="success"
-                data-quote-select="${escapeHtml(quote.id)}">
-                Select Quotation
-            </button>
-
-            <button type="button" class="danger"
-                data-quote-reject="${escapeHtml(quote.id)}">
-                Reject Quotation
-            </button>
+                <button type="button" class="danger"
+                    data-reject-supplier-quote="${escapeHtml(quote.id)}">
+                    Reject
+                </button>
+            </div>
         </article>`;
     }).join("");
 
-    target.querySelectorAll("[data-quote-select]")
-        .forEach(function(button) {
-            button.addEventListener("click", function() {
-                selectSupplierQuotation(
-                    button.dataset.quoteSelect
-                );
-            });
+    target.querySelectorAll("[data-select-supplier-quote]")
+        .forEach(button => {
+            button.addEventListener("click", () =>
+                selectSupplierQuotation(button.dataset.selectSupplierQuote)
+            );
         });
 
-    target.querySelectorAll("[data-quote-reject]")
-        .forEach(function(button) {
-            button.addEventListener("click", function() {
-                rejectSupplierQuotation(
-                    button.dataset.quoteReject
-                );
-            });
+    target.querySelectorAll("[data-reject-supplier-quote]")
+        .forEach(button => {
+            button.addEventListener("click", () =>
+                rejectSupplierQuotation(button.dataset.rejectSupplierQuote)
+            );
         });
 }
 
 
-async function selectSupplierQuotation(quoteId) {
-    const quote = currentSupplierQuotes.find(
-        item => item.id === quoteId
-    );
-
+async function selectSupplierQuotation(id) {
+    const quote = currentSupplierQuotes.find(item => item.id === id);
     if (!quote) return;
 
-    const confirmed = window.confirm(
-        "Select this supplier quotation? " +
-        "The customer quote will remain a draft until you prepare it."
-    );
+    if (!confirm("Select this supplier quotation?")) return;
 
-    if (!confirmed) return;
-
-    const { error: rejectError } = await db
+    const { error: competingError } = await db
         .from("supplier_quotes")
         .update({
             status: "rejected",
             updated_at: new Date().toISOString()
         })
         .eq("request_id", quote.request_id)
-        .neq("id", quoteId)
+        .neq("id", id)
         .eq("status", "submitted");
 
-    if (rejectError) {
-        showMessage(
-            "quotationMessage",
-            "Could not update competing quotations: " +
-            errorText(rejectError),
-            "error"
-        );
-
+    if (competingError) {
+        showMessage("quotationMessage", errorText(competingError), "error");
         return;
     }
 
@@ -1096,21 +1952,16 @@ async function selectSupplierQuotation(quoteId) {
             customer_quote_status: "draft",
             updated_at: new Date().toISOString()
         })
-        .eq("id", quoteId);
+        .eq("id", id);
 
     if (error) {
-        showMessage(
-            "quotationMessage",
-            "Could not select quotation: " + errorText(error),
-            "error"
-        );
-
+        showMessage("quotationMessage", errorText(error), "error");
         return;
     }
 
     showMessage(
         "quotationMessage",
-        "Quotation selected. Customer quote status remains draft.",
+        "Supplier quotation selected. Customer quotation remains a draft.",
         "success-message"
     );
 
@@ -1118,12 +1969,8 @@ async function selectSupplierQuotation(quoteId) {
 }
 
 
-async function rejectSupplierQuotation(quoteId) {
-    const confirmed = window.confirm(
-        "Are you sure you want to reject this supplier quotation?"
-    );
-
-    if (!confirmed) return;
+async function rejectSupplierQuotation(id) {
+    if (!confirm("Reject this supplier quotation?")) return;
 
     const { error } = await db
         .from("supplier_quotes")
@@ -1131,15 +1978,10 @@ async function rejectSupplierQuotation(quoteId) {
             status: "rejected",
             updated_at: new Date().toISOString()
         })
-        .eq("id", quoteId);
+        .eq("id", id);
 
     if (error) {
-        showMessage(
-            "quotationMessage",
-            "Could not reject quotation: " + errorText(error),
-            "error"
-        );
-
+        showMessage("quotationMessage", errorText(error), "error");
         return;
     }
 
@@ -1163,7 +2005,6 @@ el("loadSuppliersBtn").addEventListener(
 
 async function loadSupplierManagement() {
     const target = el("supplierManagementRows");
-
     target.textContent = "Loading supplier applications...";
 
     const { data, error } = await db
@@ -1172,46 +2013,31 @@ async function loadSupplierManagement() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        target.textContent =
-            "Could not load suppliers: " + errorText(error);
-
-        showMessage(
-            "supplierManagementMessage",
-            "Check administrator access and suppliers table permissions.",
-            "error"
-        );
-
+        target.textContent = "Could not load suppliers: " + errorText(error);
+        showMessage("supplierManagementMessage", errorText(error), "error");
         return;
     }
 
     currentSuppliers = data || [];
 
-    el("supplierCount").textContent =
-        currentSuppliers.length;
+    el("supplierCount").textContent = currentSuppliers.length;
 
     el("pendingSupplierCount").textContent =
-        currentSuppliers.filter(function(supplier) {
-            return ![
-                "approved",
-                "rejected",
-                "suspended"
-            ].includes(supplier.review_status || "pending");
-        }).length;
+        currentSuppliers.filter(supplier =>
+            !["approved", "rejected", "suspended"].includes(
+                supplier.review_status ||
+                (supplier.is_verified ? "approved" : "pending")
+            )
+        ).length;
 
     if (!currentSuppliers.length) {
         target.textContent = "No supplier applications found.";
-
-        clearMessage("supplierManagementMessage");
-
         return;
     }
 
     target.innerHTML = currentSuppliers.map(function(supplier) {
         const status = supplier.review_status ||
             (supplier.is_verified ? "approved" : "pending");
-
-        const identity =
-            supplier.id;
 
         return `
         <article class="card">
@@ -1220,10 +2046,10 @@ async function loadSupplierManagement() {
             <p><strong>Supplier ID:</strong>
                 ${escapeHtml(supplier.id)}</p>
 
-            <p><strong>Business Email:</strong>
+            <p><strong>Email:</strong>
                 ${escapeHtml(supplier.email || "Not provided")}</p>
 
-            <p><strong>Contact Person:</strong>
+            <p><strong>Contact:</strong>
                 ${escapeHtml(supplier.contact_name || "Not provided")}</p>
 
             <p><strong>Phone:</strong>
@@ -1232,192 +2058,114 @@ async function loadSupplierManagement() {
             <p><strong>Address:</strong>
                 ${escapeHtml(supplier.address || "Not provided")}</p>
 
-            <p><strong>City / State:</strong>
-                ${escapeHtml(supplier.city || "Not provided")},
-                ${escapeHtml(supplier.state || "Not provided")}</p>
+            <p><strong>Status:</strong> ${badge(status)}</p>
 
-            <p><strong>Registered:</strong>
-                ${dateText(supplier.created_at)}</p>
-
-            <p><strong>Review Status:</strong>
-                ${badge(status)}</p>
-
-            <p><strong>Email / Supplier Verification Flag:</strong>
-                ${supplier.is_verified ? "Verified" : "Not verified"}</p>
-
-            <p><strong>Account Active:</strong>
+            <p><strong>Active:</strong>
                 ${supplier.is_active ? "Yes" : "No"}</p>
 
-            <p><strong>Previous Review Reason:</strong>
-                ${escapeHtml(supplier.review_reason || "None recorded")}</p>
+            <label for="reviewReason_${supplier.id}">Review Reason</label>
+            <textarea id="reviewReason_${supplier.id}"
+                placeholder="Required when rejecting or suspending"></textarea>
 
-            <label for="reviewReason_${identity}">
-                Review Reason / Notes
-            </label>
-
-            <textarea
-                id="reviewReason_${identity}"
-                placeholder="Record your reason or instructions">
-            </textarea>
-
-            <div class="supplier-actions">
-
+            <div class="action-row">
                 <button type="button" class="success"
-                    data-supplier-decision="approved"
-                    data-supplier-id="${escapeHtml(identity)}">
-                    Approve Supplier
+                    data-supplier-status="approved"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
+                    Approve
                 </button>
 
                 <button type="button" class="danger"
-                    data-supplier-decision="rejected"
-                    data-supplier-id="${escapeHtml(identity)}">
-                    Reject Application
+                    data-supplier-status="rejected"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
+                    Reject
                 </button>
 
                 <button type="button" class="warning"
-                    data-supplier-decision="more_info"
-                    data-supplier-id="${escapeHtml(identity)}">
-                    Request More Information
+                    data-supplier-status="more_info"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
+                    Request Information
                 </button>
 
                 <button type="button" class="warning"
-                    data-supplier-decision="in_review"
-                    data-supplier-id="${escapeHtml(identity)}">
-                    Mark In Review
+                    data-supplier-status="in_review"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
+                    In Review
                 </button>
 
                 <button type="button" class="danger"
-                    data-supplier-decision="suspended"
-                    data-supplier-id="${escapeHtml(identity)}">
-                    Suspend Supplier
+                    data-supplier-status="suspended"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
+                    Suspend
                 </button>
 
                 <button type="button" class="neutral"
-                    data-supplier-decision="pending"
-                    data-supplier-id="${escapeHtml(identity)}">
+                    data-supplier-status="pending"
+                    data-supplier-id="${escapeHtml(supplier.id)}">
                     Return to Pending
                 </button>
-
             </div>
         </article>`;
     }).join("");
 
-    target.querySelectorAll("[data-supplier-decision]")
-        .forEach(function(button) {
-            button.addEventListener("click", function() {
-                reviewSupplier(
-                    button.dataset.supplierId,
-                    button.dataset.supplierDecision
-                );
-            });
-        });
+    target.querySelectorAll("[data-supplier-status]").forEach(button => {
+        button.addEventListener("click", () =>
+            reviewSupplier(
+                button.dataset.supplierId,
+                button.dataset.supplierStatus
+            )
+        );
+    });
 
     showMessage(
         "supplierManagementMessage",
-        "Supplier applications loaded. Review each application before deciding.",
+        "Supplier applications loaded.",
         "success-message"
     );
 }
 
 
 async function reviewSupplier(supplierId, newStatus) {
-    if (!currentAdmin) {
-        showMessage(
-            "supplierManagementMessage",
-            "Administrator login is required.",
-            "error"
-        );
+    const supplier = currentSuppliers.find(item => item.id === supplierId);
 
-        return;
-    }
-
-    const supplier = currentSuppliers.find(
-        item => item.id === supplierId
-    );
-
-    if (!supplier) {
-        showMessage(
-            "supplierManagementMessage",
-            "Supplier record not found. Refresh the list.",
-            "error"
-        );
-
-        return;
-    }
+    if (!supplier || !currentAdmin) return;
 
     const reasonField = el("reviewReason_" + supplierId);
+    const reason = reasonField ? reasonField.value.trim() : "";
 
-    const reason = reasonField
-        ? reasonField.value.trim()
-        : "";
-
-    if (
-        ["rejected", "suspended"].includes(newStatus) &&
-        !reason
-    ) {
+    if (["rejected", "suspended"].includes(newStatus) && !reason) {
         showMessage(
             "supplierManagementMessage",
             "Enter a reason before rejecting or suspending a supplier.",
             "error"
         );
-
-        if (reasonField) reasonField.focus();
-
         return;
     }
 
-    const actionLabels = {
-        approved: "approve",
-        rejected: "reject",
-        more_info: "request more information from",
-        in_review: "mark as under review",
-        suspended: "suspend",
-        pending: "return to pending review"
-    };
+    if (!confirm(
+        "Are you sure you want to mark " +
+        supplier.business_name + " as " + newStatus + "?"
+    )) {
+        return;
+    }
 
-    const confirmed = window.confirm(
-        "Are you sure you want to " +
-        actionLabels[newStatus] +
-        " " + supplier.business_name + "?"
-    );
-
-    if (!confirmed) return;
-
-    showMessage(
-        "supplierManagementMessage",
-        "Submitting administrator decision...",
-        "info"
-    );
-
-    /*
-     * This calls the protected database function.
-     * It does not update is_verified directly from the browser.
-     */
-
-    const { data, error } = await db.rpc(
-        "admin_review_supplier",
-        {
-            target_supplier_id: supplierId,
-            new_status: newStatus,
-            reason: reason || null
-        }
-    );
+    const { error } = await db.rpc("admin_review_supplier", {
+        target_supplier_id: supplierId,
+        new_status: newStatus,
+        reason: reason || null
+    });
 
     if (error) {
         showMessage(
             "supplierManagementMessage",
-            "The decision was not completed: " +
-            errorText(error),
+            "Decision not completed: " + errorText(error),
             "error"
         );
-
         return;
     }
 
     showMessage(
         "supplierManagementMessage",
-        "Administrator decision saved: " +
-        supplier.business_name + " — " + newStatus,
+        "Supplier decision saved: " + newStatus,
         "success-message"
     );
 
@@ -1425,17 +2173,13 @@ async function reviewSupplier(supplierId, newStatus) {
 }
 
 
-/* PAYMENT VISIBILITY */
+/* PAYMENT RECORD VISIBILITY */
 
-el("loadPaymentsBtn").addEventListener(
-    "click",
-    loadPaymentRecords
-);
+el("loadPaymentsBtn").addEventListener("click", loadPaymentRecords);
 
 
 async function loadPaymentRecords() {
     const target = el("paymentRecords");
-
     target.textContent = "Loading payment records...";
 
     const { data, error } = await db
@@ -1444,16 +2188,8 @@ async function loadPaymentRecords() {
         .order("created_at", { ascending: false });
 
     if (error) {
-        target.textContent =
-            "Payment records could not be loaded: " +
-            errorText(error);
-
-        showMessage(
-            "paymentMessage",
-            "No payment was initiated or modified. Check the payments table permissions.",
-            "error"
-        );
-
+        target.textContent = "Could not load payments: " + errorText(error);
+        showMessage("paymentMessage", errorText(error), "error");
         return;
     }
 
@@ -1462,7 +2198,7 @@ async function loadPaymentRecords() {
 
         showMessage(
             "paymentMessage",
-            "Payment records loaded successfully.",
+            "Payment records loaded.",
             "success-message"
         );
 
@@ -1476,36 +2212,28 @@ async function loadPaymentRecords() {
             <table>
                 <thead>
                     <tr>
-                        ${columns.map(function(column) {
-                            return "<th>" +
-                                escapeHtml(column) +
-                                "</th>";
-                        }).join("")}
+                        ${columns.map(column =>
+                            "<th>" + escapeHtml(column) + "</th>"
+                        ).join("")}
                     </tr>
                 </thead>
-
                 <tbody>
-                    ${data.map(function(row) {
-                        return "<tr>" +
-                            columns.map(function(column) {
-                                const value = row[column];
-
-                                return "<td>" +
-                                    escapeHtml(
-                                        value === null
-                                            ? ""
-                                            : typeof value === "object"
-                                                ? JSON.stringify(value)
-                                                : value
-                                    ) +
-                                    "</td>";
-                            }).join("") +
-                            "</tr>";
-                    }).join("")}
+                    ${data.map(row =>
+                        "<tr>" +
+                        columns.map(column =>
+                            "<td>" + escapeHtml(
+                                row[column] === null
+                                    ? ""
+                                    : typeof row[column] === "object"
+                                        ? JSON.stringify(row[column])
+                                        : row[column]
+                            ) + "</td>"
+                        ).join("") +
+                        "</tr>"
+                    ).join("")}
                 </tbody>
             </table>
-        </div>
-    `;
+        </div>`;
 
     showMessage(
         "paymentMessage",
@@ -1520,6 +2248,5 @@ async function loadPaymentRecords() {
 checkExistingSession();
 
 </script>
-
 </body>
 </html>
