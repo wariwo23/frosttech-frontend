@@ -1,241 +1,137 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supplier Portal | FrostTech</title>
 
-  <title>Supplier Portal | FrostTech HVAC and Refrigeration</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<style>
+* { box-sizing: border-box; }
 
-  <link
-    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
-    rel="stylesheet"
-  >
+body {
+  margin: 0;
+  font-family: Inter, sans-serif;
+  background: #f3f6fa;
+  color: #1f2937;
+  line-height: 1.6;
+}
 
-  <style>
-    * {
-      box-sizing: border-box;
-    }
+header {
+  background: #073b70;
+  color: white;
+  padding: 20px 16px;
+}
 
-    body {
-      margin: 0;
-      padding: 0;
-      font-family: "Inter", sans-serif;
-      background: #f3f6fa;
-      color: #1f2937;
-      line-height: 1.6;
-    }
+.header-inner, main {
+  max-width: 1000px;
+  margin: auto;
+}
 
-    header {
-      background: #073b70;
-      color: white;
-      padding: 20px 16px;
-    }
+header h1 { margin: 0; font-size: 22px; }
+header p { margin: 5px 0; }
 
-    .header-inner {
-      max-width: 1100px;
-      margin: auto;
-    }
+nav { margin-top: 12px; }
+nav a {
+  color: white;
+  margin-right: 14px;
+  text-decoration: none;
+  font-size: 13px;
+}
 
-    header h1 {
-      margin: 0;
-      font-size: 23px;
-    }
+main { padding: 20px 14px 40px; }
 
-    header p {
-      margin: 5px 0 0;
-      font-size: 14px;
-      opacity: 0.9;
-    }
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 18px;
+  box-shadow: 0 3px 14px #0000000d;
+}
 
-    nav {
-      margin-top: 12px;
-    }
+h2 { color: #073b70; margin-top: 0; font-size: 21px; }
+h3 { color: #073b70; font-size: 17px; }
 
-    nav a {
-      color: white;
-      margin-right: 16px;
-      text-decoration: none;
-      font-size: 14px;
-    }
+label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  margin: 13px 0 5px;
+}
 
-    main {
-      max-width: 1100px;
-      margin: 24px auto;
-      padding: 0 14px 40px;
-    }
+input, select, textarea {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 7px;
+  background: white;
+  font: inherit;
+  font-size: 14px;
+}
 
-    .card {
-      background: white;
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 3px 14px rgba(0, 0, 0, 0.05);
-    }
+textarea { min-height: 80px; }
 
-    h2 {
-      margin-top: 0;
-      color: #073b70;
-      font-size: 21px;
-    }
+button {
+  width: 100%;
+  padding: 13px;
+  margin-top: 14px;
+  border: 0;
+  border-radius: 7px;
+  background: #087443;
+  color: white;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
 
-    h3 {
-      color: #073b70;
-      font-size: 17px;
-    }
+button:disabled { opacity: .6; }
 
-    label {
-      display: block;
-      font-size: 14px;
-      font-weight: 600;
-      margin: 14px 0 6px;
-    }
+.secondary { background: #073b70; }
+.danger { background: #b42318; }
+.hidden { display: none !important; }
 
-    input,
-    select,
-    textarea {
-      display: block;
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #cbd5e1;
-      border-radius: 7px;
-      background: white;
-      font: inherit;
-      font-size: 14px;
-    }
+.message {
+  padding: 13px;
+  border-radius: 8px;
+  margin-bottom: 18px;
+  overflow-wrap: anywhere;
+}
 
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
+.info { background: #e8f2ff; color: #174276; }
+.success { background: #e8f7ee; color: #17663a; }
+.error { background: #fff0ef; color: #a12622; }
 
-    button {
-      display: inline-block;
-      width: 100%;
-      border: none;
-      border-radius: 7px;
-      padding: 13px 16px;
-      margin-top: 16px;
-      background: #087443;
-      color: white;
-      font: inherit;
-      font-weight: 600;
-      cursor: pointer;
-    }
+.item {
+  border: 1px solid #dbe3ec;
+  border-radius: 9px;
+  padding: 14px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
 
-    button:hover {
-      opacity: 0.92;
-    }
+.muted { color: #64748b; font-size: 13px; }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
+.diagnostic {
+  background: #fff8e6;
+  padding: 12px;
+  border-radius: 8px;
+  overflow-wrap: anywhere;
+}
 
-    .secondary-button {
-      background: #073b70;
-    }
+footer {
+  text-align: center;
+  padding: 20px;
+  color: #64748b;
+  font-size: 13px;
+}
 
-    .danger-button {
-      background: #b42318;
-    }
-
-    .hidden {
-      display: none !important;
-    }
-
-    .message {
-      padding: 13px;
-      border-radius: 8px;
-      margin: 0 0 20px;
-      overflow-wrap: anywhere;
-      font-size: 14px;
-    }
-
-    .message.info {
-      background: #e8f2ff;
-      color: #174276;
-      border: 1px solid #c6dcfa;
-    }
-
-    .message.success {
-      background: #e8f7ee;
-      color: #17663a;
-      border: 1px solid #b8e2c7;
-    }
-
-    .message.error {
-      background: #fff0ef;
-      color: #a12622;
-      border: 1px solid #f2c3bf;
-    }
-
-    .diagnostic {
-      background: #fff8e6;
-      border: 1px solid #efd48b;
-      border-radius: 8px;
-      padding: 14px;
-      margin-top: 14px;
-      overflow-wrap: anywhere;
-      font-size: 13px;
-    }
-
-    .diagnostic p {
-      margin: 6px 0;
-    }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 14px;
-    }
-
-    .request-item,
-    .quote-item {
-      border: 1px solid #dbe3ec;
-      border-radius: 9px;
-      padding: 15px;
-      margin: 12px 0;
-      overflow-wrap: anywhere;
-    }
-
-    .muted {
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    .status {
-      display: inline-block;
-      padding: 4px 9px;
-      background: #e8f2ff;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-    }
-
-    footer {
-      padding: 20px;
-      text-align: center;
-      color: #64748b;
-      font-size: 13px;
-    }
-
-    @media (max-width: 600px) {
-      .grid {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        padding: 16px;
-      }
-
-      header h1 {
-        font-size: 20px;
-      }
-    }
-  </style>
+@media(max-width:600px) {
+  .card { padding: 15px; }
+}
+</style>
 </head>
 
 <body>
@@ -244,10 +140,9 @@
   <div class="header-inner">
     <h1>FrostTech HVAC and Refrigeration</h1>
     <p>Supplier Portal</p>
-
     <nav>
       <a href="index.html">Home</a>
-      <a href="catalog.html">Product Catalogue</a>
+      <a href="catalog.html">Catalogue</a>
       <a href="supplier-register.html">Supplier Registration</a>
     </nav>
   </div>
@@ -255,976 +150,720 @@
 
 <main>
 
-  <div id="pageMessage" class="message info">
-    Loading the FrostTech supplier portal...
+<div id="pageMessage" class="message info">
+  Starting supplier portal...
+</div>
+
+<section id="loginSection" class="card hidden">
+  <h2>Supplier Login</h2>
+  <p class="muted">Log in with your registered supplier account.</p>
+
+  <form id="loginForm">
+    <label for="email">Email address</label>
+    <input id="email" type="email" autocomplete="username" required>
+
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required>
+
+    <button id="loginButton" type="submit">Log In</button>
+  </form>
+</section>
+
+<section id="diagnosticSection" class="card hidden">
+  <h2>Supplier Account Check</h2>
+  <div id="diagnosticDetails" class="diagnostic"></div>
+  <button id="retryButton" class="secondary" type="button">
+    Check Again
+  </button>
+  <button id="returnButton" class="secondary" type="button">
+    Return to Login
+  </button>
+</section>
+
+<section id="portalSection" class="hidden">
+
+  <div class="card">
+    <h2 id="supplierWelcome">Welcome, Supplier</h2>
+    <p class="muted">View requests and prepare your quotations.</p>
+
+    <button id="refreshButton" class="secondary" type="button">
+      Refresh Requests and Quotations
+    </button>
+
+    <button id="logoutButton" class="danger" type="button">
+      Log Out
+    </button>
   </div>
 
-  <!-- LOGIN -->
-  <section id="loginSection" class="card hidden">
-    <h2>Supplier Login</h2>
+  <div class="card">
+    <h2>Open Customer Requests</h2>
+    <div id="requestsList">Loading requests...</div>
+  </div>
 
-    <p class="muted">
-      Log in with the email address and password used to register
-      your supplier account.
-    </p>
+  <div class="card">
+    <h2>Submit Supplier Quotation</h2>
 
-    <form id="loginForm">
-      <label for="email">Email Address</label>
-      <input
-        id="email"
-        type="email"
-        autocomplete="username"
-        required
-      >
+    <form id="quotationForm">
 
-      <label for="password">Password</label>
-      <input
-        id="password"
-        type="password"
-        autocomplete="current-password"
-        required
-      >
+      <label for="requestSelect">Customer request</label>
+      <select id="requestSelect" required>
+        <option value="">Select a request</option>
+      </select>
 
-      <button id="loginButton" type="submit">Log In</button>
+      <label for="unitPrice">Unit price (₦)</label>
+      <input id="unitPrice" type="number" min="0.01" step="0.01" required>
+
+      <label for="deliveryCost">Delivery cost (₦)</label>
+      <input id="deliveryCost" type="number" min="0" step="0.01" value="0" required>
+
+      <label for="marginPercent">Proposed FrostTech margin (%)</label>
+      <input id="marginPercent" type="number" min="0" max="100" step="0.1" value="15" required>
+
+      <label for="notes">Quotation notes (optional)</label>
+      <textarea id="notes" maxlength="1000"></textarea>
+
+      <div class="diagnostic">
+        <p>Quantity: <strong id="quantityDisplay">—</strong></p>
+        <p>Supplier total: <strong id="supplierTotalDisplay">₦0.00</strong></p>
+        <p>Margin amount: <strong id="marginDisplay">₦0.00</strong></p>
+        <p>Delivery: <strong id="deliveryDisplay">₦0.00</strong></p>
+        <p>Estimated customer total: <strong id="customerTotalDisplay">₦0.00</strong></p>
+      </div>
+
+      <button id="submitQuoteButton" type="submit">
+        Submit Quotation
+      </button>
+
     </form>
-  </section>
+  </div>
 
-  <!-- ACCOUNT DIAGNOSTICS -->
-  <section id="diagnosticSection" class="card hidden">
-    <h2>Supplier Account Check</h2>
+  <div class="card">
+    <h2>My Submitted Quotations</h2>
+    <div id="myQuotesList">Loading quotations...</div>
+  </div>
 
-    <p>
-      This section helps identify why a logged-in account cannot
-      access its supplier profile.
-    </p>
-
-    <div id="diagnosticDetails" class="diagnostic">
-      Account details will appear here.
-    </div>
-
-    <button
-      id="retryButton"
-      type="button"
-      class="secondary-button"
-    >
-      Check Supplier Account Again
-    </button>
-
-    <button
-      id="showLoginButton"
-      type="button"
-      class="secondary-button"
-    >
-      Return to Login
-    </button>
-  </section>
-
-  <!-- SUPPLIER PORTAL -->
-  <section id="portalSection" class="hidden">
-
-    <div class="card">
-      <h2 id="supplierWelcome">Welcome, Supplier</h2>
-
-      <p class="muted">
-        View customer requests and submit your quotations.
-        Your submissions will be reviewed through the FrostTech
-        quotation process.
-      </p>
-
-      <button
-        id="refreshButton"
-        type="button"
-        class="secondary-button"
-      >
-        Refresh Requests and Quotations
-      </button>
-
-      <button
-        id="logoutButton"
-        type="button"
-        class="danger-button"
-      >
-        Log Out
-      </button>
-    </div>
-
-    <!-- OPEN CUSTOMER REQUESTS -->
-    <div class="card">
-      <h2>Open Customer Requests</h2>
-
-      <p class="muted">
-        Select a customer request before preparing a quotation.
-      </p>
-
-      <div id="requestsList">
-        Loading customer requests...
-      </div>
-    </div>
-
-    <!-- SUBMIT QUOTATION -->
-    <div class="card">
-      <h2>Submit Supplier Quotation</h2>
-
-      <form id="quotationForm">
-
-        <label for="requestSelect">Customer Request</label>
-        <select id="requestSelect" required>
-          <option value="">Select a customer request</option>
-        </select>
-
-        <label for="unitPrice">Unit Price (₦)</label>
-        <input
-          id="unitPrice"
-          type="number"
-          min="0"
-          step="0.01"
-          required
-        >
-
-        <label for="deliveryCost">Delivery Cost (₦)</label>
-        <input
-          id="deliveryCost"
-          type="number"
-          min="0"
-          step="0.01"
-          value="0"
-          required
-        >
-
-        <label for="marginPercent">Your Proposed Margin (%)</label>
-        <input
-          id="marginPercent"
-          type="number"
-          min="0"
-          max="100"
-          step="0.1"
-          value="15"
-          required
-        >
-
-        <div class="diagnostic">
-          <p>
-            <strong>Requested Quantity:</strong>
-            <span id="requestedQuantity">—</span>
-          </p>
-
-          <p>
-            <strong>Estimated Supplier Cost:</strong>
-            <span id="estimatedCost">₦0.00</span>
-          </p>
-
-          <p>
-            <strong>Proposed Margin:</strong>
-            <span id="estimatedMargin">₦0.00</span>
-          </p>
-
-          <p>
-            <strong>Estimated Total:</strong>
-            <span id="estimatedTotal">₦0.00</span>
-          </p>
-        </div>
-
-        <button id="quotationButton" type="submit">
-          Submit Quotation
-        </button>
-      </form>
-    </div>
-
-    <!-- SUBMITTED QUOTATIONS -->
-    <div class="card">
-      <h2>My Submitted Quotations</h2>
-
-      <div id="myQuotesList">
-        Loading your submitted quotations...
-      </div>
-    </div>
-
-  </section>
-
+</section>
 </main>
 
 <footer>
   &copy; 2026 FrostTech HVAC and Refrigeration.
-  All rights reserved.
 </footer>
-  <!-- SUPABASE LIBRARY AND PROJECT CONNECTION -->
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 
 <script>
-(function () {
+
   "use strict";
 
-  let db = null;
-  let currentUser = null;
-  let currentSupplier = null;
-  let requests = [];
-  let productsById = {};
-  let myQuotes = [];
-  let busy = false;
+let db = null;
+let currentUser = null;
+let currentSupplier = null;
+let requests = [];
+let busy = false;
 
-  const $ = (id) => document.getElementById(id);
+const $ = id => document.getElementById(id);
 
-  function showPageMessage(message, type = "info") {
-    const box = $("pageMessage");
+function message(text, type = "info") {
+  const box = $("pageMessage");
+  box.textContent = text;
+  box.className = "message " + type;
+  box.classList.remove("hidden");
+}
 
-    box.textContent = message;
-    box.className = "message " + type;
-    box.classList.remove("hidden");
-  }
+function money(value) {
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN"
+  }).format(Number(value) || 0);
+}
 
-  function showDiagnostic(details) {
-    const section = $("diagnosticSection");
-    const box = $("diagnosticDetails");
+function safe(value) {
+  return String(value ?? "").replace(/[&<>"']/g, char => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#039;"
+  })[char]);
+}
 
-    box.replaceChildren();
+function showDiagnostic(details) {
+  const box = $("diagnosticDetails");
+  box.replaceChildren();
 
-    Object.entries(details).forEach(([label, value]) => {
-      const row = document.createElement("p");
-      const heading = document.createElement("strong");
+  Object.entries(details).forEach(([key, value]) => {
+    const p = document.createElement("p");
+    const strong = document.createElement("strong");
 
-      heading.textContent = label + ": ";
-      row.appendChild(heading);
-      row.appendChild(
-        document.createTextNode(
-          value === null || value === undefined || value === ""
-            ? "Not available"
-            : String(value)
-        )
-      );
-
-      box.appendChild(row);
-    });
-
-    section.classList.remove("hidden");
-  }
-
-  function hideDiagnostic() {
-    $("diagnosticSection").classList.add("hidden");
-  }
-
-  async function initialize() {
-    /*
-      IMPORTANT:
-      supabase.js must create window.supabaseClient.
-      The Supabase CDN library by itself is not the connected client.
-    */
-
-    db = window.supabaseClient || null;
-
-    if (!db || !db.auth || !db.from) {
-      showPageMessage(
-        "Supabase client not found. Check that supabase.js creates " +
-        "window.supabaseClient and contains the correct project URL " +
-        "and publishable key.",
-        "error"
-      );
-
-      $("loginSection").classList.remove("hidden");
-      return;
-    }
-
-    $("loginForm").addEventListener("submit", loginSupplier);
-
-    $("logoutButton").addEventListener("click", logoutSupplier);
-
-    $("refreshButton").addEventListener("click", loadPortalData);
-
-    $("retryButton").addEventListener(
-      "click",
-      openSupplierPortal
+    strong.textContent = key + ": ";
+    p.appendChild(strong);
+    p.appendChild(
+      document.createTextNode(String(value ?? "Not available"))
     );
 
-    $("showLoginButton").addEventListener(
-      "click",
-      returnToLogin
+    box.appendChild(p);
+  });
+
+  $("diagnosticSection").classList.remove("hidden");
+}
+
+async function initializePortal() {
+  db = window.supabaseClient || null;
+
+  if (!db || !db.auth || !db.from) {
+    message(
+      "Supabase client not found. Check the project connection in supabase.js.",
+      "error"
     );
 
-    $("quotationForm").addEventListener(
-      "submit",
-      submitQuotation
-    );
+    $("loginSection").classList.remove("hidden");
+    return;
+  }
 
-    [
-      "requestSelect",
-      "unitPrice",
-      "deliveryCost",
-      "marginPercent"
-    ].forEach((id) => {
+  $("loginForm").addEventListener("submit", loginSupplier);
+  $("retryButton").addEventListener("click", checkSupplier);
+  $("returnButton").addEventListener("click", returnToLogin);
+  $("logoutButton").addEventListener("click", logoutSupplier);
+  $("refreshButton").addEventListener("click", loadPortalData);
+  $("quotationForm").addEventListener("submit", submitQuotation);
+
+  ["requestSelect", "unitPrice", "deliveryCost", "marginPercent"]
+    .forEach(id => {
       $(id).addEventListener("input", updateTotals);
       $(id).addEventListener("change", updateTotals);
     });
 
-    showPageMessage("Checking your login...");
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
 
-    try {
-      const { data, error } = await db.auth.getSession();
-
-      if (error) {
-        throw error;
-      }
-
-      if (data.session && data.session.user) {
-        currentUser = data.session.user;
-
-        await openSupplierPortal();
-      } else {
-        $("loginSection").classList.remove("hidden");
-
-        showPageMessage(
-          "Please log in with your registered supplier account."
-        );
-      }
-    } catch (error) {
-      console.error("Supplier portal initialization failed:", error);
-
-      showPageMessage(
-        "Unable to initialize the supplier portal: " + error.message,
-        "error"
-      );
-
+    if (data.session?.user) {
+      currentUser = data.session.user;
+      await checkSupplier();
+    } else {
       $("loginSection").classList.remove("hidden");
+      message("Please log in with your supplier account.");
     }
+  } catch (error) {
+    console.error("Portal initialization:", error);
+    message("Portal initialization failed: " + error.message, "error");
+    $("loginSection").classList.remove("hidden");
   }
+}
 
-  async function loginSupplier(event) {
-    event.preventDefault();
+async function loginSupplier(event) {
+  event.preventDefault();
 
-    if (busy) return;
+  if (busy) return;
+  busy = true;
 
-    const button = $("loginButton");
+  $("loginButton").disabled = true;
+  message("Checking your login...");
 
-    button.disabled = true;
-    button.textContent = "Signing in...";
-
-    showPageMessage("Checking your supplier login...");
-
-    try {
-      const { data, error } = await db.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-
-      if (error) {
-        throw error;
-      }
-
-      currentUser = data.user;
-
-      if (!currentUser) {
-        throw new Error(
-          "Login succeeded, but no user account was returned."
-        );
-      }
-
-      $("loginSection").classList.add("hidden");
-
-      await openSupplierPortal();
-
-    } catch (error) {
-      console.error("Supplier login failed:", error);
-
-      showPageMessage(
-        "Login failed: " + error.message,
-        "error"
-      );
-
-      $("loginSection").classList.remove("hidden");
-
-    } finally {
-      button.disabled = false;
-      button.textContent = "Log In";
-    }
-  }
-
-  async function openSupplierPortal() {
-    if (!db) {
-      showPageMessage(
-        "Supabase is not connected. Check supabase.js.",
-        "error"
-      );
-      return;
-    }
-
-    if (!currentUser) {
-      showPageMessage(
-        "No logged-in account was found. Please log in again.",
-        "error"
-      );
-
-      $("loginSection").classList.remove("hidden");
-      return;
-    }
-
-    $("portalSection").classList.add("hidden");
-
-    showPageMessage(
-      "Checking the supplier profile for your logged-in account..."
-    );
-
-    const loginEmail = currentUser.email || "Email unavailable";
-    const loginUserId = currentUser.id || "User ID unavailable";
-
-    /*
-      Query the supplier record linked to the current Auth user.
-
-      If no row is returned, it may mean:
-      1. The wrong account is logged in.
-      2. The supplier record is not linked correctly.
-      3. Row Level Security is preventing the query from seeing the row.
-    */
-
-    let supplier = null;
-    let queryError = null;
-
-    try {
-      const result = await db
-        .from("suppliers")
-        .select(
-          "id, user_id, business_name, contact_name, email, " +
-          "is_verified, is_active, review_status"
-        )
-        .eq("user_id", currentUser.id)
-        .maybeSingle();
-
-      supplier = result.data;
-      queryError = result.error;
-
-    } catch (error) {
-      queryError = error;
-    }
-
-    console.log("FROSTTECH SUPPLIER DIAGNOSTIC", {
-      loginEmail: loginEmail,
-      loginUserId: loginUserId,
-      supplierFound: !!supplier,
-      supplierId: supplier?.id || null,
-      supplierEmail: supplier?.email || null,
-      supplierUserId: supplier?.user_id || null,
-      queryError: queryError?.message || null
+  try {
+    const { data, error } = await db.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
     });
 
-    if (queryError) {
-      showDiagnostic({
-        "Logged-in email": loginEmail,
-        "Authentication user ID": loginUserId,
-        "Supplier record found": "Could not complete query",
-        "Database error": queryError.message,
-        "Next step":
-          "Check the suppliers table SELECT policy and its permissions."
-      });
+    if (error) throw error;
 
-      showPageMessage(
-        "We could not read your supplier profile. The diagnostic " +
-        "details below show the database error.",
-        "error"
-      );
+    currentUser = data.user;
+    $("loginSection").classList.add("hidden");
 
-      $("loginSection").classList.add("hidden");
-      return;
-    }
+    await checkSupplier();
+  } catch (error) {
+    console.error("Supplier login:", error);
+    message("Login failed: " + error.message, "error");
+    $("loginSection").classList.remove("hidden");
+  } finally {
+    busy = false;
+    $("loginButton").disabled = false;
+  }
+}
+
+async function checkSupplier() {
+  if (!db || !currentUser) {
+    $("loginSection").classList.remove("hidden");
+    message("Please log in first.");
+    return;
+  }
+
+  $("portalSection").classList.add("hidden");
+  $("diagnosticSection").classList.add("hidden");
+
+  message("Checking your supplier profile...");
+
+  try {
+    const { data: supplier, error } = await db
+      .from("suppliers")
+      .select(
+        "id,user_id,business_name,contact_name,email,is_active,is_verified,review_status"
+      )
+      .eq("user_id", currentUser.id)
+      .maybeSingle();
+
+    if (error) throw error;
 
     if (!supplier) {
       showDiagnostic({
-        "Logged-in email": loginEmail,
-        "Authentication user ID": loginUserId,
-        "Supplier record found": "No",
-        "Database error": "No error was returned.",
-        "Next step":
-          "Check that this exact user ID appears in suppliers.user_id. " +
-          "If it does, the suppliers SELECT policy may be hiding the row."
+        "Login email": currentUser.email,
+        "Authentication user ID": currentUser.id,
+        "Supplier profile": "Not found",
+        "Next step": "Check the suppliers table and its SELECT policy."
       });
 
-      showPageMessage(
-        "Your login is valid, but the portal cannot see a supplier " +
-        "record linked to this account. See the diagnostic details below.",
+      message(
+        "Your login works, but no linked supplier profile was found.",
         "error"
       );
-
-      $("loginSection").classList.add("hidden");
-      return;
-    }
-
-    hideDiagnostic();
-
-    if (supplier.is_active !== true) {
-      showDiagnostic({
-        "Logged-in email": loginEmail,
-        "Supplier business": supplier.business_name,
-        "Supplier record ID": supplier.id,
-        "Account active": supplier.is_active,
-        "Account verified": supplier.is_verified,
-        "Review status": supplier.review_status,
-        "Next step":
-          "Ask FrostTech to check your supplier account status."
-      });
-
-      showPageMessage(
-        "Your supplier profile was found, but the account is not active.",
-        "error"
-      );
-
-      $("loginSection").classList.add("hidden");
       return;
     }
 
     if (
+      supplier.is_active !== true ||
       supplier.is_verified !== true ||
       supplier.review_status !== "approved"
     ) {
       showDiagnostic({
-        "Logged-in email": loginEmail,
-        "Supplier business": supplier.business_name,
-        "Supplier record ID": supplier.id,
-        "Account active": supplier.is_active,
-        "Account verified": supplier.is_verified,
+        "Business": supplier.business_name,
+        "Active": supplier.is_active,
+        "Verified": supplier.is_verified,
         "Review status": supplier.review_status,
-        "Next step":
-          "Your supplier account must be approved and verified by FrostTech."
+        "Next step": "FrostTech must approve and activate this supplier account."
       });
 
-      showPageMessage(
-        "Your supplier profile was found, but it is not yet fully approved.",
-        "error"
-      );
-
-      $("loginSection").classList.add("hidden");
+      message("Your supplier account is not fully approved yet.", "error");
       return;
     }
 
     currentSupplier = supplier;
 
     $("supplierWelcome").textContent =
-      "Welcome, " +
-      (supplier.business_name ||
-       supplier.contact_name ||
-       "Supplier") +
-      ".";
+      "Welcome, " + (supplier.business_name || supplier.contact_name || "Supplier");
 
     $("loginSection").classList.add("hidden");
+    $("diagnosticSection").classList.add("hidden");
     $("portalSection").classList.remove("hidden");
 
-    showPageMessage(
-      "Supplier account verified. Welcome to the FrostTech portal.",
-      "success"
-    );
+    message("Supplier account approved. Loading your portal...", "success");
 
     await loadPortalData();
-  }
+  } catch (error) {
+    console.error("Supplier profile check:", error);
 
-  async function returnToLogin() {
+    showDiagnostic({
+      "Login email": currentUser.email,
+      "Authentication user ID": currentUser.id,
+      "Database error": error.message,
+      "Next step": "Check supplier table permissions and columns."
+    });
+
+    message("Could not verify supplier account: " + error.message, "error");
+  }
+}
+
+async function returnToLogin() {
+  $("portalSection").classList.add("hidden");
+  $("diagnosticSection").classList.add("hidden");
+  $("loginSection").classList.remove("hidden");
+
+  currentSupplier = null;
+  message("Log in using your registered supplier account.");
+}
+
+async function logoutSupplier() {
+  if (!db) return;
+
+  try {
+    const { error } = await db.auth.signOut();
+    if (error) throw error;
+
+    currentUser = null;
+    currentSupplier = null;
+    requests = [];
+
     $("portalSection").classList.add("hidden");
     $("diagnosticSection").classList.add("hidden");
     $("loginSection").classList.remove("hidden");
+    $("password").value = "";
 
-    currentSupplier = null;
-
-    showPageMessage(
-      "Please log in using the email address belonging to your supplier account."
-    );
+    message("You have logged out successfully.");
+  } catch (error) {
+    message("Logout failed: " + error.message, "error");
   }
-
-  async function logoutSupplier() {
-    if (!db) return;
-
-    try {
-      const { error } = await db.auth.signOut();
-
-      if (error) throw error;
-
-      currentUser = null;
-      currentSupplier = null;
-      requests = [];
-      productsById = {};
-      myQuotes = [];
-
-      $("portalSection").classList.add("hidden");
-      $("diagnosticSection").classList.add("hidden");
-      $("loginSection").classList.remove("hidden");
-
-      $("password").value = "";
-
-      showPageMessage("You have been logged out successfully.");
-
-    } catch (error) {
-      console.error("Supplier logout failed:", error);
-
-      showPageMessage(
-        "Could not complete logout: " + error.message,
-        "error"
-      );
-    }
-  }
-
-  /*
-    Sections 3 and 4 will add:
-    - Loading customer requests and products
-    - Displaying supplier quotations
-    - Calculating quotation totals
-    - Submitting quotations securely
-  */
-
-  <script>
-/* ==========================================
-   SECTION 3 OF 4
-   SUPPLIER REQUESTS AND QUOTATION MANAGEMENT
-   ========================================== */
-
-let requests = [];
-let myQuotes = [];
-let productsById = {};
-
-/* Show a message on the page */
-function showPageMessage(message, type = "info") {
-    const box = document.getElementById("pageMessage");
-
-    if (!box) return;
-
-    box.textContent = message;
-    box.className = "message " + type;
-    box.classList.remove("hidden");
 }
 
-/* Safely display text received from the database */
-function safeText(value) {
-    return String(value ?? "")
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
-}
+async function loadPortalData() {
+  if (!currentSupplier) return;
 
-/* Format Nigerian naira */
-function formatNaira(value) {
-    return new Intl.NumberFormat("en-NG", {
-        style: "currency",
-        currency: "NGN",
-        maximumFractionDigits: 2
-    }).format(Number(value) || 0);
+  await loadOpenRequests();
+  await loadMyQuotations();
 }
-
-/* ==========================================
-   LOAD OPEN CUSTOMER REQUESTS
-   ========================================== */
 
 async function loadOpenRequests() {
-    const container = document.getElementById("requestsList");
+  const container = $("requestsList");
+  container.textContent = "Loading customer requests...";
 
-    if (!container) return;
+  try {
+    const { data, error } = await db.rpc("supplier_get_open_requests");
 
-    container.innerHTML = "<p>Loading available requests...</p>";
+    if (error) throw error;
 
-    try {
-        /*
-         * IMPORTANT:
-         * Use the secure database function.
-         * Do not retrieve customer personal details
-         * directly from the customers table.
-         */
-        const { data, error } = await db.rpc(
-            "supplier_get_open_requests"
-        );
+    requests = data || [];
 
-        if (error) {
-            console.error("Request loading error:", error);
-
-            container.innerHTML =
-                "<p>Unable to load requests. Please refresh and try again.</p>";
-
-            return;
-        }
-
-        requests = data || [];
-
-        if (requests.length === 0) {
-            container.innerHTML =
-                "<p>No open customer requests are available at the moment.</p>";
-
-            updateRequestDropdown();
-            return;
-        }
-
-        container.innerHTML = requests.map(request => `
-            <div class="request-item">
-
-                <h3>${safeText(
-                    request.title || "Customer quotation request"
-                )}</h3>
-
-                <p>
-                    <strong>Request number:</strong>
-                    ${safeText(request.request_number || "Pending")}
-                </p>
-
-                <p>
-                    <strong>Category:</strong>
-                    ${safeText(request.category || "Not specified")}
-                </p>
-
-                <p>
-                    <strong>Description:</strong>
-                    ${safeText(request.description || "No description provided")}
-                </p>
-
-                <p>
-                    <strong>Quantity:</strong>
-                    ${safeText(request.quantity || 1)}
-                </p>
-
-                <p>
-                    <strong>Preferred brand:</strong>
-                    ${safeText(request.preferred_brand || "Any suitable brand")}
-                </p>
-
-                <p>
-                    <strong>Status:</strong>
-                    <span class="status">
-                        ${safeText(request.status || "Open")}
-                    </span>
-                </p>
-
-                <button
-                    type="button"
-                    class="secondary-button"
-                    onclick="selectRequest('${safeText(request.id)}')">
-                    Prepare Quotation
-                </button>
-
-            </div>
-        `).join("");
-
-        updateRequestDropdown();
-
-    } catch (error) {
-        console.error("Unexpected request error:", error);
-
-        container.innerHTML =
-            "<p>An unexpected error occurred while loading requests.</p>";
+    if (!requests.length) {
+      container.textContent = "No open customer requests are available.";
+      updateRequestDropdown();
+      updateTotals();
+      return;
     }
-}
 
-/* ==========================================
-   UPDATE REQUEST DROPDOWN
-   ========================================== */
+    container.innerHTML = requests.map(request => `
+      <div class="item">
+        <h3>${safe(request.title || "Customer request")}</h3>
+        <p><strong>Request number:</strong> ${safe(request.request_number)}</p>
+        <p><strong>Category:</strong> ${safe(request.category || "Not specified")}</p>
+        <p><strong>Description:</strong> ${safe(request.description || "Not provided")}</p>
+        <p><strong>Quantity:</strong> ${Number(request.quantity) || 1}</p>
+        <p><strong>Preferred brand:</strong> ${safe(request.preferred_brand || "Any suitable brand")}</p>
+        <p><strong>Status:</strong> ${safe(request.status)}</p>
+        <button type="button" class="secondary"
+          data-request-id="${safe(request.id)}">Prepare Quotation</button>
+      </div>
+    `).join("");
+
+    container.querySelectorAll("[data-request-id]").forEach(button => {
+      button.addEventListener("click", () => {
+        $("requestSelect").value = button.dataset.requestId;
+        updateTotals();
+
+        $("quotationForm").scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+      });
+    });
+
+    updateRequestDropdown();
+    updateTotals();
+  } catch (error) {
+    console.error("Open requests:", error);
+    requests = [];
+
+    container.textContent =
+      "Unable to load requests: " + error.message;
+  }
+}
 
 function updateRequestDropdown() {
-    const select = document.getElementById("requestSelect");
+  const select = $("requestSelect");
+  select.innerHTML = '<option value="">Select a customer request</option>';
 
-    if (!select) return;
+  requests.forEach(request => {
+    const option = document.createElement("option");
+    option.value = request.id;
+    option.textContent =
+      (request.request_number || "Request") + " — " +
+      (request.title || "Quotation request");
 
-    select.innerHTML =
-        '<option value="">Select a customer request</option>';
+    select.appendChild(option);
+  });
+}
 
-    requests.forEach(request => {
-        const option = document.createElement("option");
+function updateTotals() {
+  const request = requests.find(
+    item => item.id === $("requestSelect").value
+  );
 
-        option.value = request.id;
+  const quantity = Math.max(1, Number(request?.quantity) || 1);
+  const unitPrice = Math.max(0, Number($("unitPrice").value) || 0);
+  const delivery = Math.max(0, Number($("deliveryCost").value) || 0);
+  const marginPercent = Math.min(
+    100,
+    Math.max(0, Number($("marginPercent").value) || 0)
+  );
 
-        option.textContent =
-            (request.request_number || "Request") +
-            " — " +
-            (request.title || "Quotation request");
+  const supplierTotal = unitPrice * quantity;
+  const margin = supplierTotal * marginPercent / 100;
+  const customerTotal = supplierTotal + delivery + margin;
 
-        select.appendChild(option);
-    });
+  $("quantityDisplay").textContent = quantity;
+  $("supplierTotalDisplay").textContent = money(supplierTotal);
+  $("marginDisplay").textContent = money(margin);
+  $("deliveryDisplay").textContent = money(delivery);
+  $("customerTotalDisplay").textContent = money(customerTotal);
+
+  return {
+    request,
+    quantity,
+    unitPrice,
+    delivery,
+    marginPercent,
+    supplierTotal,
+    margin,
+    customerTotal
+  };
 }
 
 /* ==========================================
-   SELECT A REQUEST
+   PART 3: QUOTATION SUBMISSION AND HISTORY
    ========================================== */
 
-function selectRequest(requestId) {
-    const select = document.getElementById("requestSelect");
-
-    if (!select) return;
-
-    select.value = requestId;
-
-    const form = document.getElementById("quotationForm");
-
-    if (form) {
-        form.scrollIntoView({
-            behavior: "smooth",
-            block: "start"
-        });
-    }
-
-    calculateQuotation();
-}
-
-/* ==========================================
-   CALCULATE QUOTATION TOTALS
-   ========================================== */
-
-function calculateQuotation() {
-    const unitPrice =
-        Number(document.getElementById("unitPrice")?.value) || 0;
-
-    const deliveryCost =
-        Number(document.getElementById("deliveryCost")?.value) || 0;
-
-    const marginPercent =
-        Number(document.getElementById("marginPercent")?.value) || 0;
-
-    const quantity =
-        Number(
-            requests.find(
-                request =>
-                    request.id ===
-                    document.getElementById("requestSelect")?.value
-            )?.quantity
-        ) || 1;
-
-    const estimatedCost = unitPrice * quantity;
-
-    const estimatedMargin =
-        estimatedCost * (marginPercent / 100);
-
-    const estimatedTotal =
-        estimatedCost + deliveryCost + estimatedMargin;
-
-    const quantityDisplay =
-        document.getElementById("requestedQuantity");
-
-    const costDisplay =
-        document.getElementById("estimatedCost");
-
-    const marginDisplay =
-        document.getElementById("estimatedMargin");
-
-    const totalDisplay =
-        document.getElementById("estimatedTotal");
-
-    if (quantityDisplay) {
-        quantityDisplay.textContent = quantity;
-    }
-
-    if (costDisplay) {
-        costDisplay.textContent = formatNaira(estimatedCost);
-    }
-
-    if (marginDisplay) {
-        marginDisplay.textContent = formatNaira(estimatedMargin);
-    }
-
-    if (totalDisplay) {
-        totalDisplay.textContent = formatNaira(estimatedTotal);
-    }
-
-    return {
-        quantity,
-        unitPrice,
-        deliveryCost,
-        marginPercent,
-        estimatedCost,
-        estimatedMargin,
-        estimatedTotal
-    };
-}
-
-/* ==========================================
-   LOAD MY SUBMITTED QUOTATIONS
-   ========================================== */
-
+/* Load quotations belonging to this supplier */
 async function loadMyQuotations() {
-    const container = document.getElementById("myQuotesList");
+  const container = $("myQuotesList");
 
-    if (!container || !currentSupplier) return;
+  if (!currentSupplier) {
+    container.textContent = "Please log in as an approved supplier.";
+    return;
+  }
 
-    container.innerHTML = "<p>Loading your quotations...</p>";
+  container.textContent = "Loading your quotations...";
 
-    try {
-        const { data, error } = await db
-            .from("supplier_quotes")
-            .select("*")
-            .eq("supplier_id", currentSupplier.id)
-            .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await db
+      .from("supplier_quotes")
+      .select(
+        "id,request_id,quantity,supplier_unit_price," +
+        "supplier_total,delivery_cost,notes,status," +
+        "frosttech_margin_percent,frosttech_margin_amount," +
+        "customer_total,customer_quote_status,created_at"
+      )
+      .eq("supplier_id", currentSupplier.id)
+      .order("created_at", { ascending: false });
 
-        if (error) {
-            console.error("Quotation loading error:", error);
+    if (error) throw error;
 
-            container.innerHTML =
-                "<p>Unable to load your quotations.</p>";
-
-            return;
-        }
-
-        myQuotes = data || [];
-
-        if (myQuotes.length === 0) {
-            container.innerHTML =
-                "<p>You have not submitted any quotations yet.</p>";
-
-            return;
-        }
-
-        container.innerHTML = myQuotes.map(quote => `
-            <div class="quote-item">
-
-                <h3>
-                    Quotation ${safeText(
-                        quote.id
-                            ? quote.id.substring(0, 8)
-                            : "Pending"
-                    )}
-                </h3>
-
-                <p>
-                    <strong>Unit price:</strong>
-                    ${formatNaira(quote.unit_price)}
-                </p>
-
-                <p>
-                    <strong>Delivery cost:</strong>
-                    ${formatNaira(quote.delivery_cost)}
-                </p>
-
-                <p>
-                    <strong>Quotation status:</strong>
-                    ${safeText(quote.status || "Submitted")}
-                </p>
-
-                <p>
-                    <strong>Customer quote status:</strong>
-                    ${safeText(quote.customer_quote_status || "Pending")}
-                </p>
-
-            </div>
-        `).join("");
-
-    } catch (error) {
-        console.error("Unexpected quotation error:", error);
-
-        container.innerHTML =
-            "<p>An unexpected error occurred while loading quotations.</p>";
+    if (!data || data.length === 0) {
+      container.textContent =
+        "You have not submitted any quotations yet.";
+      return;
     }
+
+    container.innerHTML = data.map(quote => {
+      const request = requests.find(
+        item => item.id === quote.request_id
+      );
+
+      return `
+        <div class="item">
+          <h3>Quotation ${safe(quote.id.substring(0, 8))}</h3>
+
+          <p>
+            <strong>Request:</strong>
+            ${safe(request?.request_number || quote.request_id)}
+          </p>
+
+          <p>
+            <strong>Quantity:</strong>
+            ${Number(quote.quantity) || 1}
+          </p>
+
+          <p>
+            <strong>Unit price:</strong>
+            ${money(quote.supplier_unit_price)}
+          </p>
+
+          <p>
+            <strong>Supplier total:</strong>
+            ${money(quote.supplier_total)}
+          </p>
+
+          <p>
+            <strong>Delivery cost:</strong>
+            ${money(quote.delivery_cost)}
+          </p>
+
+          <p>
+            <strong>Proposed margin:</strong>
+            ${Number(quote.frosttech_margin_percent) || 0}%
+          </p>
+
+          <p>
+            <strong>Customer total estimate:</strong>
+            ${money(quote.customer_total)}
+          </p>
+
+          <p>
+            <strong>Submission status:</strong>
+            ${safe(quote.status)}
+          </p>
+
+          <p>
+            <strong>Customer quote status:</strong>
+            ${safe(quote.customer_quote_status || "draft")}
+          </p>
+
+          <p class="muted">
+            Submitted:
+            ${safe(
+              quote.created_at
+                ? new Date(quote.created_at).toLocaleString("en-NG")
+                : "Date unavailable"
+            )}
+          </p>
+        </div>
+      `;
+    }).join("");
+
+  } catch (error) {
+    console.error("Quotation history error:", error);
+
+    container.textContent =
+      "Unable to load quotations: " + error.message;
+  }
 }
 
-/* ==========================================
-   REFRESH SUPPLIER PORTAL DATA
-   ========================================== */
 
-async function refreshSupplierData() {
-    await loadOpenRequests();
+/* Submit a new supplier quotation */
+async function submitQuotation(event) {
+  event.preventDefault();
+
+  if (busy) return;
+
+  if (!currentUser || !currentSupplier) {
+    message("Please log in with an approved supplier account.", "error");
+    return;
+  }
+
+  const totals = updateTotals();
+
+  if (!totals.request) {
+    message("Please select a customer request.", "error");
+    return;
+  }
+
+  if (!Number.isFinite(totals.unitPrice) || totals.unitPrice <= 0) {
+    message("Enter a unit price greater than zero.", "error");
+    return;
+  }
+
+  if (!Number.isFinite(totals.delivery) || totals.delivery < 0) {
+    message("Enter a valid delivery cost.", "error");
+    return;
+  }
+
+  if (
+    !Number.isFinite(totals.marginPercent) ||
+    totals.marginPercent < 0 ||
+    totals.marginPercent > 100
+  ) {
+    message("The proposed margin must be between 0% and 100%.", "error");
+    return;
+  }
+
+  if (
+    !Number.isSafeInteger(totals.quantity) ||
+    totals.quantity < 1
+  ) {
+    message("The requested quantity is invalid.", "error");
+    return;
+  }
+
+  busy = true;
+
+  const button = $("submitQuoteButton");
+  button.disabled = true;
+  button.textContent = "Submitting quotation...";
+
+  try {
+    /*
+      Check whether this supplier has already quoted
+      for the selected request.
+    */
+    const { data: existing, error: checkError } = await db
+      .from("supplier_quotes")
+      .select("id")
+      .eq("supplier_id", currentSupplier.id)
+      .eq("request_id", totals.request.id)
+      .limit(1);
+
+    if (checkError) throw checkError;
+
+    if (existing && existing.length > 0) {
+      message(
+        "You have already submitted a quotation for this request. " +
+        "Please check My Submitted Quotations.",
+        "error"
+      );
+      return;
+    }
+
+    /*
+      These column names match your actual supplier_quotes table.
+      The database must also permit this supplier to insert a row.
+    */
+    const quotation = {
+      request_id: totals.request.id,
+      supplier_id: currentSupplier.id,
+      quantity: totals.quantity,
+      supplier_unit_price: totals.unitPrice,
+      supplier_total: Number(totals.supplierTotal.toFixed(2)),
+      delivery_cost: Number(totals.delivery.toFixed(2)),
+      frosttech_margin_percent: totals.marginPercent,
+      frosttech_margin_amount: Number(totals.margin.toFixed(2)),
+      customer_total: Number(totals.customerTotal.toFixed(2)),
+      notes: $("notes").value.trim() || null,
+      status: "submitted",
+      customer_quote_status: "draft"
+    };
+
+    const { data, error } = await db
+      .from("supplier_quotes")
+      .insert(quotation)
+      .select("id")
+      .single();
+
+    if (error) throw error;
+
+    $("quotationForm").reset();
+    $("deliveryCost").value = "0";
+    $("marginPercent").value = "15";
+
+    updateTotals();
+
+    message(
+      "Quotation submitted successfully! Reference: " +
+      data.id.substring(0, 8) +
+      ". FrostTech can now review it.",
+      "success"
+    );
+
     await loadMyQuotations();
+
+  } catch (error) {
+    console.error("Quotation submission error:", error);
+
+    message(
+      "Quotation could not be submitted: " +
+      error.message +
+      ". If this is a permissions error, the supplier_quotes " +
+      "INSERT policy needs to be checked.",
+      "error"
+    );
+
+  } finally {
+    busy = false;
+    button.disabled = false;
+    button.textContent = "Submit Quotation";
+  }
 }
+
+
+/* Start the portal after the page has loaded */
+initializePortal().catch(error => {
+  console.error("Supplier portal startup error:", error);
+
+  message(
+    "The supplier portal could not start: " + error.message,
+    "error"
+  );
+
+  $("loginSection").classList.remove("hidden");
+});
+
 </script>
-
-  <!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <!-- Section 1: Page settings and styles -->
-</head>
-
-<body>
-
-    <!-- Section 2: Supplier portal layout -->
-
-    <!-- Section 3: Supplier requests and quotations -->
-
-    <!-- PASTE SECTION 4 HERE -->
-
 </body>
-</html>
+</html>  
