@@ -1,19 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Product Catalogue | FrostTech HVAC and Refrigeration</title><meta name="description"
+content="Browse air conditioners, refrigeration parts, HVAC accessories and products at FrostTech. View current prices and request quotations.">
 
-  <title>Product Catalogue | FrostTech HVAC and Refrigeration</title>
-
-  <meta name="description"
-        content="Browse air conditioners, refrigeration parts, HVAC accessories and products at FrostTech.">
-
-  <link rel="stylesheet" href="style.css">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-  <style>
+  <link rel="stylesheet" href="style.css">  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <style>
     .catalogue-page {
       max-width: 1200px;
       margin: auto;
@@ -129,7 +120,15 @@
     .catalogue-price {
       font-size: 19px;
       font-weight: bold;
-      margin: 8px 0 16px;
+      margin: 8px 0 6px;
+      color: #075985;
+      overflow-wrap: anywhere;
+    }
+
+    .catalogue-price-note {
+      font-size: 12px;
+      color: #666;
+      margin: 0 0 16px;
     }
 
     .catalogue-actions {
@@ -187,105 +186,75 @@
         height: 230px;
       }
     }
-  </style>
-</head>
+  </style></head><body><header class="topbar">
+  <div class="container nav"><div class="logo">
+  <span>❄</span> FrostTech
+</div>
 
-<body>
-
-<header class="topbar">
-  <div class="container nav">
-
-    <div class="logo">
-      <span>❄</span> FrostTech
-    </div>
-
-    <nav>
-      <a href="index.html">Home</a>
-      <a href="catalog.html">Catalogue</a>
-      <a href="quote_requests.html">Request Quote</a>
-      <a href="admin.html">Admin</a>
-    </nav>
+<nav>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalogue</a>
+  <a href="quote_requests.html">Request Quote</a>
+  <a href="admin.html">Admin</a>
+</nav>
 
   </div>
-</header>
+</header><main class="catalogue-page">  <section class="catalogue-heading">
+    <p class="small-title">FROSTTECH HVAC &amp; REFRIGERATION</p><h1>Our Product Catalogue</h1>
 
-<main class="catalogue-page">
+<p>
+  Browse air conditioners, refrigeration parts,
+  accessories and other HVAC products.
+  View available prices or request a quotation.
+</p>
 
-  <section class="catalogue-heading">
-    <p class="small-title">FROSTTECH HVAC & REFRIGERATION</p>
+  </section>  <section class="catalogue-tools"><input
+  type="search"
+  id="catalogue-search"
+  placeholder="Search products, brands or models..."
+  aria-label="Search products">
 
-    <h1>Our Product Catalogue</h1>
+<select
+  id="catalogue-category"
+  aria-label="Filter by category">
 
-    <p>
-      Browse air conditioners, refrigeration parts,
-      accessories and other HVAC products.
-    </p>
-  </section>
+  <option value="">All Categories</option>
 
-  <section class="catalogue-tools">
+</select>
 
-    <input
-      type="search"
-      id="catalogue-search"
-      placeholder="Search products, brands or models..."
-      aria-label="Search products">
-
-    <select
-      id="catalogue-category"
-      aria-label="Filter by category">
-
-      <option value="">All Categories</option>
-
-    </select>
-
-  </section>
-
-  <p id="catalogue-count" class="catalogue-count">
+  </section>  <p id="catalogue-count" class="catalogue-count">
     Loading products...
-  </p>
-
-  <section
+  </p>  <section
     id="catalogue-grid"
     class="catalogue-grid"
-    aria-live="polite">
+    aria-live="polite"><p class="catalogue-status">
+  Loading FrostTech products...
+</p>
 
-    <p class="catalogue-status">
-      Loading FrostTech products...
-    </p>
+  </section></main><footer>
+  <div class="container footer-content"><div>
+  <h2>❄ FrostTech</h2>
+  <p>HVAC and Refrigeration Marketplace</p>
+</div>
 
-  </section>
+<div>
+  <p>Website: frosttechonline.com</p>
+  <p>WhatsApp: +234 803 200 8635</p>
+</div>
 
-</main>
-
-<footer>
-  <div class="container footer-content">
-
-    <div>
-      <h2>❄ FrostTech</h2>
-      <p>HVAC and Refrigeration Marketplace</p>
-    </div>
-
-    <div>
-      <p>Website: frosttechonline.com</p>
-      <p>WhatsApp: +234 803 200 8635</p>
-    </div>
-
-  </div>
-
-  <div class="copyright">
+  </div>  <div class="copyright">
     © 2026 FrostTech HVAC and Refrigeration.
     All rights reserved.
   </div>
-</footer>
-
-<script>
+</footer><script>
   "use strict";
 
   const SUPABASE_URL =
     "https://nftxptjpgidcsgtaltjn.supabase.co";
 
   const SUPABASE_PUBLISHABLE_KEY =
-"sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
   const grid = document.getElementById("catalogue-grid");
   const searchInput = document.getElementById("catalogue-search");
   const categorySelect = document.getElementById("catalogue-category");
@@ -390,6 +359,27 @@
     });
   }
 
+  function formatPrice(value) {
+    if (
+      value === null ||
+      value === undefined ||
+      value === ""
+    ) {
+      return null;
+    }
+
+    const amount = Number(value);
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return null;
+    }
+
+    return "₦" + amount.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
   function displayCatalogue(products) {
     grid.innerHTML = "";
 
@@ -465,18 +455,16 @@
       const price = document.createElement("div");
       price.className = "catalogue-price";
 
-      const amount = Number(product.selling_price);
+      const formattedPrice = formatPrice(product.selling_price);
 
-      price.textContent =
-        product.selling_price !== null &&
-        product.selling_price !== "" &&
-        Number.isFinite(amount) &&
-        amount > 0
-          ? "₦" + amount.toLocaleString("en-NG", {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2
-            })
-          : "Price on request";
+      price.textContent = formattedPrice || "Price on request";
+
+      const priceNote = document.createElement("p");
+      priceNote.className = "catalogue-price-note";
+
+      priceNote.textContent = formattedPrice
+        ? "Request a quotation for installation, accessories, delivery, or other requirements."
+        : "Contact FrostTech for current pricing and a personalised quotation.";
 
       const actions = document.createElement("div");
       actions.className = "catalogue-actions";
@@ -489,7 +477,11 @@
 
       const quoteButton = document.createElement("a");
       quoteButton.className = "request-quote-btn";
-      quoteButton.href = "quote_requests.html";
+
+      quoteButton.href =
+        "quote_requests.html?product_id=" +
+        encodeURIComponent(product.id);
+
       quoteButton.textContent = "Request a Quote";
 
       actions.appendChild(viewButton);
@@ -503,6 +495,7 @@
       }
 
       info.appendChild(price);
+      info.appendChild(priceNote);
       info.appendChild(actions);
 
       card.appendChild(imageContainer);
@@ -544,7 +537,5 @@
   categorySelect.addEventListener("change", filterCatalogue);
 
   loadCatalogue();
-</script>
-
-</body>
+</script></body>
 </html>
