@@ -604,7 +604,7 @@ const db = window.supabase.createClient(
     SUPABASE_URL,
     SUPABASE_PUBLISHABLE_KEY
 );
-
+window.supabaseClient = db;
 let currentAdmin = null;
 let currentRequests = [];
 let currentSuppliers = [];
