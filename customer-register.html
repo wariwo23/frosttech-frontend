@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Customer Registration | FrostTech</title>
+<style>
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:20px;color:#172b4d}
+.card{max-width:430px;margin:25px auto;background:white;padding:24px;border-radius:12px;box-shadow:0 4px 18px #0001}
+h1{color:#075985;font-size:25px}
+label{display:block;margin-top:15px;font-weight:bold}
+input{box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px}
+button{width:100%;margin-top:22px;padding:13px;background:#075985;color:white;border:0;border-radius:6px;font-size:16px}
+#message{overflow-wrap:anywhere;line-height:1.5}
+a{color:#075985}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>Create a Customer Account</h1>
+<p>Register with FrostTech HVAC and Refrigeration to request quotations.</p>
+
+<form id="registerForm">
+<label for="fullName">Full name</label>
+<input id="fullName" required autocomplete="name">
+
+<label for="phone">Phone number</label>
+<input id="phone" type="tel" required autocomplete="tel">
+
+<label for="email">Email address</label>
+<input id="email" type="email" required autocomplete="email">
+
+<label for="password">Password (minimum 8 characters)</label>
+<input id="password" type="password" minlength="8" required autocomplete="new-password">
+
+<button id="registerButton" type="submit">Create Account</button>
+</form>
+
+<p id="message" role="status"></p>
+<p>Already registered? <a href="customer-login.html">Sign in</a></p>
+<p><a href="index.html">Return to homepage</a></p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+const form=document.getElementById("registerForm");
+const message=document.getElementById("message");
+const button=document.getElementById("registerButton");
+
+form.addEventListener("submit",async function(e){
+ e.preventDefault();
+ const client=window.supabaseClient;
+ if(!client){
+  message.textContent="Connection error. Please check supabase.js.";
+  return;
+ }
+
+ const fullName=document.getElementById("fullName").value.trim();
+ const phone=document.getElementById("phone").value.trim();
+ const email=document.getElementById("email").value.trim().toLowerCase();
+ const password=document.getElementById("password").value;
+
+ button.disabled=true;
+ message.textContent="Creating your account...";
+
+ try{
+  const {data,error}=await client.auth.signUp({
+   email:email,
+   password:password,
+   options:{data:{full_name:fullName,phone:phone,account_type:"customer"}}
+  });
+  if(error) throw error;
+
+  message.textContent=data.session
+   ?"Account created. Customer profile setup is our next step."
+   :"Registration received. Check your email for a confirmation link before signing in.";
+ }catch(error){
+  message.textContent="Registration failed: "+error.message;
+ }finally{
+  button.disabled=false;
+ }
+});
+</script>
+</body>
+</html>
