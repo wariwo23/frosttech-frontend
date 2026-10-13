@@ -1869,10 +1869,13 @@ checkExistingSession();
 
 </script>
 
-    <!-- Temporary supplier email confirmation tool -->
+    <!-- Supplier Account Maintenance -->
 <div style="margin:20px;padding:16px;border:1px solid #ccc;border-radius:8px;">
   <h3>Supplier Account Maintenance</h3>
-  <p>Confirm the existing supplier email using administrator access.</p>
+
+  <p>
+    Confirm the existing supplier email using administrator access.
+  </p>
 
   <button
     id="confirmSupplierEmailBtn"
@@ -1882,80 +1885,143 @@ checkExistingSession();
     Confirm Supplier Email
   </button>
 
-  <p id="confirmSupplierEmailResult" role="status"></p>
+  <p
+    id="confirmSupplierEmailResult"
+    role="status"
+    aria-live="polite"
+  ></p>
 </div>
 
 <script>
-(async function () {
-  const button = document.getElementById("confirmSupplierEmailBtn");
-  const result = document.getElementById("confirmSupplierEmailResult");
+(function () {
+  const button = document.getElementById(
+    "confirmSupplierEmailBtn"
+  );
+
+  const result = document.getElementById(
+    "confirmSupplierEmailResult"
+  );
+
+  if (!button || !result) {
+    console.error(
+      "Supplier Account Maintenance elements were not found."
+    );
+    return;
+  }
 
   button.addEventListener("click", async function () {
-    if (!window.supabaseClient) {
-      result.textContent =
-        "Supabase client not found. Please check the page setup.";
-      return;
-    }
-
     button.disabled = true;
-    result.textContent = "Checking administrator session...";
+    result.textContent = "Checking administrator access...";
 
     try {
-      const { data: userData, error: userError } =
-        await window.supabaseClient.auth.getUser();
+      /*
+       * Reuse the existing Supabase client.
+       * Do not create another client or expose secret keys.
+       */
+      let client = window.supabaseClient;
 
-      if (userError || !userData.user) {
+      if (!client && typeof db !== "undefined") {
+        client = db;
+      }
+
+      if (!client) {
         result.textContent =
-          "Please sign in to the FrostTech admin dashboard first.";
+          "Supabase client not found. Check the main admin dashboard script.";
         return;
       }
 
-      const { data: profile, error: profileError } =
-        await window.supabaseClient
-          .from("profiles")
-          .select("role, is_active")
-          .eq("id", userData.user.id)
-          .maybeSingle();
+      // Check the signed-in account.
+      const {
+        data: userData,
+        error: userError
+      } = await client.auth.getUser();
+
+      if (userError || !userData.user) {
+        result.textContent =
+          "Please sign in to the admin dashboard first.";
+        return;
+      }
+
+      // Verify active administrator access.
+      const {
+        data: profile,
+        error: profileError
+      } = await client
+        .from("profiles")
+        .select("role, is_active")
+        .eq("id", userData.user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        result.textContent =
+          "Could not verify administrator access: " +
+          profileError.message;
+        return;
+      }
 
       if (
-        profileError ||
         !profile ||
         profile.role !== "admin" ||
         profile.is_active !== true
       ) {
         result.textContent =
-          "Active administrator access could not be verified.";
+          "Your account does not have active administrator access.";
         return;
       }
 
-      result.textContent = "Calling the protected function...";
+      // Call the server-side Edge Function.
+      result.textContent =
+        "Administrator verified. Processing supplier confirmation...";
 
-      const { data, error } =
-        await window.supabaseClient.functions.invoke(
-          "confirm-existing-supplier",
-          { body: {} }
-        );
+      const {
+        data,
+        error
+      } = await client.functions.invoke(
+        "confirm-existing-supplier",
+        {
+          body: {}
+        }
+      );
 
       if (error) {
-        console.error("Confirmation function error:", error);
+        console.error(
+          "Supplier confirmation error:",
+          error
+        );
+
         result.textContent =
-          "The request failed. Check the Edge Function logs.";
+          "Confirmation failed: " +
+          (error.message || "Check the Edge Function logs.");
+
         return;
       }
 
-      result.textContent = data?.message ||
-        data?.error ||
-        "The function returned no message.";
+      if (data && data.error) {
+        result.textContent =
+          "Confirmation failed: " + data.error;
+        return;
+      }
+
+      result.textContent =
+        (data && data.message) ||
+        "The function responded. Verify the supplier's email confirmation status.";
 
     } catch (error) {
-      console.error(error);
+      console.error(
+        "Unexpected supplier confirmation error:",
+        error
+      );
+
       result.textContent =
-        "An unexpected error occurred. Check the browser console.";
+        "Unexpected error: " +
+        (error.message || "Please check the browser console.");
+
     } finally {
       button.disabled = false;
     }
   });
 })();
+</script>
 </script>
 </body>
 </html>
