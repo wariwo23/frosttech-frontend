@@ -1868,5 +1868,94 @@ async function loadPaymentRecords() {
 checkExistingSession();
 
 </script>
+
+    <!-- Temporary supplier email confirmation tool -->
+<div style="margin:20px;padding:16px;border:1px solid #ccc;border-radius:8px;">
+  <h3>Supplier Account Maintenance</h3>
+  <p>Confirm the existing supplier email using administrator access.</p>
+
+  <button
+    id="confirmSupplierEmailBtn"
+    type="button"
+    style="padding:12px 16px;background:#176b45;color:white;border:0;border-radius:6px;"
+  >
+    Confirm Supplier Email
+  </button>
+
+  <p id="confirmSupplierEmailResult" role="status"></p>
+</div>
+
+<script>
+(async function () {
+  const button = document.getElementById("confirmSupplierEmailBtn");
+  const result = document.getElementById("confirmSupplierEmailResult");
+
+  button.addEventListener("click", async function () {
+    if (!window.supabaseClient) {
+      result.textContent =
+        "Supabase client not found. Please check the page setup.";
+      return;
+    }
+
+    button.disabled = true;
+    result.textContent = "Checking administrator session...";
+
+    try {
+      const { data: userData, error: userError } =
+        await window.supabaseClient.auth.getUser();
+
+      if (userError || !userData.user) {
+        result.textContent =
+          "Please sign in to the FrostTech admin dashboard first.";
+        return;
+      }
+
+      const { data: profile, error: profileError } =
+        await window.supabaseClient
+          .from("profiles")
+          .select("role, is_active")
+          .eq("id", userData.user.id)
+          .maybeSingle();
+
+      if (
+        profileError ||
+        !profile ||
+        profile.role !== "admin" ||
+        profile.is_active !== true
+      ) {
+        result.textContent =
+          "Active administrator access could not be verified.";
+        return;
+      }
+
+      result.textContent = "Calling the protected function...";
+
+      const { data, error } =
+        await window.supabaseClient.functions.invoke(
+          "confirm-existing-supplier",
+          { body: {} }
+        );
+
+      if (error) {
+        console.error("Confirmation function error:", error);
+        result.textContent =
+          "The request failed. Check the Edge Function logs.";
+        return;
+      }
+
+      result.textContent = data?.message ||
+        data?.error ||
+        "The function returned no message.";
+
+    } catch (error) {
+      console.error(error);
+      result.textContent =
+        "An unexpected error occurred. Check the browser console.";
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
 </body>
 </html>
