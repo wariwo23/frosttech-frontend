@@ -221,12 +221,15 @@ footer {
       <textarea id="notes" maxlength="1000"></textarea>
 
       <div class="diagnostic">
-        <p>Quantity: <strong id="quantityDisplay">—</strong></p>
-        <p>Supplier total: <strong id="supplierTotalDisplay">₦0.00</strong></p>
-        <p>Margin amount: <strong id="marginDisplay">₦0.00</strong></p>
-        <p>Delivery: <strong id="deliveryDisplay">₦0.00</strong></p>
-        <p>Estimated customer total: <strong id="customerTotalDisplay">₦0.00</strong></p>
-      </div>
+  <p>Quantity: <strong id="quantityDisplay">—</strong></p>
+  <p>Supplier total: <strong id="supplierTotalDisplay">₦0.00</strong></p>
+  <p>Delivery: <strong id="deliveryDisplay">₦0.00</strong></p>  <p style="display:none;">
+    Margin amount: <strong id="marginDisplay">₦0.00</strong>
+  </p>  <p style="display:none;">
+    Estimated customer total:
+    <strong id="customerTotalDisplay">₦0.00</strong>
+  </p>
+</div>
 
       <button id="submitQuoteButton" type="submit">
         Submit Quotation
