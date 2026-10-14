@@ -627,11 +627,10 @@ async function loadMyQuotations() {
     const { data, error } = await db
       .from("supplier_quotes")
       .select(
-        "id,request_id,quantity,supplier_unit_price," +
-        "supplier_total,delivery_cost,notes,status," +
-        "frosttech_margin_percent,frosttech_margin_amount," +
-        "customer_total,customer_quote_status,created_at"
-      )
+"id,request_id,quantity,supplier_unit_price," +
+"supplier_total,delivery_cost,notes,status," +
+"created_at"
+)
       .eq("supplier_id", currentSupplier.id)
       .order("created_at", { ascending: false });
 
