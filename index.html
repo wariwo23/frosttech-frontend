@@ -381,9 +381,18 @@ function displayProducts(products) {
       (product.model ? " • " + product.model : "");
 
     const price = document.createElement("strong");
-    price.textContent = "₦" +
-      Number(product.selling_price || 0).toLocaleString("en-NG");
+const sellingPrice = Number(product.selling_price);
 
+if (
+  product.selling_price !== null &&
+  product.selling_price !== "" &&
+  Number.isFinite(sellingPrice) &&
+  sellingPrice > 0
+) {
+  price.textContent = "₦" + sellingPrice.toLocaleString("en-NG");
+} else {
+  price.textContent = "Price on request";
+}
     const button = document.createElement("button");
     button.type = "button";
     button.textContent = "View Product";
