@@ -1843,41 +1843,50 @@ async function loadSupplierQuotations() {
 
 
 async function selectSupplierQuotation(id) {
-async function selectSupplierQuotation(id) {
-    const quote = currentSupplierQuotes.find(item => item.id === id);
+    const quote = currentSupplierQuotes.find(
+        item => item.id === id
+    );
 
-    if (!quote || !confirm("Select this supplier quotation?")) {
+    if (!quote) {
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation not found.",
+            "error"
+        );
+        return;
+    }
+
+    if (!confirm("Select this supplier quotation?")) {
         return;
     }
 
     const { error } = await db.rpc(
         "admin_select_supplier_quote",
-        { p_quote_id: id }
+        {
+            p_quote_id: id
+        }
     );
 
     if (error) {
-        alert("Could not select quotation: " + error.message);
+        showMessage(
+            "quotationMessage",
+            "Could not select quotation: " +
+                errorText(error),
+            "error"
+        );
         return;
     }
 
-    alert("Supplier quotation selected successfully.");
-    window.location.reload();
-}
-    const { error } = await db.from("supplier_quotes")
-        .update({
-            status:"selected",
-            customer_quote_status:"draft",
-            updated_at:new Date().toISOString()
-        })
-        .eq("id", id);
+    showMessage(
+        "quotationMessage",
+        "Supplier quotation selected successfully.",
+        "success-message"
+    );
 
-    if (error) {
-        showMessage("quotationMessage", errorText(error), "error");
-        return;
-    }
-
-    showMessage("quotationMessage", "Supplier quotation selected. Customer quotation remains a draft.", "success-message");
-    await loadSupplierQuotations();
+    await Promise.allSettled([
+        loadSupplierQuotations(),
+        loadCustomerRequests()
+    ]);
 }
 
 
