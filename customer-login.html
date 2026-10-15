@@ -467,25 +467,7 @@
       }
 
       // Detect an existing authenticated session.
-      try {
-        const { data, error } =
-          await db.auth.getSession();
-
-        if (error) throw error;
-
-        if (data.session) {
-          showMessage(
-            "You are already signed in. Opening FrostTech..."
-          );
-
-          window.location.replace(getReturnUrl());
-        }
-      } catch (error) {
-        console.error(
-          "Session check failed:",
-          error
-        );
-      }
+      
     }
 
     registerButton.addEventListener("click", () => {
