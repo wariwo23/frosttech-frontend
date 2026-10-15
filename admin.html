@@ -948,51 +948,130 @@ async function loadProducts() {
             </div>
         </article>
     `).join("");
+async function loadProducts() {
+    const target = el("productList");
+    target.textContent = "Loading products...";
 
-    target.querySelectorAll("[data-edit-product]").forEach(button => {
+    const { data, error } = await db
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent =
+            "Could not load products: " + errorText(error);
+
+        showMessage(
+            "productMessage",
+            errorText(error),
+            "error"
+        );
+
+        el("productCount").textContent = "—";
+        return;
+    }
+
+    currentProducts = data || [];
+
+    el("productCount").textContent =
+        currentProducts.length;
+
+    if (currentProducts.length === 0) {
+        target.textContent = "No products found.";
+        clearMessage("productMessage");
+        return;
+    }
+
+    target.innerHTML = currentProducts.map(product => `
+        <article class="card">
+
+            <h3>${escapeHtml(product.name)}</h3>
+
+            ${product.image_url
+                ? `<img
+                    class="product-image"
+                    src="${escapeHtml(product.image_url)}"
+                    alt="Product image"
+                   >`
+                : ""
+            }
+
+            <p>
+                <strong>Category:</strong>
+                ${escapeHtml(product.category || "Not specified")}
+            </p>
+
+            <p>
+                <strong>Brand / Model:</strong>
+                ${escapeHtml(product.brand || "")}
+                ${escapeHtml(product.model || "")}
+            </p>
+
+            <p>
+                <strong>SKU:</strong>
+                ${escapeHtml(product.sku || "Not specified")}
+            </p>
+
+            <p>
+                <strong>Selling Price:</strong>
+                ${money(product.selling_price)}
+            </p>
+
+            <p>
+                <strong>Stock:</strong>
+                ${escapeHtml(product.stock_quantity)}
+            </p>
+
+            <p>
+                <strong>Visibility:</strong>
+                ${product.is_active
+                    ? badge("active")
+                    : badge("inactive")
+                }
+            </p>
+
+            <div class="action-row">
+
+                <button
+                    type="button"
+                    data-edit-product="${escapeHtml(product.id)}">
+                    Edit Product
+                </button>
+
+                <button
+                    type="button"
+                    class="${product.is_active
+                        ? "warning"
+                        : "success"
+                    }"
+                    data-toggle-product="${escapeHtml(product.id)}">
+
+                    ${product.is_active
+                        ? "Deactivate"
+                        : "Activate"
+                    }
+
+                </button>
+
+            </div>
+
+        </article>
+    `).join("");
+
+    target.querySelectorAll(
+        "[data-edit-product]"
+    ).forEach(button => {
         button.addEventListener("click", () => {
             editProduct(button.dataset.editProduct);
         });
     });
 
-    target.querySelectorAll("[data-toggle-product]").forEach(button => {
+    target.querySelectorAll(
+        "[data-toggle-product]"
+    ).forEach(button => {
         button.addEventListener("click", () => {
             toggleProduct(button.dataset.toggleProduct);
         });
-    });
-
-    clearMessage("productMessage");
-}
-
-    target.innerHTML = currentProducts.map(product => `
-        <article class="card">
-            <h3>${escapeHtml(product.name)}</h3>
-            ${product.image_url
-                ? '<img class="product-image" src="' + escapeHtml(product.image_url) + '" alt="Product image">'
-                : ""}
-            <p><strong>Category:</strong> ${escapeHtml(product.category || "Not specified")}</p>
-            <p><strong>Brand / Model:</strong> ${escapeHtml(product.brand || "")} ${escapeHtml(product.model || "")}</p>
-            <p><strong>SKU:</strong> ${escapeHtml(product.sku || "Not specified")}</p>
-            <p><strong>Selling Price:</strong> ${money(product.selling_price)}</p>
-            <p><strong>Supplier Cost:</strong> ${money(product.supplier_cost)}</p>
-            <p><strong>Stock:</strong> ${escapeHtml(product.stock_quantity)}</p>
-            <p><strong>Visibility:</strong> ${product.is_active ? badge("active") : badge("inactive")}</p>
-            <div class="action-row">
-                <button type="button" data-edit-product="${escapeHtml(product.id)}">Edit Product</button>
-                <button type="button" class="${product.is_active ? "warning" : "success"}"
-                    data-toggle-product="${escapeHtml(product.id)}">
-                    ${product.is_active ? "Deactivate" : "Activate"}
-                </button>
-            </div>
-        </article>
-    `).join("");
-
-    target.querySelectorAll("[data-edit-product]").forEach(button => {
-        button.addEventListener("click", () => editProduct(button.dataset.editProduct));
-    });
-
-    target.querySelectorAll("[data-toggle-product]").forEach(button => {
-        button.addEventListener("click", () => toggleProduct(button.dataset.toggleProduct));
     });
 
     clearMessage("productMessage");
