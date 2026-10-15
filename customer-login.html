@@ -185,26 +185,8 @@ const supabase = window.supabaseClient;
     }
 
     toggleButton.addEventListener("click", () => {
-      createAccountMode = !createAccountMode;
-
-      formTitle.textContent = createAccountMode
-        ? "Create Customer Account"
-        : "Customer Login";
-
-      submitButton.textContent = createAccountMode
-        ? "Create Account"
-        : "Sign In";
-
-      toggleButton.textContent = createAccountMode
-        ? "Return to Login"
-        : "Create a New Account";
-
-      passwordInput.autocomplete = createAccountMode
-        ? "new-password"
-        : "current-password";
-
-      showMessage("");
-    });
+  window.location.href = "customer-register.html";
+});
 
     form.addEventListener("submit", async (event) => {
       event.preventDefault();
