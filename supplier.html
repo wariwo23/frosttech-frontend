@@ -786,15 +786,14 @@ async function submitQuotation(event) {
       The database must also permit this supplier to insert a row.
     */
     const quotation = {
-request_id: totals.request.id,
-supplier_id: currentSupplier.id,
-quantity: totals.quantity,
-supplier_unit_price: totals.unitPrice,
-supplier_total: Number(totals.supplierTotal.toFixed(2)),
-delivery_cost: Number(totals.delivery.toFixed(2)),
-notes: $("notes").value.trim() || null,
-status: "submitted",
-customer_quote_status: "draft"
+    request_id: totals.request.id,
+    supplier_id: currentSupplier.id,
+    quantity: totals.quantity,
+    supplier_unit_price: totals.unitPrice,
+    delivery_cost: Number(totals.delivery.toFixed(2)),
+    notes: $("notes").value.trim() || null,
+    status: "submitted",
+    customer_quote_status: "draft"
 };
 
     const { data, error } = await db
