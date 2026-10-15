@@ -1701,18 +1701,28 @@ async function selectSupplierQuotation(id) {
 
 
 async function rejectSupplierQuotation(id) {
-    if (!confirm("Reject this supplier quotation?")) return;
+    const quote = currentSupplierQuotes.find(item => item.id === id);
 
-    const { error } = await db.from("supplier_quotes")
-        .update({status:"rejected", updated_at:new Date().toISOString()})
-        .eq("id", id);
+    if (!quote || !confirm("Reject this supplier quotation?")) {
+        return;
+    }
+
+    const { error } = await db.rpc(
+        "admin_reject_supplier_quote",
+        { p_quote_id: id }
+    );
 
     if (error) {
         showMessage("quotationMessage", errorText(error), "error");
         return;
     }
 
-    showMessage("quotationMessage", "Supplier quotation rejected.", "success-message");
+    showMessage(
+        "quotationMessage",
+        "Supplier quotation rejected.",
+        "success-message"
+    );
+
     await loadSupplierQuotations();
 }
 
