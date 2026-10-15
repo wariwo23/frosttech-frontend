@@ -164,21 +164,10 @@
   </div>
 
   <script type="module">
-    import { createClient } from
-      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
-
-    const SUPABASE_URL =
-      "https://nftxptjpgidcsgtaltjn.supabase.co";
-
-    // Replace this placeholder with the public/publishable
-    // key already used in your FrostTech supabase.js file.
-    const SUPABASE_PUBLIC_KEY =
-      "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
-
-    const supabase = createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLIC_KEY
-    );
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+    const supabase = window.supabaseClient;
 
     const form = document.getElementById("authForm");
     const emailInput = document.getElementById("email");
