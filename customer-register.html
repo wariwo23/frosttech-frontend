@@ -66,20 +66,16 @@ form.addEventListener("submit",async function(e){
 
  try{
   const {data,error}=await client.auth.signUp({
-   email:email,
-   password:password,
-   options:{data:{full_name:fullName,phone:phone,account_type:"customer"}}
-  });
-  if(error) throw error;
-
-  message.textContent=data.session
-   ?"Account created. Customer profile setup is our next step."
-   :"Registration received. Check your email for a confirmation link before signing in.";
- }catch(error){
-  message.textContent="Registration failed: "+error.message;
- }finally{
-  button.disabled=false;
- }
+    email: email,
+    password: password,
+    options: {
+        emailRedirectTo: "https://wariwo23.github.io/frosttech-frontend/customer-login.html",
+        data: {
+            full_name: fullName,
+            phone: phone,
+            account_type: "customer"
+        }
+    }
 });
 </script>
 </body>
