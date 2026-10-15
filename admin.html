@@ -873,15 +873,22 @@ async function loadProducts() {
         target.textContent =
             "Could not load products: " + errorText(error);
 
-        showMessage("productMessage", errorText(error), "error");
+        showMessage(
+            "productMessage",
+            errorText(error),
+            "error"
+        );
+
         el("productCount").textContent = "—";
         return;
     }
 
     currentProducts = data || [];
-    el("productCount").textContent = currentProducts.length;
 
-    if (!currentProducts.length) {
+    el("productCount").textContent =
+        currentProducts.length;
+
+    if (currentProducts.length === 0) {
         target.textContent = "No products found.";
         clearMessage("productMessage");
         return;
@@ -892,9 +899,11 @@ async function loadProducts() {
             <h3>${escapeHtml(product.name)}</h3>
 
             ${product.image_url
-                ? '<img class="product-image" src="' +
-                    escapeHtml(product.image_url) +
-                    '" alt="Product image">'
+                ? `<img
+                    class="product-image"
+                    src="${escapeHtml(product.image_url)}"
+                    alt="Product image"
+                   >`
                 : ""
             }
 
@@ -946,115 +955,6 @@ async function loadProducts() {
                     ${product.is_active ? "Deactivate" : "Activate"}
                 </button>
             </div>
-        </article>
-    `).join("");
-async function loadProducts() {
-    const target = el("productList");
-    target.textContent = "Loading products...";
-
-    const { data, error } = await db
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        target.textContent =
-            "Could not load products: " + errorText(error);
-
-        showMessage(
-            "productMessage",
-            errorText(error),
-            "error"
-        );
-
-        el("productCount").textContent = "—";
-        return;
-    }
-
-    currentProducts = data || [];
-
-    el("productCount").textContent =
-        currentProducts.length;
-
-    if (currentProducts.length === 0) {
-        target.textContent = "No products found.";
-        clearMessage("productMessage");
-        return;
-    }
-
-    target.innerHTML = currentProducts.map(product => `
-        <article class="card">
-
-            <h3>${escapeHtml(product.name)}</h3>
-
-            ${product.image_url
-                ? `<img
-                    class="product-image"
-                    src="${escapeHtml(product.image_url)}"
-                    alt="Product image"
-                   >`
-                : ""
-            }
-
-            <p>
-                <strong>Category:</strong>
-                ${escapeHtml(product.category || "Not specified")}
-            </p>
-
-            <p>
-                <strong>Brand / Model:</strong>
-                ${escapeHtml(product.brand || "")}
-                ${escapeHtml(product.model || "")}
-            </p>
-
-            <p>
-                <strong>SKU:</strong>
-                ${escapeHtml(product.sku || "Not specified")}
-            </p>
-
-            <p>
-                <strong>Selling Price:</strong>
-                ${money(product.selling_price)}
-            </p>
-
-            <p>
-                <strong>Stock:</strong>
-                ${escapeHtml(product.stock_quantity)}
-            </p>
-
-            <p>
-                <strong>Visibility:</strong>
-                ${product.is_active
-                    ? badge("active")
-                    : badge("inactive")
-                }
-            </p>
-
-            <div class="action-row">
-
-                <button
-                    type="button"
-                    data-edit-product="${escapeHtml(product.id)}">
-                    Edit Product
-                </button>
-
-                <button
-                    type="button"
-                    class="${product.is_active
-                        ? "warning"
-                        : "success"
-                    }"
-                    data-toggle-product="${escapeHtml(product.id)}">
-
-                    ${product.is_active
-                        ? "Deactivate"
-                        : "Activate"
-                    }
-
-                </button>
-
-            </div>
-
         </article>
     `).join("");
 
