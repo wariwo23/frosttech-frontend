@@ -1430,27 +1430,37 @@ async function saveDirectQuotation(status) {
         existingNotes ? "CUSTOMER NOTES: " + existingNotes : ""
     ].filter(Boolean).join("\n");
 
+const subtotal = Math.round(
+calculation.quantity * calculation.customerUnitPrice * 100
+) / 100;
+
+const totalAmount = Math.round(
+(subtotal + calculation.delivery + calculation.additional - calculation.discount) * 100
+) / 100;
+
 const record = {
-    request_id: request.id,
-    customer_id: request.customer_id,
-    product_description: description,
-    quantity: calculation.quantity,
-    unit_price: calculation.customerUnitPrice,
-    delivery_cost: calculation.delivery,
-    additional_charges: calculation.additional,
-    discount: calculation.discount,
-    validity_date: el("directValidity").value || null,
-    notes: itemisedNotes,
-    status,
-    updated_at: new Date().toISOString()
+request_id: request.id,
+customer_id: request.customer_id,
+product_description: description,
+quantity: calculation.quantity,
+unit_price: calculation.customerUnitPrice,
+delivery_cost: calculation.delivery,
+additional_charges: calculation.additional,
+discount: calculation.discount,
+subtotal: subtotal,
+total_amount: totalAmount,
+validity_date: el("directValidity").value || null,
+notes: itemisedNotes,
+status,
+updated_at: new Date().toISOString()
 };
 
-    if (quoteId) {
-        // Do not overwrite the original creator or quotation number.
-    } else {
-        record.quotation_number = makeReference("FT-Q");
-        record.created_by = currentAdmin.id;
-    }
+if (quoteId) {
+// Do not overwrite the original creator or quotation number.
+} else {
+record.quotation_number = makeReference("FT-Q");
+record.created_by = currentAdmin.id;
+}
 
     const button = status === "draft" ? el("saveDraftBtn") : el("submitDirectQuoteBtn");
     button.disabled = true;
