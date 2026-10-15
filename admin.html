@@ -1615,10 +1615,7 @@ async function loadSupplierQuotations() {
     const target = el("supplierQuotes");
     target.textContent = "Loading supplier quotations...";
 
-    const { data, error } = await db.from("supplier_quotes")
-        .select("*")
-        .order("created_at", {ascending:false});
-
+    const { data, error } = await db.rpc("admin_list_supplier_quotes");
     if (error) {
         target.textContent = "Could not load supplier quotations: " + errorText(error);
         el("quotationCount").textContent = "—";
