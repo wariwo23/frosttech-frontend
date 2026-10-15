@@ -1662,20 +1662,26 @@ async function loadSupplierQuotations() {
 
 
 async function selectSupplierQuotation(id) {
+async function selectSupplierQuotation(id) {
     const quote = currentSupplierQuotes.find(item => item.id === id);
-    if (!quote || !confirm("Select this supplier quotation?")) return;
 
-    const { error:competingError } = await db.from("supplier_quotes")
-        .update({status:"rejected", updated_at:new Date().toISOString()})
-        .eq("request_id", quote.request_id)
-        .neq("id", id)
-        .eq("status", "submitted");
-
-    if (competingError) {
-        showMessage("quotationMessage", errorText(competingError), "error");
+    if (!quote || !confirm("Select this supplier quotation?")) {
         return;
     }
 
+    const { error } = await db.rpc(
+        "admin_select_supplier_quote",
+        { p_quote_id: id }
+    );
+
+    if (error) {
+        alert("Could not select quotation: " + error.message);
+        return;
+    }
+
+    alert("Supplier quotation selected successfully.");
+    window.location.reload();
+}
     const { error } = await db.from("supplier_quotes")
         .update({
             status:"selected",
