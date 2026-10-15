@@ -932,8 +932,31 @@ async function saveProduct(event) {
         const id = el("productId").value.trim();
         const imageFile = el("productImage").files[0];
 
-        const price = numericInput("productSellingPrice");
         const costValue = el("productSupplierCost").value.trim();
+const supplierCost = costValue === "" ? null : Number(costValue);
+
+const isAirConditioner =
+    el("productCategory").value === "Air Conditioners";
+
+let price;
+
+if (isAirConditioner) {
+    if (
+        supplierCost === null ||
+        !Number.isFinite(supplierCost) ||
+        supplierCost <= 0
+    ) {
+        throw new Error(
+            "Enter a valid supplier cost for the air conditioner."
+        );
+    }
+
+    price = Math.round(supplierCost * 1.15 * 100) / 100;
+
+    el("productSellingPrice").value = price.toFixed(2);
+} else {
+    price = numericInput("productSellingPrice");
+}
         const stock = numericInput("productStock");
         const minimumStock = numericInput("productMinStock");
 
