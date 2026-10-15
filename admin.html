@@ -977,7 +977,7 @@ if (isAirConditioner) {
             unit:el("productUnit").value,
             description:el("productDescription").value.trim() || null,
             selling_price:price,
-            supplier_cost:costValue === "" ? null : Number(costValue),
+supplier_cost:supplierCost,
             stock_quantity:stock,
             min_stock_level:minimumStock,
             is_active:el("productActive").value === "true",
