@@ -6,6 +6,11 @@
 
   <title>Customer Login | FrostTech</title>
 
+  <meta
+    name="description"
+    content="Sign in to your FrostTech HVAC and Refrigeration Marketplace customer account."
+  >
+
   <style>
     * {
       box-sizing: border-box;
@@ -22,7 +27,7 @@
     .container {
       max-width: 430px;
       margin: 35px auto;
-      background: white;
+      background: #ffffff;
       padding: 25px;
       border-radius: 12px;
       box-shadow: 0 4px 18px #00000012;
@@ -65,7 +70,7 @@
       border: none;
       border-radius: 6px;
       background: #0755a5;
-      color: white;
+      color: #ffffff;
       font-size: 16px;
       cursor: pointer;
     }
@@ -84,6 +89,7 @@
     #message {
       overflow-wrap: anywhere;
       margin-top: 16px;
+      font-size: 14px;
     }
 
     .footer {
@@ -91,12 +97,25 @@
       margin-top: 22px;
       font-size: 13px;
     }
+
+    .footer a {
+      color: #0755a5;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .help-text {
+      font-size: 13px;
+      color: #475569;
+    }
   </style>
 </head>
 
 <body>
 
-  <div class="container">
+  <main class="container">
 
     <h1>FrostTech</h1>
 
@@ -104,193 +123,606 @@
       HVAC and Refrigeration Marketplace
     </p>
 
-    <h2 id="formTitle">Customer Login</h2>
+    <section id="loginSection">
 
-    <p>
-      Sign in to your FrostTech account to continue with your order.
-    </p>
+      <h2>Customer Login</h2>
 
-    <form id="authForm">
+      <p>
+        Sign in to your FrostTech account to continue with your
+        products, quotations and orders.
+      </p>
 
-      <label for="email">Email Address</label>
+      <form id="loginForm">
 
-      <input
-        type="email"
-        id="email"
-        autocomplete="email"
-        required
-        placeholder="Enter your email"
+        <label for="email">Email Address</label>
+
+        <input
+          type="email"
+          id="email"
+          autocomplete="email"
+          required
+          placeholder="Enter your email"
+        >
+
+        <label for="password">Password</label>
+
+        <input
+          type="password"
+          id="password"
+          autocomplete="current-password"
+          required
+          placeholder="Enter your password"
+        >
+
+        <button id="loginButton" type="submit">
+          Sign In
+        </button>
+
+      </form>
+
+      <button
+        id="registerButton"
+        class="secondary"
+        type="button"
       >
-
-      <label for="password">Password</label>
-
-      <input
-        type="password"
-        id="password"
-        autocomplete="current-password"
-        required
-        minlength="6"
-        placeholder="Enter your password"
-      >
-
-      <button id="submitButton" type="submit">
-        Sign In
+        Create a New Account
       </button>
 
-    </form>
+      <button
+        id="forgotButton"
+        class="secondary"
+        type="button"
+      >
+        Forgot Password?
+      </button>
 
-    <button
-      id="toggleButton"
-      class="secondary"
-      type="button"
-    >
-      Create a New Account
-    </button>
+    </section>
 
-    <button
-      id="resetButton"
-      class="secondary"
-      type="button"
-    >
-      Forgot Password?
-    </button>
+    <section id="resetSection" class="hidden">
 
-    <p id="message" role="status" aria-live="polite"></p>
+      <h2>Reset Your Password</h2>
+
+      <p>
+        Enter the email address associated with your FrostTech
+        account. We will send you a password-reset link.
+      </p>
+
+      <form id="resetRequestForm">
+
+        <label for="resetEmail">Email Address</label>
+
+        <input
+          type="email"
+          id="resetEmail"
+          autocomplete="email"
+          required
+          placeholder="Enter your registered email"
+        >
+
+        <button id="sendResetButton" type="submit">
+          Send Reset Link
+        </button>
+
+      </form>
+
+      <button
+        id="backToLoginButton"
+        class="secondary"
+        type="button"
+      >
+        Back to Login
+      </button>
+
+    </section>
+
+    <section id="newPasswordSection" class="hidden">
+
+      <h2>Choose a New Password</h2>
+
+      <p>
+        Enter your new password below.
+      </p>
+
+      <form id="newPasswordForm">
+
+        <label for="newPassword">New Password</label>
+
+        <input
+          type="password"
+          id="newPassword"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          placeholder="At least 8 characters"
+        >
+
+        <label for="confirmPassword">Confirm New Password</label>
+
+        <input
+          type="password"
+          id="confirmPassword"
+          autocomplete="new-password"
+          minlength="8"
+          required
+          placeholder="Enter the password again"
+        >
+
+        <button id="savePasswordButton" type="submit">
+          Update Password
+        </button>
+
+      </form>
+
+    </section>
+
+    <p
+      id="message"
+      role="status"
+      aria-live="polite"
+    ></p>
 
     <div class="footer">
       <a href="index.html">Return to FrostTech Homepage</a>
     </div>
 
-  </div>
+  </main>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase.js"></script>
-<script>
-const supabase = window.supabaseClient;
+  <script src="supabase.js"></script>
 
-    const form = document.getElementById("authForm");
-    const emailInput = document.getElementById("email");
-    const passwordInput = document.getElementById("password");
-    const submitButton = document.getElementById("submitButton");
-    const toggleButton = document.getElementById("toggleButton");
-    const resetButton = document.getElementById("resetButton");
-    const message = document.getElementById("message");
-    const formTitle = document.getElementById("formTitle");
+  <script>
+    "use strict";
 
-    let createAccountMode = false;
+    const db = window.supabaseClient;
+
+    const loginSection =
+      document.getElementById("loginSection");
+
+    const resetSection =
+      document.getElementById("resetSection");
+
+    const newPasswordSection =
+      document.getElementById("newPasswordSection");
+
+    const loginForm =
+      document.getElementById("loginForm");
+
+    const resetRequestForm =
+      document.getElementById("resetRequestForm");
+
+    const newPasswordForm =
+      document.getElementById("newPasswordForm");
+
+    const emailInput =
+      document.getElementById("email");
+
+    const passwordInput =
+      document.getElementById("password");
+
+    const resetEmailInput =
+      document.getElementById("resetEmail");
+
+    const newPasswordInput =
+      document.getElementById("newPassword");
+
+    const confirmPasswordInput =
+      document.getElementById("confirmPassword");
+
+    const loginButton =
+      document.getElementById("loginButton");
+
+    const registerButton =
+      document.getElementById("registerButton");
+
+    const forgotButton =
+      document.getElementById("forgotButton");
+
+    const sendResetButton =
+      document.getElementById("sendResetButton");
+
+    const savePasswordButton =
+      document.getElementById("savePasswordButton");
+
+    const backToLoginButton =
+      document.getElementById("backToLoginButton");
+
+    const message =
+      document.getElementById("message");
+
+    const LOGIN_URL =
+      "https://wariwo23.github.io/frosttech-frontend/customer-login.html";
+
+    const REGISTER_URL =
+      "https://wariwo23.github.io/frosttech-frontend/customer-register.html";
 
     function showMessage(text, isError = false) {
       message.textContent = text;
-      message.style.color = isError ? "#b91c1c" : "#166534";
+
+      message.style.color = isError
+        ? "#b91c1c"
+        : "#166534";
     }
 
-    toggleButton.addEventListener("click", () => {
-  window.location.href = "customer-register.html";
-});
+    function showSection(section) {
+      loginSection.classList.add("hidden");
+      resetSection.classList.add("hidden");
+      newPasswordSection.classList.add("hidden");
 
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
+      section.classList.remove("hidden");
 
-      submitButton.disabled = true;
-      toggleButton.disabled = true;
+      message.textContent = "";
+    }
 
-      showMessage(
-        createAccountMode
-          ? "Creating your account..."
-          : "Signing you in..."
+    function setBusy(button, busy, busyText, originalText) {
+      button.disabled = busy;
+      button.textContent = busy ? busyText : originalText;
+    }
+
+    function getAuthErrorMessage(error) {
+      const text = String(error?.message || "").toLowerCase();
+
+      if (
+        text.includes("invalid login credentials")
+      ) {
+        return "The email or password is incorrect. Please check your details and try again.";
+      }
+
+      if (
+        text.includes("email not confirmed")
+      ) {
+        return "Your email address has not been confirmed. Please check your inbox before signing in.";
+      }
+
+      if (
+        text.includes("too many requests")
+      ) {
+        return "Too many attempts. Please wait a while before trying again.";
+      }
+
+      if (
+        text.includes("network") ||
+        text.includes("fetch")
+      ) {
+        return "Unable to connect. Check your internet connection and try again.";
+      }
+
+      return error?.message ||
+        "Something went wrong. Please try again.";
+    }
+
+    function getReturnUrl() {
+      const params = new URLSearchParams(
+        window.location.search
       );
 
+      const requestedNext = params.get("next");
+
+      if (!requestedNext) {
+        return "index.html";
+      }
+
       try {
-        const email = emailInput.value.trim();
-        const password = passwordInput.value;
+        const destination = new URL(
+          requestedNext,
+          window.location.origin
+        );
 
-        if (createAccountMode) {
-          const { data, error } = await supabase.auth.signUp({
-            email,
-            password,
-            options: {
-              emailRedirectTo:
-                "https://wariwo23.github.io/frosttech-frontend/customer-login.html"
-            }
-          });
+        // Only allow destinations on this website.
+        if (
+          destination.origin !== window.location.origin
+        ) {
+          return "index.html";
+        }
 
-          if (error) throw error;
+        return destination.href;
+      } catch {
+        return "index.html";
+      }
+    }
 
-          if (data.session) {
-            showMessage("Account created. Opening your order...");
+    async function initializePage() {
+      if (!db || !db.auth) {
+        showMessage(
+          "FrostTech could not connect to its authentication service. Please refresh the page or try again later.",
+          true
+        );
 
-            window.location.href = "payment.html";
-            return;
-          }
+        loginButton.disabled = true;
+        registerButton.disabled = true;
+        forgotButton.disabled = true;
 
+        return;
+      }
+
+      const params = new URLSearchParams(
+        window.location.search
+      );
+
+      const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, "")
+      );
+
+      const isRecovery =
+        params.get("mode") === "reset" ||
+        hashParams.get("type") === "recovery";
+
+      if (isRecovery) {
+        showSection(newPasswordSection);
+
+        showMessage(
+          "Enter and confirm your new password."
+        );
+
+        return;
+      }
+
+      // Handle a confirmation link returning to this page.
+      const confirmed =
+        params.get("confirmed") === "true";
+
+      if (confirmed) {
+        showMessage(
+          "Email confirmation link received. You can now try signing in."
+        );
+      }
+
+      // Detect an existing authenticated session.
+      try {
+        const { data, error } =
+          await db.auth.getSession();
+
+        if (error) throw error;
+
+        if (data.session) {
           showMessage(
-            "Account created. Check your email to confirm your account, then return here and sign in."
+            "You are already signed in. Opening FrostTech..."
           );
 
-        } else {
-          const { error } = await supabase.auth.signInWithPassword({
+          window.location.replace(getReturnUrl());
+        }
+      } catch (error) {
+        console.error(
+          "Session check failed:",
+          error
+        );
+      }
+    }
+
+    registerButton.addEventListener("click", () => {
+      window.location.href = REGISTER_URL;
+    });
+
+    forgotButton.addEventListener("click", () => {
+      resetEmailInput.value =
+        emailInput.value.trim();
+
+      showSection(resetSection);
+    });
+
+    backToLoginButton.addEventListener("click", () => {
+      showSection(loginSection);
+    });
+
+    loginForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      if (!db || !db.auth) {
+        showMessage(
+          "Authentication is unavailable. Please refresh and try again.",
+          true
+        );
+
+        return;
+      }
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+
+      setBusy(
+        loginButton,
+        true,
+        "Signing In...",
+        "Sign In"
+      );
+
+      registerButton.disabled = true;
+      forgotButton.disabled = true;
+
+      showMessage("Checking your login details...");
+
+      try {
+        const { data, error } =
+          await db.auth.signInWithPassword({
             email,
             password
           });
 
-          if (error) throw error;
+        if (error) throw error;
 
-          showMessage("Login successful. Opening your order...");
+        if (!data.session) {
+          throw new Error(
+            "Login could not be completed. Please try again."
+          );
+        }
 
-          window.location.href = "payment.html";
+        showMessage(
+          "Login successful. Opening FrostTech..."
+        );
+
+        // Do not automatically send every customer to payment.
+        // A payment page should be opened when an actual payment is due.
+        window.location.replace(getReturnUrl());
+
+      } catch (error) {
+        showMessage(
+          getAuthErrorMessage(error),
+          true
+        );
+      } finally {
+        setBusy(
+          loginButton,
+          false,
+          "Signing In...",
+          "Sign In"
+        );
+
+        registerButton.disabled = false;
+        forgotButton.disabled = false;
+      }
+    });
+
+    resetRequestForm.addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
+
+        if (!db || !db.auth) {
+          showMessage(
+            "Authentication is unavailable. Please refresh and try again.",
+            true
+          );
+
           return;
         }
 
-      } catch (error) {
-        showMessage(
-          error.message || "Something went wrong. Please try again.",
-          true
+        const email = resetEmailInput.value.trim();
+
+        setBusy(
+          sendResetButton,
+          true,
+          "Sending...",
+          "Send Reset Link"
         );
 
-      } finally {
-        submitButton.disabled = false;
-        toggleButton.disabled = false;
+        try {
+          const redirectUrl =
+            LOGIN_URL + "?mode=reset";
+
+          const { error } =
+            await db.auth.resetPasswordForEmail(
+              email,
+              {
+                redirectTo: redirectUrl
+              }
+            );
+
+          if (error) throw error;
+
+          showMessage(
+            "If an account exists for this email, a password-reset link will be sent. Check your inbox and spam folder."
+          );
+
+        } catch (error) {
+          showMessage(
+            getAuthErrorMessage(error),
+            true
+          );
+        } finally {
+          setBusy(
+            sendResetButton,
+            false,
+            "Sending...",
+            "Send Reset Link"
+          );
+        }
       }
-    });
+    );
 
-    resetButton.addEventListener("click", async () => {
-      const email = emailInput.value.trim();
+    newPasswordForm.addEventListener(
+      "submit",
+      async (event) => {
+        event.preventDefault();
 
-      if (!email) {
-        showMessage(
-          "Enter your email address first, then tap Forgot Password again.",
-          true
+        if (!db || !db.auth) {
+          showMessage(
+            "Authentication is unavailable. Please refresh and try again.",
+            true
+          );
+
+          return;
+        }
+
+        const newPassword =
+          newPasswordInput.value;
+
+        const confirmPassword =
+          confirmPasswordInput.value;
+
+        if (newPassword.length < 8) {
+          showMessage(
+            "Your new password must contain at least 8 characters.",
+            true
+          );
+
+          return;
+        }
+
+        if (newPassword !== confirmPassword) {
+          showMessage(
+            "The passwords do not match. Please enter them again.",
+            true
+          );
+
+          return;
+        }
+
+        setBusy(
+          savePasswordButton,
+          true,
+          "Updating Password...",
+          "Update Password"
         );
-        return;
-      }
 
-      resetButton.disabled = true;
+        try {
+          // Supabase must have an active recovery session
+          // created by the password-reset link.
+          const { data: sessionData, error: sessionError } =
+            await db.auth.getSession();
 
-      try {
-        const { error } = await supabase.auth.resetPasswordForEmail(
-          email,
-          {
-            redirectTo:
-              "https://wariwo23.github.io/frosttech-frontend/customer-login.html"
+          if (sessionError) throw sessionError;
+
+          if (!sessionData.session) {
+            throw new Error(
+              "Your password-reset session is missing or has expired. Request a new reset link and open it again."
+            );
           }
-        );
 
-        if (error) throw error;
+          const { error } =
+            await db.auth.updateUser({
+              password: newPassword
+            });
 
-        showMessage(
-          "If the account exists, a password reset email will be sent."
-        );
+          if (error) throw error;
 
-      } catch (error) {
-        showMessage(
-          error.message || "Could not request a password reset.",
-          true
-        );
+          // Sign out after changing the password so the
+          // customer can sign in again with the new password.
+          await db.auth.signOut();
 
-      } finally {
-        resetButton.disabled = false;
+          showSection(loginSection);
+
+          passwordInput.value = "";
+
+          showMessage(
+            "Your password has been updated successfully. Please sign in with your new password."
+          );
+
+        } catch (error) {
+          showMessage(
+            getAuthErrorMessage(error),
+            true
+          );
+        } finally {
+          setBusy(
+            savePasswordButton,
+            false,
+            "Updating Password...",
+            "Update Password"
+          );
+        }
       }
-    });
+    );
+
+    initializePage();
   </script>
 
 </body>
