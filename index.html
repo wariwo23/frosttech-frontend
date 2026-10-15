@@ -451,5 +451,65 @@ document
   });
 
 loadProducts();
-</script></body>
-</html>
+</script>
+
+  <script>
+document.addEventListener("DOMContentLoaded", function () {
+    const loginButtons = document.querySelectorAll(".customer-login-btn");
+    const registerButtons = document.querySelectorAll(".create-account-btn");
+    const db = window.supabaseClient;
+
+    if (!db) {
+        console.error("FrostTech Supabase client was not found.");
+        return;
+    }
+
+    async function updateCustomerButtons() {
+        const { data, error } = await db.auth.getSession();
+
+        if (error) {
+            console.error("Unable to check customer login:", error.message);
+            return;
+        }
+
+        const isLoggedIn = Boolean(data.session);
+
+        loginButtons.forEach(function (button) {
+            button.textContent = isLoggedIn ? "Sign Out" : "Customer Login";
+            button.href = isLoggedIn ? "#" : "customer-login.html";
+        });
+
+        registerButtons.forEach(function (button) {
+            button.style.display = isLoggedIn ? "none" : "";
+        });
+    }
+
+    loginButtons.forEach(function (button) {
+        button.addEventListener("click", async function (event) {
+            if (button.textContent.trim() !== "Sign Out") {
+                return;
+            }
+
+            event.preventDefault();
+
+            button.textContent = "Signing Out...";
+
+            const { error } = await db.auth.signOut();
+
+            if (error) {
+                alert("Sign out failed: " + error.message);
+                await updateCustomerButtons();
+                return;
+            }
+
+            window.location.reload();
+        });
+    });
+
+    updateCustomerButtons();
+
+    db.auth.onAuthStateChange(function () {
+        updateCustomerButtons();
+    });
+});
+</script>
