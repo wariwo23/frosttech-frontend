@@ -1308,42 +1308,82 @@ function calculateDirectTotal() {
 
 
 function prepareDirectQuotation(requestId) {
-    const request = currentRequests.find(item => item.id === requestId);
+const request = currentRequests.find(item => item.id === requestId);
 
-    if (!request) {
-        showMessage("directQuoteMessage", "Request not found.", "error");
-        return;
-    }
+if (!request) {
+    showMessage("directQuoteMessage", "Request not found.", "error");
+    return;
+}
 
-    el("directQuoteForm").reset();
+el("directQuoteForm").reset();
 
-    el("directQuoteId").value = "";
-    el("directRequestId").value = request.id;
-    el("directRequestReference").textContent = request.request_number || request.id;
+el("directQuoteId").value = "";
+el("directRequestId").value = request.id;
+el("directRequestReference").textContent =
+    request.request_number || request.id;
 
-    el("directRequestRequirements").textContent = requirementsText(request);
-    el("directProductDescription").value = request.title || request.description || "";
-    el("directQuantity").value = request.quantity || 1;
+el("directRequestRequirements").textContent =
+    requirementsText(request);
 
-    el("directUnitCost").value = "";
-    el("directMarkup").value = "15";
-    el("directDeliveryCost").value = "0";
-    el("directBracketCost").value = "0";
-    el("directInstallationCost").value = "0";
-    el("directAccessoryCost").value = "0";
-    el("directDiscount").value = "0";
+el("directProductDescription").value =
+    request.title || request.description || "";
 
-    el("directQuoteFormTitle").textContent = "Prepare Direct Quotation";
-    calculateDirectTotal();
+el("directQuantity").value = request.quantity || 1;
 
-    el("directQuoteForm").classList.remove("hidden");
-    el("directQuotationSection").scrollIntoView({behavior:"smooth"});
+// Find the matching catalogue product.
+const product = currentProducts.find(item =>
+    request.product_id &&
+    String(item.id) === String(request.product_id)
+);
 
+// Prefer the saved supplier cost.
+// If unavailable, use the catalogue selling price as a fallback.
+const supplierCost = Number(
+    product?.supplier_cost ??
+    product?.cost_price ??
+    product?.selling_price ??
+    0
+);
+
+el("directUnitCost").value =
+    supplierCost > 0 ? supplierCost : "";
+
+el("directMarkup").value = "15";
+el("directDeliveryCost").value = "0";
+el("directBracketCost").value = "0";
+el("directInstallationCost").value = "0";
+el("directAccessoryCost").value = "0";
+el("directDiscount").value = "0";
+el("directValidity").value = "";
+el("directNotes").value = "";
+
+el("directQuoteFormTitle").textContent =
+    "Prepare Direct Quotation";
+
+calculateDirectTotal();
+
+el("directQuoteForm").classList.remove("hidden");
+
+el("directQuotationSection").scrollIntoView({
+    behavior: "smooth"
+});
+
+if (supplierCost > 0) {
     showMessage(
         "directQuoteMessage",
-        "Review the customer requirements, enter your costs, and check the calculated total.",
-        "info"
+        "Product cost loaded: " + money(supplierCost) +
+        ". Review the amount and additional charges before saving.",
+        "success-message"
     );
+} else {
+    showMessage(
+        "directQuoteMessage",
+        "The product cost could not be identified automatically. " +
+        "Enter the correct cost manually before submitting.",
+        "warning-message"
+    );
+}
+
 }
 
 
