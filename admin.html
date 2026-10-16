@@ -1479,20 +1479,19 @@ const totalAmount = Math.round(
 ) / 100;
 
 const record = {
-request_id: request.id,
-customer_id: request.customer_id,
-product_description: description,
-quantity: calculation.quantity,
-unit_price: calculation.customerUnitPrice,
-delivery_cost: calculation.delivery,
-additional_charges: calculation.additional,
-discount: calculation.discount,
-subtotal: subtotal,
-total_amount: totalAmount,
-validity_date: el("directValidity").value || null,
-notes: itemisedNotes,
-status,
-updated_at: new Date().toISOString()
+    request_id: request.id,
+    customer_id: request.customer_id,
+    product_description: description,
+    quantity: calculation.quantity,
+    unit_price: calculation.customerUnitPrice,
+    delivery_cost: calculation.delivery,
+    additional_charges: calculation.additional,
+    discount: calculation.discount,
+    total_amount: totalAmount,
+    validity_date: el("directValidity").value || null,
+    notes: itemisedNotes,
+    status,
+    updated_at: new Date().toISOString()
 };
 
 if (quoteId) {
