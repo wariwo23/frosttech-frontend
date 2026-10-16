@@ -3,7 +3,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">  <title>Request a Quote | FrostTech HVAC and Refrigeration</title><meta
 name="description"
-content="Request a quotation for air conditioners, refrigeration products, HVAC accessories and installation services from FrostTech."
+content="Request a quotation for air conditioners, refrigeration products, HVAC accessories and services from FrostTech."
 
 «»
 
@@ -79,16 +79,18 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
       color: #991b1b;
     }
 
-    .login-notice {
-      margin-top: 16px;
-      padding: 12px;
-      border-radius: 5px;
+    #formMessage.info {
+      display: block;
       background: #eff6ff;
       color: #1e40af;
-      text-align: center;
     }
 
-    .login-notice a {
+    .login-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .login-link a {
       font-weight: bold;
     }
   </style></head><body>  <header>
@@ -105,12 +107,10 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
   Our team will review your request and prepare a quotation.
 </p>
 
-<div class="login-notice">
-  Please sign in to your customer account before submitting
-  a quote request.
-  <br>
+<p class="login-link">
+  Need an account?
   <a href="customer-login.html">Customer Login</a>
-</div>
+</p>
 
 <form id="quoteForm" class="quote-form">
 
@@ -225,7 +225,7 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
     }
 
     /*
-      Reuse the existing FrostTech Supabase configuration.
+      Use the Supabase client already configured by supabase.js.
     */
     function getClient() {
       if (window.supabaseClient) {
@@ -256,7 +256,7 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
     }
 
     /*
-      Load active products.
+      Load active products into the dropdown.
     */
     async function loadProducts() {
       productSelect.replaceChildren();
@@ -305,12 +305,12 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
         if (products.length === 0) {
           showMessage(
             "No active products are currently available.",
-            "error"
+            "info"
           );
         }
 
       } catch (error) {
-        console.error("Product loading error:", error);
+        console.error("FrostTech product loading error:", error);
 
         products = [];
 
@@ -330,7 +330,9 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
     }
 
     /*
-      Retrieve the authenticated user and validate their profile.
+      Verify the actual Supabase session.
+      A visible homepage Sign Out link alone does not prove that
+      this page's Supabase client has restored the session.
     */
     async function getActiveCustomer() {
       const {
@@ -339,16 +341,16 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
       } = await client.auth.getUser();
 
       if (authError) {
-        console.error("Authentication error:", authError);
+        console.error("FrostTech authentication error:", authError);
 
         throw new Error(
-          "We could not verify your login. Please sign in again."
+          "We could not verify your login. Please try again."
         );
       }
 
       if (!user) {
         throw new Error(
-          "Please sign in to your FrostTech customer account before submitting your request."
+          "Your customer session was not found. Please sign in again."
         );
       }
 
@@ -359,7 +361,10 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
         .maybeSingle();
 
       if (profileError) {
-        console.error("Profile verification error:", profileError);
+        console.error(
+          "FrostTech profile verification error:",
+          profileError
+        );
 
         throw new Error(
           "We could not verify your customer profile. Please try again."
@@ -380,7 +385,7 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
     }
 
     /*
-      Submit the quote request.
+      Submit a quote request.
     */
     async function handleQuoteSubmit(event) {
       event.preventDefault();
@@ -401,9 +406,10 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
           client = getClient();
         }
 
-        // Verify the customer before accepting the request.
+        // Step 1: Confirm the signed-in customer.
         const user = await getActiveCustomer();
 
+        // Step 2: Read the form.
         const customerName =
           document.getElementById("customerName").value.trim();
 
@@ -432,6 +438,7 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
           return product.id === productId;
         });
 
+        // Step 3: Validate the form.
         if (!customerName || !customerPhone || !deliveryAddress) {
           throw new Error(
             "Please complete your name, phone number and delivery address."
@@ -439,17 +446,20 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
         }
 
         if (!selectedProduct) {
-          throw new Error(
-            "Please select a valid product."
-          );
+          throw new Error("Please select a valid product.");
         }
 
-        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+        if (
+          !Number.isInteger(quantity) ||
+          quantity < 1 ||
+          quantity > 10000
+        ) {
           throw new Error(
             "Please enter a quantity between 1 and 10,000."
           );
         }
 
+        // Step 4: Create the reference number.
         const requestNumber =
           "FT-" +
           Date.now() +
@@ -464,12 +474,13 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
           "\nRequirements: " + (additionalDetails || "None");
 
         /*
-          customer_id references profiles.id.
+          Step 5: Build the insert.
 
-          The authenticated-customer INSERT policy requires
-          customer_id to equal auth.uid().
+          customer_id must match auth.uid() because of the
+          existing authenticated-customer RLS policy.
 
-          Other required fields use their existing database defaults.
+          admin_fee, admin_fee_status, and installation defaults
+          are supplied by the database.
         */
         const requestData = {
           customer_id: user.id,
@@ -490,23 +501,32 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
           status: "pending"
         };
 
-        const { data, error } = await client
+        /*
+          Step 6: Insert WITHOUT SELECT.
+
+          This avoids requiring the customer to have SELECT
+          permission on quote_requests just to receive a success
+          response.
+        */
+        const { error } = await client
           .from("quote_requests")
-          .insert(requestData)
-          .select("id, request_number, status")
-          .single();
+          .insert(requestData);
 
         if (error) {
-          console.error("Quote submission error:", error);
+          console.error(
+            "FrostTech Supabase submission error:",
+            error
+          );
 
           throw new Error(
-            "Your quote request could not be saved. " + error.message
+            "Your request could not be saved. " + error.message
           );
         }
 
+        // Step 7: Confirm only after the insert succeeds.
         showMessage(
           "Your quote request was submitted successfully. Reference: " +
-          data.request_number +
+          requestNumber +
           ". FrostTech will review your request.",
           "success"
         );
@@ -516,7 +536,10 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
         document.getElementById("quantity").value = "1";
 
       } catch (error) {
-        console.error("FrostTech quote submission failed:", error);
+        console.error(
+          "FrostTech quote submission failed:",
+          error
+        );
 
         showMessage(
           error.message ||
