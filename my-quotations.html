@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>My Quotations | FrostTech</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f1f5f9;
+      color: #183153;
+    }
+
+    header {
+      background: #0755a5;
+      color: white;
+      padding: 18px;
+    }
+
+    header .inner {
+      max-width: 1000px;
+      margin: auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 23px;
+    }
+
+    header a {
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    main {
+      max-width: 1000px;
+      margin: 28px auto;
+      padding: 0 15px 35px;
+    }
+
+    .intro,
+    .quotation {
+      background: white;
+      border: 1px solid #dbe3ed;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 3px 12px #00000008;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #0755a5;
+    }
+
+    .quotation h3 {
+      overflow-wrap: anywhere;
+      margin-top: 0;
+    }
+
+    .details {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .detail {
+      background: #f8fafc;
+      border-radius: 8px;
+      padding: 12px;
+      overflow-wrap: anywhere;
+    }
+
+    .label {
+      display: block;
+      color: #64748b;
+      font-size: 13px;
+      margin-bottom: 5px;
+    }
+
+    .value {
+      font-weight: bold;
+    }
+
+    .total {
+      color: #087443;
+      font-size: 22px;
+    }
+
+    .status {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 20px;
+      background: #dbeafe;
+      color: #1d4ed8;
+      font-size: 13px;
+      font-weight: bold;
+    }
+
+    .message {
+      background: white;
+      padding: 18px;
+      border-radius: 10px;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .error {
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    button,
+    .button {
+      display: inline-block;
+      padding: 12px 16px;
+      border: none;
+      border-radius: 7px;
+      background: #0755a5;
+      color: white;
+      font-size: 15px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      margin: 5px 5px 5px 0;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+    }
+
+    .secondary {
+      background: #e2e8f0;
+      color: #183153;
+    }
+
+    #pageMessage {
+      overflow-wrap: anywhere;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #64748b;
+      font-size: 13px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="inner">
+    <h1>FrostTech</h1>
+    <a href="index.html">Return to Homepage</a>
+  </div>
+</header>
+
+<main>
+
+  <section class="intro">
+    <h2>My Quotations</h2>
+
+    <p>
+      View quotations prepared for your FrostTech customer account.
+      Your quotation details are private to your account.
+    </p>
+
+    <button id="refreshButton" type="button">
+      Refresh Quotations
+    </button>
+
+    <button id="signOutButton" class="secondary" type="button">
+      Sign Out
+    </button>
+
+    <p id="pageMessage" aria-live="polite">
+      Checking your account...
+    </p>
+  </section>
+
+  <section id="quotationList"></section>
+
+</main>
+
+<footer>
+  FrostTech HVAC and Refrigeration Marketplace
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+  "use strict";
+
+  const db = window.supabaseClient;
+
+  const pageMessage = document.getElementById("pageMessage");
+  const quotationList = document.getElementById("quotationList");
+  const refreshButton = document.getElementById("refreshButton");
+  const signOutButton = document.getElementById("signOutButton");
+
+  function showMessage(message, isError = false) {
+    pageMessage.textContent = message;
+    pageMessage.style.color = isError ? "#b91c1c" : "#475569";
+  }
+
+  function formatMoney(amount) {
+    const number = Number(amount);
+
+    if (!Number.isFinite(number)) {
+      return "Not available";
+    }
+
+    return new Intl.NumberFormat("en-NG", {
+      style: "currency",
+      currency: "NGN",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(number);
+  }
+
+  function formatDate(value) {
+    if (!value) return "Not specified";
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return "Not specified";
+    }
+
+    return date.toLocaleDateString("en-NG", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric"
+    });
+  }
+
+  function safeText(value, fallback = "Not specified") {
+    if (value === null || value === undefined || value === "") {
+      return fallback;
+    }
+
+    return String(value);
+  }
+
+  function addDetail(container, label, value, isTotal = false) {
+    const box = document.createElement("div");
+    box.className = "detail";
+
+    const heading = document.createElement("span");
+    heading.className = "label";
+    heading.textContent = label;
+
+    const content = document.createElement("span");
+    content.className = isTotal ? "value total" : "value";
+    content.textContent = value;
+
+    box.appendChild(heading);
+    box.appendChild(content);
+    container.appendChild(box);
+  }
+
+  function displayQuotation(quotation) {
+    const card = document.createElement("article");
+    card.className = "quotation";
+
+    const heading = document.createElement("h3");
+    heading.textContent =
+      "Quotation " +
+      safeText(quotation.quotation_number, quotation.request_id || quotation.id);
+
+    card.appendChild(heading);
+
+    const status = document.createElement("span");
+    status.className = "status";
+    status.textContent = safeText(quotation.status, "Unknown");
+
+    card.appendChild(status);
+
+    const details = document.createElement("div");
+    details.className = "details";
+
+    addDetail(
+      details,
+      "Product",
+      safeText(quotation.product_description)
+    );
+
+    addDetail(
+      details,
+      "Quantity",
+      safeText(quotation.quantity)
+    );
+
+    addDetail(
+      details,
+      "Unit Price",
+      formatMoney(quotation.unit_price)
+    );
+
+    addDetail(
+      details,
+      "Delivery",
+      formatMoney(quotation.delivery_cost)
+    );
+
+    addDetail(
+      details,
+      "Additional Charges",
+      formatMoney(quotation.additional_charges)
+    );
+
+    addDetail(
+      details,
+      "Discount",
+      formatMoney(quotation.discount)
+    );
+
+    addDetail(
+      details,
+      "Total Quotation",
+      formatMoney(quotation.total_amount),
+      true
+    );
+
+    addDetail(
+      details,
+      "Valid Until",
+      formatDate(quotation.validity_date)
+    );
+
+    addDetail(
+      details,
+      "Date Created",
+      formatDate(quotation.created_at)
+    );
+
+    card.appendChild(details);
+
+    const note = document.createElement("p");
+    note.style.marginTop = "18px";
+    note.textContent =
+      "Payment has not been initiated by this page. " +
+      "Please wait for the official payment instructions from FrostTech.";
+
+    card.appendChild(note);
+
+    quotationList.appendChild(card);
+  }
+
+  async function loadQuotations() {
+    quotationList.replaceChildren();
+
+    if (!db || !db.auth) {
+      showMessage(
+        "FrostTech could not connect to its account service. Refresh the page and try again.",
+        true
+      );
+      return;
+    }
+
+    refreshButton.disabled = true;
+    showMessage("Checking your login and loading quotations...");
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await db.auth.getSession();
+
+      if (sessionError) throw sessionError;
+
+      const session = sessionData.session;
+
+      if (!session) {
+        showMessage("Please sign in to view your quotations.");
+
+        window.location.replace(
+          "customer-login.html?next=" +
+          encodeURIComponent("my-quotations.html")
+        );
+
+        return;
+      }
+
+      const user = session.user;
+
+      /*
+       * Only request quotations linked to this signed-in user.
+       * Supabase Row Level Security must also enforce access.
+       */
+      const { data, error } = await db
+        .from("admin_quotations")
+        .select("*")
+        .eq("customer_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Quotation loading error:", error);
+
+        throw new Error(
+          "We could not load your quotations. The database may need a customer-read permission. Details: " +
+          error.message
+        );
+      }
+
+      if (!data || data.length === 0) {
+        showMessage(
+          "You are signed in, but no quotations linked to this account were found."
+        );
+
+        return;
+      }
+
+      data.forEach(displayQuotation);
+
+      showMessage(
+        "Loaded " + data.length +
+        (data.length === 1 ? " quotation." : " quotations.")
+      );
+
+    } catch (error) {
+      console.error(error);
+
+      showMessage(
+        error.message || "An unexpected error occurred while loading quotations.",
+        true
+      );
+
+    } finally {
+      refreshButton.disabled = false;
+    }
+  }
+
+  refreshButton.addEventListener("click", loadQuotations);
+
+  signOutButton.addEventListener("click", async () => {
+    signOutButton.disabled = true;
+
+    try {
+      const { error } = await db.auth.signOut();
+
+      if (error) throw error;
+
+      window.location.replace("customer-login.html");
+
+    } catch (error) {
+      showMessage(
+        error.message || "Unable to sign out.",
+        true
+      );
+
+      signOutButton.disabled = false;
+    }
+  });
+
+  loadQuotations();
+</script>
+
+</body>
+</html>
