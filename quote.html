@@ -1,14 +1,13 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1">  <title>Request a Quote | FrostTech HVAC and Refrigeration</title><meta
+name="description"
+content="Request a quotation for air conditioners, refrigeration products, HVAC accessories and installation services from FrostTech."
 
-  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+«»
 
-  <link rel="stylesheet" href="style.css">
-
-  <style>
+  <link rel="stylesheet" href="style.css">  <style>
     .quote-container {
       max-width: 650px;
       margin: 30px auto;
@@ -79,134 +78,129 @@
       background: #fee2e2;
       color: #991b1b;
     }
-  </style>
-</head>
 
-<body>
+    .login-notice {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 5px;
+      background: #eff6ff;
+      color: #1e40af;
+      text-align: center;
+    }
 
-  <header>
-    <h2>FrostTech HVAC and Refrigeration</h2>
+    .login-notice a {
+      font-weight: bold;
+    }
+  </style></head><body>  <header>
+    <h2>FrostTech HVAC and Refrigeration</h2><nav>
+  <a href="index.html">Home</a> |
+  <a href="catalog.html">Products</a> |
+  <a href="quote.html">Request a Quote</a>
+</nav>
 
-    <nav>
-      <a href="index.html">Home</a> |
-      <a href="product.html">Products</a> |
-      <a href="quote.html">Request a Quote</a>
-    </nav>
-  </header>
+  </header>  <main class="quote-container"><h1>Request a Quote</h1>
 
-  <main class="quote-container">
+<p>
+  Tell us which HVAC or refrigeration product you need.
+  Our team will review your request and prepare a quotation.
+</p>
 
-    <h1>Request a Quote</h1>
+<div class="login-notice">
+  Please sign in to your customer account before submitting
+  a quote request.
+  <br>
+  <a href="customer-login.html">Customer Login</a>
+</div>
 
-    <p>
-      Tell us what HVAC or refrigeration product you need.
-      Our team will review your request.
-    </p>
+<form id="quoteForm" class="quote-form">
 
-    <!--
-      IMPORTANT:
-      The inline handler prevents normal browser form submission.
-      This helps prevent an unwanted page refresh.
-    -->
-    <form
-      id="quoteForm"
-      class="quote-form"
-      onsubmit="handleQuoteSubmit(event); return false;"
-    >
+  <label for="customerName">Full Name *</label>
+  <input
+    id="customerName"
+    name="customerName"
+    type="text"
+    maxlength="150"
+    autocomplete="name"
+    required
+  >
 
-      <label for="customerName">Full Name *</label>
+  <label for="customerPhone">Phone / WhatsApp *</label>
+  <input
+    id="customerPhone"
+    name="customerPhone"
+    type="tel"
+    maxlength="30"
+    autocomplete="tel"
+    required
+  >
 
-      <input
-        id="customerName"
-        type="text"
-        maxlength="150"
-        autocomplete="name"
-        required
-      >
+  <label for="customerEmail">Email Address</label>
+  <input
+    id="customerEmail"
+    name="customerEmail"
+    type="email"
+    maxlength="254"
+    autocomplete="email"
+  >
 
-      <label for="customerPhone">Phone / WhatsApp *</label>
+  <label for="productId">Product *</label>
+  <select id="productId" name="productId" required>
+    <option value="">Loading products...</option>
+  </select>
 
-      <input
-        id="customerPhone"
-        type="tel"
-        maxlength="30"
-        autocomplete="tel"
-        required
-      >
+  <label for="quantity">Quantity *</label>
+  <input
+    id="quantity"
+    name="quantity"
+    type="number"
+    min="1"
+    max="10000"
+    step="1"
+    value="1"
+    required
+  >
 
-      <label for="customerEmail">Email Address</label>
+  <label for="preferredBrand">Preferred Brand</label>
+  <input
+    id="preferredBrand"
+    name="preferredBrand"
+    type="text"
+    maxlength="100"
+    placeholder="e.g. LG, Samsung, Daikin"
+  >
 
-      <input
-        id="customerEmail"
-        type="email"
-        maxlength="254"
-        autocomplete="email"
-      >
+  <label for="deliveryAddress">Delivery Address *</label>
+  <textarea
+    id="deliveryAddress"
+    name="deliveryAddress"
+    maxlength="1000"
+    rows="3"
+    autocomplete="street-address"
+    required
+  ></textarea>
 
-      <label for="productId">Product *</label>
+  <label for="additionalDetails">Additional Requirements</label>
+  <textarea
+    id="additionalDetails"
+    name="additionalDetails"
+    maxlength="2000"
+    rows="4"
+    placeholder="Specifications, installation needs or other requirements"
+  ></textarea>
 
-      <select id="productId" required>
-        <option value="">Loading products...</option>
-      </select>
+  <button id="submitButton" type="submit">
+    Submit Quote Request
+  </button>
 
-      <label for="quantity">Quantity *</label>
+  <div
+    id="formMessage"
+    role="status"
+    aria-live="polite"
+  ></div>
 
-      <input
-        id="quantity"
-        type="number"
-        min="1"
-        max="10000"
-        step="1"
-        value="1"
-        required
-      >
+</form>
 
-      <label for="preferredBrand">Preferred Brand</label>
-
-      <input
-        id="preferredBrand"
-        type="text"
-        maxlength="100"
-        placeholder="e.g. LG, Samsung, Daikin"
-      >
-
-      <label for="deliveryAddress">Delivery Address *</label>
-
-      <textarea
-        id="deliveryAddress"
-        maxlength="1000"
-        rows="3"
-        required
-      ></textarea>
-
-      <label for="additionalDetails">Requirements</label>
-
-      <textarea
-        id="additionalDetails"
-        maxlength="2000"
-        rows="4"
-        placeholder="Add specifications or other requirements"
-      ></textarea>
-
-      <button id="submitButton" type="submit">
-        Submit Quote Request
-      </button>
-
-      <div
-        id="formMessage"
-        role="status"
-        aria-live="polite"
-      ></div>
-
-    </form>
-
-  </main>
-
-  <!-- Load Supabase before the FrostTech configuration. -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="supabase.js"></script>
-
-  <script>
+  </main>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script>  <script>
     "use strict";
 
     const form = document.getElementById("quoteForm");
@@ -218,12 +212,6 @@
     let products = [];
     let submissionInProgress = false;
 
-    /*
-      Display messages.
-
-      Do not set display:none directly on the message element:
-      an inline display:none would hide even an error message.
-    */
     function showMessage(message, type) {
       formMessage.textContent = message;
       formMessage.className = type;
@@ -237,7 +225,7 @@
     }
 
     /*
-      Reuse the Supabase client configured in supabase.js.
+      Reuse the existing FrostTech Supabase configuration.
     */
     function getClient() {
       if (window.supabaseClient) {
@@ -256,21 +244,19 @@
         url &&
         key
       ) {
-        window.supabaseClient = window.supabase.createClient(
-          url,
-          key
-        );
+        window.supabaseClient =
+          window.supabase.createClient(url, key);
 
         return window.supabaseClient;
       }
 
       throw new Error(
-        "Supabase client not found. Check the configuration in supabase.js."
+        "Supabase is not configured correctly. Please check supabase.js."
       );
     }
 
     /*
-      Load active products into the product dropdown.
+      Load active products.
     */
     async function loadProducts() {
       productSelect.replaceChildren();
@@ -318,15 +304,13 @@
 
         if (products.length === 0) {
           showMessage(
-            "No active products are available. Please contact FrostTech.",
+            "No active products are currently available.",
             "error"
           );
-        } else {
-          clearMessage();
         }
 
       } catch (error) {
-        console.error("FrostTech product loading error:", error);
+        console.error("Product loading error:", error);
 
         products = [];
 
@@ -339,33 +323,74 @@
         productSelect.appendChild(option);
 
         showMessage(
-          "Unable to load products. Please refresh the page or contact FrostTech.",
+          "Unable to load products. Please refresh the page and try again.",
           "error"
         );
       }
     }
 
     /*
-      Handle customer quote submissions.
-
-      This function is called directly by the form's onsubmit
-      attribute, so we do not depend on addEventListener().
+      Retrieve the authenticated user and validate their profile.
     */
-    async function handleQuoteSubmit(event) {
+    async function getActiveCustomer() {
+      const {
+        data: { user },
+        error: authError
+      } = await client.auth.getUser();
 
-      // Stop the browser's default form submission immediately.
-      if (event) {
-        event.preventDefault();
-        event.stopPropagation();
+      if (authError) {
+        console.error("Authentication error:", authError);
+
+        throw new Error(
+          "We could not verify your login. Please sign in again."
+        );
       }
 
-      // Prevent accidental double submissions.
+      if (!user) {
+        throw new Error(
+          "Please sign in to your FrostTech customer account before submitting your request."
+        );
+      }
+
+      const { data: profile, error: profileError } = await client
+        .from("profiles")
+        .select("id, role, is_active")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (profileError) {
+        console.error("Profile verification error:", profileError);
+
+        throw new Error(
+          "We could not verify your customer profile. Please try again."
+        );
+      }
+
+      if (
+        !profile ||
+        profile.role !== "customer" ||
+        profile.is_active !== true
+      ) {
+        throw new Error(
+          "Your account does not have an active customer profile. Please contact FrostTech support."
+        );
+      }
+
+      return user;
+    }
+
+    /*
+      Submit the quote request.
+    */
+    async function handleQuoteSubmit(event) {
+      event.preventDefault();
+      event.stopPropagation();
+
       if (submissionInProgress) {
         return false;
       }
 
       submissionInProgress = true;
-
       submitButton.disabled = true;
       submitButton.textContent = "Submitting...";
 
@@ -375,6 +400,9 @@
         if (!client) {
           client = getClient();
         }
+
+        // Verify the customer before accepting the request.
+        const user = await getActiveCustomer();
 
         const customerName =
           document.getElementById("customerName").value.trim();
@@ -404,9 +432,6 @@
           return product.id === productId;
         });
 
-        /*
-          Validate the form before contacting Supabase.
-        */
         if (!customerName || !customerPhone || !deliveryAddress) {
           throw new Error(
             "Please complete your name, phone number and delivery address."
@@ -414,17 +439,17 @@
         }
 
         if (!selectedProduct) {
-          throw new Error("Please select a valid product.");
+          throw new Error(
+            "Please select a valid product."
+          );
         }
 
-        if (!Number.isInteger(quantity) || quantity < 1) {
-          throw new Error("Please enter a valid quantity.");
+        if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+          throw new Error(
+            "Please enter a quantity between 1 and 10,000."
+          );
         }
 
-        /*
-          Build the request using the existing quote_requests
-          column structure used by the current FrostTech page.
-        */
         const requestNumber =
           "FT-" +
           Date.now() +
@@ -434,25 +459,37 @@
         const description =
           "Customer: " + customerName +
           "\nPhone: " + customerPhone +
-          "\nEmail: " + (customerEmail || "Not provided") +
+          "\nEmail: " + (customerEmail || user.email || "Not provided") +
           "\nProduct: " + selectedProduct.name +
           "\nRequirements: " + (additionalDetails || "None");
 
+        /*
+          customer_id references profiles.id.
+
+          The authenticated-customer INSERT policy requires
+          customer_id to equal auth.uid().
+
+          Other required fields use their existing database defaults.
+        */
         const requestData = {
+          customer_id: user.id,
+          customer_name: customerName,
+          customer_phone: customerPhone,
+          customer_email: customerEmail || user.email || null,
+
           product_id: selectedProduct.id,
           request_number: requestNumber,
           title: "Quote Request - " + selectedProduct.name,
           description: description,
           quantity: quantity,
+
           preferred_brand:
             preferredBrand || selectedProduct.brand || null,
+
           delivery_address: deliveryAddress,
           status: "pending"
         };
 
-        /*
-          Insert into Supabase and request the saved record back.
-        */
         const { data, error } = await client
           .from("quote_requests")
           .insert(requestData)
@@ -460,22 +497,16 @@
           .single();
 
         if (error) {
-          console.error(
-            "FrostTech Supabase submission error:",
-            error
-          );
+          console.error("Quote submission error:", error);
 
           throw new Error(
-            "Your request could not be saved. " + error.message
+            "Your quote request could not be saved. " + error.message
           );
         }
 
-        /*
-          Only show success after Supabase confirms the insert.
-        */
         showMessage(
-          "Your quote request was submitted successfully. " +
-          "Reference: " + data.request_number +
+          "Your quote request was submitted successfully. Reference: " +
+          data.request_number +
           ". FrostTech will review your request.",
           "success"
         );
@@ -495,7 +526,6 @@
 
       } finally {
         submissionInProgress = false;
-
         submitButton.disabled = false;
         submitButton.textContent = "Submit Quote Request";
       }
@@ -503,11 +533,8 @@
       return false;
     }
 
-    /*
-      Load products when the page starts.
-    */
-    loadProducts();
-  </script>
+    form.addEventListener("submit", handleQuoteSubmit);
 
-</body>
+    loadProducts();
+  </script></body>
 </html>
