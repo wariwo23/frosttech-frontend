@@ -685,16 +685,6 @@
       money(quotation.administration_fee)
     );
 
-    if (quotation.notes) {
-      const notes = document.createElement("div");
-      notes.className = "fee-panel";
-
-      addText(notes, "strong", "Quotation notes");
-      addText(notes, "p", quotation.notes);
-
-      details.appendChild(notes);
-    }
-
     card.appendChild(details);
     return card;
   }
