@@ -52,24 +52,96 @@ textarea,select{width:100%;padding:11px;border:1px solid #b9c7d8;border-radius:8
 .field{margin:12px 0}
 .field label{display:block}
 footer{text-align:center;padding:20px 14px;color:var(--muted);font-size:12px}
-@media(max-width:480px){header h1{font-size:21px}.quotation-card,.intro,.notice{padding:14px}.detail-row{gap:10px}.detail-row span:last-child{max-width:60%}.toolbar button,.actions button{flex:1}}
+
+/* FrostTech branded confirmation window */
+.ft-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.6);
+}
+.ft-confirm-box{
+  width:100%;
+  max-width:390px;
+  padding:23px;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.3);
+  text-align:center;
+  font-family:Inter,Arial,sans-serif;
+}
+.ft-confirm-title{
+  margin:0 0 18px;
+  color:var(--blue);
+  font-size:18px;
+  line-height:1.4;
+}
+.ft-confirm-question{
+  margin:0 0 12px;
+  color:#222;
+  font-size:18px;
+  font-weight:800;
+}
+.ft-confirm-details{
+  margin:0 0 22px;
+  color:#555;
+  font-size:14px;
+}
+.ft-confirm-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+.ft-confirm-cancel{
+  background:#eee;
+  color:#222;
+  border:1px solid #ccc;
+}
+.ft-confirm-ok{
+  background:var(--blue);
+  color:#fff;
+}
+.ft-confirm-ok:hover{background:var(--dark)}
+@media(max-width:480px){
+  header h1{font-size:21px}
+  .quotation-card,.intro,.notice{padding:14px}
+  .detail-row{gap:10px}
+  .detail-row span:last-child{max-width:60%}
+  .toolbar button,.actions button{flex:1}
+  .ft-confirm-box{padding:20px}
+}
 </style>
 </head>
 <body>
-<header><div class="header-inner"><h1>FrostTech HVAC &amp; Refrigeration</h1><p>My Quotations</p></div></header>
+<header>
+  <div class="header-inner">
+    <h1>FrostTech HVAC &amp; Refrigeration</h1>
+    <p>My Quotations</p>
+  </div>
+</header>
+
 <main>
-<section class="intro">
-<h2>Your Quotations</h2>
-<p>Review your quotation status and pay the administration fee securely before viewing the complete quotation.</p>
-<div class="toolbar">
-<button id="refreshButton" class="primary" type="button">Refresh Quotations</button>
-<button id="signOutButton" class="secondary" type="button">Sign Out</button>
-</div>
-</section>
-<div id="message" class="message hidden" role="status" aria-live="polite"></div>
-<section id="quotationsContainer" aria-live="polite"><div class="notice">Loading your quotations...</div></section>
+  <section class="intro">
+    <h2>Your Quotations</h2>
+    <p>Review your quotation status and pay the administration fee securely before viewing the complete quotation.</p>
+    <div class="toolbar">
+      <button id="refreshButton" class="primary" type="button">Refresh Quotations</button>
+      <button id="signOutButton" class="secondary" type="button">Sign Out</button>
+    </div>
+  </section>
+
+  <div id="message" class="message hidden" role="status" aria-live="polite"></div>
+  <section id="quotationsContainer" aria-live="polite">
+    <div class="notice">Loading your quotations...</div>
+  </section>
 </main>
+
 <footer>&copy; <span id="currentYear"></span> FrostTech HVAC and Refrigeration. All rights reserved.</footer>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
 <script>
@@ -88,27 +160,117 @@ let currentSession = null;
 let paymentInProgress = false;
 let decisionInProgress = false;
 
+/* FrostTech confirmation replaces the browser's domain-name popup. */
+function frosttechConfirm(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement("div");
+    overlay.className="ft-confirm-overlay";
+
+    const box=document.createElement("div");
+    box.className="ft-confirm-box";
+    box.setAttribute("role","dialog");
+    box.setAttribute("aria-modal","true");
+    box.setAttribute("aria-labelledby","ftConfirmTitle");
+    box.setAttribute("aria-describedby","ftConfirmDetails");
+
+    const title=document.createElement("h3");
+    title.id="ftConfirmTitle";
+    title.className="ft-confirm-title";
+    title.textContent="FrostTech HVAC and Refrigeration Marketplace";
+
+    const question=document.createElement("p");
+    question.className="ft-confirm-question";
+    question.textContent="Accept offer?";
+
+    const details=document.createElement("p");
+    details.id="ftConfirmDetails";
+    details.className="ft-confirm-details";
+    details.textContent="Do you agree to the quotation and its terms?";
+
+    const buttons=document.createElement("div");
+    buttons.className="ft-confirm-actions";
+
+    const cancel=document.createElement("button");
+    cancel.type="button";
+    cancel.className="ft-confirm-cancel";
+    cancel.textContent="Cancel";
+
+    const ok=document.createElement("button");
+    ok.type="button";
+    ok.className="ft-confirm-ok";
+    ok.textContent="OK";
+
+    let finished=false;
+
+    function finish(answer){
+      if(finished)return;
+      finished=true;
+      document.removeEventListener("keydown",handleKeydown);
+      overlay.remove();
+      resolve(answer);
+    }
+
+    function handleKeydown(event){
+      if(event.key==="Escape"){
+        event.preventDefault();
+        finish(false);
+      }else if(event.key==="Enter"){
+        event.preventDefault();
+        finish(true);
+      }
+    }
+
+    cancel.addEventListener("click",()=>finish(false));
+    ok.addEventListener("click",()=>finish(true));
+
+    overlay.addEventListener("click",event=>{
+      if(event.target===overlay)finish(false);
+    });
+
+    buttons.append(cancel,ok);
+    box.append(title,question,details,buttons);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    document.addEventListener("keydown",handleKeydown);
+    cancel.focus();
+  });
+}
+
 function showMessage(text,type="info"){
   messageBox.textContent=text;
   messageBox.className="message";
   if(type==="error")messageBox.classList.add("error");
   if(type==="success")messageBox.classList.add("success");
 }
+
 function hideMessage(){
   messageBox.textContent="";
   messageBox.className="message hidden";
 }
+
 function money(value){
   const n=Number(value);
   if(value===null||value===undefined||value===""||!Number.isFinite(n))return "Amount unavailable";
-  return new Intl.NumberFormat("en-NG",{style:"currency",currency:"NGN",minimumFractionDigits:2,maximumFractionDigits:2}).format(n);
+  return new Intl.NumberFormat("en-NG",{
+    style:"currency",
+    currency:"NGN",
+    minimumFractionDigits:2,
+    maximumFractionDigits:2
+  }).format(n);
 }
+
 function displayDate(value){
   if(!value)return "Not specified";
   const d=new Date(value);
   if(Number.isNaN(d.getTime()))return String(value);
-  return d.toLocaleDateString("en-NG",{day:"numeric",month:"short",year:"numeric"});
+  return d.toLocaleDateString("en-NG",{
+    day:"numeric",
+    month:"short",
+    year:"numeric"
+  });
 }
+
 function addText(parent,tag,text,className=""){
   const el=document.createElement(tag);
   el.textContent=text===null||text===undefined||text===""?"Not specified":String(text);
@@ -116,6 +278,7 @@ function addText(parent,tag,text,className=""){
   parent.appendChild(el);
   return el;
 }
+
 function addDetail(parent,label,value,total=false){
   const row=document.createElement("div");
   row.className="detail-row"+(total?" total-row":"");
@@ -123,6 +286,7 @@ function addDetail(parent,label,value,total=false){
   addText(row,"span",value);
   parent.appendChild(row);
 }
+
 async function getSession(){
   if(!db)throw new Error("Could not connect to Supabase. Check supabase.js.");
   const {data,error}=await db.auth.getSession();
@@ -134,27 +298,40 @@ async function getSession(){
   currentSession=data.session;
   return currentSession;
 }
+
 async function invokeFunction(name,body){
-  if(!currentSession?.access_token)throw new Error("Your session has expired. Please sign in again.");
+  if(!currentSession?.access_token){
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+
   const {data,error}=await db.functions.invoke(name,{
     body,
     headers:{Authorization:"Bearer "+currentSession.access_token}
   });
+
   if(error){
     console.error(name+" failed:",error,data);
     throw new Error(data?.error||"The service could not complete your request. Please refresh and try again.");
   }
-  if(!data||data.error||data.success===false)throw new Error(data?.error||"Unexpected service response.");
+
+  if(!data||data.error||data.success===false){
+    throw new Error(data?.error||"Unexpected service response.");
+  }
+
   return data;
 }
+
 async function handlePaystackReturn(){
   const params=new URLSearchParams(window.location.search);
   const reference=params.get("reference")||params.get("trxref");
   if(!reference)return;
+
   window.history.replaceState({},document.title,window.location.pathname);
   showMessage("Checking your Paystack payment. Please wait.");
+
   try{
     const result=await invokeFunction("verify-paystack-payment",{reference});
+
     if(result.success===true&&(result.payment_status==="success"||result.status==="paid")){
       showMessage("Payment verified successfully. Refreshing your quotation details.","success");
     }else{
@@ -165,9 +342,11 @@ async function handlePaystackReturn(){
     showMessage("We could not verify this payment yet. Your quotation remains locked. If you were charged, please contact FrostTech.","error");
   }
 }
+
 function renderLockedQuotation(q){
   const card=document.createElement("article");
   card.className="quotation-card";
+
   addText(card,"h3",q.quotation_number||"FrostTech Quotation");
   addText(card,"div","Quotation reference: "+q.id,"reference");
   addText(card,"span","Administration fee payment required","status");
@@ -180,22 +359,27 @@ function renderLockedQuotation(q){
   addText(panel,"strong","Administration fee");
   addText(panel,"p",money(q.administration_fee),"fee-amount");
   addText(panel,"p","Pay securely to unlock the full quotation.");
+
   const button=document.createElement("button");
   button.type="button";
   button.className="primary";
   button.textContent="Pay Administration Fee";
   button.addEventListener("click",()=>startPayment(q,button));
+
   panel.appendChild(button);
   card.appendChild(panel);
   return card;
 }
+
 function renderUnlockedQuotation(q){
   const card=document.createElement("article");
   card.className="quotation-card";
+
   addText(card,"h3",q.quotation_number||"FrostTech Quotation");
   addText(card,"div","Quotation reference: "+q.id,"reference");
 
   const decision=String(q.customer_decision||"").toLowerCase();
+
   if(decision==="accepted"){
     addText(card,"span","Offer accepted","status status-accepted");
     addText(card,"p","You accepted this offer. Any order payment is handled separately.","muted");
@@ -208,6 +392,7 @@ function renderUnlockedQuotation(q){
 
   const details=document.createElement("div");
   details.className="details";
+
   addDetail(details,"Product / Service",q.product_description);
   addDetail(details,"Quantity",q.quantity);
   addDetail(details,"Unit price",money(q.unit_price));
@@ -219,10 +404,13 @@ function renderUnlockedQuotation(q){
   addDetail(details,"Valid until",displayDate(q.validity_date));
   addDetail(details,"Date issued",displayDate(q.created_at));
   addDetail(details,"Administration fee paid",money(q.administration_fee));
+
   card.appendChild(details);
 
   if(decision==="accepted"||decision==="declined"){
-    if(q.customer_decision_at)addDetail(details,"Decision recorded",displayDate(q.customer_decision_at));
+    if(q.customer_decision_at){
+      addDetail(details,"Decision recorded",displayDate(q.customer_decision_at));
+    }
     return card;
   }
 
@@ -238,46 +426,67 @@ function renderUnlockedQuotation(q){
 
   const termsLabel=document.createElement("label");
   termsLabel.className="terms";
+
   const terms=document.createElement("input");
   terms.type="checkbox";
   terms.checked=false;
+
   const termsText=document.createElement("span");
   termsText.textContent="I have reviewed this quotation and agree to its quoted prices, stated validity period, applicable charges and delivery or installation terms. I understand that accepting the offer records my agreement to proceed but does not itself make payment or guarantee that an order payment has been completed.";
+
   termsLabel.append(terms,termsText);
   panel.appendChild(termsLabel);
 
   const actions=document.createElement("div");
   actions.className="actions";
+
   const accept=document.createElement("button");
   accept.type="button";
   accept.className="primary";
   accept.textContent="Accept Offer";
+
   accept.addEventListener("click",async()=>{
     if(!terms.checked){
       showMessage("Please tick the terms and conditions checkbox before accepting this offer.","error");
       terms.focus();
       return;
     }
-    if(!window.confirm("Accept this quotation and record your agreement to the terms?"))return;
-    await submitDecision(q.id,"accept",{terms_accepted:true},accept,decline);
+
+    if(decisionInProgress)return;
+
+    const confirmed=await frosttechConfirm();
+    if(!confirmed)return;
+
+    await submitDecision(
+      q.id,
+      "accept",
+      {terms_accepted:true},
+      accept,
+      decline
+    );
   });
 
   const decline=document.createElement("button");
   decline.type="button";
   decline.className="danger";
   decline.textContent="Decline Offer";
+
   actions.append(accept,decline);
   panel.appendChild(actions);
 
   const declinePanel=document.createElement("div");
   declinePanel.className="hidden";
+
   const reasonField=document.createElement("div");
   reasonField.className="field";
+
   const reasonLabel=document.createElement("label");
   reasonLabel.textContent="Reason for declining (required)";
   reasonLabel.htmlFor="declineReason";
+
   const reason=document.createElement("select");
   reason.id="declineReason";
+
   [
     ["","Select a reason"],
     ["price","Price is too high"],
@@ -291,48 +500,64 @@ function renderUnlockedQuotation(q){
     option.textContent=label;
     reason.appendChild(option);
   });
+
   reasonField.append(reasonLabel,reason);
 
   const commentsField=document.createElement("div");
   commentsField.className="field";
+
   const commentsLabel=document.createElement("label");
   commentsLabel.textContent="Additional comments (optional)";
   commentsLabel.htmlFor="declineComments";
+
   const comments=document.createElement("textarea");
   comments.id="declineComments";
   comments.rows=3;
   comments.maxLength=1000;
   comments.placeholder="Add any details you want FrostTech to know.";
+
   commentsField.append(commentsLabel,comments);
 
   const confirmDecline=document.createElement("button");
   confirmDecline.type="button";
   confirmDecline.className="danger";
   confirmDecline.textContent="Confirm Decline";
+
   confirmDecline.addEventListener("click",async()=>{
     if(!reason.value){
       showMessage("Please select a reason for declining this offer.","error");
       reason.focus();
       return;
     }
+
     if(!window.confirm("Confirm that you want to decline this quotation?"))return;
-    await submitDecision(q.id,"decline",{
-      decline_reason:reason.value,
-      decline_comments:comments.value.trim()
-    },confirmDecline,accept);
+
+    await submitDecision(
+      q.id,
+      "decline",
+      {
+        decline_reason:reason.value,
+        decline_comments:comments.value.trim()
+      },
+      confirmDecline,
+      accept
+    );
   });
 
   const cancelDecline=document.createElement("button");
   cancelDecline.type="button";
   cancelDecline.className="secondary";
   cancelDecline.textContent="Cancel";
+
   cancelDecline.addEventListener("click",()=>{
     declinePanel.classList.add("hidden");
     decline.disabled=false;
   });
+
   const declineActions=document.createElement("div");
   declineActions.className="actions";
   declineActions.append(confirmDecline,cancelDecline);
+
   declinePanel.append(reasonField,commentsField,declineActions);
   panel.appendChild(declinePanel);
 
@@ -345,48 +570,70 @@ function renderUnlockedQuotation(q){
   card.appendChild(panel);
   return card;
 }
+
 async function submitDecision(quotationId,decision,extra,button,otherButton){
   if(decisionInProgress)return;
+
   decisionInProgress=true;
   button.disabled=true;
   if(otherButton)otherButton.disabled=true;
+
+  const originalText=button.textContent;
   button.textContent="Saving decision...";
+
   try{
     await getSession();
     if(!currentSession)return;
+
     const result=await invokeFunction("customer-quotation-decision",{
       quotation_id:quotationId,
       decision,
       ...extra
     });
-    showMessage(result.message||(decision==="accept"?"Offer accepted successfully.":"Offer declined successfully."),"success");
+
+    showMessage(
+      result.message||(decision==="accept"?"Offer accepted successfully.":"Offer declined successfully."),
+      "success"
+    );
+
     await loadQuotations(true);
   }catch(error){
     console.error("Saving quotation decision failed:",error);
     showMessage(error.message||"Your decision could not be saved. Please refresh and try again.","error");
     button.disabled=false;
     if(otherButton)otherButton.disabled=false;
-    button.textContent=decision==="accept"?"Accept Offer":"Confirm Decline";
+    button.textContent=originalText;
   }finally{
     decisionInProgress=false;
   }
 }
+
 async function loadQuotations(keepMessage=false){
   if(!keepMessage)hideMessage();
+
   refreshButton.disabled=true;
   container.replaceChildren();
   addText(container,"div","Loading your quotations...","notice");
+
   try{
     await getSession();
     if(!currentSession)return;
+
     await handlePaystackReturn();
+
     const result=await invokeFunction("get-customer-quotations",{});
-    if(!Array.isArray(result.quotations))throw new Error("The quotation service returned an invalid response.");
+
+    if(!Array.isArray(result.quotations)){
+      throw new Error("The quotation service returned an invalid response.");
+    }
+
     container.replaceChildren();
+
     if(result.quotations.length===0){
       addText(container,"div","You do not have any quotations available yet.","notice");
       return;
     }
+
     for(const q of result.quotations){
       if(q.quotation_details_unlocked===true){
         container.appendChild(renderUnlockedQuotation(q));
@@ -403,18 +650,26 @@ async function loadQuotations(keepMessage=false){
     refreshButton.disabled=false;
   }
 }
+
 async function startPayment(q,button){
   if(paymentInProgress)return;
+
   paymentInProgress=true;
   button.disabled=true;
   button.textContent="Preparing secure payment...";
+
   try{
     await getSession();
     if(!currentSession)return;
-    const result=await invokeFunction("initialize-paystack-payment",{quotation_id:q.id});
+
+    const result=await invokeFunction("initialize-paystack-payment",{
+      quotation_id:q.id
+    });
+
     if(result.success!==true||!result.authorization_url){
       throw new Error(result.error||"Paystack could not initialize the payment.");
     }
+
     window.location.assign(result.authorization_url);
   }catch(error){
     console.error("Payment initialization failed:",error);
@@ -424,9 +679,12 @@ async function startPayment(q,button){
     paymentInProgress=false;
   }
 }
+
 refreshButton.addEventListener("click",()=>loadQuotations());
+
 signOutButton.addEventListener("click",async()=>{
   signOutButton.disabled=true;
+
   try{
     const {error}=await db.auth.signOut();
     if(error)throw error;
@@ -437,6 +695,7 @@ signOutButton.addEventListener("click",async()=>{
     signOutButton.disabled=false;
   }
 });
+
 loadQuotations();
 })();
 </script>
