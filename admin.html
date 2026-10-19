@@ -654,7 +654,39 @@ footer {
 
 <footer>FrostTech HVAC and Refrigeration Marketplace</footer>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- FROSTTECH BRANDED CONFIRMATION --><div id="ftConfirmModal"
+     class="ft-modal hidden"
+     role="dialog"
+     aria-modal="true"
+     aria-labelledby="ftConfirmTitle"
+     aria-describedby="ftConfirmText"><div class="ft-modal-box">
+    <div class="ft-modal-header">
+        <h2 id="ftConfirmTitle">FrostTech</h2>
+    </div>
+
+    <div class="ft-modal-body">
+        <p id="ftConfirmText">
+            Are you sure you want to continue?
+        </p>
+    </div>
+
+    <div class="ft-modal-actions">
+        <button id="ftConfirmCancel"
+                type="button"
+                class="ft-cancel">
+            Cancel
+        </button>
+
+        <button id="ftConfirmYes"
+                type="button"
+                class="success">
+            Yes, Continue
+        </button>
+    </div>
+</div>
+
+</div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <script>
 "use strict";
