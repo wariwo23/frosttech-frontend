@@ -2111,14 +2111,22 @@ async function reviewSupplier(supplierId, newStatus) {
         showMessage("supplierManagementMessage", "Enter a reason before rejecting or suspending a supplier.", "error");
         return;
     }
+const confirmed = await frostTechConfirm(
+"Are you sure you want to mark " +
+supplier.business_name +
+" as " +
+newStatus +
+"?",
+"Yes, Continue"
+);
 
-    if (!confirm("Are you sure you want to mark " + supplier.business_name + " as " + newStatus + "?")) return;
+if (!confirmed) return;
 
-    const { error } = await db.rpc("admin_review_supplier", {
-        target_supplier_id:supplierId,
-        new_status:newStatus,
-        reason:reason || null
-    });
+const { error } = await db.rpc("admin_review_supplier", {
+target_supplier_id: supplierId,
+new_status: newStatus,
+reason: reason || null
+});
 
     if (error) {
         showMessage("supplierManagementMessage", "Decision not completed: " + errorText(error), "error");
