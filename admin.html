@@ -1975,10 +1975,12 @@ async function selectSupplierQuotation(id) {
     }
 
     const confirmed = await frostTechConfirm(
-"Select this supplier quotation?",
-"Yes, Continue"
-);
-if (!confirmed) return;
+        "Select this supplier quotation?",
+        "Yes, Continue"
+    );
+
+    if (!confirmed) {
+        return;
     }
 
     const { error } = await db.rpc(
@@ -1991,8 +1993,7 @@ if (!confirmed) return;
     if (error) {
         showMessage(
             "quotationMessage",
-            "Could not select quotation: " +
-                errorText(error),
+            "Could not select quotation: " + errorText(error),
             "error"
         );
         return;
