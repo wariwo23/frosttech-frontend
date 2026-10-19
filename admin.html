@@ -1874,8 +1874,11 @@ async function submitExistingDraft(id) {
         showMessage("directQuoteMessage", "The original request is not loaded.", "error");
         return;
     }
-
-    if (!confirm("Submit quotation " + quote.quotation_number + "?")) return;
+const confirmed = await frostTechConfirm(
+"Submit quotation " + quote.quotation_number + "?",
+"Yes, Continue"
+);
+if (!confirmed) return;
 
     const { error } = await db.from("admin_quotations")
         .update({status:"submitted", updated_at:new Date().toISOString()})
