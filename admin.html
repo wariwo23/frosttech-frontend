@@ -2012,27 +2012,43 @@ async function selectSupplierQuotation(id) {
 }
 
 
+
 async function rejectSupplierQuotation(id) {
-    const quote = currentSupplierQuotes.find(item => item.id === id);
+    const quote = currentSupplierQuotes.find(
+        item => item.id === id
+    );
 
     if (!quote) {
-return;
-}
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation not found.",
+            "error"
+        );
+        return;
+    }
 
-const confirmed = await frostTechConfirm(
-"Reject this supplier quotation?",
-"Yes, Reject"
-);
-if (!confirmed) return;
+    const confirmed = await frostTechConfirm(
+        "Reject this supplier quotation?",
+        "Yes, Reject"
+    );
+
+    if (!confirmed) {
+        return;
     }
 
     const { error } = await db.rpc(
         "admin_reject_supplier_quote",
-        { p_quote_id: id }
+        {
+            p_quote_id: id
+        }
     );
 
     if (error) {
-        showMessage("quotationMessage", errorText(error), "error");
+        showMessage(
+            "quotationMessage",
+            errorText(error),
+            "error"
+        );
         return;
     }
 
@@ -2044,8 +2060,6 @@ if (!confirmed) return;
 
     await loadSupplierQuotations();
 }
-
-
 /* SUPPLIER MANAGEMENT */
 
 el("loadSuppliersBtn").addEventListener("click", loadSupplierManagement);
@@ -2361,7 +2375,6 @@ checkExistingSession();
     }
   });
 })();
-</script>
 </script>
 </body>
 </html>
