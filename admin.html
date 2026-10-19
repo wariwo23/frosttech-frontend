@@ -751,6 +751,67 @@ function showMessage(id, text, type = "info") {
     target.textContent = text;
 }
 
+    /* FROSTTECH BRANDED CONFIRMATION BEHAVIOUR */
+
+function frostTechConfirm(message, confirmLabel = "Yes, Continue") {
+return new Promise(resolve => {
+const modal = el("ftConfirmModal");
+const text = el("ftConfirmText");
+const yes = el("ftConfirmYes");
+const cancel = el("ftConfirmCancel");
+
+    if (!modal || !text || !yes || !cancel) {
+        resolve(false);
+        return;
+    }
+
+    text.textContent = message;
+    yes.textContent = confirmLabel;
+
+    modal.classList.remove("hidden");
+    document.body.classList.add("ft-modal-open");
+    yes.focus();
+
+    function finish(answer) {
+        modal.classList.add("hidden");
+        document.body.classList.remove("ft-modal-open");
+
+        yes.removeEventListener("click", onYes);
+        cancel.removeEventListener("click", onCancel);
+        modal.removeEventListener("click", onBackdrop);
+        document.removeEventListener("keydown", onKeydown);
+
+        resolve(answer);
+    }
+
+    function onYes() {
+        finish(true);
+    }
+
+    function onCancel() {
+        finish(false);
+    }
+
+    function onBackdrop(event) {
+        if (event.target === modal) {
+            finish(false);
+        }
+    }
+
+    function onKeydown(event) {
+        if (event.key === "Escape") {
+            finish(false);
+        }
+    }
+
+    yes.addEventListener("click", onYes);
+    cancel.addEventListener("click", onCancel);
+    modal.addEventListener("click", onBackdrop);
+    document.addEventListener("keydown", onKeydown);
+});
+
+}
+    
 function clearMessage(id) {
     const target = el(id);
     if (!target) return;
