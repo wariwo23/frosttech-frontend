@@ -1551,9 +1551,16 @@ el("cancelDirectQuoteBtn").addEventListener("click", function() {
 
 el("saveDraftBtn").addEventListener("click", () => saveDirectQuotation("draft"));
 
-el("submitDirectQuoteBtn").addEventListener("click", function() {
-    if (!confirm("Submit this quotation to the customer?")) return;
-    saveDirectQuotation("submitted");
+el("submitDirectQuoteBtn").addEventListener("click", async function() {
+const confirmed = await frostTechConfirm(
+"Are you sure you want to submit this quotation to the customer?",
+"Yes, Submit Quotation"
+);
+
+if (!confirmed) return;
+
+saveDirectQuotation("submitted");
+
 });
 
 
