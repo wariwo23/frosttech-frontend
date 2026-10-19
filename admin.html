@@ -6,6 +6,68 @@
 
 <title>FrostTech Administration</title>
 
+/* FROSTTECH BRANDED CONFIRMATION POPUP */
+
+.ft-modal {
+position:fixed;
+inset:0;
+z-index:99999;
+display:flex;
+align-items:center;
+justify-content:center;
+padding:18px;
+background:rgba(0,0,0,.55);
+}
+
+.ft-modal.hidden {
+display:none!important;
+}
+
+.ft-modal-box {
+width:100%;
+max-width:420px;
+background:#fff;
+border-radius:12px;
+overflow:hidden;
+box-shadow:0 12px 40px rgba(0,0,0,.25);
+}
+
+.ft-modal-header {
+background:var(--primary);
+color:#fff;
+padding:18px;
+}
+
+.ft-modal-header h2 {
+color:#fff;
+margin:0;
+font-size:21px;
+}
+
+.ft-modal-body {
+padding:20px;
+line-height:1.6;
+}
+
+.ft-modal-actions {
+display:flex;
+gap:10px;
+padding:0 20px 20px;
+}
+
+.ft-modal-actions button {
+flex:1;
+margin:0;
+}
+
+.ft-modal-actions .ft-cancel {
+background:#596579;
+}
+
+body.ft-modal-open {
+overflow:hidden;
+}
+    
 <style>
 :root {
     --primary:#063b70;
