@@ -2014,8 +2014,15 @@ if (!confirmed) return;
 async function rejectSupplierQuotation(id) {
     const quote = currentSupplierQuotes.find(item => item.id === id);
 
-    if (!quote || !confirm("Reject this supplier quotation?")) {
-        return;
+    if (!quote) {
+return;
+}
+
+const confirmed = await frostTechConfirm(
+"Reject this supplier quotation?",
+"Yes, Reject"
+);
+if (!confirmed) return;
     }
 
     const { error } = await db.rpc(
