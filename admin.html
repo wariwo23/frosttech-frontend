@@ -1301,7 +1301,11 @@ async function toggleProduct(id) {
     if (!product) return;
 
     const action = product.is_active ? "deactivate" : "activate";
-    if (!confirm("Do you want to " + action + " " + product.name + "?")) return;
+    const confirmed = await frostTechConfirm(
+"Do you want to " + action + " " + product.name + "?",
+"Yes, Continue"
+);
+if (!confirmed) return;
 
     const { error } = await db.from("products")
         .update({is_active:!product.is_active, updated_at:new Date().toISOString()})
