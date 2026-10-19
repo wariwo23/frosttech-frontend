@@ -1974,8 +1974,11 @@ async function selectSupplierQuotation(id) {
         return;
     }
 
-    if (!confirm("Select this supplier quotation?")) {
-        return;
+    const confirmed = await frostTechConfirm(
+"Select this supplier quotation?",
+"Yes, Continue"
+);
+if (!confirmed) return;
     }
 
     const { error } = await db.rpc(
