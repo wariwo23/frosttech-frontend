@@ -343,33 +343,7 @@ async function handlePaystackReturn(){
   }
 }
 
-function renderLockedQuotation(q){
-  const card=document.createElement("article");
-  card.className="quotation-card";
-
-  addText(card,"h3",q.quotation_number||"FrostTech Quotation");
-  addText(card,"div","Quotation reference: "+q.id,"reference");
-  addText(card,"span","Administration fee payment required","status");
-  addDetail(card,"Quotation status",q.status||"Available");
-  addDetail(card,"Date issued",displayDate(q.created_at));
-  addDetail(card,"Valid until",displayDate(q.validity_date));
-
-  const panel=document.createElement("div");
-  panel.className="fee-panel";
-  addText(panel,"strong","Administration fee");
-  addText(panel,"p",money(q.administration_fee),"fee-amount");
-  addText(panel,"p","Pay securely to unlock the full quotation.");
-
-  const button=document.createElement("button");
-  button.type="button";
-  button.className="primary";
-  button.textContent="Pay Administration Fee";
-  button.addEventListener("click",()=>startPayment(q,button));
-
-  panel.appendChild(button);
-  card.appendChild(panel);
-  return card;
-}
+renderLockedQuotation(q)
 
 function renderUnlockedQuotation(q){
   const card=document.createElement("article");
