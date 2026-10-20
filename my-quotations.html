@@ -343,7 +343,84 @@ async function handlePaystackReturn(){
   }
 }
 
-renderLockedQuotation(q)
+function renderLockedQuotation(q){
+const card=document.createElement("article");
+card.className="quotation-card";
+
+addText(card,"h3",q.quotation_number||"FrostTech Quotation");
+addText(card,"div","Quotation reference: "+q.id,"reference");
+addText(card,"span","Administration fee payment required","status");
+addDetail(card,"Quotation status",q.status||"Available");
+addDetail(card,"Date issued",displayDate(q.created_at));
+addDetail(card,"Valid until",displayDate(q.validity_date));
+
+const panel=document.createElement("div");
+panel.className="fee-panel";
+
+addText(panel,"strong","Administration fee");
+addText(panel,"p",money(q.administration_fee),"fee-amount");
+addText(panel,"p","Accept the pre-payment Terms and Conditions before proceeding to secure payment.");
+
+const termsLabel=document.createElement("label");
+termsLabel.className="terms";
+
+const terms=document.createElement("input");
+terms.type="checkbox";
+terms.checked=false;
+
+const termsText=document.createElement("span");
+termsText.textContent="I agree to FrostTech's pre-payment Terms and Conditions. I understand that the administration fee is separate from the quotation amount and order payment, and that paying this fee unlocks the full quotation for my review.";
+
+termsLabel.append(terms,termsText);
+panel.appendChild(termsLabel);
+
+const button=document.createElement("button");
+button.type="button";
+button.className="primary";
+button.textContent="Pay Administration Fee";
+
+button.addEventListener("click",async()=>{
+if(!terms.checked){
+showMessage("Please accept the pre-payment Terms and Conditions before proceeding.","error");
+terms.focus();
+return;
+}
+
+button.disabled=true;
+button.textContent="Recording acceptance...";
+
+try{
+  await getSession();
+  if(!currentSession){
+    button.disabled=false;
+    button.textContent="Pay Administration Fee";
+    return;
+  }
+
+  await invokeFunction("record-prepayment-terms",{
+    quotation_id:q.id,
+    terms_accepted:true
+  });
+
+  await startPayment(q,button);
+
+}catch(error){
+  console.error("Pre-payment terms acceptance failed:",error);
+  showMessage(
+    error.message||"Unable to record your acceptance. Please try again.",
+    "error"
+  );
+  button.disabled=false;
+  button.textContent="Pay Administration Fee";
+}
+
+});
+
+panel.appendChild(button);
+card.appendChild(panel);
+
+return card;
+}
 
 function renderUnlockedQuotation(q){
   const card=document.createElement("article");
