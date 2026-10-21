@@ -490,11 +490,10 @@ if(decision==="accepted"){
       if(!request)throw new Error("The order request is not available yet. Please refresh and try again.");
 
       const {data:order,error:orderError}=await db
-        .from("orders")
-        .select("id,status")
-        .eq("request_id",request.id)
-        .maybeSingle();
-
+.from("orders")
+.select("id,status")
+.eq("quote_request_id",request.id)
+.maybeSingle();
       if(orderError)throw orderError;
       if(!order)throw new Error("The order has not been found yet. Please refresh and try again.");
       if(order.status!=="awaiting_payment")throw new Error("This order is not currently awaiting payment.");
