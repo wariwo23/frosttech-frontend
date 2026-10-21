@@ -459,11 +459,68 @@ function renderUnlockedQuotation(q){
   card.appendChild(details);
 
   if(decision==="accepted"||decision==="declined"){
-    if(q.customer_decision_at){
-      addDetail(details,"Decision recorded",displayDate(q.customer_decision_at));
+if(q.customer_decision_at){
+addDetail(details,"Decision recorded",displayDate(q.customer_decision_at));
+}
+
+if(decision==="accepted"){
+  const payButton=document.createElement("button");
+  payButton.type="button";
+  payButton.className="primary";
+  payButton.textContent="Order Payment";
+
+  payButton.addEventListener("click",async()=>{
+    if(paymentInProgress)return;
+
+    paymentInProgress=true;
+    payButton.disabled=true;
+    payButton.textContent="Preparing secure payment...";
+
+    try{
+      await getSession();
+      if(!currentSession)throw new Error("Please sign in again.");
+
+      const {data:request,error:requestError}=await db
+        .from("customer_requests")
+        .select("id")
+        .eq("source_quote_request_id",q.request_id)
+        .maybeSingle();
+
+      if(requestError)throw requestError;
+      if(!request)throw new Error("The order request is not available yet. Please refresh and try again.");
+
+      const {data:order,error:orderError}=await db
+        .from("orders")
+        .select("id,status")
+        .eq("request_id",request.id)
+        .maybeSingle();
+
+      if(orderError)throw orderError;
+      if(!order)throw new Error("The order has not been found yet. Please refresh and try again.");
+      if(order.status!=="awaiting_payment")throw new Error("This order is not currently awaiting payment.");
+
+      const result=await invokeFunction("initialize-paystack-payment",{
+        order_id:order.id
+      });
+
+      if(!result.authorization_url)throw new Error(result.error||"Unable to start order payment.");
+
+      window.location.assign(result.authorization_url);
+    }catch(error){
+      console.error("Order payment failed:",error);
+      showMessage(error.message||"Unable to start order payment.","error");
+      payButton.disabled=false;
+      payButton.textContent="Order Payment";
+      paymentInProgress=false;
     }
-    return card;
-  }
+  });
+
+  card.appendChild(payButton);
+}
+
+return card;
+
+}
 
   if(String(q.status||"").toLowerCase()!=="submitted"){
     addText(card,"p","This quotation is not currently open for a customer decision. Please contact FrostTech for assistance.","muted");
