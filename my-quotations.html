@@ -492,10 +492,15 @@ if(decision==="accepted"){
       const {data:order,error:orderError}=await db
 .from("orders")
 .select("id,status")
-.eq("quote_request_id",request.id)
+.eq("quote_request_id",q.request_id)
+.eq("customer_id",currentSession.user.id)
 .maybeSingle();
-      if(orderError)throw orderError;
-      if(!order)throw new Error("The order has not been found yet. Please refresh and try again.");
+
+if(orderError)throw orderError;
+
+if(!order){
+throw new Error("The order has not been found yet. Please refresh and try again.");
+}
       if(order.status!=="awaiting_payment")throw new Error("This order is not currently awaiting payment.");
 
       const result=await invokeFunction("initialize-paystack-payment",{
