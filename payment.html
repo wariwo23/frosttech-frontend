@@ -260,13 +260,24 @@
           result.message || "The payment has not been confirmed."
         );
       } catch (error) {
-        showMessage(
-          "Payment verification could not be completed.\n\n" +
-          error.message +
-          "\n\nDo not pay again. Please contact FrostTech to check the transaction.",
-          "error"
-        );
+sessionStorage.removeItem("frosttech_pending_payment_reference");
 
+const savedOrderId = sessionStorage.getItem("frosttech_pending_order_id");
+
+if (savedOrderId) {
+orderIdInput.value = savedOrderId;
+}
+
+showMessage(
+"The payment was not confirmed. Your order has not been marked as paid.\n\n" +
+error.message +
+"\n\nYou can return to the payment form. Check your payment status before trying again.",
+"error"
+);
+
+paymentForm.classList.remove("hidden");
+return true;
+}
         return true;
       }
     }
