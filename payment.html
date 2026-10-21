@@ -342,11 +342,13 @@ window.location.assign(result.authorization_url);
         await getAccessToken();
 
         const params = new URLSearchParams(window.location.search);
-        const orderId = params.get("order_id");
+const orderId =
+  params.get("order_id") ||
+  sessionStorage.getItem("frosttech_pending_order_id");
 
-        if (orderId && validUUID(orderId)) {
-          orderIdInput.value = orderId;
-        }
+if (orderId && validUUID(orderId)) {
+  orderIdInput.value = orderId;
+}
 
         const returnedFromPaystack =
           await verifyReturnedPayment();
