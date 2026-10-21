@@ -302,7 +302,9 @@
 
         showMessage("Opening Paystack secure checkout...");
 
-        window.location.assign(result.authorization_url);
+        sessionStorage.setItem("frosttech_pending_order_id", orderId);
+sessionStorage.setItem("frosttech_pending_payment_reference", result.reference);
+window.location.assign(result.authorization_url);
       } catch (error) {
         showMessage(
           error.message || "Unable to initialize payment.",
