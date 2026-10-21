@@ -216,9 +216,9 @@
       const params = new URLSearchParams(window.location.search);
 
       const reference =
-  params.get("reference") ||
-  params.get("trxref") ||
-  sessionStorage.getItem("frosttech_pending_payment_reference");
+        params.get("reference") ||
+        params.get("trxref") ||
+        sessionStorage.getItem("frosttech_pending_payment_reference");
 
       if (!reference) {
         return false;
@@ -237,6 +237,9 @@
         );
 
         if (result.success) {
+          sessionStorage.removeItem("frosttech_pending_payment_reference");
+          sessionStorage.removeItem("frosttech_pending_order_id");
+
           showMessage(
             "Payment verified successfully.\n\n" +
             "Payment ID: " + (result.payment_id || "Recorded") +
@@ -245,8 +248,6 @@
             "success"
           );
 
-          // Remove the transaction reference from the address bar.
-          // The payment reference remains in the database.
           window.history.replaceState(
             {},
             document.title,
@@ -259,25 +260,25 @@
         throw new Error(
           result.message || "The payment has not been confirmed."
         );
+
       } catch (error) {
-sessionStorage.removeItem("frosttech_pending_payment_reference");
+        sessionStorage.removeItem("frosttech_pending_payment_reference");
 
-const savedOrderId = sessionStorage.getItem("frosttech_pending_order_id");
+        const savedOrderId =
+          sessionStorage.getItem("frosttech_pending_order_id");
 
-if (savedOrderId) {
-orderIdInput.value = savedOrderId;
-}
+        if (savedOrderId) {
+          orderIdInput.value = savedOrderId;
+        }
 
-showMessage(
-"The payment was not confirmed. Your order has not been marked as paid.\n\n" +
-error.message +
-"\n\nYou can return to the payment form. Check your payment status before trying again.",
-"error"
-);
+        showMessage(
+          "The payment was not confirmed. Your order has not been marked as paid.\n\n" +
+          error.message +
+          "\n\nCheck your payment status before trying again.",
+          "error"
+        );
 
-paymentForm.classList.remove("hidden");
-return true;
-}
+        paymentForm.classList.remove("hidden");
         return true;
       }
     }
