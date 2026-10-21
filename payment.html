@@ -216,8 +216,9 @@
       const params = new URLSearchParams(window.location.search);
 
       const reference =
-        params.get("reference") ||
-        params.get("trxref");
+  params.get("reference") ||
+  params.get("trxref") ||
+  sessionStorage.getItem("frosttech_pending_payment_reference");
 
       if (!reference) {
         return false;
