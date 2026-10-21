@@ -481,25 +481,17 @@ if(decision==="accepted"){
       if(!currentSession)throw new Error("Please sign in again.");
 
       const {data:request,error:requestError}=await db
-        .from("customer_requests")
-        .select("id")
-        .eq("source_quote_request_id",q.request_id)
-        .maybeSingle();
-
-      if(requestError)throw requestError;
-      if(!request)throw new Error("The order request is not available yet. Please refresh and try again.");
-
       const {data:order,error:orderError}=await db
-.from("orders")
-.select("id,status")
-.eq("quote_request_id",q.request_id)
-.eq("customer_id",currentSession.user.id)
-.maybeSingle();
+  .from("orders")
+  .select("id,status")
+  .eq("quote_request_id",q.request_id)
+  .eq("customer_id",currentSession.user.id)
+  .maybeSingle();
 
 if(orderError)throw orderError;
 
 if(!order){
-throw new Error("The order has not been found yet. Please refresh and try again.");
+  throw new Error("The order has not been found yet. Please refresh and try again.");
 }
       if(order.status!=="awaiting_payment")throw new Error("This order is not currently awaiting payment.");
 
