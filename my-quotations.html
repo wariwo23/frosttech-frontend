@@ -1,16 +1,7 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-
-<title>My Quotations | FrostTech</title>
-
-<meta name="description" content="Review FrostTech quotations, pay the administration fee and respond to offers securely.">
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-<style>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>My Quotations | FrostTech</title><meta name="description" content="Review FrostTech quotations, pay the administration fee and respond to offers securely."><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"><style>
 :root{
   --blue:#0759b8;
   --dark:#063d7a;
@@ -244,12 +235,14 @@ button:disabled{
   align-items:flex-start;
   gap:10px;
   margin:14px 0;
+  line-height:1.6;
 }
 
 .terms input{
   margin-top:5px;
   min-width:18px;
   min-height:18px;
+  cursor:pointer;
 }
 
 label{
@@ -367,51 +360,28 @@ footer{
     padding:20px;
   }
 }
-</style>
-</head>
-
-<body>
-
-<header>
+</style></head><body><header>
   <div class="header-inner">
     <h1>FrostTech HVAC &amp; Refrigeration</h1>
     <p>My Quotations</p>
   </div>
-</header>
-
-<main>
-
-  <section class="intro">
+</header><main>  <section class="intro">
     <h2>Your Quotations</h2>
-    <p>Review your quotations, check their payment status, and respond to offers from FrostTech.</p>
+    <p>Review your quotations, check their payment status, and respond to offers from FrostTech.</p><div class="toolbar">
+  <button id="refreshButton" class="primary" type="button">
+    Refresh Quotations
+  </button>
 
-    <div class="toolbar">
-      <button id="refreshButton" class="primary" type="button">
-        Refresh Quotations
-      </button>
+  <button id="signOutButton" class="secondary" type="button">
+    Sign Out
+  </button>
+</div>
 
-      <button id="signOutButton" class="secondary" type="button">
-        Sign Out
-      </button>
-    </div>
-  </section>
-
-  <div id="message" class="message hidden" role="status" aria-live="polite"></div>
-
-  <section id="quotationsContainer" aria-live="polite">
+  </section>  <div id="message" class="message hidden" role="status" aria-live="polite"></div>  <section id="quotationsContainer" aria-live="polite">
     <div class="notice">Loading your quotations...</div>
-  </section>
-
-</main>
-
-<footer>
+  </section></main><footer>
   &copy; <span id="currentYear"></span> FrostTech HVAC and Refrigeration. All rights reserved.
-</footer>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
-<script src="supabase.js"></script>
-
-<script>
+</footer><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script><script src="supabase.js"></script><script>
 (() => {
 "use strict";
 
@@ -598,6 +568,24 @@ function addDetail(parent,label,value,total=false){
 }
 
 
+/* Timeout helper for operations that might hang */
+
+function withTimeout(promise,milliseconds,message){
+  let timer;
+
+  const timeout=new Promise((resolve,reject)=>{
+    timer=setTimeout(
+      ()=>reject(new Error(message)),
+      milliseconds
+    );
+  });
+
+  return Promise.race([promise,timeout]).finally(()=>{
+    clearTimeout(timer);
+  });
+}
+
+
 async function getSession(){
   if(!db){
     throw new Error(
@@ -610,6 +598,8 @@ async function getSession(){
   if(error)throw error;
 
   if(!data.session){
+    currentSession=null;
+
     window.location.href=
       "customer-login.html?next=my-quotations.html";
 
@@ -789,6 +779,8 @@ function renderLockedQuotation(q){
   button.textContent="Pay Administration Fee";
 
   button.addEventListener("click",async()=>{
+    if(paymentInProgress)return;
+
     if(!terms.checked){
       showMessage(
         "Please accept the pre-payment Terms and Conditions before proceeding.",
@@ -989,6 +981,29 @@ function renderUnlockedQuotation(q){
 
     if(decision==="accepted"){
 
+      /*
+       * Separate mandatory agreement for final order payment.
+       * This is not the quotation-acceptance checkbox.
+       */
+
+      const paymentTermsLabel=document.createElement("label");
+      paymentTermsLabel.className="terms";
+
+      const paymentTerms=document.createElement("input");
+      paymentTerms.type="checkbox";
+      paymentTerms.checked=false;
+
+      const paymentTermsText=document.createElement("span");
+      paymentTermsText.textContent=
+        "Before proceeding, I agree to FrostTech's Terms and Conditions for final order payment. I understand that continuing will open Paystack checkout and that payment is subject to successful verification.";
+
+      paymentTermsLabel.append(
+        paymentTerms,
+        paymentTermsText
+      );
+
+      card.appendChild(paymentTermsLabel);
+
       const payButton=document.createElement("button");
 
       payButton.type="button";
@@ -998,34 +1013,47 @@ function renderUnlockedQuotation(q){
       payButton.addEventListener("click",async()=>{
         if(paymentInProgress)return;
 
+        if(!paymentTerms.checked){
+          showMessage(
+            "Please accept FrostTech's Terms and Conditions before proceeding to payment.",
+            "error"
+          );
+
+          paymentTerms.focus();
+          return;
+        }
+
         paymentInProgress=true;
         payButton.disabled=true;
-
-        payButton.textContent=
-          "Preparing secure payment...";
+        payButton.textContent="Preparing secure payment...";
 
         try{
-          await getSession();
+          await withTimeout(
+            getSession(),
+            25000,
+            "Checking your sign-in took too long. Please try again."
+          );
 
           if(!currentSession){
             throw new Error("Please sign in again.");
           }
 
           /*
-           * IMPORTANT FIX:
-           * Find the existing order directly using
-           * quote_request_id.
-           *
-           * Do not query customer_requests.
-           * The existing order's request_id is NULL.
+           * Preserve the existing order lookup:
+           * the order is linked through quote_request_id.
+           * Do not query customer_requests here.
            */
 
-          const {data:order,error:orderError}=await db
-            .from("orders")
-            .select("id,status")
-            .eq("quote_request_id",q.request_id)
-            .eq("customer_id",currentSession.user.id)
-            .maybeSingle();
+          const {data:order,error:orderError}=await withTimeout(
+            db
+              .from("orders")
+              .select("id,status")
+              .eq("quote_request_id",q.request_id)
+              .eq("customer_id",currentSession.user.id)
+              .maybeSingle(),
+            25000,
+            "Checking your order took too long. Refresh My Quotations before trying again."
+          );
 
           if(orderError){
             throw orderError;
@@ -1044,15 +1072,21 @@ function renderUnlockedQuotation(q){
           }
 
           /*
-           * Keep the existing server-side payment
-           * initialization and verification flow.
+           * The server independently checks the explicit
+           * acceptance flag and records the acceptance time.
+           * Existing payment-retry safeguards remain in place.
            */
 
-          const result=await invokeFunction(
-            "initialize-paystack-payment",
-            {
-              order_id:order.id
-            }
+          const result=await withTimeout(
+            invokeFunction(
+              "initialize-paystack-payment",
+              {
+                order_id:order.id,
+                order_payment_terms_accepted:true
+              }
+            ),
+            30000,
+            "Payment initialization timed out. Check My Quotations and your payment status before trying again."
           );
 
           if(!result.authorization_url){
@@ -1068,13 +1102,13 @@ function renderUnlockedQuotation(q){
 
         }catch(error){
           console.error(
-            "Order payment failed:",
+            "Order payment initialization failed:",
             error
           );
 
           showMessage(
             error.message||
-            "Unable to start order payment.",
+            "Unable to start order payment. Check its status before retrying.",
             "error"
           );
 
@@ -1576,7 +1610,5 @@ signOutButton.addEventListener(
 loadQuotations();
 
 })();
-</script>
-
-</body>
+</script></body>
 </html>
