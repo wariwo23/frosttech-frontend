@@ -1004,30 +1004,54 @@ function renderUnlockedQuotation(q){
       );
     }
 
-    if(decision==="accepted"){
+    if(decision==="accepted"){const paymentTermsLabel=document.createElement("label");
+paymentTermsLabel.className="terms";
 
-      /*
-       * Separate mandatory agreement for final order payment.
-       * This is not the quotation-acceptance checkbox.
-       */
+paymentTerms.type="checkbox";
+paymentTerms.checked=false;
+paymentTerms.disabled=true;
 
-      const paymentTermsLabel=document.createElement("label");
-      paymentTermsLabel.className="terms";
+paymentTermsText.textContent=
+  "I have read and agreed to the FrostTech General Terms and Conditions.";
 
-      const paymentTerms=document.createElement("input");
-      paymentTerms.type="checkbox";
-      paymentTerms.checked=false;
+paymentTermsLabel.append(
+  paymentTerms,
+  paymentTermsText
+);
 
-      const paymentTermsText=document.createElement("span");
-      paymentTermsText.textContent=
-        "Before proceeding, I agree to FrostTech's Terms and Conditions for final order payment. I understand that continuing will open Paystack checkout and that payment is subject to successful verification.";
+card.appendChild(paymentTermsLabel);
 
-      paymentTermsLabel.append(
-        paymentTerms,
-        paymentTermsText
-      );
+const paymentTermsLink=document.createElement("a");
+paymentTermsLink.href=
+  "terms.html?return=my-quotations.html&purpose=order_payment&reference="+
+  encodeURIComponent(q.id);
 
-      card.appendChild(paymentTermsLabel);
+paymentTermsLink.textContent=
+  "Read General Terms and Conditions";
+
+card.appendChild(paymentTermsLink);
+
+try{
+  const saved=JSON.parse(
+    sessionStorage.getItem("frosttech_terms_acceptance_v1")||"null"
+  );
+
+  const age=saved
+    ? Date.now()-Date.parse(saved.acceptedAt)
+    : -1;
+
+  if(
+    saved &&
+    saved.purpose==="order_payment" &&
+    saved.reference===String(q.id) &&
+    saved.version==="1.0" &&
+    age>=0 &&
+    age<=15*60*1000
+  ){
+    paymentTerms.checked=true;
+    sessionStorage.removeItem("frosttech_terms_acceptance_v1");
+  }
+}catch(e){}
 
       const payButton=document.createElement("button");
 
