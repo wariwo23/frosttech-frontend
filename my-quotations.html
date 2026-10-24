@@ -758,20 +758,45 @@ function renderLockedQuotation(q){
   );
 
   const termsLabel=document.createElement("label");
-  termsLabel.className="terms";
+termsLabel.className="terms";
 
-  const terms=document.createElement("input");
-  terms.type="checkbox";
-  terms.checked=false;
+const terms=document.createElement("input");
+terms.type="checkbox";
+terms.checked=false;
+terms.disabled=true;
 
-  const termsText=document.createElement("span");
+const termsText=document.createElement("span");
+termsText.textContent=
+  "I have read and agreed to the General Terms and Conditions.";
 
-  termsText.textContent=
-    "I agree to FrostTech's pre-payment Terms and Conditions. I understand that the administration fee is separate from the quotation amount and order payment, and that paying this fee unlocks the full quotation for my review.";
+termsLabel.append(terms,termsText);
+panel.appendChild(termsLabel);
 
-  termsLabel.append(terms,termsText);
-  panel.appendChild(termsLabel);
+const termsLink=document.createElement("a");
+termsLink.href=
+  "terms.html?return=my-quotations.html&purpose=admin_fee&reference="+
+  encodeURIComponent(q.id);
+termsLink.textContent="Read General Terms and Conditions";
+panel.appendChild(termsLink);
 
+try{
+  const saved=JSON.parse(
+    sessionStorage.getItem("frosttech_terms_acceptance_v1")||"null"
+  );
+  const age=saved?Date.now()-Date.parse(saved.acceptedAt):-1;
+
+  if(
+    saved &&
+    saved.purpose==="admin_fee" &&
+    saved.reference===String(q.id) &&
+    saved.version==="1.0" &&
+    age>=0 &&
+    age<=15*60*1000
+  ){
+    terms.checked=true;
+    sessionStorage.removeItem("frosttech_terms_acceptance_v1");
+  }
+}catch(e){}
   const button=document.createElement("button");
 
   button.type="button";
