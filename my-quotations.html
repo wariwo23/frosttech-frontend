@@ -1004,13 +1004,16 @@ function renderUnlockedQuotation(q){
       );
     }
 
-    if(decision==="accepted"){const paymentTermsLabel=document.createElement("label");
+    if(decision==="accepted"){
+const paymentTermsLabel=document.createElement("label");
 paymentTermsLabel.className="terms";
 
+const paymentTerms=document.createElement("input");
 paymentTerms.type="checkbox";
 paymentTerms.checked=false;
 paymentTerms.disabled=true;
 
+const paymentTermsText=document.createElement("span");
 paymentTermsText.textContent=
   "I have read and agreed to the FrostTech General Terms and Conditions.";
 
@@ -1020,6 +1023,16 @@ paymentTermsLabel.append(
 );
 
 card.appendChild(paymentTermsLabel);
+
+const paymentTermsLink=document.createElement("a");
+paymentTermsLink.href=
+  "terms.html?return=my-quotations.html&purpose=order_payment&reference="+
+  encodeURIComponent(q.id);
+
+paymentTermsLink.textContent=
+  "Read General Terms and Conditions";
+
+card.appendChild(paymentTermsLink);
 
 const paymentTermsLink=document.createElement("a");
 paymentTermsLink.href=
