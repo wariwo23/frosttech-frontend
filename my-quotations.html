@@ -1063,16 +1063,6 @@ paymentTermsLink.textContent=
 
 card.appendChild(paymentTermsLink);
 
-const paymentTermsLink=document.createElement("a");
-paymentTermsLink.href=
-  "terms.html?return=my-quotations.html&purpose=order_payment&reference="+
-  encodeURIComponent(q.id);
-
-paymentTermsLink.textContent=
-  "Read General Terms and Conditions";
-
-card.appendChild(paymentTermsLink);
-
 try{
   const saved=JSON.parse(
     sessionStorage.getItem("frosttech_terms_acceptance_v1")||"null"
