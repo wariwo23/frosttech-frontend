@@ -1723,10 +1723,10 @@ async function saveDirectQuotation(status) {
 
     const quoteId = el("directQuoteId").value.trim();
 
-    const itemisedNotes = [
-        "PRODUCT COST PER UNIT: " + money(calculation.unitCost),
-        "MARKUP: " + calculation.markup + "%",
-        "CUSTOMER PRICE PER AC: " + money(calculation.customerUnitPrice),
+    
+const itemisedNotes = [
+        "PRODUCT: " + (document.getElementById("directProductName")?.value || "Selected product"),
+        "UNIT PRICE: " + money(calculation.customerUnitPrice),
         "PRODUCT QUANTITY: " + calculation.quantity,
         "PRODUCT SUBTOTAL: " + money(subtotal),
 
@@ -1755,6 +1755,7 @@ async function saveDirectQuotation(status) {
         "DELIVERY COST: " + money(calculation.delivery),
         "DISCOUNT: " + money(calculation.discount),
         "FINAL QUOTATION TOTAL: " + money(totalAmount),
+
 
         existingNotes ? "CUSTOMER NOTES: " + existingNotes : ""
     ].filter(Boolean).join("\n");
