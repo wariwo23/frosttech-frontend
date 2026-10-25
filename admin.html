@@ -2013,41 +2013,65 @@ async function loadDirectQuotations() {
 }
 
 
+
 function editDirectQuotation(id) {
-    const quote = currentDirectQuotes.find(item => item.id === id);
+    const quote = currentDirectQuotes.find(
+        item => item.id === id
+    );
+
     if (!quote || quote.status !== "draft") return;
 
-    const request = currentRequests.find(item => item.id === quote.request_id);
+    const request = currentRequests.find(
+        item => item.id === quote.request_id
+    );
 
     if (!request) {
-        showMessage("directQuoteMessage", "The original customer request is not loaded. Refresh requests first.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "The original customer request is not loaded. Refresh requests first.",
+            "error"
+        );
         return;
     }
 
     prepareDirectQuotation(request.id);
 
     el("directQuoteId").value = quote.id;
-    el("directProductDescription").value = quote.product_description || "";
+    el("directProductDescription").value =
+        quote.product_description || "";
     el("directQuantity").value = quote.quantity || 1;
 
     /*
-     * Existing saved quotations store the customer-facing unit price.
-     * The cost/markup inputs cannot be reliably reconstructed from older quotes.
-     * Load the saved unit price as the cost and use zero markup for safe editing.
+     * Saved quotations contain the customer-facing unit price.
+     * Use it as the unit cost with zero markup to preserve the price.
      */
     el("directUnitCost").value = quote.unit_price ?? "";
     el("directMarkup").value = "0";
-    el("directDeliveryCost").value = quote.delivery_cost ?? 0;
+    el("directDeliveryCost").value =
+        quote.delivery_cost ?? 0;
 
-    el("directBracketCost").value = 0;
-    el("directInstallationCost").value = 0;
-    el("directAccessoryCost").value = quote.additional_charges ?? 0;
+    /*
+     * Older saved quotations combine additional charges.
+     * Preserve their full amount as one lump-sum accessory charge.
+     */
+    el("directBracketQuantity").value = "0";
+    el("directBracketUnitCost").value = "0";
+    el("directInstallationPerAc").value = "0";
+
+    el("directAccessoryDescription").value =
+        "Previously combined additional charges";
+    el("directAccessoryUnit").value = "lump sum";
+    el("directAccessoryQuantity").value =
+        Number(quote.additional_charges || 0) > 0 ? "1" : "0";
+    el("directAccessoryUnitCost").value =
+        quote.additional_charges ?? 0;
 
     el("directDiscount").value = quote.discount ?? 0;
     el("directValidity").value = quote.validity_date || "";
     el("directNotes").value = quote.notes || "";
 
-    el("directQuoteFormTitle").textContent = "Edit Draft " + quote.quotation_number;
+    el("directQuoteFormTitle").textContent =
+        "Edit Draft " + quote.quotation_number;
 
     calculateDirectTotal();
 }
