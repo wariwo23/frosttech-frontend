@@ -1423,15 +1423,28 @@ async function updateRequestStatus(requestId, status) {
 
 /* DIRECT QUOTATION CALCULATOR */
 
+
 function calculateDirectTotal() {
     const quantity = numericInput("directQuantity");
     const unitCost = numericInput("directUnitCost");
     const markup = numericInput("directMarkup");
     const delivery = numericInput("directDeliveryCost");
-    const brackets = numericInput("directBracketCost");
-    const installation = numericInput("directInstallationCost");
-    const accessories = numericInput("directAccessoryCost");
     const discount = numericInput("directDiscount");
+
+    const bracketQuantity = numericInput("directBracketQuantity");
+    const bracketUnitCost = numericInput("directBracketUnitCost");
+    const brackets = bracketQuantity * bracketUnitCost;
+
+    const installationPerAc = numericInput("directInstallationPerAc");
+    const installation = quantity * installationPerAc;
+
+    const accessoryDescription =
+        el("directAccessoryDescription").value.trim();
+    const accessoryUnit =
+        el("directAccessoryUnit").value.trim();
+    const accessoryQuantity = numericInput("directAccessoryQuantity");
+    const accessoryUnitCost = numericInput("directAccessoryUnitCost");
+    const accessories = accessoryQuantity * accessoryUnitCost;
 
     const customerUnitPrice = unitCost * (1 + markup / 100);
     const subtotal = quantity * customerUnitPrice;
@@ -1440,7 +1453,8 @@ function calculateDirectTotal() {
 
     el("displayUnitCost").textContent = money(unitCost);
     el("displayMarkup").textContent = markup + "%";
-    el("displayCustomerUnitPrice").textContent = money(customerUnitPrice);
+    el("displayCustomerUnitPrice").textContent =
+        money(customerUnitPrice);
     el("directSubtotal").textContent = money(subtotal);
     el("displayDelivery").textContent = money(delivery);
     el("displayBrackets").textContent = money(brackets);
@@ -1456,28 +1470,43 @@ function calculateDirectTotal() {
         customerUnitPrice,
         subtotal,
         delivery,
+
+        bracketQuantity,
+        bracketUnitCost,
         brackets,
+
+        installationPerAc,
         installation,
+
+        accessoryDescription,
+        accessoryUnit,
+        accessoryQuantity,
+        accessoryUnitCost,
         accessories,
+
         additional,
         discount,
         total
     };
 }
 
-
 [
     "directQuantity",
     "directUnitCost",
     "directMarkup",
     "directDeliveryCost",
-    "directBracketCost",
-    "directInstallationCost",
-    "directAccessoryCost",
+    "directBracketQuantity",
+    "directBracketUnitCost",
+    "directInstallationPerAc",
+    "directAccessoryDescription",
+    "directAccessoryUnit",
+    "directAccessoryQuantity",
+    "directAccessoryUnitCost",
     "directDiscount"
 ].forEach(id => {
     el(id).addEventListener("input", calculateDirectTotal);
 });
+
 
 
 function prepareDirectQuotation(requestId) {
