@@ -1767,11 +1767,11 @@ async function saveDirectQuotation(status) {
         unit_price: Math.round(
             calculation.customerUnitPrice * 100
         ) / 100,
-        subtotal: subtotal,
+        
         delivery_cost: calculation.delivery,
         additional_charges: additionalCharges,
         discount: calculation.discount,
-        total_amount: totalAmount,
+        
         validity_date: el("directValidity").value || null,
         notes: itemisedNotes,
         status: status,
