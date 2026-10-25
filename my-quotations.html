@@ -491,6 +491,64 @@ function frosttechConfirm(){
   });
 }
 
+/* FrostTech branded decline confirmation */
+
+function showDeclineConfirmation(){
+  return new Promise(resolve=>{
+    const overlay=document.createElement("div");
+    overlay.className="ft-confirm-overlay";
+
+    const dialog=document.createElement("div");
+    dialog.className="ft-confirm-box";
+    dialog.setAttribute("role","dialog");
+    dialog.setAttribute("aria-modal","true");
+
+    const title=document.createElement("h3");
+    title.className="ft-confirm-title";
+    title.textContent="FrostTech HVAC & Refrigeration Marketplace";
+
+    const message=document.createElement("p");
+    message.className="ft-confirm-question";
+    message.textContent="Are you sure you want to decline this offer?";
+
+    const buttons=document.createElement("div");
+    buttons.className="ft-confirm-actions";
+
+    const cancel=document.createElement("button");
+    cancel.type="button";
+    cancel.className="ft-confirm-cancel";
+    cancel.textContent="Cancel";
+
+    const confirm=document.createElement("button");
+    confirm.type="button";
+    confirm.className="ft-confirm-ok";
+    confirm.textContent="Yes, Decline Offer";
+
+    let finished=false;
+
+    function finish(result){
+      if(finished)return;
+      finished=true;
+      overlay.remove();
+      resolve(result);
+    }
+
+    cancel.addEventListener("click",()=>finish(false));
+    confirm.addEventListener("click",()=>finish(true));
+
+    overlay.addEventListener("click",event=>{
+      if(event.target===overlay)finish(false);
+    });
+
+    buttons.append(cancel,confirm);
+    dialog.append(title,message,buttons);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    cancel.focus();
+  });
+}
+
 
 function showMessage(text,type="info"){
   messageBox.textContent=text;
