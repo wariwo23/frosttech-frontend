@@ -1346,13 +1346,11 @@ function renderUnlockedQuotation(q){
       return;
     }
 
-    if(
-      !window.confirm(
-        "Confirm that you want to decline this quotation?"
-      )
-    ){
-      return;
-    }
+    
+if(!(await showDeclineConfirmation())){
+  return;
+}
+
 
     await submitDecision(
       q.id,
