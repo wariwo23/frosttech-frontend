@@ -1666,7 +1666,6 @@ saveDirectQuotation("submitted");
 
 });
 
-
 async function saveDirectQuotation(status) {
     if (!currentAdmin) {
         showMessage("directQuoteMessage", "Admin login required.", "error");
@@ -1674,103 +1673,177 @@ async function saveDirectQuotation(status) {
     }
 
     const requestId = el("directRequestId").value;
-    const request = currentRequests.find(item => item.id === requestId);
+    const request = currentRequests.find(
+        item => String(item.id) === String(requestId)
+    );
 
     if (!request) {
-        showMessage("directQuoteMessage", "Customer request not found. Refresh requests first.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "Customer request not found. Refresh requests first.",
+            "error"
+        );
         return;
     }
 
     const calculation = calculateDirectTotal();
     const description = el("directProductDescription").value.trim();
+    const existingNotes = el("directNotes").value.trim();
 
     if (!description) {
-        showMessage("directQuoteMessage", "Enter a product or service description.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "Enter a product or service description.",
+            "error"
+        );
         return;
     }
 
+    const valuesToCheck = [
+        calculation.quantity,
+        calculation.unitCost,
+        calculation.markup,
+        calculation.delivery,
+        calculation.bracketQuantity,
+        calculation.bracketUnitCost,
+        calculation.installationPerAc,
+        calculation.accessoryQuantity,
+        calculation.accessoryUnitCost,
+        calculation.discount
+    ];
+
     if (
+        !valuesToCheck.every(Number.isFinite) ||
         !Number.isInteger(calculation.quantity) ||
         calculation.quantity < 1 ||
+        !Number.isInteger(calculation.bracketQuantity) ||
+        calculation.bracketQuantity < 0 ||
+        !Number.isInteger(calculation.accessoryQuantity) ||
+        calculation.accessoryQuantity < 0 ||
         calculation.unitCost < 0 ||
         calculation.markup < 0 ||
         calculation.delivery < 0 ||
-        calculation.brackets < 0 ||
-        calculation.installation < 0 ||
-        calculation.accessories < 0 ||
+        calculation.bracketUnitCost < 0 ||
+        calculation.installationPerAc < 0 ||
+        calculation.accessoryUnitCost < 0 ||
         calculation.discount < 0
     ) {
-        showMessage("directQuoteMessage", "Check the quantity, markup, and cost fields.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "Check all quantities and costs. Quantities must be whole, non-negative numbers, and product quantity must be at least 1.",
+            "error"
+        );
         return;
     }
 
-    if (!Number.isFinite(calculation.total) || calculation.total < 0) {
-        showMessage("directQuoteMessage", "The discount cannot exceed the subtotal plus charges.", "error");
+    const subtotal = Math.round(
+        calculation.subtotal * 100
+    ) / 100;
+
+    const additionalCharges = Math.round(
+        calculation.additional * 100
+    ) / 100;
+
+    const totalAmount = Math.round(
+        (
+            subtotal +
+            calculation.delivery +
+            additionalCharges -
+            calculation.discount
+        ) * 100
+    ) / 100;
+
+    if (!Number.isFinite(totalAmount) || totalAmount < 0) {
+        showMessage(
+            "directQuoteMessage",
+            "The discount cannot exceed the subtotal plus delivery and additional charges.",
+            "error"
+        );
         return;
     }
 
-    if (status === "submitted" && calculation.total <= 0) {
-        showMessage("directQuoteMessage", "The total must be greater than zero before submitting.", "error");
+    if (status === "submitted" && totalAmount <= 0) {
+        showMessage(
+            "directQuoteMessage",
+            "The total must be greater than zero before submitting.",
+            "error"
+        );
         return;
     }
 
     const quoteId = el("directQuoteId").value.trim();
 
-    /*
-     * The existing database table has a single additional_charges column.
-     * Store brackets, installation and accessories together in that column.
-     * Their individual values are preserved in the notes for an itemised record.
-     */
-    const existingNotes = el("directNotes").value.trim();
-
     const itemisedNotes = [
         "PRODUCT COST PER UNIT: " + money(calculation.unitCost),
         "MARKUP: " + calculation.markup + "%",
-        "CALCULATED CUSTOMER UNIT PRICE: " + money(calculation.customerUnitPrice),
+        "CUSTOMER PRICE PER AC: " + money(calculation.customerUnitPrice),
+        "PRODUCT QUANTITY: " + calculation.quantity,
+        "PRODUCT SUBTOTAL: " + money(subtotal),
+
+        "OUTDOOR BRACKETS: " +
+            calculation.bracketQuantity + " sets × " +
+            money(calculation.bracketUnitCost) +
+            " = " + money(calculation.brackets),
+
+        "INSTALLATION: " +
+            calculation.quantity + " AC × " +
+            money(calculation.installationPerAc) +
+            " per AC = " + money(calculation.installation),
+
+        "ACCESSORY DESCRIPTION: " +
+            (calculation.accessoryDescription || "Not specified"),
+
+        "ACCESSORY UNIT / PACK: " +
+            (calculation.accessoryUnit || "Not specified"),
+
+        "ACCESSORIES: " +
+            calculation.accessoryQuantity + " × " +
+            money(calculation.accessoryUnitCost) +
+            " = " + money(calculation.accessories),
+
+        "TOTAL ADDITIONAL CHARGES: " + money(additionalCharges),
         "DELIVERY COST: " + money(calculation.delivery),
-        "OUTDOOR BRACKETS: " + money(calculation.brackets),
-        "INSTALLATION: " + money(calculation.installation),
-        "ACCESSORIES: " + money(calculation.accessories),
         "DISCOUNT: " + money(calculation.discount),
+        "FINAL QUOTATION TOTAL: " + money(totalAmount),
+
         existingNotes ? "CUSTOMER NOTES: " + existingNotes : ""
     ].filter(Boolean).join("\n");
 
-const subtotal = Math.round(
-calculation.quantity * calculation.customerUnitPrice * 100
-) / 100;
+    const record = {
+        request_id: request.id,
+        customer_id: request.customer_id,
+        product_description: description,
+        quantity: calculation.quantity,
+        unit_price: Math.round(
+            calculation.customerUnitPrice * 100
+        ) / 100,
+        subtotal: subtotal,
+        delivery_cost: calculation.delivery,
+        additional_charges: additionalCharges,
+        discount: calculation.discount,
+        total_amount: totalAmount,
+        validity_date: el("directValidity").value || null,
+        notes: itemisedNotes,
+        status: status,
+        updated_at: new Date().toISOString()
+    };
 
-const totalAmount = Math.round(
-(subtotal + calculation.delivery + calculation.additional - calculation.discount) * 100
-) / 100;
+    if (!quoteId) {
+        record.quotation_number = makeReference("FT-Q");
+        record.created_by = currentAdmin.id;
+    }
 
-const record = {
-    request_id: request.id,
-    customer_id: request.customer_id,
-    product_description: description,
-    quantity: calculation.quantity,
-    unit_price: calculation.customerUnitPrice,
-    delivery_cost: calculation.delivery,
-    additional_charges: calculation.additional,
-    discount: calculation.discount,
-    validity_date: el("directValidity").value || null,
-    notes: itemisedNotes,
-    status,
-    updated_at: new Date().toISOString()
-};
+    const button = status === "draft"
+        ? el("saveDraftBtn")
+        : el("submitDirectQuoteBtn");
 
-if (quoteId) {
-// Do not overwrite the original creator or quotation number.
-} else {
-record.quotation_number = makeReference("FT-Q");
-record.created_by = currentAdmin.id;
-}
-
-    const button = status === "draft" ? el("saveDraftBtn") : el("submitDirectQuoteBtn");
     button.disabled = true;
 
     showMessage(
         "directQuoteMessage",
-        status === "draft" ? "Saving draft..." : "Submitting quotation...",
+        status === "draft"
+            ? "Saving draft..."
+            : "Submitting quotation...",
         "info"
     );
 
@@ -1778,7 +1851,8 @@ record.created_by = currentAdmin.id;
         let saved;
 
         if (quoteId) {
-            const result = await db.from("admin_quotations")
+            const result = await db
+                .from("admin_quotations")
                 .update(record)
                 .eq("id", quoteId)
                 .select("*")
@@ -1787,7 +1861,8 @@ record.created_by = currentAdmin.id;
             if (result.error) throw result.error;
             saved = result.data;
         } else {
-            const result = await db.from("admin_quotations")
+            const result = await db
+                .from("admin_quotations")
                 .insert(record)
                 .select("*")
                 .single();
@@ -1798,39 +1873,54 @@ record.created_by = currentAdmin.id;
 
         if (status === "submitted") {
             try {
-                const { data:customer, error:customerError } = await db
+                const { data: customer, error: customerError } = await db
                     .from("customers")
                     .select("user_id")
                     .eq("id", request.customer_id)
                     .maybeSingle();
 
                 if (!customerError && customer?.user_id) {
-                    const { error:notificationError } = await db
+                    const { error: notificationError } = await db
                         .from("notifications")
                         .insert({
-                            user_id:customer.user_id,
-                            title:"FrostTech quotation available",
-                            message:"Your quotation " + saved.quotation_number + " is ready for review.",
-                            type:"quotation",
-                            reference_type:"admin_quotation",
-                            reference_id:saved.id
+                            user_id: customer.user_id,
+                            title: "FrostTech quotation available",
+                            message:
+                                "Your quotation " +
+                                saved.quotation_number +
+                                " is ready for review.",
+                            type: "quotation",
+                            reference_type: "admin_quotation",
+                            reference_id: saved.id
                         });
 
                     if (notificationError) {
-                        console.warn("Quotation saved but notification failed:", notificationError.message);
+                        console.warn(
+                            "Quotation saved but notification failed:",
+                            notificationError.message
+                        );
                     }
                 }
             } catch (notificationError) {
-                console.warn("Customer notification failed.", notificationError);
+                console.warn(
+                    "Customer notification failed.",
+                    notificationError
+                );
             }
 
-            const { error:requestUpdateError } = await db
+            const { error: requestUpdateError } = await db
                 .from("quote_requests")
-                .update({status:"quoted", updated_at:new Date().toISOString()})
+                .update({
+                    status: "quoted",
+                    updated_at: new Date().toISOString()
+                })
                 .eq("id", request.id);
 
             if (requestUpdateError) {
-                console.warn("Quotation saved, but request status update failed:", requestUpdateError.message);
+                console.warn(
+                    "Quotation saved, but request status update failed:",
+                    requestUpdateError.message
+                );
             }
         }
 
@@ -1838,7 +1928,8 @@ record.created_by = currentAdmin.id;
             "directQuoteMessage",
             status === "draft"
                 ? "Quotation draft saved: " + saved.quotation_number
-                : "Quotation submitted: " + saved.quotation_number +
+                : "Quotation submitted: " +
+                  saved.quotation_number +
                   ". Payment has not been initiated.",
             "success-message"
         );
