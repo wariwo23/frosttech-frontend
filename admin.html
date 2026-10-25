@@ -1725,7 +1725,7 @@ async function saveDirectQuotation(status) {
 
     
 const itemisedNotes = [
-        "PRODUCT: " + (document.getElementById("directProductName")?.value || "Selected product"),
+        "PRODUCT: " + description,
         "UNIT PRICE: " + money(calculation.customerUnitPrice),
         "PRODUCT QUANTITY: " + calculation.quantity,
         "PRODUCT SUBTOTAL: " + money(subtotal),
