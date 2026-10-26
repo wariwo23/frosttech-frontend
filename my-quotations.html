@@ -681,32 +681,43 @@ async function getSession(){
 }
 
 
-async function invokeFunction(name,body){
-  if(!currentSession?.access_token){
+async function invokeFunction(name, body) {
+  if (!currentSession?.access_token) {
     throw new Error(
       "Your session has expired. Please sign in again."
     );
   }
 
-  const {data,error}=await db.functions.invoke(name,{
+  const { data, error } = await db.functions.invoke(name, {
     body,
-    headers:{
-      Authorization:"Bearer "+currentSession.access_token
+    headers: {
+      Authorization: "Bearer " + currentSession.access_token
     }
   });
 
-  if(error){
-    console.error(name+" failed:",error,data);
+  if (error) {
+    console.error(name + " failed:", error, data);
+
+    let message = data?.error || "";
+
+    if (!message && error.context instanceof Response) {
+      try {
+        const response = await error.context.clone().json();
+        message = response?.error || response?.message || "";
+      } catch (_) {
+        // The response may not contain readable JSON.
+      }
+    }
 
     throw new Error(
-      data?.error||
-      "The service could not complete your request. Please refresh and try again."
+      message ||
+      "Supabase returned an error. Open the browser console for details."
     );
   }
 
-  if(!data||data.error||data.success===false){
+  if (!data || data.error || data.success === false) {
     throw new Error(
-      data?.error||"Unexpected service response."
+      data?.error || "Unexpected service response."
     );
   }
 
