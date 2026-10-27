@@ -1251,7 +1251,7 @@ payButton.addEventListener("click", async () => {
       db
         .from("orders")
         .select("id,status")
-        .eq("quote_request_id", q.request_id)
+        .eq("quotation_id", q.id)
         .eq("customer_id", currentSession.user.id)
         .maybeSingle(),
       25000,
