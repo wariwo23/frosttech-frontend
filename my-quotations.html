@@ -1219,33 +1219,114 @@ function renderUnlockedQuotation(q){
           );
 
           if(!result.authorization_url){
-            throw new Error(
-              result.error||
-              "Unable to start order payment."
-            );
-          }
 
-          window.location.assign(
-            result.authorization_url
-          );
+payButton.addEventListener("click", async () => {
+  if (paymentInProgress) return;
 
-        }catch(error){
-          console.error(
-            "Order payment initialization failed:",
-            error
-          );
+  if (!paymentTerms.checked) {
+    showMessage(
+      "Please accept FrostTech's Terms and Conditions before proceeding to payment.",
+      "error"
+    );
+    paymentTerms.focus();
+    return;
+  }
 
-          showMessage(
-            error.message||
-            "Unable to start order payment. Check its status before retrying.",
-            "error"
-          );
+  paymentInProgress = true;
+  payButton.disabled = true;
+  payButton.textContent = "Recording Terms acceptance...";
 
-          payButton.disabled=false;
-          payButton.textContent="Order Payment";
-          paymentInProgress=false;
-        }
-      });
+  try {
+    await withTimeout(
+      getSession(),
+      25000,
+      "Checking your sign-in took too long. Please try again."
+    );
+
+    if (!currentSession) {
+      throw new Error("Please sign in again.");
+    }
+
+    const { data: order, error: orderError } = await withTimeout(
+      db
+        .from("orders")
+        .select("id,status")
+        .eq("quote_request_id", q.request_id)
+        .eq("customer_id", currentSession.user.id)
+        .maybeSingle(),
+      25000,
+      "Checking your order took too long. Refresh My Quotations before trying again."
+    );
+
+    if (orderError) throw orderError;
+
+    if (!order) {
+      throw new Error(
+        "The order could not be found. Please contact FrostTech support."
+      );
+    }
+
+    if (order.status !== "awaiting_payment") {
+      throw new Error(
+        "This order is not currently awaiting payment."
+      );
+    }
+
+    // First, record explicit Terms acceptance.
+    // This function must not start or initialize a payment.
+    const recorded = await withTimeout(
+      invokeFunction("record-order-payment-terms", {
+        order_id: order.id,
+        terms_accepted: true
+      }),
+      30000,
+      "Recording Terms acceptance timed out. No payment was started."
+    );
+
+    if (recorded.success !== true || recorded.recorded !== true) {
+      throw new Error(
+        recorded.error ||
+        recorded.message ||
+        "Terms acceptance could not be confirmed. No payment was started."
+      );
+    }
+
+    // Only after the server confirms acceptance do we request
+    // the existing payment initializer to continue.
+    payButton.textContent = "Preparing secure payment...";
+
+    const result = await withTimeout(
+      invokeFunction("initialize-paystack-payment", {
+        order_id: order.id,
+        order_payment_terms_accepted: true
+      }),
+      30000,
+      "Payment initialization timed out. Check My Quotations and your payment status before trying again."
+    );
+
+    if (!result.authorization_url) {
+      throw new Error(
+        result.error || "Unable to start order payment."
+      );
+    }
+
+    window.location.assign(result.authorization_url);
+
+  } catch (error) {
+    console.error("Order payment initialization failed:", error);
+
+    showMessage(
+      error.message ||
+      "Unable to start order payment. Check its status before retrying.",
+      "error"
+    );
+
+    payButton.disabled = false;
+    payButton.textContent = "Order Payment";
+    paymentInProgress = false;
+  }
+});
+
 
       card.appendChild(payButton);
     }
