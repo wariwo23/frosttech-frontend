@@ -1252,7 +1252,7 @@ payButton.addEventListener("click", async () => {
         .from("orders")
         .select("id,status")
         .eq("quotation_id", q.id)
-        .eq("customer_id", currentSession.user.id)
+        .eq("customer_id", customerRecordId)
         .maybeSingle(),
       25000,
       "Checking your order took too long. Refresh My Quotations before trying again."
