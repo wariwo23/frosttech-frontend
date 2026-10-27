@@ -1176,10 +1176,10 @@ function renderUnlockedQuotation(q){
           const {data:order,error:orderError}=await withTimeout(
             db
               .from("orders")
-              .select("id,status")
-              .eq("quote_request_id",q.request_id)
-              .eq("customer_id",currentSession.user.id)
-              .maybeSingle(),
+.select("id,status")
+.eq("quotation_id", q.id)
+.eq("customer_id", customerRecordId)
+.maybeSingle()
             25000,
             "Checking your order took too long. Refresh My Quotations before trying again."
           );
