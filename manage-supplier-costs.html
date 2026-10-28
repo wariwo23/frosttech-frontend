@@ -227,32 +227,54 @@
   }
 
   async function loadProducts() {
-    const { data, error } = await db
-      .from("products")
-      .select("id,name,category,brand,model,selling_price,supplier_id,is_active")
-      .order("name");
+  
+async function loadProducts() {
+  const previousProductId = $("productSelect").value;
 
-    if (error) throw error;
-    products = data || [];
+  const { data, error } = await db
+    .from("products")
+    .select("id,name,category,brand,model,selling_price,supplier_id,is_active")
+    .order("name");
 
-    const select = $("productSelect");
-    select.replaceChildren(new Option("Choose a product", ""));
+  if (error) throw error;
+  products = data || [];
 
-    products.forEach(p => {
-      const label = [p.name, p.brand, p.model].filter(Boolean).join(" — ");
-      select.add(new Option(label || p.id, p.id));
-    });
+  const select = $("productSelect");
+  select.replaceChildren(new Option("Choose a product", ""));
 
-    if (!products.length) {
-      $("productInfo").textContent = "No products were returned for this account.";
-      $("costRows").innerHTML =
-        '<tr><td colspan="5">No products available.</td></tr>';
-      return;
-    }
+  products.forEach(p => {
+    const label = [p.name, p.brand, p.model]
+      .filter(Boolean)
+      .join(" — ");
+    select.add(new Option(label || p.id, p.id));
+  });
 
+  const previousStillExists = products.some(
+    p => p.id === previousProductId
+  );
+
+  if (previousStillExists) {
+    select.value = previousProductId;
+  } else if (products.length > 0) {
     select.value = products[0].id;
-    await loadCosts();
   }
+
+  if (!products.length) {
+    $("productInfo").textContent =
+      "No products were returned for this account.";
+    $("costRows").replaceChildren();
+    const row = document.createElement("tr");
+    const cell = document.createElement("td");
+    cell.colSpan = 5;
+    cell.textContent = "No products available.";
+    row.appendChild(cell);
+    $("costRows").appendChild(row);
+    return;
+  }
+
+  await loadCosts();
+}
+
 
   async function loadSuppliers() {
     const { data, error } = await db
