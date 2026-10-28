@@ -1,0 +1,508 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FrostTech | Supplier Cost Management</title>
+  <style>
+    :root {
+      font-family: Arial, sans-serif;
+      color: #172033;
+      background: #f3f6fa;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    header {
+      background: #12345a;
+      color: white;
+      padding: 18px 16px;
+    }
+    header h1 { margin: 0 0 6px; font-size: 21px; }
+    header p { margin: 0; font-size: 13px; }
+    main { max-width: 900px; margin: 20px auto; padding: 0 12px 30px; }
+    .panel {
+      background: white;
+      padding: 18px;
+      margin-bottom: 16px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px #0000000c;
+    }
+    h2 { font-size: 18px; margin: 0 0 14px; }
+    label { display: block; font-weight: bold; margin: 13px 0 6px; }
+    input, select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      background: white;
+      font-size: 15px;
+    }
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 12px 15px;
+      margin: 10px 5px 0 0;
+      font-size: 14px;
+      font-weight: bold;
+      cursor: pointer;
+      background: #1557a0;
+      color: white;
+    }
+    button.secondary { background: #526174; }
+    button:disabled { opacity: .55; cursor: not-allowed; }
+    .muted { color: #64748b; font-size: 13px; line-height: 1.5; }
+    .notice {
+      padding: 12px;
+      margin-bottom: 14px;
+      border-radius: 7px;
+      background: #e8f1fb;
+      color: #173d68;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    .notice.error { background: #fff0ef; color: #a12424; }
+    .notice.success { background: #e8f7ed; color: #176534; }
+    .hidden { display: none !important; }
+    .price { font-size: 19px; font-weight: bold; margin-top: 12px; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; min-width: 520px; }
+    th, td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+      font-size: 13px;
+    }
+    th { background: #f8fafc; }
+    .selected { color: #16733b; font-weight: bold; }
+    footer { text-align: center; padding: 16px; color: #64748b; font-size: 12px; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>FrostTech HVAC and Refrigeration Marketplace</h1>
+  <p>Administrator — Supplier Cost Management</p>
+</header>
+
+<main>
+  <div id="notice" class="notice" role="status">
+    Sign in with an authorised FrostTech administrator account to continue.
+  </div>
+
+  <section id="loginPanel" class="panel">
+    <h2>Administrator sign in</h2>
+    <form id="loginForm">
+      <label for="email">Administrator email</label>
+      <input id="email" type="email" autocomplete="username" required>
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required>
+      <button id="loginButton" type="submit">Sign In</button>
+    </form>
+    <p class="muted">Your account must already have active FrostTech administrator access.</p>
+  </section>
+
+  <div id="workspace" class="hidden">
+    <section class="panel">
+      <h2>1. Select a product</h2>
+      <label for="productSelect">Product</label>
+      <select id="productSelect">
+        <option value="">Loading products…</option>
+      </select>
+      <div id="productInfo" class="muted"></div>
+      <button id="refreshButton" type="button" class="secondary">Refresh Data</button>
+    </section>
+
+    <section class="panel">
+      <h2>2. Save a supplier cost</h2>
+      <p class="muted">
+        Only active, verified, approved suppliers are eligible. Saving a cost
+        does not select that supplier unless the supplier is already selected.
+      </p>
+      <label for="supplierSelect">Eligible supplier</label>
+      <select id="supplierSelect">
+        <option value="">Loading suppliers…</option>
+      </select>
+      <label for="supplierCost">Supplier cost (₦)</label>
+      <input id="supplierCost" type="number" min="0.01" step="0.01"
+             inputmode="decimal" placeholder="Enter verified supplier cost">
+      <div id="pricePreview" class="price">Estimated selling price: —</div>
+      <p class="muted">Calculation: supplier cost × 1.15. Delivery and other charges are handled separately.</p>
+      <button id="saveCostButton" type="button">Save Supplier Cost</button>
+    </section>
+
+    <section class="panel">
+      <h2>3. Supplier costs for this product</h2>
+      <p class="muted">
+        These costs are displayed only in this administrator interface.
+        Select one eligible supplier to make it the product's current supplier.
+      </p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Supplier</th>
+              <th>Cost</th>
+              <th>Calculated selling price</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="costRows">
+            <tr><td colspan="5">Select a product to view its saved costs.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Administrator session</h2>
+      <p id="signedInAs" class="muted"></p>
+      <button id="signOutButton" type="button" class="secondary">Sign Out</button>
+    </section>
+  </div>
+</main>
+
+<footer>FrostTech — Internal administration page</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(() => {
+  "use strict";
+
+  const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
+  const SUPABASE_KEY = "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+  const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+  const $ = id => document.getElementById(id);
+
+  let products = [];
+  let suppliers = [];
+  let costs = [];
+  let busy = false;
+
+  function notify(message, type = "") {
+    const el = $("notice");
+    el.textContent = message;
+    el.className = "notice" + (type ? " " + type : "");
+  }
+
+  function money(value) {
+    const n = Number(value);
+    if (!Number.isFinite(n)) return "—";
+    return "₦" + n.toLocaleString("en-NG", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+  }
+
+  function selectedProduct() {
+    return products.find(p => p.id === $("productSelect").value);
+  }
+
+  function supplierName(id) {
+    const s = suppliers.find(item => item.id === id);
+    return s ? s.business_name : "Supplier " + id;
+  }
+
+  function setBusy(value) {
+    busy = value;
+    [
+      "loginButton", "refreshButton", "saveCostButton",
+      "signOutButton", "productSelect", "supplierSelect"
+    ].forEach(id => {
+      $(id).disabled = value;
+    });
+    document.querySelectorAll(".select-cost-button").forEach(button => {
+      button.disabled = value;
+    });
+  }
+
+  function updatePreview() {
+    const raw = $("supplierCost").value;
+    const cost = Number(raw);
+    $("pricePreview").textContent =
+      raw !== "" && Number.isFinite(cost) && cost > 0
+        ? "Estimated selling price: " + money(Math.round(cost * 1.15 * 100) / 100)
+        : "Estimated selling price: —";
+  }
+
+  async function loadProducts() {
+    const { data, error } = await db
+      .from("products")
+      .select("id,name,category,brand,model,selling_price,supplier_id,is_active")
+      .order("name");
+
+    if (error) throw error;
+    products = data || [];
+
+    const select = $("productSelect");
+    select.replaceChildren(new Option("Choose a product", ""));
+
+    products.forEach(p => {
+      const label = [p.name, p.brand, p.model].filter(Boolean).join(" — ");
+      select.add(new Option(label || p.id, p.id));
+    });
+
+    if (!products.length) {
+      $("productInfo").textContent = "No products were returned for this account.";
+      $("costRows").innerHTML =
+        '<tr><td colspan="5">No products available.</td></tr>';
+      return;
+    }
+
+    select.value = products[0].id;
+    await loadCosts();
+  }
+
+  async function loadSuppliers() {
+    const { data, error } = await db
+      .from("suppliers")
+      .select("id,business_name,is_active,is_verified,review_status")
+      .eq("is_active", true)
+      .eq("is_verified", true)
+      .eq("review_status", "approved")
+      .order("business_name");
+
+    if (error) throw error;
+    suppliers = data || [];
+
+    const select = $("supplierSelect");
+    select.replaceChildren(new Option("Choose an eligible supplier", ""));
+    suppliers.forEach(s => select.add(new Option(s.business_name, s.id)));
+
+    if (!suppliers.length) {
+      select.add(new Option("No eligible suppliers found", ""));
+    }
+  }
+
+  async function loadCosts() {
+    const product = selectedProduct();
+    if (!product) return;
+
+    $("productInfo").textContent =
+      "Current selling price: " + money(product.selling_price) +
+      " | Current supplier: " +
+      (product.supplier_id ? supplierName(product.supplier_id) : "Not assigned");
+
+    const { data, error } = await db.rpc("admin_list_product_supplier_costs", {
+      p_product_id: product.id
+    });
+    if (error) throw error;
+
+    costs = data || [];
+    renderCosts();
+  }
+
+  function renderCosts() {
+    const body = $("costRows");
+    body.replaceChildren();
+
+    if (!costs.length) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 5;
+      td.textContent = "No saved supplier costs for this product.";
+      tr.appendChild(td);
+      body.appendChild(tr);
+      return;
+    }
+
+    costs.forEach(cost => {
+      const tr = document.createElement("tr");
+      const supplierCell = document.createElement("td");
+      supplierCell.textContent = supplierName(cost.supplier_id);
+
+      const costCell = document.createElement("td");
+      costCell.textContent = money(cost.supplier_cost);
+
+      const priceCell = document.createElement("td");
+      priceCell.textContent =
+        money(Math.round(Number(cost.supplier_cost) * 1.15 * 100) / 100);
+
+      const statusCell = document.createElement("td");
+      statusCell.textContent = cost.is_selected ? "Selected" : "Alternative";
+      if (cost.is_selected) statusCell.className = "selected";
+
+      const actionCell = document.createElement("td");
+      if (cost.is_selected) {
+        actionCell.textContent = "Current supplier";
+      } else {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "select-cost-button";
+        button.textContent = "Select Supplier";
+        button.addEventListener("click", () => selectSupplier(cost.supplier_id));
+        actionCell.appendChild(button);
+      }
+
+      [supplierCell, costCell, priceCell, statusCell, actionCell]
+        .forEach(cell => tr.appendChild(cell));
+      body.appendChild(tr);
+    });
+  }
+
+  async function saveCost() {
+    if (busy) return;
+    const product = selectedProduct();
+    const supplierId = $("supplierSelect").value;
+    const raw = $("supplierCost").value;
+    const cost = Number(raw);
+
+    if (!product) return notify("Select a product first.", "error");
+    if (!supplierId) return notify("Select an eligible supplier.", "error");
+    if (raw === "" || !Number.isFinite(cost) || cost <= 0) {
+      return notify("Enter a valid supplier cost greater than zero.", "error");
+    }
+
+    setBusy(true);
+    try {
+      const { error } = await db.rpc("admin_save_product_supplier_cost", {
+        p_product_id: product.id,
+        p_supplier_id: supplierId,
+        p_supplier_cost: cost
+      });
+      if (error) throw error;
+
+      $("supplierCost").value = "";
+      updatePreview();
+      await loadProducts();
+      await loadCosts();
+      notify("Supplier cost saved successfully.", "success");
+    } catch (error) {
+      notify("Could not save supplier cost: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function selectSupplier(supplierId) {
+    if (busy) return;
+    const product = selectedProduct();
+    if (!product) return notify("Select a product first.", "error");
+
+    const ok = window.confirm(
+      "Select " + supplierName(supplierId) +
+      " as the current supplier for this product? The selling price will be recalculated at a 15% markup."
+    );
+    if (!ok) return;
+
+    setBusy(true);
+    try {
+      const { data, error } = await db.rpc("admin_select_product_supplier", {
+        p_product_id: product.id,
+        p_supplier_id: supplierId
+      });
+      if (error) throw error;
+
+      await loadProducts();
+      await loadCosts();
+      notify(
+        "Supplier selected. Calculated selling price: " + money(data) + ".",
+        "success"
+      );
+    } catch (error) {
+      notify("Could not select supplier: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function refreshAll() {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await loadSuppliers();
+      await loadProducts();
+      notify("Supplier-cost data refreshed.", "success");
+    } catch (error) {
+      notify("Could not load data: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function showWorkspace(session) {
+    $("loginPanel").classList.toggle("hidden", !!session);
+    $("workspace").classList.toggle("hidden", !session);
+
+    if (!session) {
+      notify("Sign in with an authorised FrostTech administrator account.");
+      return;
+    }
+
+    $("signedInAs").textContent = "Signed in as " + session.user.email;
+    setBusy(true);
+    try {
+      await loadSuppliers();
+      await loadProducts();
+      notify("Signed in. Supplier costs are available only to authorised administrators.", "success");
+    } catch (error) {
+      notify("Unable to load administrator data: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  $("loginForm").addEventListener("submit", async event => {
+    event.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    try {
+      const { data, error } = await db.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+      if (error) throw error;
+      $("password").value = "";
+      await showWorkspace(data.session);
+    } catch (error) {
+      notify("Sign-in failed: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  $("productSelect").addEventListener("change", async () => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await loadCosts();
+    } catch (error) {
+      notify("Could not load product costs: " + error.message, "error");
+    } finally {
+      setBusy(false);
+    }
+  });
+
+  $("supplierSelect").addEventListener("change", () => {
+    const existing = costs.find(c =>
+      c.supplier_id === $("supplierSelect").value
+    );
+    $("supplierCost").value = existing ? existing.supplier_cost : "";
+    updatePreview();
+  });
+
+  $("supplierCost").addEventListener("input", updatePreview);
+  $("saveCostButton").addEventListener("click", saveCost);
+  $("refreshButton").addEventListener("click", refreshAll);
+
+  $("signOutButton").addEventListener("click", async () => {
+    const { error } = await db.auth.signOut();
+    if (error) return notify("Sign-out failed: " + error.message, "error");
+    products = [];
+    suppliers = [];
+    costs = [];
+    await showWorkspace(null);
+  });
+
+  db.auth.getSession().then(({ data, error }) => {
+    if (error) {
+      notify("Could not check your session: " + error.message, "error");
+      return;
+    }
+    showWorkspace(data.session);
+  });
+})();
+</script>
+</body>
+</html>
