@@ -419,36 +419,92 @@ async function loadProducts() {
   }
 
   async function selectSupplier(supplierId) {
-    if (busy) return;
-    const product = selectedProduct();
-    if (!product) return notify("Select a product first.", "error");
+  
+let pendingSupplierId = null;
 
-    const ok = window.confirm(
-      "Select " + supplierName(supplierId) +
-      " as the current supplier for this product? The selling price will be recalculated at a 15% markup."
-    );
-    if (!ok) return;
+function openSupplierConfirmation(supplierId) {
+  pendingSupplierId = supplierId;
 
-    setBusy(true);
-    try {
-      const { data, error } = await db.rpc("admin_select_product_supplier", {
+  $("confirmMessage").textContent =
+    "Are you sure you want to select " +
+    supplierName(supplierId) +
+    " as the current supplier for this product? The selling price will be recalculated using the approved 15% markup.";
+
+  $("confirmOverlay").classList.remove("hidden");
+}
+
+function closeSupplierConfirmation() {
+  pendingSupplierId = null;
+  $("confirmOverlay").classList.add("hidden");
+}
+
+async function selectSupplier(supplierId) {
+  if (busy) return;
+
+  const product = selectedProduct();
+  if (!product) {
+    notify("Select a product first.", "error");
+    return;
+  }
+
+  openSupplierConfirmation(supplierId);
+}
+
+async function confirmSupplierSelection() {
+  if (busy || !pendingSupplierId) return;
+
+  const supplierId = pendingSupplierId;
+  const product = selectedProduct();
+
+  if (!product) {
+    closeSupplierConfirmation();
+    notify("Select a product first.", "error");
+    return;
+  }
+
+  setBusy(true);
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_select_product_supplier",
+      {
         p_product_id: product.id,
         p_supplier_id: supplierId
-      });
-      if (error) throw error;
+      }
+    );
 
-      await loadProducts();
-      await loadCosts();
-      notify(
-        "Supplier selected. Calculated selling price: " + money(data) + ".",
-        "success"
-      );
-    } catch (error) {
-      notify("Could not select supplier: " + error.message, "error");
-    } finally {
-      setBusy(false);
-    }
+    if (error) throw error;
+
+    closeSupplierConfirmation();
+    await loadProducts();
+    await loadCosts();
+
+    notify(
+      "Supplier selected. Calculated selling price: " +
+      money(data) + ".",
+      "success"
+    );
+  } catch (error) {
+    closeSupplierConfirmation();
+    notify(
+      "Could not select supplier: " + error.message,
+      "error"
+    );
+  } finally {
+    setBusy(false);
   }
+}
+
+$("confirmCancel").addEventListener(
+  "click",
+  closeSupplierConfirmation
+);
+
+$("confirmProceed").addEventListener(
+  "click",
+  confirmSupplierSelection
+);
+
 
   async function refreshAll() {
     if (busy) return;
