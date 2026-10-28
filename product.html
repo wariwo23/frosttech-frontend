@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +8,9 @@
   <title>Product Details | FrostTech HVAC and Refrigeration</title>
 
   <meta name="description"
-        content="View HVAC and refrigeration products and request a quotation from FrostTech.">
+        content="Explore HVAC and refrigeration products and request a quotation from FrostTech.">
 
+  <meta name="theme-color" content="#075985">
   <link rel="stylesheet" href="style.css">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -28,35 +30,40 @@
     .product-page {
       max-width: 1100px;
       margin: auto;
-      padding: 30px 16px 60px;
+      padding: 28px 16px 55px;
     }
 
     .back-link {
       display: inline-block;
-      margin-bottom: 24px;
+      margin-bottom: 22px;
       color: #075985;
       text-decoration: none;
-      font-weight: bold;
+      font-weight: 700;
+    }
+
+    .back-link:hover {
+      text-decoration: underline;
     }
 
     .product-card {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 30px;
-      background: white;
-      padding: 25px;
+      padding: 26px;
+      background: #fff;
+      border: 1px solid #e5eaf0;
       border-radius: 14px;
-      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.07);
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.06);
     }
 
     .product-image-box {
-      min-height: 300px;
+      min-height: 320px;
       display: flex;
-      justify-content: center;
       align-items: center;
+      justify-content: center;
+      overflow: hidden;
       background: #f0f5f9;
       border-radius: 10px;
-      overflow: hidden;
       color: #075985;
       font-size: 70px;
     }
@@ -64,99 +71,152 @@
     .product-image-box img {
       display: block;
       width: 100%;
-      max-height: 430px;
+      max-height: 440px;
       object-fit: contain;
     }
 
+    .product-information {
+      min-width: 0;
+    }
+
     .product-category {
+      margin-bottom: 10px;
       color: #075985;
       font-size: 14px;
-      font-weight: bold;
-      margin-bottom: 10px;
+      font-weight: 700;
+      overflow-wrap: anywhere;
     }
 
     .product-name {
-      font-size: 30px;
-      line-height: 1.3;
       margin: 0 0 16px;
+      font-size: 30px;
+      line-height: 1.35;
       overflow-wrap: anywhere;
     }
 
     .product-details {
-      line-height: 1.8;
       color: #4b5563;
+      line-height: 1.8;
       overflow-wrap: anywhere;
     }
 
     .product-price {
-      font-size: 26px;
-      font-weight: bold;
+      margin: 22px 0 12px;
       color: #075985;
-      margin: 22px 0;
+      font-size: 27px;
+      font-weight: 800;
+      overflow-wrap: anywhere;
+    }
+
+    .price-note {
+      margin: -4px 0 18px;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
     }
 
     .product-stock {
-      margin: 12px 0;
-      font-weight: bold;
+      display: inline-block;
+      margin: 6px 0 20px;
+      padding: 8px 12px;
+      border-radius: 20px;
+      background: #e8f7ee;
+      color: #087443;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .description-heading {
+      margin: 12px 0 8px;
+      font-size: 19px;
     }
 
     .product-description {
+      margin: 0;
+      color: #4b5563;
       line-height: 1.8;
       white-space: pre-wrap;
       overflow-wrap: anywhere;
     }
 
     .quote-button {
-      display: inline-block;
+      display: block;
       width: 100%;
-      text-align: center;
-      padding: 15px;
-      margin-top: 20px;
+      margin-top: 24px;
+      padding: 15px 18px;
+      border: 0;
       border-radius: 8px;
       background: #075985;
-      color: white;
+      color: #fff;
+      text-align: center;
       text-decoration: none;
       font-size: 16px;
-      font-weight: bold;
-      border: none;
+      font-weight: 700;
       cursor: pointer;
+      transition: background 0.2s ease;
     }
 
     .quote-button:hover {
       background: #064568;
     }
 
+    .quote-button:focus-visible,
+    .back-link:focus-visible,
+    .retry-button:focus-visible {
+      outline: 3px solid #38bdf8;
+      outline-offset: 3px;
+    }
+
     .page-message {
       padding: 22px;
       margin: 20px 0;
-      border-radius: 10px;
-      background: white;
       border: 1px solid #d8e0e8;
+      border-radius: 10px;
+      background: #fff;
+      line-height: 1.7;
       overflow-wrap: anywhere;
     }
 
+    .page-message[hidden],
+    #product-container[hidden] {
+      display: none !important;
+    }
+
     .error-message {
-      background: #fff0f0;
       border-color: #e5a3a3;
-      color: #9b1c1c;
+      background: #fff5f5;
+      color: #8f2020;
     }
 
     .retry-button {
-      margin-top: 12px;
+      margin-top: 8px;
       padding: 12px 18px;
-      border: none;
+      border: 0;
       border-radius: 7px;
       background: #075985;
-      color: white;
+      color: #fff;
       font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
     }
 
+    .retry-button:hover {
+      background: #064568;
+    }
+
+    .footer-content {
+      gap: 20px;
+    }
+
     @media (max-width: 700px) {
+      .product-page {
+        padding: 22px 14px 40px;
+      }
+
       .product-card {
-        grid-template-columns: 1fr;
-        padding: 16px;
+        grid-template-columns: minmax(0, 1fr);
         gap: 22px;
+        padding: 16px;
       }
 
       .product-image-box {
@@ -168,7 +228,13 @@
       }
 
       .product-price {
-        font-size: 23px;
+        font-size: 24px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .quote-button {
+        transition: none;
       }
     }
   </style>
@@ -178,17 +244,17 @@
 
 <header class="topbar">
   <div class="container nav">
+    <a href="index.html"
+       class="logo"
+       style="text-decoration:none;color:inherit;">
+      <span aria-hidden="true">❄</span> FrostTech
+    </a>
 
-    <div class="logo">
-      <span>❄</span> FrostTech
-    </div>
-
-    <nav>
+    <nav aria-label="Main navigation">
       <a href="index.html">Home</a>
       <a href="catalog.html">Catalogue</a>
       <a href="quote_requests.html">Request Quote</a>
     </nav>
-
   </div>
 </header>
 
@@ -198,15 +264,20 @@
     ← Back to Product Catalogue
   </a>
 
-  <div id="product-status" class="page-message">
+  <div id="product-status"
+       class="page-message"
+       role="status"
+       aria-live="polite">
     Loading product details...
   </div>
 
   <section id="product-container" hidden>
-
     <article class="product-card">
 
-      <div id="product-image-box" class="product-image-box">
+      <div id="product-image-box"
+           class="product-image-box"
+           role="img"
+           aria-label="Product image">
         ❄
       </div>
 
@@ -220,20 +291,27 @@
 
         <div id="product-price" class="product-price"></div>
 
-        <div id="product-stock" class="product-stock"></div>
+        <p class="price-note">
+          Displayed price is the FrostTech selling price.
+          Final quotation details will be confirmed through the quotation process.
+        </p>
 
-        <h3>Product Description</h3>
+        <div id="product-stock" class="product-stock">
+          Available for quotation
+        </div>
+
+        <h2 class="description-heading">Product Description</h2>
 
         <p id="product-description" class="product-description"></p>
 
-        <a id="quote-button" class="quote-button" href="quote_requests.html">
+        <a id="quote-button"
+           class="quote-button"
+           href="quote_requests.html">
           Request a Quote
         </a>
 
       </div>
-
     </article>
-
   </section>
 
 </main>
@@ -271,6 +349,8 @@ const SUPABASE_PUBLISHABLE_KEY =
 const statusBox = document.getElementById("product-status");
 const productContainer = document.getElementById("product-container");
 
+let supabaseClient = null;
+
 function showMessage(message, isError = false) {
   statusBox.hidden = false;
   statusBox.className = isError
@@ -285,25 +365,26 @@ function showMessage(message, isError = false) {
 
   if (isError) {
     const button = document.createElement("button");
+    button.type = "button";
     button.className = "retry-button";
     button.textContent = "Try Again";
-
     button.addEventListener("click", loadProduct);
-
     statusBox.appendChild(button);
   }
 }
 
 function formatPrice(value) {
-  const amount = Number(value);
-
   if (
     value === null ||
     value === undefined ||
-    value === "" ||
-    !Number.isFinite(amount) ||
-    amount <= 0
+    value === ""
   ) {
+    return "Price on request";
+  }
+
+  const amount = Number(value);
+
+  if (!Number.isFinite(amount) || amount <= 0) {
     return "Price on request";
   }
 
@@ -311,6 +392,40 @@ function formatPrice(value) {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2
   });
+}
+
+function displayProductImage(product) {
+  const imageBox = document.getElementById("product-image-box");
+
+  imageBox.replaceChildren();
+  imageBox.setAttribute("aria-label", "Product image");
+
+  if (!product.image_url) {
+    imageBox.textContent = "❄";
+    imageBox.setAttribute(
+      "aria-label",
+      "No product image available"
+    );
+    return;
+  }
+
+  const image = document.createElement("img");
+
+  image.src = product.image_url;
+  image.alt = product.name || "FrostTech product";
+  image.loading = "eager";
+  image.decoding = "async";
+
+  image.onerror = function () {
+    imageBox.replaceChildren();
+    imageBox.textContent = "❄";
+    imageBox.setAttribute(
+      "aria-label",
+      "Product image unavailable"
+    );
+  };
+
+  imageBox.appendChild(image);
 }
 
 async function loadProduct() {
@@ -321,7 +436,7 @@ async function loadProduct() {
 
   if (!productId || !productId.trim()) {
     showMessage(
-      "No product ID was provided. Please return to the product catalogue and tap View Product on the product you want.",
+      "No product was selected. Please return to the product catalogue and select a product.",
       true
     );
     return;
@@ -331,15 +446,15 @@ async function loadProduct() {
 
   try {
     if (!window.supabase) {
-      throw new Error(
-        "The Supabase library did not load. Check your internet connection and try again."
-      );
+      throw new Error("SUPABASE_LIBRARY_UNAVAILABLE");
     }
 
-    const supabaseClient = window.supabase.createClient(
-      SUPABASE_URL,
-      SUPABASE_PUBLISHABLE_KEY
-    );
+    if (!supabaseClient) {
+      supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_PUBLISHABLE_KEY
+      );
+    }
 
     const { data: product, error } = await supabaseClient
       .from("products")
@@ -351,65 +466,54 @@ async function loadProduct() {
       .maybeSingle();
 
     if (error) {
-      throw new Error(
-        "Database error: " + error.message +
-        (error.code ? " (Code: " + error.code + ")" : "")
+      console.error(
+        "FrostTech product database error:",
+        error.message,
+        error.code
       );
+
+      throw new Error("PRODUCT_LOOKUP_FAILED");
     }
 
     if (!product) {
-      throw new Error(
-        "This product could not be found or is no longer active. Return to the catalogue and select an available product."
+      showMessage(
+        "This product could not be found or is no longer available in the catalogue. Please select another product.",
+        true
       );
+      return;
     }
 
     document.getElementById("product-name").textContent =
       product.name || "FrostTech Product";
 
     document.getElementById("product-category").textContent =
-      product.category || "HVAC Product";
+      product.category || "HVAC and Refrigeration";
+
+    const details = [];
+
+    if (product.brand) {
+      details.push("Brand: " + product.brand);
+    }
+
+    if (product.model) {
+      details.push("Model: " + product.model);
+    }
 
     document.getElementById("product-details").textContent =
-      [
-        product.brand ? "Brand: " + product.brand : "",
-        product.model ? "Model: " + product.model : ""
-      ].filter(Boolean).join(" | ");
+      details.join(" | ");
 
     document.getElementById("product-price").textContent =
       formatPrice(product.selling_price);
 
     document.getElementById("product-description").textContent =
-      product.description || "Contact FrostTech for more information about this product.";
+      product.description ||
+      "Contact FrostTech for more information about this product.";
 
-    const imageBox = document.getElementById("product-image-box");
-    imageBox.replaceChildren();
+    displayProductImage(product);
 
-    if (product.image_url) {
-      const image = document.createElement("img");
+    document.getElementById("product-stock").textContent =
+      "Available for quotation";
 
-      image.src = product.image_url;
-      image.alt = product.name || "FrostTech product";
-      image.loading = "eager";
-
-      image.onerror = function () {
-        imageBox.replaceChildren();
-        imageBox.textContent = "❄";
-      };
-
-      imageBox.appendChild(image);
-    } else {
-      imageBox.textContent = "❄";
-    }
-
-    const stockDisplay = document.getElementById("product-stock");
-
-    stockDisplay.textContent = "Available for quotation";
-    stockDisplay.style.color = "#087443";
-
-    /*
-      Pass the selected product ID to the quotation page.
-      The quotation page must read this ID to preselect the product.
-    */
     const quoteButton = document.getElementById("quote-button");
 
     quoteButton.href =
@@ -420,14 +524,20 @@ async function loadProduct() {
     productContainer.hidden = false;
 
   } catch (error) {
-    console.error("FrostTech product loading error:", error);
-
-    showMessage(
-      error && error.message
-        ? error.message
-        : "An unexpected error occurred while loading this product.",
-      true
+    console.error(
+      "FrostTech product loading error:",
+      error
     );
+
+    let message =
+      "We could not load this product right now. Please check your internet connection and try again.";
+
+    if (error && error.message === "SUPABASE_LIBRARY_UNAVAILABLE") {
+      message =
+        "The product service could not be loaded. Please check your internet connection and try again.";
+    }
+
+    showMessage(message, true);
   }
 }
 
