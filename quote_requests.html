@@ -1,870 +1,717 @@
-<!DOCTYPE html><html lang="en">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>Request a Quote | FrostTech HVAC and Refrigeration</title><meta name="description"
-content="Request a quotation for HVAC products, refrigeration parts, accessories, and services from FrostTech.">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-  <link rel="stylesheet" href="style.css">  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script>  <style>
-    * {
+  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+
+  <meta name="description"
+        content="Request a quotation for HVAC products, refrigeration equipment, accessories and services from FrostTech.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .quote-container {
+      max-width: 650px;
+      margin: 30px auto;
+      padding: 24px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    }
+
+    .quote-container h1,
+    .quote-container > p {
+      text-align: center;
+    }
+
+    .quote-form label {
+      display: block;
+      margin-top: 16px;
+      font-weight: bold;
+    }
+
+    .quote-form input,
+    .quote-form select,
+    .quote-form textarea {
+      display: block;
+      width: 100%;
       box-sizing: border-box;
-    }
-
-    body {
-      margin: 0;
-      font-family: 'Inter', Arial, sans-serif;
-      background: #f1f5f9;
-      color: #1e293b;
-      line-height: 1.6;
-    }
-
-    .topbar {
-      background: #fff;
-      border-bottom: 1px solid #e2e8f0;
-    }
-
-    .topbar .container {
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 14px 20px;
-    }
-
-    .nav {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    .logo {
-      color: #075985;
-      font-size: 21px;
-      font-weight: 800;
-    }
-
-    .logo span {
-      color: #0284c7;
-    }
-
-    nav {
-      display: flex;
-      gap: 20px;
-      flex-wrap: wrap;
-    }
-
-    nav a {
-      color: #334155;
-      text-decoration: none;
-      font-size: 14px;
-      font-weight: 600;
-    }
-
-    main {
-      width: 100%;
-      max-width: 800px;
-      margin: 0 auto;
-      padding: 32px 18px 44px;
-    }
-
-    .section-heading {
-      margin-bottom: 24px;
-    }
-
-    .section-heading > p:first-child {
-      color: #0284c7;
-      font-size: 12px;
-      font-weight: 800;
-      letter-spacing: 1.2px;
-    }
-
-    h1 {
-      margin: 8px 0 12px;
-      color: #075985;
-      font-size: 30px;
-      line-height: 1.3;
-    }
-
-    .section-heading p {
-      color: #475569;
-    }
-
-    .quote-form-card {
-      width: 100%;
-      padding: 28px;
-      background: #fff;
-      border: 1px solid #e2e8f0;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(15, 23, 42, 0.06);
-    }
-
-    #quote-form label {
-      display: block;
-      margin: 18px 0 7px;
-      color: #334155;
-      font-size: 14px;
-      font-weight: 700;
-    }
-
-    #quote-form input,
-    #quote-form select,
-    #quote-form textarea {
-      display: block;
-      width: 100%;
-      min-height: 48px;
-      padding: 12px 14px;
-      border: 1px solid #cbd5e1;
-      border-radius: 9px;
-      background: #fff;
-      color: #1e293b;
-      font-family: 'Inter', Arial, sans-serif;
+      padding: 12px;
+      margin-top: 6px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
       font-size: 16px;
+      background: #fff;
     }
 
-    #quote-form textarea {
-      min-height: 100px;
-      resize: vertical;
-    }
-
-    .product-selection {
-      margin-bottom: 20px;
-      padding: 15px;
-      border: 1px solid #bae6fd;
-      border-radius: 10px;
-      background: #f0f9ff;
-    }
-
-    .product-selection strong {
-      display: block;
-      color: #075985;
-      margin-bottom: 4px;
-    }
-
-    .product-selection p {
-      margin: 4px 0;
-      overflow-wrap: anywhere;
-    }
-
-    .optional-note {
-      color: #64748b;
-      font-size: 13px;
-      margin-top: 5px;
-    }
-
-    .form-section {
-      margin-top: 28px;
-      padding-top: 20px;
-      border-top: 1px solid #e2e8f0;
-    }
-
-    .form-section h2 {
-      margin: 0 0 8px;
-      color: #075985;
-      font-size: 19px;
-    }
-
-    .form-section > p {
-      margin-top: 0;
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    .conditional-fields {
-      display: none;
-      margin-top: 12px;
+    .quote-form button {
+      width: 100%;
+      margin-top: 24px;
       padding: 14px;
-      background: #f8fafc;
-      border-radius: 10px;
-    }
-
-    .conditional-fields.visible {
-      display: block;
-    }
-
-    .primary-btn {
-      display: block;
-      width: 100%;
-      min-height: 52px;
-      margin-top: 26px;
-      padding: 14px 18px;
-      border: none;
-      border-radius: 10px;
+      border: 0;
+      border-radius: 5px;
       background: #075985;
-      color: #fff;
-      font-family: 'Inter', Arial, sans-serif;
+      color: white;
       font-size: 16px;
-      font-weight: 700;
+      font-weight: bold;
       cursor: pointer;
     }
 
-    .primary-btn:disabled {
-      opacity: 0.65;
+    .quote-form button:disabled {
+      opacity: 0.6;
       cursor: not-allowed;
     }
 
-    #form-status {
-      margin-top: 18px;
-      overflow-wrap: anywhere;
-      font-size: 14px;
-      font-weight: 600;
+    .field-help {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
     }
 
-    #form-status:empty {
+    .login-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .login-link a {
+      font-weight: bold;
+    }
+
+    #formMessage {
       display: none;
-    }
-
-    #form-status.success,
-    #form-status.error {
+      margin-top: 18px;
       padding: 12px;
-      border-radius: 8px;
+      border-radius: 5px;
+      overflow-wrap: anywhere;
+      line-height: 1.6;
     }
 
-    #form-status.success {
+    #formMessage.success {
+      display: block;
       background: #dcfce7;
       color: #166534;
     }
 
-    #form-status.error {
+    #formMessage.error {
+      display: block;
       background: #fee2e2;
       color: #991b1b;
     }
 
-    #form-status.info {
-      color: #075985;
+    #formMessage.info {
+      display: block;
+      background: #eff6ff;
+      color: #1e40af;
     }
 
-    footer {
-      margin-top: 20px;
-      background: #0f172a;
-      color: #e2e8f0;
+    [hidden] {
+      display: none !important;
     }
+  </style>
+</head>
 
-    .footer-content {
-      display: flex;
-      justify-content: space-between;
-      gap: 24px;
-      flex-wrap: wrap;
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 28px 20px;
-    }
+<body>
 
-    .footer-content h2 {
-      margin-top: 0;
-      color: #fff;
-      font-size: 20px;
-    }
-
-    .copyright {
-      padding: 16px 20px;
-      border-top: 1px solid #334155;
-      text-align: center;
-      font-size: 12px;
-    }
-
-    @media (max-width: 600px) {
-      .nav {
-        align-items: flex-start;
-        flex-direction: column;
-        gap: 10px;
-      }
-
-      nav {
-        gap: 16px;
-      }
-
-      main {
-        padding: 24px 14px 32px;
-      }
-
-      h1 {
-        font-size: 25px;
-      }
-
-      .quote-form-card {
-        padding: 20px 16px;
-      }
-
-      .footer-content {
-        flex-direction: column;
-        gap: 16px;
-        padding: 24px 16px;
-      }
-    }
-  </style></head><body><header class="topbar">
+<header class="topbar">
   <div class="container nav">
-    <div class="logo"><span>❄</span> FrostTech</div><nav aria-label="Main navigation">
-  <a href="index.html">Home</a>
-  <a href="index.html#categories">Categories</a>
-  <a href="catalog.html">Products</a>
-</nav>
+    <a href="index.html"
+       class="logo"
+       style="text-decoration:none;color:inherit;">
+      <span aria-hidden="true">❄</span> FrostTech
+    </a>
 
+    <nav aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="catalog.html">Catalogue</a>
+      <a href="quote_requests.html">Request a Quote</a>
+    </nav>
   </div>
-</header><main>
-  <section>
-    <div class="section-heading">
-      <p>FROSTTECH HVAC &amp; REFRIGERATION</p>
-      <h1>Request a Quote</h1>
-      <p>
-        Tell us what HVAC or refrigeration product or service you need.
-        Our team will review your request.
-      </p>
-    </div><div class="quote-form-card">
+</header>
 
-  <div id="selected-product" class="product-selection" hidden>
-    <strong>Selected product</strong>
-    <p id="selected-product-name">Loading product...</p>
-    <p id="selected-product-details"></p>
-  </div>
+<main class="quote-container">
 
-  <form id="quote-form">
+  <h1>Request a Quote</h1>
 
-    <input type="hidden" id="product_id" name="product_id">
+  <p>
+    Select a product from our catalogue or tell us about a product
+    you need that is not currently listed.
+  </p>
 
-    <label for="title">What do you need?</label>
+  <p class="login-link">
+    Need an account?
+    <a href="customer-login.html">Customer Login</a>
+  </p>
+
+  <form id="quoteForm" class="quote-form">
+
+    <label for="customerName">Full Name *</label>
     <input
+      id="customerName"
+      name="customerName"
       type="text"
-      id="title"
-      name="title"
-      placeholder="e.g. 1.5HP Split AC"
-      maxlength="200"
+      maxlength="150"
+      autocomplete="name"
       required
     >
 
-    <label for="description">Description</label>
-    <textarea
-      id="description"
-      name="description"
-      placeholder="Describe the product or service you need..."
+    <label for="customerPhone">Phone / WhatsApp *</label>
+    <input
+      id="customerPhone"
+      name="customerPhone"
+      type="tel"
+      maxlength="30"
+      autocomplete="tel"
       required
-    ></textarea>
+    >
 
-    <label for="category">Category</label>
-    <select id="category" name="category" required>
-      <option value="">Select category</option>
-      <option value="Air Conditioners">Air Conditioners</option>
-      <option value="Refrigeration Parts">Refrigeration Parts</option>
-      <option value="HVAC Accessories">HVAC Accessories</option>
-      <option value="HVAC Services">HVAC Services</option>
+    <label for="customerEmail">Email Address</label>
+    <input
+      id="customerEmail"
+      name="customerEmail"
+      type="email"
+      maxlength="254"
+      autocomplete="email"
+    >
+
+    <label for="productId">Product *</label>
+    <select id="productId" name="productId" required>
+      <option value="">Loading products...</option>
     </select>
 
-    <label for="quantity">Product quantity</label>
+    <div id="unlistedProductFields" hidden>
+
+      <label for="requestedProductName">
+        Name or Description of Product Required *
+      </label>
+      <input
+        id="requestedProductName"
+        name="requestedProductName"
+        type="text"
+        maxlength="200"
+        placeholder="Enter the product or equipment you need"
+        disabled
+      >
+
+      <label for="budget">Estimated Budget (₦)</label>
+      <input
+        id="budget"
+        name="budget"
+        type="number"
+        min="1"
+        max="1000000000000"
+        step="0.01"
+        placeholder="Enter your budget, if known"
+        disabled
+      >
+
+      <p class="field-help">
+        Optional. This field is only for products or equipment
+        not listed in the FrostTech catalogue.
+      </p>
+
+    </div>
+
+    <label for="quantity">Quantity *</label>
     <input
-      type="number"
       id="quantity"
       name="quantity"
+      type="number"
       min="1"
-      max="100000"
+      max="10000"
       step="1"
       value="1"
       required
     >
 
-    <label for="preferred_brand">Preferred Brand (optional)</label>
+    <label for="preferredBrand">Preferred Brand</label>
     <input
+      id="preferredBrand"
+      name="preferredBrand"
       type="text"
-      id="preferred_brand"
-      name="preferred_brand"
-      placeholder="e.g. LG, Samsung, Daikin"
       maxlength="100"
+      placeholder="e.g. LG, Samsung, Daikin"
     >
 
-    <div id="air-conditioner-options" class="form-section" hidden>
-      <h2>Air Conditioner Additional Requirements</h2>
-      <p>Select only the extra items and services you need.</p>
-
-      <label for="brackets_needed">Outdoor AC brackets required?</label>
-      <select id="brackets_needed" name="brackets_needed">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
-      </select>
-
-      <div id="bracket-fields" class="conditional-fields">
-        <label for="bracket_quantity">Number of outdoor brackets</label>
-        <input
-          type="number"
-          id="bracket_quantity"
-          name="bracket_quantity"
-          min="1"
-          max="100000"
-          step="1"
-          value="1"
-        >
-      </div>
-
-      <label for="installation_needed">AC installation required?</label>
-      <select id="installation_needed" name="installation_needed">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
-      </select>
-
-      <div id="installation-fields" class="conditional-fields">
-        <label for="installation_quantity">Number of AC units to install</label>
-        <input
-          type="number"
-          id="installation_quantity"
-          name="installation_quantity"
-          min="1"
-          max="100000"
-          step="1"
-          value="1"
-        >
-      </div>
-
-      <label for="accessories_needed">AC accessories required?</label>
-      <select id="accessories_needed" name="accessories_needed">
-        <option value="no">No</option>
-        <option value="yes">Yes</option>
-      </select>
-
-      <div id="accessory-fields" class="conditional-fields">
-        <label for="accessory_type">Type of AC accessories</label>
-        <input
-          type="text"
-          id="accessory_type"
-          name="accessory_type"
-          maxlength="200"
-          placeholder="e.g. copper pipe, drain hose, cable"
-        >
-
-        <label for="accessory_quantity">Accessory quantity</label>
-        <input
-          type="number"
-          id="accessory_quantity"
-          name="accessory_quantity"
-          min="1"
-          max="100000"
-          step="1"
-          value="1"
-        >
-      </div>
-    </div>
-
-    <label for="budget">Budget in Naira (optional)</label>
-    <input
-      type="number"
-      id="budget"
-      name="budget"
-      min="0"
-      step="0.01"
-      placeholder="Enter your budget in ₦"
-    >
-
-    <label for="delivery_address">Delivery Address</label>
+    <label for="deliveryAddress">Delivery Address *</label>
     <textarea
-      id="delivery_address"
-      name="delivery_address"
+      id="deliveryAddress"
+      name="deliveryAddress"
+      maxlength="1000"
       rows="3"
-      placeholder="Enter your delivery address, town and state..."
+      autocomplete="street-address"
       required
     ></textarea>
 
-    <button type="submit" class="primary-btn" id="submit-button">
+    <label for="additionalDetails">Additional Requirements</label>
+    <textarea
+      id="additionalDetails"
+      name="additionalDetails"
+      maxlength="2000"
+      rows="4"
+      placeholder="Installation, accessories, specifications or other requirements"
+    ></textarea>
+
+    <button id="submitButton" type="submit">
       Submit Quote Request
     </button>
 
-    <p id="form-status" role="status" aria-live="polite"></p>
-  </form>
-</div>
+    <div
+      id="formMessage"
+      role="status"
+      aria-live="polite"
+    ></div>
 
-  </section>
-</main><footer>
-  <div class="footer-content">
+  </form>
+</main>
+
+<footer>
+  <div class="container footer-content">
     <div>
       <h2>❄ FrostTech</h2>
       <p>HVAC and Refrigeration Marketplace</p>
-    </div><div>
-  <p>Website: frosttechonline.com</p>
-  <p>WhatsApp: +234 803 200 8635</p>
-</div>
+    </div>
 
-  </div>  <div class="copyright">
-    © 2026 FrostTech HVAC and Refrigeration. All rights reserved.
+    <div>
+      <p>Website: frosttechonline.com</p>
+      <p>WhatsApp: +234 803 200 8635</p>
+    </div>
   </div>
-</footer><script>
-  "use strict";
 
-  const quoteForm = document.getElementById("quote-form");
-  const formStatus = document.getElementById("form-status");
-  const submitButton = document.getElementById("submit-button");
+  <div class="copyright">
+    © 2026 FrostTech HVAC and Refrigeration.
+    All rights reserved.
+  </div>
+</footer>
 
-  const productIdInput = document.getElementById("product_id");
-  const selectedProductBox = document.getElementById("selected-product");
-  const selectedProductName = document.getElementById("selected-product-name");
-  const selectedProductDetails = document.getElementById("selected-product-details");
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
 
-  const categoryInput = document.getElementById("category");
-  const titleInput = document.getElementById("title");
-  const descriptionInput = document.getElementById("description");
+<script>
+"use strict";
 
-  const acOptions = document.getElementById("air-conditioner-options");
+const form = document.getElementById("quoteForm");
+const submitButton = document.getElementById("submitButton");
+const formMessage = document.getElementById("formMessage");
+const productSelect = document.getElementById("productId");
 
-  function showStatus(message, type) {
-    formStatus.textContent = message;
-    formStatus.className = type || "";
+const unlistedFields =
+  document.getElementById("unlistedProductFields");
+
+const requestedProductName =
+  document.getElementById("requestedProductName");
+
+const budgetInput = document.getElementById("budget");
+
+const OTHER_PRODUCT = "__other_product__";
+
+let client = null;
+let products = [];
+let submissionInProgress = false;
+
+function showMessage(message, type) {
+  formMessage.textContent = message;
+  formMessage.className = type;
+  formMessage.style.display = "block";
+}
+
+function clearMessage() {
+  formMessage.textContent = "";
+  formMessage.className = "";
+  formMessage.style.display = "none";
+}
+
+function getClient() {
+  if (window.supabaseClient) {
+    return window.supabaseClient;
   }
 
-  function getClient() {
-    if (
-      typeof supabaseClient !== "undefined" &&
-      supabaseClient
-    ) {
-      return supabaseClient;
-    }
+  const url = window.SUPABASE_URL;
 
-    if (window.supabaseClient) {
-      return window.supabaseClient;
-    }
+  const key =
+    window.SUPABASE_PUBLISHABLE_KEY ||
+    window.SUPABASE_ANON_KEY;
 
-    return null;
+  if (
+    window.supabase &&
+    typeof window.supabase.createClient === "function" &&
+    url &&
+    key
+  ) {
+    window.supabaseClient =
+      window.supabase.createClient(url, key);
+
+    return window.supabaseClient;
   }
 
-  function isAirConditioner() {
-    return categoryInput.value === "Air Conditioners";
+  throw new Error(
+    "Supabase is not configured correctly. Please check supabase.js."
+  );
+}
+
+function updateProductFields() {
+  const isUnlisted = productSelect.value === OTHER_PRODUCT;
+
+  unlistedFields.hidden = !isUnlisted;
+
+  requestedProductName.disabled = !isUnlisted;
+  requestedProductName.required = isUnlisted;
+
+  budgetInput.disabled = !isUnlisted;
+
+  if (!isUnlisted) {
+    requestedProductName.value = "";
+    budgetInput.value = "";
   }
+}
 
-  function updateConditionalFields() {
-    const showAC = isAirConditioner();
+async function loadProducts() {
+  productSelect.replaceChildren();
 
-    acOptions.hidden = !showAC;
+  const loadingOption = document.createElement("option");
+  loadingOption.value = "";
+  loadingOption.textContent = "Loading products...";
+  productSelect.appendChild(loadingOption);
 
-    const groups = [
-      {
-        select: "brackets_needed",
-        container: "bracket-fields",
-        inputs: ["bracket_quantity"]
-      },
-      {
-        select: "installation_needed",
-        container: "installation-fields",
-        inputs: ["installation_quantity"]
-      },
-      {
-        select: "accessories_needed",
-        container: "accessory-fields",
-        inputs: ["accessory_type", "accessory_quantity"]
-      }
-    ];
+  productSelect.disabled = true;
 
-    groups.forEach(group => {
-      const select = document.getElementById(group.select);
-      const container = document.getElementById(group.container);
-      const enabled = showAC && select.value === "yes";
+  try {
+    client = getClient();
 
-      container.classList.toggle("visible", enabled);
+    const { data, error } = await client
+      .from("products")
+      .select("id, name, brand, model")
+      .eq("is_active", true)
+      .order("name");
 
-      group.inputs.forEach(id => {
-        const input = document.getElementById(id);
-        input.required = enabled;
-      });
-    });
-  }
-
-  async function loadSelectedProduct() {
-    const params = new URLSearchParams(window.location.search);
-    const productId = params.get("product_id");
-
-    if (!productId) {
-      selectedProductBox.hidden = true;
-      return;
+    if (error) {
+      throw error;
     }
 
-    productIdInput.value = productId;
-    selectedProductBox.hidden = false;
-    selectedProductName.textContent = "Loading selected product...";
-    selectedProductDetails.textContent = "";
+    products = data || [];
 
-    const client = getClient();
+    productSelect.replaceChildren();
 
-    if (!client) {
-      selectedProductName.textContent =
-        "Product selected. Its details could not be loaded yet.";
-      return;
-    }
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a product";
+    productSelect.appendChild(placeholder);
 
-    try {
-      const { data: product, error } = await client
-        .from("products")
-        .select("id, name, category, brand, model")
-        .eq("id", productId)
-        .eq("is_active", true)
-        .maybeSingle();
+    products.forEach(function(product) {
+      const option = document.createElement("option");
 
-      if (error) {
-        console.error("Could not load selected product:", error);
-        selectedProductName.textContent =
-          "Selected product ID: " + productId;
-        return;
-      }
+      option.value = product.id;
 
-      if (!product) {
-        productIdInput.value = "";
-        selectedProductName.textContent =
-          "The selected product is unavailable. Please select a product again from the catalogue.";
-        return;
-      }
-
-      productIdInput.value = product.id;
-      selectedProductName.textContent = product.name || "Selected product";
-
-      selectedProductDetails.textContent = [
+      option.textContent = [
+        product.name,
         product.brand,
-        product.model,
-        product.category
-      ].filter(Boolean).join(" • ");
+        product.model
+      ].filter(Boolean).join(" - ");
 
-      titleInput.value = product.name || "";
+      productSelect.appendChild(option);
+    });
 
-      if (product.category) {
-        categoryInput.value = product.category;
+    const otherOption = document.createElement("option");
+    otherOption.value = OTHER_PRODUCT;
+    otherOption.textContent = "Other product — not listed in catalogue";
+    productSelect.appendChild(otherOption);
+
+    productSelect.disabled = false;
+
+    // Preselect a product when the customer arrives from the catalogue.
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("product_id");
+
+    if (requestedId) {
+      const matchingProduct = products.find(function(product) {
+        return product.id === requestedId;
+      });
+
+      if (matchingProduct) {
+        productSelect.value = matchingProduct.id;
       }
-
-      if (product.brand) {
-        document.getElementById("preferred_brand").value = product.brand;
-      }
-
-      descriptionInput.value =
-        "Product selected from the FrostTech catalogue: " +
-        (product.name || "HVAC product") +
-        (product.brand ? "\nBrand: " + product.brand : "") +
-        (product.model ? "\nModel: " + product.model : "") +
-        "\n\nPlease provide a quotation for this product and any selected additional requirements.";
-
-      updateConditionalFields();
-
-    } catch (error) {
-      console.error("Selected product loading error:", error);
-      selectedProductName.textContent =
-        "The product details could not be loaded. Please check the catalogue and try again.";
-    }
-  }
-
-  async function submitQuote(event) {
-    event.preventDefault();
-
-    if (submitButton.disabled) {
-      return;
     }
 
-    const client = getClient();
+    updateProductFields();
 
-    if (!client) {
-      showStatus(
-        "The database connection is not ready. Please refresh the page and try again.",
-        "error"
+    if (products.length === 0) {
+      showMessage(
+        "No active catalogue products were found. You can still select the option for a product not listed in the catalogue.",
+        "info"
       );
-      return;
     }
 
-    submitButton.disabled = true;
-    submitButton.textContent = "Submitting...";
-    showStatus("Submitting your quote request...", "info");
+  } catch (error) {
+    console.error("FrostTech product loading error:", error);
 
-    try {
-      const {
-        data: { user },
-        error: userError
-      } = await client.auth.getUser();
+    products = [];
+    productSelect.replaceChildren();
 
-      if (userError) {
-        throw userError;
-      }
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Unable to load catalogue products";
+    productSelect.appendChild(placeholder);
 
-      if (!user) {
-        showStatus(
-          "Please log in to your FrostTech customer account before submitting a quote request.",
-          "error"
-        );
-        return;
-      }
+    const otherOption = document.createElement("option");
+    otherOption.value = OTHER_PRODUCT;
+    otherOption.textContent = "Other product — not listed in catalogue";
+    productSelect.appendChild(otherOption);
 
-      const title = titleInput.value.trim();
-      let description = descriptionInput.value.trim();
-      const category = categoryInput.value;
-      const quantity = Number(document.getElementById("quantity").value);
-      const preferredBrand = document.getElementById("preferred_brand").value.trim();
-      const budgetValue = document.getElementById("budget").value.trim();
-      const deliveryAddress = document.getElementById("delivery_address").value.trim();
-      const productId = productIdInput.value.trim();
+    productSelect.disabled = false;
+    updateProductFields();
 
-      if (!title || !description || !category || !deliveryAddress) {
-        showStatus("Please complete all required fields.", "error");
-        return;
-      }
-
-      if (!Number.isInteger(quantity) || quantity < 1) {
-        showStatus("Product quantity must be a whole number of at least 1.", "error");
-        return;
-      }
-
-      let budget = null;
-
-      if (budgetValue !== "") {
-        budget = Number(budgetValue);
-
-        if (!Number.isFinite(budget) || budget < 0) {
-          showStatus("Please enter a valid budget.", "error");
-          return;
-        }
-      }
-
-      const additionalRequirements = [];
-
-      if (isAirConditioner()) {
-        const bracketsNeeded = document.getElementById("brackets_needed").value;
-        const installationNeeded = document.getElementById("installation_needed").value;
-        const accessoriesNeeded = document.getElementById("accessories_needed").value;
-
-        if (bracketsNeeded === "yes") {
-          const bracketQuantity = Number(
-            document.getElementById("bracket_quantity").value
-          );
-
-          if (!Number.isInteger(bracketQuantity) || bracketQuantity < 1) {
-            showStatus("Enter a valid quantity for outdoor brackets.", "error");
-            return;
-          }
-
-          additionalRequirements.push(
-            "Outdoor AC brackets: Yes; quantity: " + bracketQuantity
-          );
-        } else {
-          additionalRequirements.push("Outdoor AC brackets: No");
-        }
-
-        if (installationNeeded === "yes") {
-          const installationQuantity = Number(
-            document.getElementById("installation_quantity").value
-          );
-
-          if (!Number.isInteger(installationQuantity) || installationQuantity < 1) {
-            showStatus("Enter a valid number of AC units to install.", "error");
-            return;
-          }
-
-          additionalRequirements.push(
-            "AC installation: Yes; units to install: " + installationQuantity
-          );
-        } else {
-          additionalRequirements.push("AC installation: No");
-        }
-
-        if (accessoriesNeeded === "yes") {
-          const accessoryType = document.getElementById("accessory_type").value.trim();
-          const accessoryQuantity = Number(
-            document.getElementById("accessory_quantity").value
-          );
-
-          if (!accessoryType) {
-            showStatus("Please specify the AC accessories you need.", "error");
-            return;
-          }
-
-          if (!Number.isInteger(accessoryQuantity) || accessoryQuantity < 1) {
-            showStatus("Enter a valid quantity for AC accessories.", "error");
-            return;
-          }
-
-          additionalRequirements.push(
-            "AC accessories: " + accessoryType +
-            "; quantity: " + accessoryQuantity
-          );
-        } else {
-          additionalRequirements.push("AC accessories: No");
-        }
-      }
-
-      if (additionalRequirements.length > 0) {
-        description +=
-          "\n\nAdditional requirements:\n- " +
-          additionalRequirements.join("\n- ");
-      }
-
-      description =
-        "Category: " + category + "\n\n" + description;
-
-      const requestNumber = "FT-" + Date.now();
-
-      const requestPayload = {
-        customer_id: user.id,
-        request_number: requestNumber,
-        title: title,
-        description: description,
-        quantity: quantity,
-        preferred_brand: preferredBrand || null,
-        budget: budget,
-        delivery_address: deliveryAddress,
-        status: "pending"
-      };
-
-      // Only attach product_id when the catalogue supplied one.
-      // This field exists in the current quote_requests schema.
-      if (productId) {
-        requestPayload.product_id = productId;
-      }
-
-      const {
-        data,
-        error
-      } = await client
-        .from("quote_requests")
-        .insert([requestPayload])
-        .select("id, request_number")
-        .single();
-
-      if (error) {
-        console.error("FrostTech quote submission error:", error);
-        throw error;
-      }
-
-      showStatus(
-        "Your quote request was submitted successfully! Reference number: " +
-        data.request_number +
-        ". Please keep this number for your records.",
-        "success"
-      );
-
-      quoteForm.reset();
-      productIdInput.value = "";
-      selectedProductBox.hidden = true;
-      updateConditionalFields();
-
-    } catch (error) {
-      console.error("FrostTech quote request error:", error);
-
-      let message =
-        "We could not submit your request. Please try again.";
-
-      if (error && error.message) {
-        message += " Details: " + error.message;
-      }
-
-      showStatus(message, "error");
-
-    } finally {
-      submitButton.disabled = false;
-      submitButton.textContent = "Submit Quote Request";
-    }
-  }
-
-  categoryInput.addEventListener("change", updateConditionalFields);
-
-  [
-    "brackets_needed",
-    "installation_needed",
-    "accessories_needed"
-  ].forEach(id => {
-    document.getElementById(id).addEventListener(
-      "change",
-      updateConditionalFields
+    showMessage(
+      "The catalogue could not be loaded. You can still submit a request for a product not listed in the catalogue. Please check your connection and try again if needed.",
+      "info"
     );
-  });
+  }
+}
 
-  quoteForm.addEventListener("submit", submitQuote);
+productSelect.addEventListener("change", function() {
+  clearMessage();
+  updateProductFields();
+});
 
-  updateConditionalFields();
-  loadSelectedProduct();
-</script></body>
+async function getActiveCustomer() {
+  const {
+    data: { user },
+    error: authError
+  } = await client.auth.getUser();
+
+  if (authError) {
+    console.error("FrostTech authentication error:", authError);
+
+    throw new Error(
+      "We could not verify your login. Please try again."
+    );
+  }
+
+  if (!user) {
+    throw new Error(
+      "Your customer session was not found. Please sign in again."
+    );
+  }
+
+  const { data: profile, error: profileError } = await client
+    .from("profiles")
+    .select("id, role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error(
+      "FrostTech profile verification error:",
+      profileError
+    );
+
+    throw new Error(
+      "We could not verify your customer profile. Please try again."
+    );
+  }
+
+  if (
+    !profile ||
+    profile.role !== "customer" ||
+    profile.is_active !== true
+  ) {
+    throw new Error(
+      "Your account does not have an active customer profile. Please contact FrostTech support."
+    );
+  }
+
+  return user;
+}
+
+async function handleQuoteSubmit(event) {
+  event.preventDefault();
+
+  if (submissionInProgress) {
+    return;
+  }
+
+  clearMessage();
+
+  if (!form.reportValidity()) {
+    return;
+  }
+
+  submissionInProgress = true;
+  submitButton.disabled = true;
+  submitButton.textContent = "Submitting...";
+
+  try {
+    if (!client) {
+      client = getClient();
+    }
+
+    const user = await getActiveCustomer();
+
+    const customerName =
+      document.getElementById("customerName").value.trim();
+
+    const customerPhone =
+      document.getElementById("customerPhone").value.trim();
+
+    const customerEmail =
+      document.getElementById("customerEmail").value.trim();
+
+    const selectedId = productSelect.value;
+
+    const isUnlisted = selectedId === OTHER_PRODUCT;
+
+    const quantity = Number(
+      document.getElementById("quantity").value
+    );
+
+    const preferredBrand =
+      document.getElementById("preferredBrand").value.trim();
+
+    const deliveryAddress =
+      document.getElementById("deliveryAddress").value.trim();
+
+    const additionalDetails =
+      document.getElementById("additionalDetails").value.trim();
+
+    const budgetValue = budgetInput.value.trim();
+
+    const selectedProduct = isUnlisted
+      ? null
+      : products.find(function(product) {
+          return product.id === selectedId;
+        });
+
+    if (!customerName || !customerPhone || !deliveryAddress) {
+      throw new Error(
+        "Please complete your name, phone number and delivery address."
+      );
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+      throw new Error(
+        "Please enter a quantity between 1 and 10,000."
+      );
+    }
+
+    if (!isUnlisted && !selectedProduct) {
+      throw new Error("Please select a valid catalogue product.");
+    }
+
+    if (isUnlisted && !requestedProductName.value.trim()) {
+      throw new Error(
+        "Please enter the name or description of the product you need."
+      );
+    }
+
+    let budget = null;
+
+    if (isUnlisted && budgetValue !== "") {
+      budget = Number(budgetValue);
+
+      if (!Number.isFinite(budget) || budget <= 0) {
+        throw new Error(
+          "Please enter a valid budget greater than zero, or leave it blank."
+        );
+      }
+    }
+
+    const productName = isUnlisted
+      ? requestedProductName.value.trim()
+      : selectedProduct.name;
+
+    const requestNumber =
+      "FT-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).slice(2, 7).toUpperCase();
+
+    const description = [
+      "Customer: " + customerName,
+      "Phone: " + customerPhone,
+      "Email: " + (customerEmail || user.email || "Not provided"),
+      "Request type: " + (
+        isUnlisted
+          ? "Product not listed in catalogue"
+          : "Catalogue product"
+      ),
+      "Product: " + productName,
+      "Budget: " + (
+        isUnlisted && budget !== null
+          ? "₦" + budget.toLocaleString("en-NG")
+          : "Not provided"
+      ),
+      "Additional requirements: " + (additionalDetails || "None")
+    ].join("\n");
+
+    const requestData = {
+      customer_id: user.id,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      customer_email: customerEmail || user.email || null,
+
+      request_number: requestNumber,
+      title: "Quote Request - " + productName,
+      description: description,
+      quantity: quantity,
+      preferred_brand: preferredBrand ||
+        (selectedProduct && selectedProduct.brand) || null,
+      budget: isUnlisted ? budget : null,
+      delivery_address: deliveryAddress,
+      status: "pending"
+    };
+
+    // Only attach product_id for a real catalogue product.
+    // Unlisted requests do not use a fabricated product ID.
+    if (!isUnlisted) {
+      requestData.product_id = selectedProduct.id;
+    }
+
+    const { error } = await client
+      .from("quote_requests")
+      .insert(requestData);
+
+    if (error) {
+      console.error("FrostTech submission error:", error);
+
+      throw new Error(
+        "Your request could not be saved. " + error.message
+      );
+    }
+
+    showMessage(
+      "Your quote request was submitted successfully. Reference: " +
+      requestNumber +
+      ". FrostTech will review your request.",
+      "success"
+    );
+
+    form.reset();
+    document.getElementById("quantity").value = "1";
+
+    updateProductFields();
+
+  } catch (error) {
+    console.error("FrostTech quote submission failed:", error);
+
+    showMessage(
+      error.message ||
+      "An unexpected error occurred. Please try again.",
+      "error"
+    );
+
+  } finally {
+    submissionInProgress = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "Submit Quote Request";
+  }
+}
+
+form.addEventListener("submit", handleQuoteSubmit);
+
+loadProducts();
+</script>
+
+</body>
 </html>
