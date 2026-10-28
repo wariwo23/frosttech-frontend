@@ -1,13 +1,18 @@
-<!DOCTYPE html><html lang="en">
+
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">  <title>Request a Quote | FrostTech HVAC and Refrigeration</title><meta
-name="description"
-content="Request a quotation for air conditioners, refrigeration products, HVAC accessories and services from FrostTech."
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 
-«»
+  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
 
-  <link rel="stylesheet" href="style.css">  <style>
+  <meta name="description"
+        content="Request a quotation for HVAC products, refrigeration equipment, accessories and services from FrostTech.">
+
+  <link rel="stylesheet" href="style.css">
+
+  <style>
     .quote-container {
       max-width: 650px;
       margin: 30px auto;
@@ -39,6 +44,7 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
       border: 1px solid #ccc;
       border-radius: 5px;
       font-size: 16px;
+      background: #fff;
     }
 
     .quote-form button {
@@ -59,12 +65,29 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
       cursor: not-allowed;
     }
 
+    .field-help {
+      margin: 6px 0 0;
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.6;
+    }
+
+    .login-link {
+      text-align: center;
+      margin-top: 16px;
+    }
+
+    .login-link a {
+      font-weight: bold;
+    }
+
     #formMessage {
       display: none;
       margin-top: 18px;
       padding: 12px;
       border-radius: 5px;
       overflow-wrap: anywhere;
+      line-height: 1.6;
     }
 
     #formMessage.success {
@@ -85,479 +108,610 @@ content="Request a quotation for air conditioners, refrigeration products, HVAC 
       color: #1e40af;
     }
 
-    .login-link {
-      text-align: center;
-      margin-top: 16px;
+    [hidden] {
+      display: none !important;
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="container nav">
+    <a href="index.html"
+       class="logo"
+       style="text-decoration:none;color:inherit;">
+      <span aria-hidden="true">❄</span> FrostTech
+    </a>
+
+    <nav aria-label="Main navigation">
+      <a href="index.html">Home</a>
+      <a href="catalog.html">Catalogue</a>
+      <a href="quote_requests.html">Request a Quote</a>
+    </nav>
+  </div>
+</header>
+
+<main class="quote-container">
+
+  <h1>Request a Quote</h1>
+
+  <p>
+    Select a product from our catalogue or tell us about a product
+    you need that is not currently listed.
+  </p>
+
+  <p class="login-link">
+    Need an account?
+    <a href="customer-login.html">Customer Login</a>
+  </p>
+
+  <form id="quoteForm" class="quote-form">
+
+    <label for="customerName">Full Name *</label>
+    <input
+      id="customerName"
+      name="customerName"
+      type="text"
+      maxlength="150"
+      autocomplete="name"
+      required
+    >
+
+    <label for="customerPhone">Phone / WhatsApp *</label>
+    <input
+      id="customerPhone"
+      name="customerPhone"
+      type="tel"
+      maxlength="30"
+      autocomplete="tel"
+      required
+    >
+
+    <label for="customerEmail">Email Address</label>
+    <input
+      id="customerEmail"
+      name="customerEmail"
+      type="email"
+      maxlength="254"
+      autocomplete="email"
+    >
+
+    <label for="productId">Product *</label>
+    <select id="productId" name="productId" required>
+      <option value="">Loading products...</option>
+    </select>
+
+    <div id="unlistedProductFields" hidden>
+
+      <label for="requestedProductName">
+        Name or Description of Product Required *
+      </label>
+      <input
+        id="requestedProductName"
+        name="requestedProductName"
+        type="text"
+        maxlength="200"
+        placeholder="Enter the product or equipment you need"
+        disabled
+      >
+
+      <label for="budget">Estimated Budget (₦)</label>
+      <input
+        id="budget"
+        name="budget"
+        type="number"
+        min="1"
+        max="1000000000000"
+        step="0.01"
+        placeholder="Enter your budget, if known"
+        disabled
+      >
+
+      <p class="field-help">
+        Optional. This field is only for products or equipment
+        not listed in the FrostTech catalogue.
+      </p>
+
+    </div>
+
+    <label for="quantity">Quantity *</label>
+    <input
+      id="quantity"
+      name="quantity"
+      type="number"
+      min="1"
+      max="10000"
+      step="1"
+      value="1"
+      required
+    >
+
+    <label for="preferredBrand">Preferred Brand</label>
+    <input
+      id="preferredBrand"
+      name="preferredBrand"
+      type="text"
+      maxlength="100"
+      placeholder="e.g. LG, Samsung, Daikin"
+    >
+
+    <label for="deliveryAddress">Delivery Address *</label>
+    <textarea
+      id="deliveryAddress"
+      name="deliveryAddress"
+      maxlength="1000"
+      rows="3"
+      autocomplete="street-address"
+      required
+    ></textarea>
+
+    <label for="additionalDetails">Additional Requirements</label>
+    <textarea
+      id="additionalDetails"
+      name="additionalDetails"
+      maxlength="2000"
+      rows="4"
+      placeholder="Installation, accessories, specifications or other requirements"
+    ></textarea>
+
+    <button id="submitButton" type="submit">
+      Submit Quote Request
+    </button>
+
+    <div
+      id="formMessage"
+      role="status"
+      aria-live="polite"
+    ></div>
+
+  </form>
+</main>
+
+<footer>
+  <div class="container footer-content">
+    <div>
+      <h2>❄ FrostTech</h2>
+      <p>HVAC and Refrigeration Marketplace</p>
+    </div>
+
+    <div>
+      <p>Website: frosttechonline.com</p>
+      <p>WhatsApp: +234 803 200 8635</p>
+    </div>
+  </div>
+
+  <div class="copyright">
+    © 2026 FrostTech HVAC and Refrigeration.
+    All rights reserved.
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+"use strict";
+
+const form = document.getElementById("quoteForm");
+const submitButton = document.getElementById("submitButton");
+const formMessage = document.getElementById("formMessage");
+const productSelect = document.getElementById("productId");
+
+const unlistedFields =
+  document.getElementById("unlistedProductFields");
+
+const requestedProductName =
+  document.getElementById("requestedProductName");
+
+const budgetInput = document.getElementById("budget");
+
+const OTHER_PRODUCT = "__other_product__";
+
+let client = null;
+let products = [];
+let submissionInProgress = false;
+
+function showMessage(message, type) {
+  formMessage.textContent = message;
+  formMessage.className = type;
+  formMessage.style.display = "block";
+}
+
+function clearMessage() {
+  formMessage.textContent = "";
+  formMessage.className = "";
+  formMessage.style.display = "none";
+}
+
+function getClient() {
+  if (window.supabaseClient) {
+    return window.supabaseClient;
+  }
+
+  const url = window.SUPABASE_URL;
+
+  const key =
+    window.SUPABASE_PUBLISHABLE_KEY ||
+    window.SUPABASE_ANON_KEY;
+
+  if (
+    window.supabase &&
+    typeof window.supabase.createClient === "function" &&
+    url &&
+    key
+  ) {
+    window.supabaseClient =
+      window.supabase.createClient(url, key);
+
+    return window.supabaseClient;
+  }
+
+  throw new Error(
+    "Supabase is not configured correctly. Please check supabase.js."
+  );
+}
+
+function updateProductFields() {
+  const isUnlisted = productSelect.value === OTHER_PRODUCT;
+
+  unlistedFields.hidden = !isUnlisted;
+
+  requestedProductName.disabled = !isUnlisted;
+  requestedProductName.required = isUnlisted;
+
+  budgetInput.disabled = !isUnlisted;
+
+  if (!isUnlisted) {
+    requestedProductName.value = "";
+    budgetInput.value = "";
+  }
+}
+
+async function loadProducts() {
+  productSelect.replaceChildren();
+
+  const loadingOption = document.createElement("option");
+  loadingOption.value = "";
+  loadingOption.textContent = "Loading products...";
+  productSelect.appendChild(loadingOption);
+
+  productSelect.disabled = true;
+
+  try {
+    client = getClient();
+
+    const { data, error } = await client
+      .from("products")
+      .select("id, name, brand, model")
+      .eq("is_active", true)
+      .order("name");
+
+    if (error) {
+      throw error;
     }
 
-    .login-link a {
-      font-weight: bold;
-    }
-  </style></head><body>  <header>
-    <h2>FrostTech HVAC and Refrigeration</h2><nav>
-  <a href="index.html">Home</a> |
-  <a href="catalog.html">Products</a> |
-  <a href="quote.html">Request a Quote</a>
-</nav>
+    products = data || [];
 
-  </header>  <main class="quote-container"><h1>Request a Quote</h1>
+    productSelect.replaceChildren();
 
-<p>
-  Tell us which HVAC or refrigeration product you need.
-  Our team will review your request and prepare a quotation.
-</p>
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Select a product";
+    productSelect.appendChild(placeholder);
 
-<p class="login-link">
-  Need an account?
-  <a href="customer-login.html">Customer Login</a>
-</p>
+    products.forEach(function(product) {
+      const option = document.createElement("option");
 
-<form id="quoteForm" class="quote-form">
+      option.value = product.id;
 
-  <label for="customerName">Full Name *</label>
-  <input
-    id="customerName"
-    name="customerName"
-    type="text"
-    maxlength="150"
-    autocomplete="name"
-    required
-  >
+      option.textContent = [
+        product.name,
+        product.brand,
+        product.model
+      ].filter(Boolean).join(" - ");
 
-  <label for="customerPhone">Phone / WhatsApp *</label>
-  <input
-    id="customerPhone"
-    name="customerPhone"
-    type="tel"
-    maxlength="30"
-    autocomplete="tel"
-    required
-  >
+      productSelect.appendChild(option);
+    });
 
-  <label for="customerEmail">Email Address</label>
-  <input
-    id="customerEmail"
-    name="customerEmail"
-    type="email"
-    maxlength="254"
-    autocomplete="email"
-  >
+    const otherOption = document.createElement("option");
+    otherOption.value = OTHER_PRODUCT;
+    otherOption.textContent = "Other product — not listed in catalogue";
+    productSelect.appendChild(otherOption);
 
-  <label for="productId">Product *</label>
-  <select id="productId" name="productId" required>
-    <option value="">Loading products...</option>
-  </select>
+    productSelect.disabled = false;
 
-  <label for="quantity">Quantity *</label>
-  <input
-    id="quantity"
-    name="quantity"
-    type="number"
-    min="1"
-    max="10000"
-    step="1"
-    value="1"
-    required
-  >
+    // Preselect a product when the customer arrives from the catalogue.
+    const params = new URLSearchParams(window.location.search);
+    const requestedId = params.get("product_id");
 
-  <label for="preferredBrand">Preferred Brand</label>
-  <input
-    id="preferredBrand"
-    name="preferredBrand"
-    type="text"
-    maxlength="100"
-    placeholder="e.g. LG, Samsung, Daikin"
-  >
+    if (requestedId) {
+      const matchingProduct = products.find(function(product) {
+        return product.id === requestedId;
+      });
 
-  <label for="deliveryAddress">Delivery Address *</label>
-  <textarea
-    id="deliveryAddress"
-    name="deliveryAddress"
-    maxlength="1000"
-    rows="3"
-    autocomplete="street-address"
-    required
-  ></textarea>
-
-  <label for="additionalDetails">Additional Requirements</label>
-  <textarea
-    id="additionalDetails"
-    name="additionalDetails"
-    maxlength="2000"
-    rows="4"
-    placeholder="Specifications, installation needs or other requirements"
-  ></textarea>
-
-  <button id="submitButton" type="submit">
-    Submit Quote Request
-  </button>
-
-  <div
-    id="formMessage"
-    role="status"
-    aria-live="polite"
-  ></div>
-
-</form>
-
-  </main>  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>  <script src="supabase.js"></script>  <script>
-    "use strict";
-
-    const form = document.getElementById("quoteForm");
-    const submitButton = document.getElementById("submitButton");
-    const formMessage = document.getElementById("formMessage");
-    const productSelect = document.getElementById("productId");
-
-    let client = null;
-    let products = [];
-    let submissionInProgress = false;
-
-    function showMessage(message, type) {
-      formMessage.textContent = message;
-      formMessage.className = type;
-      formMessage.style.display = "block";
-    }
-
-    function clearMessage() {
-      formMessage.textContent = "";
-      formMessage.className = "";
-      formMessage.style.display = "none";
-    }
-
-    /*
-      Use the Supabase client already configured by supabase.js.
-    */
-    function getClient() {
-      if (window.supabaseClient) {
-        return window.supabaseClient;
+      if (matchingProduct) {
+        productSelect.value = matchingProduct.id;
       }
+    }
 
-      const url = window.SUPABASE_URL;
+    updateProductFields();
 
-      const key =
-        window.SUPABASE_PUBLISHABLE_KEY ||
-        window.SUPABASE_ANON_KEY;
-
-      if (
-        window.supabase &&
-        typeof window.supabase.createClient === "function" &&
-        url &&
-        key
-      ) {
-        window.supabaseClient =
-          window.supabase.createClient(url, key);
-
-        return window.supabaseClient;
-      }
-
-      throw new Error(
-        "Supabase is not configured correctly. Please check supabase.js."
+    if (products.length === 0) {
+      showMessage(
+        "No active catalogue products were found. You can still select the option for a product not listed in the catalogue.",
+        "info"
       );
     }
 
-    /*
-      Load active products into the dropdown.
-    */
-    async function loadProducts() {
-      productSelect.replaceChildren();
+  } catch (error) {
+    console.error("FrostTech product loading error:", error);
 
-      const loadingOption = document.createElement("option");
-      loadingOption.value = "";
-      loadingOption.textContent = "Loading products...";
-      productSelect.appendChild(loadingOption);
+    products = [];
+    productSelect.replaceChildren();
 
-      try {
-        client = getClient();
+    const placeholder = document.createElement("option");
+    placeholder.value = "";
+    placeholder.textContent = "Unable to load catalogue products";
+    productSelect.appendChild(placeholder);
 
-        const { data, error } = await client
-          .from("products")
-          .select("id, name, brand, model")
-          .eq("is_active", true)
-          .order("name");
+    const otherOption = document.createElement("option");
+    otherOption.value = OTHER_PRODUCT;
+    otherOption.textContent = "Other product — not listed in catalogue";
+    productSelect.appendChild(otherOption);
 
-        if (error) {
-          throw error;
-        }
+    productSelect.disabled = false;
+    updateProductFields();
 
-        products = data || [];
+    showMessage(
+      "The catalogue could not be loaded. You can still submit a request for a product not listed in the catalogue. Please check your connection and try again if needed.",
+      "info"
+    );
+  }
+}
 
-        productSelect.replaceChildren();
+productSelect.addEventListener("change", function() {
+  clearMessage();
+  updateProductFields();
+});
 
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Select a product";
-        productSelect.appendChild(placeholder);
+async function getActiveCustomer() {
+  const {
+    data: { user },
+    error: authError
+  } = await client.auth.getUser();
 
-        products.forEach(function(product) {
-          const option = document.createElement("option");
+  if (authError) {
+    console.error("FrostTech authentication error:", authError);
 
-          option.value = product.id;
+    throw new Error(
+      "We could not verify your login. Please try again."
+    );
+  }
 
-          option.textContent = [
-            product.name,
-            product.brand,
-            product.model
-          ].filter(Boolean).join(" - ");
+  if (!user) {
+    throw new Error(
+      "Your customer session was not found. Please sign in again."
+    );
+  }
 
-          productSelect.appendChild(option);
+  const { data: profile, error: profileError } = await client
+    .from("profiles")
+    .select("id, role, is_active")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    console.error(
+      "FrostTech profile verification error:",
+      profileError
+    );
+
+    throw new Error(
+      "We could not verify your customer profile. Please try again."
+    );
+  }
+
+  if (
+    !profile ||
+    profile.role !== "customer" ||
+    profile.is_active !== true
+  ) {
+    throw new Error(
+      "Your account does not have an active customer profile. Please contact FrostTech support."
+    );
+  }
+
+  return user;
+}
+
+async function handleQuoteSubmit(event) {
+  event.preventDefault();
+
+  if (submissionInProgress) {
+    return;
+  }
+
+  clearMessage();
+
+  if (!form.reportValidity()) {
+    return;
+  }
+
+  submissionInProgress = true;
+  submitButton.disabled = true;
+  submitButton.textContent = "Submitting...";
+
+  try {
+    if (!client) {
+      client = getClient();
+    }
+
+    const user = await getActiveCustomer();
+
+    const customerName =
+      document.getElementById("customerName").value.trim();
+
+    const customerPhone =
+      document.getElementById("customerPhone").value.trim();
+
+    const customerEmail =
+      document.getElementById("customerEmail").value.trim();
+
+    const selectedId = productSelect.value;
+
+    const isUnlisted = selectedId === OTHER_PRODUCT;
+
+    const quantity = Number(
+      document.getElementById("quantity").value
+    );
+
+    const preferredBrand =
+      document.getElementById("preferredBrand").value.trim();
+
+    const deliveryAddress =
+      document.getElementById("deliveryAddress").value.trim();
+
+    const additionalDetails =
+      document.getElementById("additionalDetails").value.trim();
+
+    const budgetValue = budgetInput.value.trim();
+
+    const selectedProduct = isUnlisted
+      ? null
+      : products.find(function(product) {
+          return product.id === selectedId;
         });
 
-        if (products.length === 0) {
-          showMessage(
-            "No active products are currently available.",
-            "info"
-          );
-        }
+    if (!customerName || !customerPhone || !deliveryAddress) {
+      throw new Error(
+        "Please complete your name, phone number and delivery address."
+      );
+    }
 
-      } catch (error) {
-        console.error("FrostTech product loading error:", error);
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+      throw new Error(
+        "Please enter a quantity between 1 and 10,000."
+      );
+    }
 
-        products = [];
+    if (!isUnlisted && !selectedProduct) {
+      throw new Error("Please select a valid catalogue product.");
+    }
 
-        productSelect.replaceChildren();
+    if (isUnlisted && !requestedProductName.value.trim()) {
+      throw new Error(
+        "Please enter the name or description of the product you need."
+      );
+    }
 
-        const option = document.createElement("option");
-        option.value = "";
-        option.textContent = "Unable to load products";
+    let budget = null;
 
-        productSelect.appendChild(option);
+    if (isUnlisted && budgetValue !== "") {
+      budget = Number(budgetValue);
 
-        showMessage(
-          "Unable to load products. Please refresh the page and try again.",
-          "error"
+      if (!Number.isFinite(budget) || budget <= 0) {
+        throw new Error(
+          "Please enter a valid budget greater than zero, or leave it blank."
         );
       }
     }
 
-    /*
-      Verify the actual Supabase session.
-      A visible homepage Sign Out link alone does not prove that
-      this page's Supabase client has restored the session.
-    */
-    async function getActiveCustomer() {
-      const {
-        data: { user },
-        error: authError
-      } = await client.auth.getUser();
+    const productName = isUnlisted
+      ? requestedProductName.value.trim()
+      : selectedProduct.name;
 
-      if (authError) {
-        console.error("FrostTech authentication error:", authError);
+    const requestNumber =
+      "FT-" +
+      Date.now() +
+      "-" +
+      Math.random().toString(36).slice(2, 7).toUpperCase();
 
-        throw new Error(
-          "We could not verify your login. Please try again."
-        );
-      }
+    const description = [
+      "Customer: " + customerName,
+      "Phone: " + customerPhone,
+      "Email: " + (customerEmail || user.email || "Not provided"),
+      "Request type: " + (
+        isUnlisted
+          ? "Product not listed in catalogue"
+          : "Catalogue product"
+      ),
+      "Product: " + productName,
+      "Budget: " + (
+        isUnlisted && budget !== null
+          ? "₦" + budget.toLocaleString("en-NG")
+          : "Not provided"
+      ),
+      "Additional requirements: " + (additionalDetails || "None")
+    ].join("\n");
 
-      if (!user) {
-        throw new Error(
-          "Your customer session was not found. Please sign in again."
-        );
-      }
+    const requestData = {
+      customer_id: user.id,
+      customer_name: customerName,
+      customer_phone: customerPhone,
+      customer_email: customerEmail || user.email || null,
 
-      const { data: profile, error: profileError } = await client
-        .from("profiles")
-        .select("id, role, is_active")
-        .eq("id", user.id)
-        .maybeSingle();
+      request_number: requestNumber,
+      title: "Quote Request - " + productName,
+      description: description,
+      quantity: quantity,
+      preferred_brand: preferredBrand ||
+        (selectedProduct && selectedProduct.brand) || null,
+      budget: isUnlisted ? budget : null,
+      delivery_address: deliveryAddress,
+      status: "pending"
+    };
 
-      if (profileError) {
-        console.error(
-          "FrostTech profile verification error:",
-          profileError
-        );
-
-        throw new Error(
-          "We could not verify your customer profile. Please try again."
-        );
-      }
-
-      if (
-        !profile ||
-        profile.role !== "customer" ||
-        profile.is_active !== true
-      ) {
-        throw new Error(
-          "Your account does not have an active customer profile. Please contact FrostTech support."
-        );
-      }
-
-      return user;
+    // Only attach product_id for a real catalogue product.
+    // Unlisted requests do not use a fabricated product ID.
+    if (!isUnlisted) {
+      requestData.product_id = selectedProduct.id;
     }
 
-    /*
-      Submit a quote request.
-    */
-    async function handleQuoteSubmit(event) {
-      event.preventDefault();
-      event.stopPropagation();
+    const { error } = await client
+      .from("quote_requests")
+      .insert(requestData);
 
-      if (submissionInProgress) {
-        return false;
-      }
+    if (error) {
+      console.error("FrostTech submission error:", error);
 
-      submissionInProgress = true;
-      submitButton.disabled = true;
-      submitButton.textContent = "Submitting...";
-
-      clearMessage();
-
-      try {
-        if (!client) {
-          client = getClient();
-        }
-
-        // Step 1: Confirm the signed-in customer.
-        const user = await getActiveCustomer();
-
-        // Step 2: Read the form.
-        const customerName =
-          document.getElementById("customerName").value.trim();
-
-        const customerPhone =
-          document.getElementById("customerPhone").value.trim();
-
-        const customerEmail =
-          document.getElementById("customerEmail").value.trim();
-
-        const productId = productSelect.value;
-
-        const quantity = Number(
-          document.getElementById("quantity").value
-        );
-
-        const preferredBrand =
-          document.getElementById("preferredBrand").value.trim();
-
-        const deliveryAddress =
-          document.getElementById("deliveryAddress").value.trim();
-
-        const additionalDetails =
-          document.getElementById("additionalDetails").value.trim();
-
-        const selectedProduct = products.find(function(product) {
-          return product.id === productId;
-        });
-
-        // Step 3: Validate the form.
-        if (!customerName || !customerPhone || !deliveryAddress) {
-          throw new Error(
-            "Please complete your name, phone number and delivery address."
-          );
-        }
-
-        if (!selectedProduct) {
-          throw new Error("Please select a valid product.");
-        }
-
-        if (
-          !Number.isInteger(quantity) ||
-          quantity < 1 ||
-          quantity > 10000
-        ) {
-          throw new Error(
-            "Please enter a quantity between 1 and 10,000."
-          );
-        }
-
-        // Step 4: Create the reference number.
-        const requestNumber =
-          "FT-" +
-          Date.now() +
-          "-" +
-          Math.random().toString(36).slice(2, 7).toUpperCase();
-
-        const description =
-          "Customer: " + customerName +
-          "\nPhone: " + customerPhone +
-          "\nEmail: " + (customerEmail || user.email || "Not provided") +
-          "\nProduct: " + selectedProduct.name +
-          "\nRequirements: " + (additionalDetails || "None");
-
-        /*
-          Step 5: Build the insert.
-
-          customer_id must match auth.uid() because of the
-          existing authenticated-customer RLS policy.
-
-          admin_fee, admin_fee_status, and installation defaults
-          are supplied by the database.
-        */
-        const requestData = {
-          customer_id: user.id,
-          customer_name: customerName,
-          customer_phone: customerPhone,
-          customer_email: customerEmail || user.email || null,
-
-          product_id: selectedProduct.id,
-          request_number: requestNumber,
-          title: "Quote Request - " + selectedProduct.name,
-          description: description,
-          quantity: quantity,
-
-          preferred_brand:
-            preferredBrand || selectedProduct.brand || null,
-
-          delivery_address: deliveryAddress,
-          status: "pending"
-        };
-
-        /*
-          Step 6: Insert WITHOUT SELECT.
-
-          This avoids requiring the customer to have SELECT
-          permission on quote_requests just to receive a success
-          response.
-        */
-        const { error } = await client
-          .from("quote_requests")
-          .insert(requestData);
-
-        if (error) {
-          console.error(
-            "FrostTech Supabase submission error:",
-            error
-          );
-
-          throw new Error(
-            "Your request could not be saved. " + error.message
-          );
-        }
-
-        // Step 7: Confirm only after the insert succeeds.
-        showMessage(
-          "Your quote request was submitted successfully. Reference: " +
-          requestNumber +
-          ". FrostTech will review your request.",
-          "success"
-        );
-
-        form.reset();
-
-        document.getElementById("quantity").value = "1";
-
-      } catch (error) {
-        console.error(
-          "FrostTech quote submission failed:",
-          error
-        );
-
-        showMessage(
-          error.message ||
-          "An unexpected error occurred. Please try again.",
-          "error"
-        );
-
-      } finally {
-        submissionInProgress = false;
-        submitButton.disabled = false;
-        submitButton.textContent = "Submit Quote Request";
-      }
-
-      return false;
+      throw new Error(
+        "Your request could not be saved. " + error.message
+      );
     }
 
-    form.addEventListener("submit", handleQuoteSubmit);
+    showMessage(
+      "Your quote request was submitted successfully. Reference: " +
+      requestNumber +
+      ". FrostTech will review your request.",
+      "success"
+    );
 
-    loadProducts();
-  </script></body>
+    form.reset();
+    document.getElementById("quantity").value = "1";
+
+    updateProductFields();
+
+  } catch (error) {
+    console.error("FrostTech quote submission failed:", error);
+
+    showMessage(
+      error.message ||
+      "An unexpected error occurred. Please try again.",
+      "error"
+    );
+
+  } finally {
+    submissionInProgress = false;
+    submitButton.disabled = false;
+    submitButton.textContent = "Submit Quote Request";
+  }
+}
+
+form.addEventListener("submit", handleQuoteSubmit);
+
+loadProducts();
+</script>
+
+</body>
 </html>
