@@ -357,7 +357,21 @@
 
         <div class="row">
           <div>
-            <label for="sellingPrice">Selling Price (₦)</label>
+            <label for="sellingPrice">
+<label for="sellingPrice">Catalogue Selling Price (₦)</label>
+<input
+  id="sellingPrice"
+  type="number"
+  min="0"
+  step="0.01"
+  placeholder="Automatically calculated from supplier cost"
+  readonly
+>
+<p class="muted">
+  Selling price is calculated automatically using the approved
+  15% markup on supplier cost.
+</p>
+</label>
             <input
               id="sellingPrice"
               type="number"
