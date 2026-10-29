@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,9 +7,7 @@
   <title>Manage Products | FrostTech HVAC and Refrigeration</title>
 
   <style>
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -24,14 +23,8 @@
       text-align: center;
     }
 
-    header h1 {
-      margin: 0 0 8px;
-      font-size: 23px;
-    }
-
-    header p {
-      margin: 0;
-    }
+    header h1 { margin: 0 0 8px; font-size: 23px; }
+    header p { margin: 0; }
 
     nav {
       background: #075985;
@@ -62,10 +55,7 @@
       box-shadow: 0 2px 8px #00000012;
     }
 
-    h2 {
-      margin-top: 0;
-      color: #075985;
-    }
+    h2 { margin-top: 0; color: #075985; }
 
     label {
       display: block;
@@ -74,9 +64,7 @@
       font-weight: bold;
     }
 
-    input,
-    textarea,
-    select {
+    input, textarea, select {
       width: 100%;
       padding: 12px;
       border: 1px solid #cbd5e1;
@@ -85,10 +73,9 @@
       background: white;
     }
 
-    textarea {
-      min-height: 90px;
-      resize: vertical;
-    }
+    input[readonly] { background: #f1f5f9; }
+
+    textarea { min-height: 90px; resize: vertical; }
 
     button {
       padding: 12px 16px;
@@ -102,26 +89,11 @@
       margin-top: 15px;
     }
 
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .secondary {
-      background: #475569;
-    }
-
-    .danger {
-      background: #b91c1c;
-    }
-
-    .full {
-      width: 100%;
-    }
-
-    .hidden {
-      display: none !important;
-    }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+    .secondary { background: #475569; }
+    .danger { background: #b91c1c; }
+    .full { width: 100%; }
+    .hidden { display: none !important; }
 
     .notice {
       padding: 12px;
@@ -130,20 +102,9 @@
       overflow-wrap: anywhere;
     }
 
-    .success {
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    .error {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .info {
-      background: #e0f2fe;
-      color: #075985;
-    }
+    .success { background: #dcfce7; color: #166534; }
+    .error { background: #fee2e2; color: #991b1b; }
+    .info { background: #e0f2fe; color: #075985; }
 
     .preview {
       display: block;
@@ -174,20 +135,9 @@
       border-radius: 6px;
     }
 
-    .product h3 {
-      margin-bottom: 5px;
-    }
-
-    .muted {
-      color: #64748b;
-      font-size: 14px;
-    }
-
-    .price {
-      font-size: 18px;
-      font-weight: bold;
-      color: #047857;
-    }
+    .product h3 { margin-bottom: 5px; }
+    .muted { color: #64748b; font-size: 14px; }
+    .price { font-size: 18px; font-weight: bold; color: #047857; }
 
     .row {
       display: grid;
@@ -196,19 +146,13 @@
     }
 
     @media (max-width: 600px) {
-      .row {
-        grid-template-columns: 1fr;
-      }
-
-      .card {
-        padding: 15px;
-      }
+      .row { grid-template-columns: 1fr; }
+      .card { padding: 15px; }
     }
   </style>
 </head>
 
 <body>
-
 <header>
   <h1>❄️ FrostTech HVAC and Refrigeration</h1>
   <p>Product Catalogue Management</p>
@@ -221,86 +165,51 @@
 </nav>
 
 <main>
-
   <section id="loginSection" class="card">
     <h2>Administrator Login</h2>
-
-    <p class="muted">
-      Sign in with your existing FrostTech administrator account.
-    </p>
-
+    <p class="muted">Sign in with your existing FrostTech administrator account.</p>
     <div id="loginMessage" aria-live="polite"></div>
 
     <form id="loginForm">
       <label for="email">Administrator Email</label>
-      <input
-        id="email"
-        type="email"
-        autocomplete="username"
-        required
-      >
+      <input id="email" type="email" autocomplete="username" required>
 
       <label for="password">Password</label>
-      <input
-        id="password"
-        type="password"
-        autocomplete="current-password"
-        required
-      >
+      <input id="password" type="password" autocomplete="current-password" required>
 
-      <button id="loginBtn" type="submit" class="full">
-        Sign In
-      </button>
+      <button id="loginBtn" type="submit" class="full">Sign In</button>
     </form>
   </section>
 
   <section id="dashboard" class="hidden">
-
     <div class="card">
       <h2>Administrator Dashboard</h2>
       <p>Signed in as: <strong id="loggedUser"></strong></p>
-      <button id="logoutBtn" class="secondary">Sign Out</button>
+      <button id="logoutBtn" type="button" class="secondary">Sign Out</button>
     </div>
 
     <div class="card">
       <h2 id="formTitle">Add a New Product</h2>
-
       <div id="formMessage" aria-live="polite"></div>
 
       <form id="productForm">
-
-        <label for="existingProduct">
-          Edit an Existing Product (Optional)
-        </label>
-
+        <label for="existingProduct">Edit an Existing Product (Optional)</label>
         <select id="existingProduct">
           <option value="">Add a new product</option>
         </select>
-
         <p class="muted">
-          Select an existing product to edit it, or leave this blank
-          to create a new product.
+          Select an existing product to edit it, or leave this blank to create a new product.
         </p>
 
         <label for="name">Product Name *</label>
-        <input
-          id="name"
-          type="text"
-          maxlength="200"
-          placeholder="e.g. LG 1.5HP Split Air Conditioner"
-          required
-        >
+        <input id="name" type="text" maxlength="200"
+          placeholder="e.g. LG 1.5HP Split Air Conditioner" required>
 
         <div class="row">
           <div>
             <label for="category">Category *</label>
-            <input
-              id="category"
-              list="categoryOptions"
-              maxlength="100"
-              placeholder="e.g. Air Conditioners"
-              required
-            >
+            <input id="category" list="categoryOptions" maxlength="100"
+              placeholder="e.g. Air Conditioners" required>
 
             <datalist id="categoryOptions">
               <option value="Air Conditioners">
@@ -317,114 +226,53 @@
 
           <div>
             <label for="brand">Brand</label>
-            <input
-              id="brand"
-              type="text"
-              maxlength="100"
-              placeholder="e.g. LG"
-            >
+            <input id="brand" type="text" maxlength="100" placeholder="e.g. LG">
           </div>
         </div>
 
         <div class="row">
           <div>
             <label for="model">Model</label>
-            <input
-              id="model"
-              type="text"
-              maxlength="150"
-              placeholder="Product model"
-            >
+            <input id="model" type="text" maxlength="150" placeholder="Product model">
           </div>
 
           <div>
             <label for="sku">SKU / Product Code</label>
-            <input
-              id="sku"
-              type="text"
-              maxlength="100"
-              placeholder="Optional"
-            >
+            <input id="sku" type="text" maxlength="100" placeholder="Optional">
           </div>
         </div>
 
         <label for="description">Product Description</label>
-        <textarea
-          id="description"
-          maxlength="5000"
-          placeholder="Describe the product, capacity, features and applications."
-        ></textarea>
+        <textarea id="description" maxlength="5000"
+          placeholder="Describe the product, capacity, features and applications."></textarea>
 
+        <!-- The supplier cost is entered once. Selling price is read-only. -->
         <div class="row">
           <div>
-            <label for="sellingPrice">
-<label for="sellingPrice">Catalogue Selling Price (₦)</label>
-<input
-  id="sellingPrice"
-  type="number"
-  min="0"
-  step="0.01"
-  placeholder="Automatically calculated from supplier cost"
-  readonly
->
-<p class="muted">
-  Selling price is calculated automatically using the approved
-  15% markup on supplier cost.
-</p>
-</label>
-            <input
-              id="sellingPrice"
-              type="number"
-              min="0"
-              step="0.01"
-              placeholder="Leave blank if price is not confirmed"
-            >
+            <label for="supplierCost">Supplier Cost (₦) *</label>
+            <input id="supplierCost" type="number" min="0.01" step="0.01"
+              placeholder="Enter supplier cost" required>
           </div>
 
           <div>
-            <label for="supplierCost">Supplier Cost (₦)</label>
-            <input
-              id="supplierCost"
-              type="number"
-              min="0"
-              step="0.01"
-              
-<label for="supplierCost">Supplier Cost (₦) *</label>
-<input
-  id="supplierCost"
-  type="number"
-  min="0.01"
-  step="0.01"
-  placeholder="Enter supplier cost"
-  required
->
-
+            <label for="sellingPrice">Catalogue Selling Price (₦)</label>
+            <input id="sellingPrice" type="number" min="0" step="0.01"
+              placeholder="Automatically calculated from supplier cost" readonly>
+            <p class="muted">
+              Automatically calculated using the approved 15% markup on supplier cost.
+            </p>
           </div>
         </div>
 
         <div class="row">
           <div>
             <label for="stock">Stock Quantity</label>
-            <input
-              id="stock"
-              type="number"
-              min="0"
-              step="1"
-              value="0"
-              required
-            >
+            <input id="stock" type="number" min="0" step="1" value="0" required>
           </div>
 
           <div>
             <label for="minStock">Minimum Stock Level</label>
-            <input
-              id="minStock"
-              type="number"
-              min="0"
-              step="1"
-              value="0"
-              required
-            >
+            <input id="minStock" type="number" min="0" step="1" value="0" required>
           </div>
         </div>
 
@@ -441,31 +289,17 @@
         </select>
 
         <label for="productImage">Product Picture</label>
-        <input
-          id="productImage"
-          type="file"
-          accept="image/jpeg,image/png,image/webp"
-        >
-
+        <input id="productImage" type="file" accept="image/jpeg,image/png,image/webp">
         <p class="muted">
           Accepted formats: JPG, PNG and WebP. Maximum size: 5 MB.
-          You can leave this empty when editing a product to keep
-          its existing picture.
+          Leave empty when editing to keep the existing picture.
         </p>
 
-        <img
-          id="imagePreview"
-          class="preview hidden"
-          alt="Product picture preview"
-        >
+        <img id="imagePreview" class="preview hidden" alt="Product picture preview">
 
         <label for="imageUrl">Current Image URL</label>
-        <input
-          id="imageUrl"
-          type="url"
-          readonly
-          placeholder="Uploaded image URL will appear here"
-        >
+        <input id="imageUrl" type="url" readonly
+          placeholder="Uploaded image URL will appear here">
 
         <label for="active">Catalogue Visibility</label>
         <select id="active">
@@ -473,34 +307,20 @@
           <option value="false">Inactive — hide from catalogue</option>
         </select>
 
-        <button id="saveBtn" type="submit" class="full">
-          Save Product
-        </button>
-
-        <button
-          id="resetBtn"
-          type="button"
-          class="secondary full"
-        >
+        <button id="saveBtn" type="submit" class="full">Save Product</button>
+        <button id="resetBtn" type="button" class="secondary full">
           Clear Form / New Product
         </button>
-
       </form>
     </div>
 
     <div class="card">
       <h2>Saved Products</h2>
-
-      <button id="refreshBtn" class="secondary">
-        Refresh Products
-      </button>
-
+      <button id="refreshBtn" type="button" class="secondary">Refresh Products</button>
       <div id="productsMessage" aria-live="polite"></div>
       <div id="productsList"></div>
     </div>
-
   </section>
-
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -509,9 +329,7 @@
 (function () {
   "use strict";
 
-  const SUPABASE_URL =
-    "https://nftxptjpgidcsgtaltjn.supabase.co";
-
+  const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
   const SUPABASE_PUBLISHABLE_KEY =
     "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
@@ -553,36 +371,26 @@
     }).format(Number(value));
   }
 
-  
+  // Approved catalogue formula: supplier cost plus 15%.
   function calculateCatalogueSellingPrice() {
-    const supplierCost = Number($("supplierCost").value);
+    const rawCost = $("supplierCost").value.trim();
+    const supplierCost = Number(rawCost);
 
     if (
-      $("supplierCost").value.trim() === "" ||
+      rawCost === "" ||
       !Number.isFinite(supplierCost) ||
       supplierCost <= 0
     ) {
       $("sellingPrice").value = "";
-      return;
+      return null;
     }
 
-    $("sellingPrice").value = (
-      Math.round(supplierCost * 1.15 * 100) / 100
-    ).toFixed(2);
+    const sellingPrice =
+      Math.round(supplierCost * 1.15 * 100) / 100;
+
+    $("sellingPrice").value = sellingPrice.toFixed(2);
+    return sellingPrice;
   }
-
-  function validOptionalNumber(value, label) {
-    if (value === "") return null;
-
-    const number = Number(value);
-
-    if (!Number.isFinite(number) || number < 0) {
-      throw new Error(label + " must be zero or greater.");
-    }
-
-    return number;
-  }
-
 
   function safeImageName(fileName) {
     const extension = fileName.split(".").pop().toLowerCase();
@@ -598,7 +406,11 @@
       throw new Error("Please choose a JPG, PNG or WebP image.");
     }
 
-    return crypto.randomUUID() + "." + allowed[extension];
+    if (!window.crypto || !window.crypto.randomUUID) {
+      throw new Error("This browser cannot safely generate an image filename. Please update your browser.");
+    }
+
+    return window.crypto.randomUUID() + "." + allowed[extension];
   }
 
   async function verifyAdmin() {
@@ -643,7 +455,6 @@
     }
 
     currentAdmin = user;
-
     $("loggedUser").textContent = user.email || profile.full_name || "";
     $("loginSection").classList.add("hidden");
     $("dashboard").classList.remove("hidden");
@@ -687,7 +498,7 @@
       selector.appendChild(option);
     });
 
-    if (products.some((p) => p.id === previousValue)) {
+    if (products.some((product) => product.id === previousValue)) {
       selector.value = previousValue;
     }
 
@@ -737,8 +548,7 @@
       card.appendChild(price);
 
       const stock = document.createElement("p");
-      stock.textContent =
-        "Stock: " + (product.stock_quantity ?? 0);
+      stock.textContent = "Stock: " + (product.stock_quantity ?? 0);
       card.appendChild(stock);
 
       const status = document.createElement("p");
@@ -748,6 +558,7 @@
       card.appendChild(status);
 
       const editButton = document.createElement("button");
+      editButton.type = "button";
       editButton.textContent = "Edit Product";
       editButton.addEventListener("click", () => {
         $("existingProduct").value = product.id;
@@ -769,8 +580,11 @@
     $("model").value = product.model || "";
     $("sku").value = product.sku || "";
     $("description").value = product.description || "";
-    $("sellingPrice").value = product.selling_price ?? "";
     $("supplierCost").value = product.supplier_cost ?? "";
+
+    // Do not trust an old stored selling price when editing.
+    calculateCatalogueSellingPrice();
+
     $("stock").value = product.stock_quantity ?? 0;
     $("minStock").value = product.min_stock_level ?? 0;
     $("unit").value = product.unit || "piece";
@@ -801,6 +615,7 @@
     $("minStock").value = "0";
     $("unit").value = "piece";
     $("active").value = "true";
+    $("sellingPrice").value = "";
 
     originalImageUrl = "";
 
@@ -880,7 +695,7 @@
   });
 
   $("existingProduct").addEventListener("change", function () {
-    const product = products.find((p) => p.id === this.value);
+    const product = products.find((item) => item.id === this.value);
 
     if (product) {
       fillForm(product);
@@ -888,6 +703,12 @@
       resetForm();
     }
   });
+
+  // Recalculate immediately whenever supplier cost changes.
+  $("supplierCost").addEventListener(
+    "input",
+    calculateCatalogueSellingPrice
+  );
 
   $("productImage").addEventListener("change", function () {
     const file = this.files?.[0];
@@ -910,11 +731,7 @@
       return;
     }
 
-    const allowedTypes = [
-      "image/jpeg",
-      "image/png",
-      "image/webp"
-    ];
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp"];
 
     if (!allowedTypes.includes(file.type)) {
       showMessage(
@@ -967,18 +784,28 @@
         !Number.isInteger(minStock) ||
         minStock < 0
       ) {
-        throw new Error("Stock values must be whole numbers of zero or greater.");
+        throw new Error(
+          "Stock values must be whole numbers of zero or greater."
+        );
       }
 
-      const sellingPrice = validOptionalNumber(
-        $("sellingPrice").value,
-        "Selling price"
-      );
+      // Server/database-independent frontend safeguard:
+      // always derive the stored selling price from supplier cost.
+      const rawSupplierCost = $("supplierCost").value.trim();
+      const supplierCost = Number(rawSupplierCost);
 
-      const supplierCost = validOptionalNumber(
-        $("supplierCost").value,
-        "Supplier cost"
-      );
+      if (
+        rawSupplierCost === "" ||
+        !Number.isFinite(supplierCost) ||
+        supplierCost <= 0
+      ) {
+        throw new Error("Enter a supplier cost greater than zero.");
+      }
+
+      const sellingPrice =
+        Math.round(supplierCost * 1.15 * 100) / 100;
+
+      $("sellingPrice").value = sellingPrice.toFixed(2);
 
       showMessage("formMessage", "Saving product...", "info");
 
@@ -1039,7 +866,10 @@
     } catch (error) {
       let message = error.message || "Could not save product.";
 
-      if (error.message && error.message.toLowerCase().includes("row-level security")) {
+      if (
+        error.message &&
+        error.message.toLowerCase().includes("row-level security")
+      ) {
         message += " Check the Storage and products table security policies.";
       }
 
@@ -1078,7 +908,7 @@
   });
 
   client.auth.onAuthStateChange(function () {
-    // The page checks the current session when loaded and during actions.
+    // Session verification occurs on page load and during protected actions.
   });
 
   async function start() {
@@ -1100,9 +930,7 @@
   }
 
   start();
-
 })();
 </script>
-
 </body>
 </html>
