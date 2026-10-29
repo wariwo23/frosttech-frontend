@@ -2,49 +2,58 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>FrostTech Supabase Test</title>
-
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FrostTech Security Test</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="supabase.js"></script>
 </head>
-
 <body>
-
-  <h1>FrostTech Supabase Test</h1>
-
-  <p id="status">Testing database connection...</p>
+  <h2>FrostTech Supplier-Cost Security Test</h2>
+  <p id="status">Checking access...</p>
 
   <script>
-    const status = document.getElementById("status");
+    async function runTest() {
+      const status = document.getElementById("status");
 
-    async function testConnection() {
-
-      if (!supabaseClient) {
+      if (!window.supabaseClient) {
         status.textContent = "Supabase client failed to load.";
         return;
       }
 
-      const { data, error } = await supabaseClient
+      const { data, error } = await window.supabaseClient
         .from("products")
         .select("*")
         .limit(1);
 
       if (error) {
-  status.textContent =
-    "Database connection error: " +
-    error.message +
-    " | Code: " +
-    (error.code || "none") +
-    " | Details: " +
-    (error.details || "none");
-} else {
-        status.textContent = "FrostTech Supabase database connected successfully!";
+        status.textContent =
+          "Query error: " + error.message +
+          " | Code: " + (error.code || "none");
+        return;
       }
+
+      if (!data || data.length === 0) {
+        status.textContent =
+          "Query succeeded, but no product row was returned. Result inconclusive.";
+        return;
+      }
+
+      const hasField =
+        Object.prototype.hasOwnProperty.call(data[0], "supplier_cost");
+
+      const hasValue =
+        hasField &&
+        data[0].supplier_cost !== null &&
+        data[0].supplier_cost !== undefined;
+
+      status.textContent =
+        "Query succeeded. supplier_cost field returned: " +
+        (hasField ? "YES" : "NO") +
+        ". Non-null value returned: " +
+        (hasValue ? "YES — value hidden" : "NO");
     }
 
-    testConnection();
+    runTest();
   </script>
-
 </body>
 </html>
