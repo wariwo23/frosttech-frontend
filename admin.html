@@ -447,11 +447,19 @@ footer {
             <label for="productDescription">Description</label>
             <textarea id="productDescription"></textarea>
 
-            <label for="productSellingPrice">Catalogue Selling Price (₦)</label>
-<input id="productSellingPrice" type="number" min="0" step="0.01" placeholder="Calculated automatically for Air Conditioners">
+            <label for="productSellingPrice">Catalogue Selling Price (₦) — Automatically Calculated</label>
+            <input
+                id="productSellingPrice"
+                type="number"
+                min="0"
+                step="0.01"
+                readonly
+                placeholder="Enter supplier cost first"
+            >
+            <small>FrostTech applies a uniform 15% markup to supplier cost across all product categories.</small>
 
             <label for="productSupplierCost">Supplier Cost (₦)</label>
-            <input id="productSupplierCost" type="number" min="0" step="0.01">
+            <input id="productSupplierCost" type="number" min="0.01" step="0.01" required>
 
             <label for="productStock">Stock Quantity *</label>
             <input id="productStock" type="number" min="0" step="1" value="0" required>
@@ -1027,6 +1035,20 @@ async function loadDashboard() {
 el("productForm").addEventListener("submit", saveProduct);
 el("loadProductsBtn").addEventListener("click", loadProducts);
 el("cancelProductEditBtn").addEventListener("click", resetProductForm);
+el("productSupplierCost").addEventListener("input", calculateCatalogueSellingPrice);
+
+function calculateCatalogueSellingPrice() {
+    const rawCost = el("productSupplierCost").value.trim();
+    const supplierCost = Number(rawCost);
+
+    if (rawCost === "" || !Number.isFinite(supplierCost) || supplierCost <= 0) {
+        el("productSellingPrice").value = "";
+        return;
+    }
+
+    const sellingPrice = Math.round(supplierCost * 1.15 * 100) / 100;
+    el("productSellingPrice").value = sellingPrice.toFixed(2);
+}
 
 
 async function loadProducts() {
@@ -1158,37 +1180,22 @@ async function saveProduct(event) {
     try {
         const id = el("productId").value.trim();
         const imageFile = el("productImage").files[0];
-
         const costValue = el("productSupplierCost").value.trim();
-const supplierCost = costValue === "" ? null : Number(costValue);
+        const supplierCost = costValue === "" ? NaN : Number(costValue);
 
-const isAirConditioner =
-    el("productCategory").value === "Air Conditioners";
+        if (!Number.isFinite(supplierCost) || supplierCost <= 0) {
+            throw new Error("Enter a valid supplier cost greater than zero.");
+        }
 
-let price;
+        // Catalogue pricing is system-calculated: supplier cost plus 15%.
+        const price = Math.round(supplierCost * 1.15 * 100) / 100;
+        el("productSellingPrice").value = price.toFixed(2);
 
-if (isAirConditioner) {
-    if (
-        supplierCost === null ||
-        !Number.isFinite(supplierCost) ||
-        supplierCost <= 0
-    ) {
-        throw new Error(
-            "Enter a valid supplier cost for the air conditioner."
-        );
-    }
-
-    price = Math.round(supplierCost * 1.15 * 100) / 100;
-
-    el("productSellingPrice").value = price.toFixed(2);
-} else {
-    price = numericInput("productSellingPrice");
-}
         const stock = numericInput("productStock");
         const minimumStock = numericInput("productMinStock");
 
-        if (price < 0 || stock < 0 || minimumStock < 0) {
-            throw new Error("Prices and stock values cannot be negative.");
+        if (stock < 0 || minimumStock < 0) {
+            throw new Error("Stock values cannot be negative.");
         }
 
         if (!Number.isInteger(stock) || !Number.isInteger(minimumStock)) {
@@ -1196,27 +1203,22 @@ if (isAirConditioner) {
         }
 
         const record = {
-            name:el("productName").value.trim(),
-            category:el("productCategory").value || null,
-            brand:el("productBrand").value.trim() || null,
-            model:el("productModel").value.trim() || null,
-            sku:el("productSku").value.trim() || null,
-            unit:el("productUnit").value,
-            description:el("productDescription").value.trim() || null,
-            selling_price:price,
-supplier_cost:supplierCost,
-            stock_quantity:stock,
-            min_stock_level:minimumStock,
-            is_active:el("productActive").value === "true",
-            updated_at:new Date().toISOString()
+            name: el("productName").value.trim(),
+            category: el("productCategory").value || null,
+            brand: el("productBrand").value.trim() || null,
+            model: el("productModel").value.trim() || null,
+            sku: el("productSku").value.trim() || null,
+            unit: el("productUnit").value,
+            description: el("productDescription").value.trim() || null,
+            selling_price: price,
+            supplier_cost: supplierCost,
+            stock_quantity: stock,
+            min_stock_level: minimumStock,
+            is_active: el("productActive").value === "true",
+            updated_at: new Date().toISOString()
         };
 
         if (!record.name) throw new Error("Enter the product name.");
-
-        if (record.supplier_cost !== null &&
-            (!Number.isFinite(record.supplier_cost) || record.supplier_cost < 0)) {
-            throw new Error("Supplier cost must be zero or greater.");
-        }
 
         if (imageFile) {
             if (!imageFile.type.startsWith("image/")) {
@@ -1229,19 +1231,20 @@ supplier_cost:supplierCost,
 
             const extension = (imageFile.name.split(".").pop() || "jpg")
                 .replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
-
             const imagePath = "products/" + crypto.randomUUID() + "." + extension;
 
-            const { error:uploadError } = await db.storage
+            const { error: uploadError } = await db.storage
                 .from("product-images")
                 .upload(imagePath, imageFile, {
-                    upsert:false,
-                    contentType:imageFile.type
+                    upsert: false,
+                    contentType: imageFile.type
                 });
 
-            if (uploadError) throw new Error("Image upload failed: " + errorText(uploadError));
+            if (uploadError) {
+                throw new Error("Image upload failed: " + errorText(uploadError));
+            }
 
-            const { data:publicUrlData } = db.storage
+            const { data: publicUrlData } = db.storage
                 .from("product-images")
                 .getPublicUrl(imagePath);
 
@@ -1260,14 +1263,12 @@ supplier_cost:supplierCost,
 
         resetProductForm();
         await loadProducts();
-
     } catch (error) {
         showMessage("productMessage", "Product could not be saved: " + errorText(error), "error");
     } finally {
         button.disabled = false;
     }
 }
-
 
 function editProduct(id) {
     const product = currentProducts.find(item => item.id === id);
@@ -1281,8 +1282,8 @@ function editProduct(id) {
     el("productSku").value = product.sku || "";
     el("productUnit").value = product.unit || "piece";
     el("productDescription").value = product.description || "";
-    el("productSellingPrice").value = product.selling_price ?? "";
     el("productSupplierCost").value = product.supplier_cost ?? "";
+    calculateCatalogueSellingPrice();
     el("productStock").value = product.stock_quantity ?? 0;
     el("productMinStock").value = product.min_stock_level ?? 0;
     el("productActive").value = String(product.is_active);
@@ -1303,6 +1304,7 @@ function resetProductForm() {
     el("productStock").value = 0;
     el("productMinStock").value = 0;
     el("productActive").value = "true";
+    el("productSellingPrice").value = "";
     el("productFormTitle").textContent = "Add Product";
     el("saveProductBtn").textContent = "Save Product";
     el("cancelProductEditBtn").classList.add("hidden");
