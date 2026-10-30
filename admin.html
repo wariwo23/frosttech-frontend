@@ -799,6 +799,312 @@ function editProduct(id) {
     el("productActive").value = String(product.is_active);
     el("productImage").value = "";
 
+
+/* PRODUCT MANAGEMENT */
+
+el("productForm").addEventListener("submit", saveProduct);
+el("loadProductsBtn").addEventListener("click", loadProducts);
+el("cancelProductEditBtn").addEventListener("click", resetProductForm);
+
+async function loadProducts() {
+    const target = el("productList");
+    target.textContent = "Loading products...";
+
+    const { data, error } = await db
+        .from("products")
+        .select("id,name,category,brand,model,sku,unit,description,selling_price,stock_quantity,min_stock_level,image_url,is_active,created_at,updated_at")
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        target.textContent = "Could not load products: " + errorText(error);
+        showMessage("productMessage", errorText(error), "error");
+        el("productCount").textContent = "—";
+        return;
+    }
+
+    currentProducts = data || [];
+    el("productCount").textContent = currentProducts.length;
+
+    if (!currentProducts.length) {
+        target.textContent = "No products found.";
+        clearMessage("productMessage");
+        return;
+    }
+
+    target.innerHTML = currentProducts.map(product => `
+        <article class="card">
+            <h3>${escapeHtml(product.name)}</h3>
+
+            ${product.image_url ? `
+                <img class="product-image"
+                     src="${escapeHtml(product.image_url)}"
+                     alt="Product image">
+            ` : ""}
+
+            <p><strong>Category:</strong>
+                ${escapeHtml(product.category || "Not specified")}</p>
+
+            <p><strong>Brand / Model:</strong>
+                ${escapeHtml(product.brand || "")}
+                ${escapeHtml(product.model || "")}</p>
+
+            <p><strong>SKU:</strong>
+                ${escapeHtml(product.sku || "Not specified")}</p>
+
+            <p><strong>Catalogue Selling Price:</strong>
+                ${Number(product.selling_price) > 0
+                    ? money(product.selling_price)
+                    : "Not yet priced"}</p>
+
+            <p><strong>Stock:</strong>
+                ${escapeHtml(product.stock_quantity)}</p>
+
+            <p><strong>Visibility:</strong>
+                ${product.is_active ? badge("active") : badge("inactive")}</p>
+
+            <div class="action-row">
+                <button type="button"
+                    data-edit-product="${escapeHtml(product.id)}">
+                    Edit Product
+                </button>
+
+                <button type="button"
+                    class="${product.is_active ? "warning" : "success"}"
+                    data-toggle-product="${escapeHtml(product.id)}">
+                    ${product.is_active ? "Deactivate" : "Activate"}
+                </button>
+            </div>
+        </article>
+    `).join("");
+
+    target.querySelectorAll("[data-edit-product]").forEach(button => {
+        button.addEventListener("click", () =>
+            editProduct(button.dataset.editProduct)
+        );
+    });
+
+    target.querySelectorAll("[data-toggle-product]").forEach(button => {
+        button.addEventListener("click", () =>
+            toggleProduct(button.dataset.toggleProduct)
+        );
+    });
+
+    clearMessage("productMessage");
+}
+
+
+/*
+ * Checks the protected supplier-cost records.
+ * Supplier cost is never displayed in Product Management.
+ */
+async function hasApprovedSelectedPricing(product) {
+    if (!product || !product.id) return false;
+
+    const sellingPrice = Number(product.selling_price);
+
+    if (!Number.isFinite(sellingPrice) || sellingPrice <= 0) {
+        return false;
+    }
+
+    const { data, error } = await db.rpc(
+        "admin_list_product_supplier_costs",
+        { p_product_id: product.id }
+    );
+
+    if (error) {
+        throw new Error(
+            "Could not verify the selected supplier pricing: " +
+            errorText(error)
+        );
+    }
+
+    const selected = (data || []).find(item =>
+        item.is_selected === true &&
+        Number(item.supplier_cost) > 0
+    );
+
+    return Boolean(selected);
+}
+
+
+async function saveProduct(event) {
+    event.preventDefault();
+
+    if (!currentAdmin) return;
+
+    const button = el("saveProductBtn");
+    button.disabled = true;
+
+    try {
+        const id = el("productId").value.trim();
+        const imageFile = el("productImage").files[0];
+
+        const stock = numericInput("productStock");
+        const minimumStock = numericInput("productMinStock");
+
+        if (!Number.isInteger(stock) || !Number.isInteger(minimumStock) ||
+            stock < 0 || minimumStock < 0) {
+            throw new Error(
+                "Stock values must be whole numbers and cannot be negative."
+            );
+        }
+
+        const record = {
+            name: el("productName").value.trim(),
+            category: el("productCategory").value || null,
+            brand: el("productBrand").value.trim() || null,
+            model: el("productModel").value.trim() || null,
+            sku: el("productSku").value.trim() || null,
+            unit: el("productUnit").value,
+            description: el("productDescription").value.trim() || null,
+            stock_quantity: stock,
+            min_stock_level: minimumStock,
+            updated_at: new Date().toISOString()
+        };
+
+        if (!record.name) {
+            throw new Error("Enter the product name.");
+        }
+
+        if (imageFile) {
+            if (!imageFile.type.startsWith("image/")) {
+                throw new Error("Please select a valid image file.");
+            }
+
+            if (imageFile.size > 5 * 1024 * 1024) {
+                throw new Error("Image must be 5 MB or smaller.");
+            }
+
+            const extension = (imageFile.name.split(".").pop() || "jpg")
+                .replace(/[^a-zA-Z0-9]/g, "")
+                .toLowerCase();
+
+            const imagePath =
+                "products/" + crypto.randomUUID() + "." + extension;
+
+            const { error: uploadError } = await db.storage
+                .from("product-images")
+                .upload(imagePath, imageFile, {
+                    upsert: false,
+                    contentType: imageFile.type
+                });
+
+            if (uploadError) {
+                throw new Error(
+                    "Image upload failed: " + errorText(uploadError)
+                );
+            }
+
+            const { data: publicUrlData } = db.storage
+                .from("product-images")
+                .getPublicUrl(imagePath);
+
+            record.image_url = publicUrlData.publicUrl;
+        }
+
+        if (id) {
+            /*
+             * Editing an existing product:
+             * Do not update supplier_cost, selling_price or supplier_id.
+             */
+            const existingProduct = currentProducts.find(
+                product => String(product.id) === String(id)
+            );
+
+            if (!existingProduct) {
+                throw new Error(
+                    "Product record not found. Reload products and try again."
+                );
+            }
+
+            const wantsActive =
+                el("productActive").value === "true";
+
+            if (wantsActive) {
+                const pricingVerified =
+                    await hasApprovedSelectedPricing(existingProduct);
+
+                if (!pricingVerified) {
+                    throw new Error(
+                        "This product cannot be activated yet. " +
+                        "First add and select an approved supplier cost " +
+                        "through Supplier Cost Management."
+                    );
+                }
+            }
+
+            record.is_active = wantsActive;
+
+            const { error } = await db
+                .from("products")
+                .update(record)
+                .eq("id", id);
+
+            if (error) throw error;
+
+            showMessage(
+                "productMessage",
+                "Product details updated. Protected supplier pricing was preserved.",
+                "success-message"
+            );
+
+        } else {
+            /*
+             * New products are created without pricing.
+             * They must remain inactive until supplier pricing is selected.
+             *
+             * No supplier cost, selling price or supplier ID is written here.
+             */
+            record.is_active = false;
+
+            const { error } = await db
+                .from("products")
+                .insert(record);
+
+            if (error) throw error;
+
+            showMessage(
+                "productMessage",
+                "New product created successfully as inactive. " +
+                "Next, add and select its approved supplier cost through " +
+                "Supplier Cost Management.",
+                "success-message"
+            );
+        }
+
+        resetProductForm();
+        await loadProducts();
+
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            "Product could not be saved: " + errorText(error),
+            "error"
+        );
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+function editProduct(id) {
+    const product = currentProducts.find(item => item.id === id);
+    if (!product) return;
+
+    el("productId").value = product.id;
+    el("productName").value = product.name || "";
+    el("productCategory").value = product.category || "";
+    el("productBrand").value = product.brand || "";
+    el("productModel").value = product.model || "";
+    el("productSku").value = product.sku || "";
+    el("productUnit").value = product.unit || "piece";
+    el("productDescription").value = product.description || "";
+    el("productStock").value = product.stock_quantity ?? 0;
+    el("productMinStock").value = product.min_stock_level ?? 0;
+    el("productSellingPrice").value = product.selling_price ?? "";
+    el("productActive").value = String(product.is_active);
+    el("productImage").value = "";
+
     el("productFormTitle").textContent = "Edit Product";
     el("saveProductBtn").textContent = "Update Product";
     el("cancelProductEditBtn").classList.remove("hidden");
@@ -807,7 +1113,7 @@ function editProduct(id) {
 
     showMessage(
         "productMessage",
-        "Editing product. Supplier cost and selling price are protected and will not be changed here.",
+        "Editing product details. Supplier cost and catalogue selling price cannot be changed here.",
         "info"
     );
 }
@@ -818,7 +1124,8 @@ function resetProductForm() {
     el("productId").value = "";
     el("productStock").value = 0;
     el("productMinStock").value = 0;
-    el("productActive").value = "true";
+    el("productSellingPrice").value = "";
+    el("productActive").value = "false";
     el("productFormTitle").textContent = "Add Product";
     el("saveProductBtn").textContent = "Save Product";
     el("cancelProductEditBtn").classList.add("hidden");
@@ -829,7 +1136,34 @@ async function toggleProduct(id) {
     const product = currentProducts.find(item => item.id === id);
     if (!product) return;
 
-    const action = product.is_active ? "deactivate" : "activate";
+    const activating = !product.is_active;
+
+    if (activating) {
+        try {
+            const pricingVerified =
+                await hasApprovedSelectedPricing(product);
+
+            if (!pricingVerified) {
+                showMessage(
+                    "productMessage",
+                    "This product cannot be activated yet. " +
+                    "First add and select an approved supplier cost " +
+                    "through Supplier Cost Management.",
+                    "error"
+                );
+                return;
+            }
+        } catch (error) {
+            showMessage(
+                "productMessage",
+                "Activation check failed: " + errorText(error),
+                "error"
+            );
+            return;
+        }
+    }
+
+    const action = activating ? "activate" : "deactivate";
 
     const confirmed = await frostTechConfirm(
         "Do you want to " + action + " " + product.name + "?",
@@ -840,7 +1174,7 @@ async function toggleProduct(id) {
 
     const { error } = await db.from("products")
         .update({
-            is_active: !product.is_active,
+            is_active: activating,
             updated_at: new Date().toISOString()
         })
         .eq("id", id);
