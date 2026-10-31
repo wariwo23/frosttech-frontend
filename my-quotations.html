@@ -7,71 +7,363 @@
 <title>My Quotations | FrostTech</title>
 <meta name="description" content="Review FrostTech quotations and respond to offers securely.">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
 <style>
-:root{--blue:#0759b8;--dark:#063d7a;--light:#eaf3ff;--red:#b42318;--text:#172033;--muted:#64748b;--border:#dce4ee;--bg:#f4f7fb}
+:root{
+  --blue:#0759b8;
+  --dark:#063d7a;
+  --light:#eaf3ff;
+  --red:#b42318;
+  --text:#172033;
+  --muted:#64748b;
+  --border:#dce4ee;
+  --bg:#f4f7fb;
+}
+
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 Inter,Arial,sans-serif}
-header{background:var(--dark);color:#fff;padding:20px 16px}
-.header-inner,main{max-width:1000px;margin:auto}
-header h1{margin:0;font-size:23px;font-weight:800}
-header p{margin:5px 0 0;color:#d8e9ff}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.6 Inter,Arial,sans-serif;
+}
+
+header{
+  background:var(--dark);
+  color:#fff;
+  padding:20px 16px;
+}
+
+.header-inner,main{
+  max-width:1000px;
+  margin:auto;
+}
+
+header h1{
+  margin:0;
+  font-size:23px;
+  font-weight:800;
+}
+
+header p{
+  margin:5px 0 0;
+  color:#d8e9ff;
+}
+
 main{padding:24px 14px 40px}
-.intro,.quotation-card,.notice{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
-.intro h2{margin:0 0 6px;font-size:20px}
+
+.intro,.quotation-card,.notice{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.intro h2{
+  margin:0 0 6px;
+  font-size:20px;
+}
+
 .intro p{margin:0;color:var(--muted)}
-.toolbar,.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
-button{border:0;border-radius:8px;padding:12px 16px;font:700 14px Inter,Arial,sans-serif;text-align:center;cursor:pointer}
+
+.toolbar,.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+button{
+  border:0;
+  border-radius:8px;
+  padding:12px 16px;
+  font:700 14px Inter,Arial,sans-serif;
+  text-align:center;
+  cursor:pointer;
+}
+
 .primary{background:var(--blue);color:#fff}
 .primary:hover{background:var(--dark)}
 .secondary{background:#e8eef6;color:var(--text)}
 .danger{background:var(--red);color:#fff}
 button:disabled{opacity:.6;cursor:not-allowed}
-.quotation-card h3{margin:0 0 5px;font-size:17px;overflow-wrap:anywhere}
-.reference{color:var(--muted);font-size:12px;overflow-wrap:anywhere}
-.status{display:inline-block;padding:5px 9px;margin:10px 0;border-radius:20px;font-size:12px;font-weight:700;background:#fff2cc;color:#805500}
-.status-paid,.status-accepted{background:#d9f7e5;color:#11613a}
-.status-declined,.status-error{background:#fee4e2;color:var(--red)}
-.fee-panel{margin-top:15px;padding:15px;border-radius:10px;background:var(--light);border:1px solid #c8ddff}
+
+.quotation-card h3{
+  margin:0 0 5px;
+  font-size:17px;
+  overflow-wrap:anywhere;
+}
+
+.reference{
+  color:var(--muted);
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+
+.status{
+  display:inline-block;
+  padding:5px 9px;
+  margin:10px 0;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:700;
+  background:#fff2cc;
+  color:#805500;
+}
+
+.status-paid,.status-accepted{
+  background:#d9f7e5;
+  color:#11613a;
+}
+
+.status-declined,.status-error{
+  background:#fee4e2;
+  color:var(--red);
+}
+
+.fee-panel{
+  margin-top:15px;
+  padding:15px;
+  border-radius:10px;
+  background:var(--light);
+  border:1px solid #c8ddff;
+}
+
 .fee-panel p{margin:5px 0}
-.fee-amount{font-size:22px;font-weight:800;color:var(--dark)}
-.details{margin-top:16px;padding-top:12px;border-top:1px solid var(--border)}
-.detail-row{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid #edf1f6}
+
+.fee-amount{
+  font-size:22px;
+  font-weight:800;
+  color:var(--dark);
+}
+
+.details{
+  margin-top:16px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+
+.detail-row{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:8px 0;
+  border-bottom:1px solid #edf1f6;
+}
+
 .detail-row span:first-child{color:var(--muted)}
-.detail-row span:last-child{text-align:right;font-weight:600;overflow-wrap:anywhere}
-.total-row{font-size:17px;font-weight:800;border-bottom:0}
-.message{padding:13px;border-radius:8px;background:#eaf3ff;color:var(--dark);margin-bottom:15px;overflow-wrap:anywhere}
+
+.detail-row span:last-child{
+  text-align:right;
+  font-weight:600;
+  overflow-wrap:anywhere;
+}
+
+.total-row{
+  font-size:17px;
+  font-weight:800;
+  border-bottom:0;
+}
+
+.message{
+  padding:13px;
+  border-radius:8px;
+  background:#eaf3ff;
+  color:var(--dark);
+  margin-bottom:15px;
+  overflow-wrap:anywhere;
+}
+
 .message.error{background:#fee4e2;color:var(--red)}
 .message.success{background:#d9f7e5;color:#11613a}
 .hidden{display:none!important}
 .muted{color:var(--muted)}
-.decision-panel{margin-top:18px;padding:15px;border:1px solid var(--border);border-radius:10px;background:#fafcff}
-.decision-panel h4{margin:0 0 8px;font-size:16px}
-.terms{display:flex;align-items:flex-start;gap:10px;margin:14px 0;line-height:1.6}
-.terms input{margin-top:5px;min-width:18px;min-height:18px;cursor:pointer}
+
+.decision-panel{
+  margin-top:18px;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fafcff;
+}
+
+.decision-panel h4{
+  margin:0 0 8px;
+  font-size:16px;
+}
+
+.terms{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:14px 0;
+  line-height:1.6;
+}
+
+.terms input{
+  margin-top:5px;
+  min-width:18px;
+  min-height:18px;
+  cursor:pointer;
+}
+
 label{font-weight:500}
-textarea,select{width:100%;padding:11px;border:1px solid #b9c7d8;border-radius:8px;font:14px Inter,Arial,sans-serif;background:#fff;margin-top:6px}
+
+textarea,select{
+  width:100%;
+  padding:11px;
+  border:1px solid #b9c7d8;
+  border-radius:8px;
+  font:14px Inter,Arial,sans-serif;
+  background:#fff;
+  margin-top:6px;
+}
+
 .field{margin:12px 0}
 .field label{display:block}
-footer{text-align:center;padding:20px 14px;color:var(--muted);font-size:12px}
-.ft-confirm-overlay{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(0,0,0,.6)}
-.ft-confirm-box{width:100%;max-width:390px;padding:23px;border-radius:14px;background:#fff;box-shadow:0 10px 35px rgba(0,0,0,.3);text-align:center}
-.ft-confirm-title{margin:0 0 18px;color:var(--blue);font-size:18px;line-height:1.4}
-.ft-confirm-question{margin:0 0 12px;color:#222;font-size:18px;font-weight:800}
-.ft-confirm-details{margin:0 0 22px;color:#555;font-size:14px}
-.ft-confirm-actions{display:flex;justify-content:center;gap:12px}
-.ft-confirm-cancel{background:#eee;color:#222;border:1px solid #ccc}
-.ft-confirm-ok{background:var(--blue);color:#fff}
+
+/* Separate Terms and payment layout */
+
+.order-payment-panel{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:100%;
+  margin-top:18px;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fafcff;
+}
+
+.order-terms-checkbox{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  width:100%;
+  margin:0;
+  line-height:1.6;
+}
+
+.order-terms-checkbox input{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+  margin:4px 0 0;
+}
+
+.order-terms-link{
+  display:block;
+  width:100%;
+  padding:10px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  color:var(--blue);
+  font-weight:700;
+  text-decoration:underline;
+  overflow-wrap:anywhere;
+}
+
+.order-payment-button{
+  display:block;
+  width:100%;
+  min-height:48px;
+  margin:0;
+  white-space:normal;
+}
+
+footer{
+  text-align:center;
+  padding:20px 14px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.ft-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.6);
+}
+
+.ft-confirm-box{
+  width:100%;
+  max-width:390px;
+  padding:23px;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.3);
+  text-align:center;
+}
+
+.ft-confirm-title{
+  margin:0 0 18px;
+  color:var(--blue);
+  font-size:18px;
+  line-height:1.4;
+}
+
+.ft-confirm-question{
+  margin:0 0 12px;
+  color:#222;
+  font-size:18px;
+  font-weight:800;
+}
+
+.ft-confirm-details{
+  margin:0 0 22px;
+  color:#555;
+  font-size:14px;
+}
+
+.ft-confirm-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+.ft-confirm-cancel{
+  background:#eee;
+  color:#222;
+  border:1px solid #ccc;
+}
+
+.ft-confirm-ok{
+  background:var(--blue);
+  color:#fff;
+}
+
 .ft-confirm-ok:hover{background:var(--dark)}
+
 @media(max-width:480px){
- header h1{font-size:21px}
- .quotation-card,.intro,.notice{padding:14px}
- .detail-row{gap:10px}
- .detail-row span:last-child{max-width:60%}
- .toolbar button,.actions button{flex:1}
- .ft-confirm-box{padding:20px}
+  header h1{font-size:21px}
+
+  .quotation-card,.intro,.notice{padding:14px}
+
+  .detail-row{gap:10px}
+
+  .detail-row span:last-child{max-width:60%}
+
+  .toolbar button,.actions button{flex:1}
+
+  .order-payment-panel{padding:13px}
+
+  .order-payment-button{width:100%}
+
+  .ft-confirm-box{padding:20px}
 }
 </style>
 </head>
+
 <body>
 <header>
  <div class="header-inner">
@@ -89,7 +381,9 @@ footer{text-align:center;padding:20px 14px;color:var(--muted);font-size:12px}
    <button id="signOutButton" class="secondary" type="button">Sign Out</button>
   </div>
  </section>
+
  <div id="message" class="message hidden" role="status" aria-live="polite"></div>
+
  <section id="quotationsContainer" aria-live="polite">
   <div class="notice">Loading your quotations...</div>
  </section>
@@ -101,6 +395,7 @@ footer{text-align:center;padding:20px 14px;color:var(--muted);font-size:12px}
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
 <script src="supabase.js"></script>
+
 <script>
 (() => {
 "use strict";
@@ -629,8 +924,13 @@ function renderUnlockedQuotation(q) {
     }
 
     if (decision === "accepted") {
+      /* Separate Terms and payment controls */
+
+      const paymentPanel = document.createElement("section");
+      paymentPanel.className = "order-payment-panel";
+
       const termsLabel = document.createElement("label");
-      termsLabel.className = "terms";
+      termsLabel.className = "order-terms-checkbox";
 
       const terms = document.createElement("input");
       terms.type = "checkbox";
@@ -642,16 +942,22 @@ function renderUnlockedQuotation(q) {
         "I have read and agreed to the FrostTech General Terms and Conditions.";
 
       termsLabel.append(terms, termsText);
-      card.appendChild(termsLabel);
+      paymentPanel.appendChild(termsLabel);
 
       const termsLink = document.createElement("a");
+      termsLink.className = "order-terms-link";
       termsLink.href =
         "terms.html?return=my-quotations.html&purpose=order_payment&reference=" +
         encodeURIComponent(q.id);
       termsLink.textContent = "Read General Terms and Conditions";
-      card.appendChild(termsLink);
+      paymentPanel.appendChild(termsLink);
 
-      const payButton = addText(card, "button", "Order Payment", "primary");
+      const payButton = addText(
+        paymentPanel,
+        "button",
+        "Order Payment",
+        "primary order-payment-button"
+      );
       payButton.type = "button";
 
       payButton.addEventListener("click", async () => {
@@ -758,6 +1064,8 @@ function renderUnlockedQuotation(q) {
           paymentInProgress = false;
         }
       });
+
+      card.appendChild(paymentPanel);
     }
 
     return card;
