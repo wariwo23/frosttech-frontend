@@ -255,6 +255,7 @@ textarea,select{
   min-width:18px;
   min-height:18px;
   margin:4px 0 0;
+  cursor:pointer;
 }
 
 .order-terms-link{
@@ -685,31 +686,12 @@ function showDeclineConfirmation() {
   });
 }
 
-/* Read a recent Terms-page return token */
-
+/*
+ * Reading the Terms page is optional.
+ * Acceptance is taken directly from the customer's checkbox on this page.
+ * This function deliberately does not require a Terms-page visit.
+ */
 function readTermsAcceptance(purpose, reference) {
-  try {
-    const saved = JSON.parse(
-      sessionStorage.getItem("frosttech_terms_acceptance_v1") || "null"
-    );
-
-    const age = saved ? Date.now() - Date.parse(saved.acceptedAt) : -1;
-
-    if (
-      saved &&
-      saved.purpose === purpose &&
-      saved.reference === String(reference) &&
-      saved.version === "1.0" &&
-      age >= 0 &&
-      age <= 15 * 60 * 1000
-    ) {
-      sessionStorage.removeItem("frosttech_terms_acceptance_v1");
-      return true;
-    }
-  } catch (error) {
-    console.error("Could not read Terms acceptance.", error);
-  }
-
   return false;
 }
 
@@ -775,19 +757,18 @@ function renderLockedQuotation(q) {
   addText(panel, "strong", "Administration fee");
   addText(panel, "p", money(q.administration_fee), "fee-amount");
   addText(panel, "p",
-    "Accept FrostTech’s pre-payment Terms and Conditions and complete the administration fee payment to unlock your full quotation for review and consideration.");
+    "Agree to FrostTech’s pre-payment Terms and Conditions and complete the administration fee payment to unlock your full quotation for review and consideration.");
 
   const termsLabel = document.createElement("label");
   termsLabel.className = "terms";
 
   const terms = document.createElement("input");
   terms.type = "checkbox";
-  terms.checked = readTermsAcceptance("admin_fee", q.id);
-  terms.disabled = !terms.checked;
+  terms.checked = false;
+  terms.disabled = false;
 
   const termsText = document.createElement("span");
-  termsText.textContent =
-    "I have read and agreed to the FrostTech General Terms and Conditions.";
+  termsText.textContent = "I agree to the Terms and Conditions?";
 
   termsLabel.append(terms, termsText);
   panel.appendChild(termsLabel);
@@ -807,7 +788,7 @@ function renderLockedQuotation(q) {
 
     if (!terms.checked) {
       showMessage(
-        "Please read and accept the pre-payment Terms and Conditions before proceeding.",
+        "Please agree to the Terms and Conditions before proceeding.",
         "error"
       );
       terms.focus();
@@ -934,12 +915,11 @@ function renderUnlockedQuotation(q) {
 
       const terms = document.createElement("input");
       terms.type = "checkbox";
-      terms.checked = readTermsAcceptance("order_payment", q.id);
-      terms.disabled = !terms.checked;
+      terms.checked = false;
+      terms.disabled = false;
 
       const termsText = document.createElement("span");
-      termsText.textContent =
-        "I have read and agreed to the FrostTech General Terms and Conditions.";
+      termsText.textContent = "I agree to the Terms and Conditions?";
 
       termsLabel.append(terms, termsText);
       paymentPanel.appendChild(termsLabel);
@@ -965,7 +945,7 @@ function renderUnlockedQuotation(q) {
 
         if (!terms.checked) {
           showMessage(
-            "Please read and accept FrostTech's Terms and Conditions before proceeding to payment.",
+            "Please agree to the Terms and Conditions before proceeding to payment.",
             "error"
           );
           terms.focus();
