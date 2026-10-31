@@ -1,0 +1,135 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advertiser Registration | FrostTech</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:18px;font-family:Arial,sans-serif;background:#f1f5f9;color:#183153}
+.card{max-width:480px;margin:24px auto;padding:26px;background:#fff;border-radius:12px;box-shadow:0 4px 18px #0001}
+.brand{text-align:center;margin-bottom:22px}
+.brand h1{margin:0;color:#087f8c}
+.brand p,.muted{color:#64748b;font-size:14px;line-height:1.5}
+h2{font-size:22px;margin:0 0 12px}
+label{display:block;margin:15px 0 6px;font-weight:600;font-size:14px}
+input{width:100%;min-height:46px;padding:11px 12px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+button{width:100%;min-height:46px;margin-top:20px;padding:12px;border:0;border-radius:7px;background:#087f8c;color:white;font-weight:600;font-size:15px}
+button:disabled{opacity:.6}
+.message{display:none;margin:14px 0;padding:12px;border-radius:7px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.message.success{display:block;background:#dcfce7;color:#166534}
+.message.error{display:block;background:#fee2e2;color:#991b1b}
+a{color:#087f8c}
+</style>
+</head>
+<body>
+<main class="card">
+<header class="brand">
+<h1>FrostTech</h1>
+<p>HVAC and Refrigeration Advertising Marketplace</p>
+</header>
+
+<h2>Create an Advertiser Account</h2>
+<p class="muted">
+Create a secure account to apply for advertiser verification.
+Company details and verification documents will be submitted after you sign in.
+</p>
+
+<div id="message" class="message" role="status" aria-live="polite"></div>
+
+<form id="registerForm">
+<label for="email">Business email address</label>
+<input id="email" type="email" autocomplete="email" required>
+
+<label for="password">Password (minimum 8 characters)</label>
+<input id="password" type="password" minlength="8" autocomplete="new-password" required>
+
+<label for="confirmPassword">Confirm password</label>
+<input id="confirmPassword" type="password" minlength="8" autocomplete="new-password" required>
+
+<button id="submitButton" type="submit">Create Advertiser Account</button>
+</form>
+
+<p class="muted">
+Already have a FrostTech account?
+<a href="advertiser-login.html">Sign in to continue</a>.
+</p>
+<p class="muted">
+<a href="index.html">Return to FrostTech homepage</a>
+</p>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+(function(){
+"use strict";
+
+const form=document.getElementById("registerForm");
+const message=document.getElementById("message");
+const button=document.getElementById("submitButton");
+
+function show(text,type){
+message.textContent=text;
+message.className="message "+type;
+}
+
+form.addEventListener("submit",async function(event){
+event.preventDefault();
+
+const db=window.supabaseClient;
+
+if(!db||!db.auth){
+show("FrostTech could not connect to the account service. Refresh and try again.","error");
+return;
+}
+
+const email=document.getElementById("email").value.trim().toLowerCase();
+const password=document.getElementById("password").value;
+const confirm=document.getElementById("confirmPassword").value;
+
+if(password.length<8){
+show("Use a password with at least 8 characters.","error");
+return;
+}
+
+if(password!==confirm){
+show("The passwords do not match.","error");
+return;
+}
+
+button.disabled=true;
+button.textContent="Creating account...";
+
+try{
+const {data,error}=await db.auth.signUp({
+email,
+password,
+options:{
+emailRedirectTo:window.location.origin+"/advertiser-login.html",
+data:{account_type:"advertiser"}
+}
+});
+
+if(error)throw error;
+
+if(data.session){
+show("Your advertiser account has been created. Continue to advertiser sign-in to complete your company application.","success");
+form.reset();
+}else{
+show("Your registration has been received. Check your email and confirm your address, then return here and sign in to complete your advertiser application.","success");
+}
+
+}catch(error){
+show(error.message||"We could not create your account. Please try again.","error");
+}finally{
+button.disabled=false;
+button.textContent="Create Advertiser Account";
+}
+});
+})();
+</script>
+</body>
+</html>
