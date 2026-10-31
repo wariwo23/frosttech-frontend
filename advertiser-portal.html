@@ -1,0 +1,384 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Advertiser Portal | FrostTech</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#f1f5f9;color:#183153}
+.container{max-width:760px;margin:20px auto}
+header,.panel{background:white;padding:22px;border-radius:12px;margin-bottom:18px;box-shadow:0 4px 16px #0000000d}
+header{text-align:center}
+header h1{margin:0;color:#087f8c}
+header p,.muted{color:#64748b;font-size:14px;line-height:1.6}
+h2{font-size:20px;margin:0 0 12px}
+h3{font-size:16px;margin:20px 0 8px}
+label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
+input,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px;background:white}
+input{min-height:44px}
+textarea{min-height:85px;resize:vertical}
+button{border:0;border-radius:7px;background:#087f8c;color:white;padding:12px 16px;min-height:44px;font-size:14px;font-weight:600;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{background:#64748b}
+.danger{background:#9f3030}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+.actions button{flex:1}
+.message{display:none;padding:12px;border-radius:7px;margin:14px 0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
+.message.success{display:block;background:#dcfce7;color:#166534}
+.message.error{display:block;background:#fee2e2;color:#991b1b}
+.message.info{display:block;background:#e0f2fe;color:#075985}
+.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#e0f2fe;color:#075985;font-weight:700;font-size:13px}
+.hidden{display:none!important}
+.doc-note{font-size:13px;color:#64748b;line-height:1.5}
+a{color:#087f8c}
+@media(max-width:520px){
+body{padding:10px}
+header,.panel{padding:18px}
+.actions{flex-direction:column}
+.actions button{width:100%}
+}
+</style>
+</head>
+<body>
+<main class="container">
+
+<header>
+<h1>FrostTech</h1>
+<p>Advertiser Workspace</p>
+<div id="welcome" class="muted">Checking your account...</div>
+<div class="actions" style="justify-content:center">
+<button id="signOutButton" class="secondary" type="button">Sign Out</button>
+</div>
+</header>
+
+<div id="message" class="message" role="status" aria-live="polite"></div>
+
+<section id="applicationPanel" class="panel hidden">
+<h2>Company Verification Application</h2>
+<p class="muted">
+Complete your company information and submit the required documents.
+Your application will be reviewed by FrostTech before advertising can be approved.
+</p>
+
+<form id="applicationForm">
+<label for="companyName">Company name *</label>
+<input id="companyName" required maxlength="180">
+
+<label for="contactPerson">Contact person's full name *</label>
+<input id="contactPerson" required maxlength="150">
+
+<label for="businessEmail">Business email address</label>
+<input id="businessEmail" type="email" readonly>
+
+<label for="phone">Business phone number *</label>
+<input id="phone" type="tel" required maxlength="40">
+
+<label for="businessAddress">Business address *</label>
+<textarea id="businessAddress" required maxlength="500"></textarea>
+
+<label for="registrationNumber">CAC registration number</label>
+<input id="registrationNumber" maxlength="100">
+
+<button id="applicationButton" type="submit">Submit Company Details</button>
+</form>
+</section>
+
+<section id="documentsPanel" class="panel hidden">
+<h2>Verification Documents</h2>
+<p class="muted">
+Upload clear copies of your company documents. Files are stored privately and are not publicly accessible.
+</p>
+
+<form id="documentForm">
+<label for="documentType">Document type *</label>
+<select id="documentType" required>
+<option value="CAC_CERTIFICATE">CAC Certificate</option>
+<option value="BUSINESS_ADDRESS">Proof of Business Address</option>
+<option value="IDENTITY_DOCUMENT">Contact Person's Identity Document</option>
+<option value="TAX_DOCUMENT">Tax Document</option>
+<option value="OTHER">Other Supporting Document</option>
+</select>
+
+<label for="documentFile">Choose document *</label>
+<input id="documentFile" type="file" accept=".pdf,.jpg,.jpeg,.png" required>
+
+<p class="doc-note">
+Accepted formats: PDF, JPG and PNG. Maximum file size: 10MB per file.
+</p>
+
+<button id="uploadButton" type="submit">Upload Document</button>
+</form>
+
+<h3>Submitted Documents</h3>
+<div id="documentList" class="muted">No documents loaded yet.</div>
+</section>
+
+<section id="statusPanel" class="panel hidden">
+<h2>Application Status</h2>
+<p>Your current verification status:</p>
+<p><span id="verificationStatus" class="status">Pending</span></p>
+<p id="statusExplanation" class="muted"></p>
+<button id="refreshButton" class="secondary" type="button">Refresh Application Status</button>
+</section>
+
+<section id="signedOutPanel" class="panel hidden">
+<h2>Sign in required</h2>
+<p class="muted">Please sign in with your FrostTech account to access the advertiser workspace.</p>
+<a href="advertiser-login.html">Go to Advertiser Sign In</a>
+</section>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+(function(){
+"use strict";
+
+const db=window.supabaseClient;
+const message=document.getElementById("message");
+let currentUser=null;
+let advertiser=null;
+
+function showMessage(text,type){
+message.textContent=text;
+message.className="message "+type;
+}
+
+function hideMessage(){
+message.textContent="";
+message.className="message";
+}
+
+function show(id){
+document.getElementById(id).classList.remove("hidden");
+}
+
+function hide(id){
+document.getElementById(id).classList.add("hidden");
+}
+
+function explainStatus(status){
+const explanations={
+pending:"Your company application is awaiting review by FrostTech. You can upload your verification documents while you wait.",
+approved:"Your advertiser application has been approved. You can proceed with the next advertising setup steps when they become available.",
+rejected:"Your application was not approved. Please contact FrostTech for guidance on the information or documents that need attention.",
+suspended:"Your advertiser account is currently suspended. Please contact FrostTech for assistance."
+};
+return explanations[status]||"Your application status will be displayed here.";
+}
+
+async function loadApplication(){
+if(!currentUser)return;
+
+const {data,error}=await db
+.from("advertisers")
+.select("*")
+.eq("user_id",currentUser.id)
+.maybeSingle();
+
+if(error)throw error;
+
+advertiser=data;
+
+if(!advertiser){
+show("applicationPanel");
+hide("documentsPanel");
+hide("statusPanel");
+document.getElementById("businessEmail").value=currentUser.email||"";
+return;
+}
+
+hide("applicationPanel");
+show("documentsPanel");
+show("statusPanel");
+
+const status=advertiser.verification_status||"pending";
+document.getElementById("verificationStatus").textContent=
+status.charAt(0).toUpperCase()+status.slice(1);
+document.getElementById("statusExplanation").textContent=explainStatus(status);
+
+await loadDocuments();
+}
+
+async function loadDocuments(){
+const list=document.getElementById("documentList");
+list.textContent="Loading documents...";
+
+const {data,error}=await db
+.from("advertiser_documents")
+.select("document_type,review_status,created_at")
+.eq("advertiser_id",advertiser.id)
+.order("created_at",{ascending:false});
+
+if(error){
+list.textContent="Unable to load document records: "+error.message;
+return;
+}
+
+if(!data||data.length===0){
+list.textContent="No documents submitted yet.";
+return;
+}
+
+list.innerHTML="";
+data.forEach(function(doc){
+const item=document.createElement("p");
+const name=String(doc.document_type||"Document").replaceAll("_"," ");
+const status=String(doc.review_status||"pending");
+item.textContent=name+" — "+status.charAt(0).toUpperCase()+status.slice(1);
+list.appendChild(item);
+});
+}
+
+document.getElementById("applicationForm").addEventListener("submit",async function(event){
+event.preventDefault();
+hideMessage();
+
+const button=document.getElementById("applicationButton");
+button.disabled=true;
+button.textContent="Submitting...";
+
+try{
+const {data,error}=await db.rpc("register_advertiser",{
+p_company_name:document.getElementById("companyName").value.trim(),
+p_contact_person:document.getElementById("contactPerson").value.trim(),
+p_phone:document.getElementById("phone").value.trim(),
+p_business_address:document.getElementById("businessAddress").value.trim(),
+p_registration_number:document.getElementById("registrationNumber").value.trim()||null
+});
+
+if(error)throw error;
+
+showMessage("Your company details have been submitted. You can now upload your verification documents.","success");
+await loadApplication();
+
+}catch(error){
+showMessage(error.message||"We could not submit your company details. Please try again.","error");
+}finally{
+button.disabled=false;
+button.textContent="Submit Company Details";
+}
+});
+
+document.getElementById("documentForm").addEventListener("submit",async function(event){
+event.preventDefault();
+hideMessage();
+
+if(!advertiser){
+showMessage("Please submit your company details first.","error");
+return;
+}
+
+const file=document.getElementById("documentFile").files[0];
+const type=document.getElementById("documentType").value;
+const button=document.getElementById("uploadButton");
+
+if(!file){
+showMessage("Please select a document.","error");
+return;
+}
+
+const allowed=["application/pdf","image/jpeg","image/png"];
+if(!allowed.includes(file.type)){
+showMessage("Only PDF, JPG and PNG documents are accepted.","error");
+return;
+}
+
+if(file.size>10*1024*1024){
+showMessage("The selected file is larger than 10MB. Please choose a smaller file.","error");
+return;
+}
+
+button.disabled=true;
+button.textContent="Uploading...";
+
+try{
+const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_");
+const path=currentUser.id+"/"+Date.now()+"_"+safeName;
+
+const {error:uploadError}=await db.storage
+.from("advertiser-documents")
+.upload(path,file,{upsert:false,contentType:file.type});
+
+if(uploadError)throw uploadError;
+
+const {error:recordError}=await db.rpc("register_advertiser_document",{
+p_document_type:type,
+p_storage_path:path
+});
+
+if(recordError){
+throw new Error("The file was uploaded, but its application record could not be saved. Please contact FrostTech support before uploading it again. Details: "+recordError.message);
+}
+
+showMessage("Your document has been uploaded successfully and submitted for review.","success");
+document.getElementById("documentForm").reset();
+await loadDocuments();
+
+}catch(error){
+showMessage(error.message||"Document upload failed. Please try again.","error");
+}finally{
+button.disabled=false;
+button.textContent="Upload Document";
+}
+});
+
+document.getElementById("refreshButton").addEventListener("click",async function(){
+hideMessage();
+try{
+await loadApplication();
+showMessage("Your application status has been refreshed.","success");
+}catch(error){
+showMessage(error.message||"Could not refresh your application.","error");
+}
+});
+
+document.getElementById("signOutButton").addEventListener("click",async function(){
+const {error}=await db.auth.signOut();
+if(error){
+showMessage(error.message,"error");
+return;
+}
+window.location.href="advertiser-login.html";
+});
+
+async function start(){
+if(!db||!db.auth){
+showMessage("FrostTech could not connect to Supabase. Please refresh the page.","error");
+return;
+}
+
+try{
+const {data,error}=await db.auth.getUser();
+if(error)throw error;
+
+currentUser=data.user;
+
+if(!currentUser){
+show("signedOutPanel");
+hide("applicationPanel");
+hide("documentsPanel");
+hide("statusPanel");
+document.getElementById("welcome").textContent="You are not signed in.";
+return;
+}
+
+document.getElementById("welcome").textContent="Signed in as "+currentUser.email;
+
+await loadApplication();
+
+}catch(error){
+showMessage(error.message||"Unable to load your advertiser workspace.","error");
+}
+}
+
+start();
+})();
+</script>
+</body>
+</html>
