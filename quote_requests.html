@@ -65,13 +65,6 @@
       cursor: not-allowed;
     }
 
-    .field-help {
-      margin: 6px 0 0;
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
     .login-link {
       text-align: center;
       margin-top: 16px;
@@ -196,23 +189,6 @@
         disabled
       >
 
-      <label for="budget">Estimated Budget (₦)</label>
-      <input
-        id="budget"
-        name="budget"
-        type="number"
-        min="1"
-        max="1000000000000"
-        step="0.01"
-        placeholder="Enter your budget, if known"
-        disabled
-      >
-
-      <p class="field-help">
-        Optional. This field is only for products or equipment
-        not listed in the FrostTech catalogue.
-      </p>
-
     </div>
 
     <label for="quantity">Quantity *</label>
@@ -246,13 +222,15 @@
       required
     ></textarea>
 
-    <label for="additionalDetails">Additional Requirements</label>
+    <label for="additionalDetails">
+      Additional Requirements or Preferences
+    </label>
     <textarea
       id="additionalDetails"
       name="additionalDetails"
       maxlength="2000"
       rows="4"
-      placeholder="Installation, accessories, specifications or other requirements"
+      placeholder="Tell us your preferred specifications, model, installation needs, accessories or other preferences"
     ></textarea>
 
     <button id="submitButton" type="submit">
@@ -303,8 +281,6 @@ const unlistedFields =
 
 const requestedProductName =
   document.getElementById("requestedProductName");
-
-const budgetInput = document.getElementById("budget");
 
 const OTHER_PRODUCT = "__other_product__";
 
@@ -360,11 +336,8 @@ function updateProductFields() {
   requestedProductName.disabled = !isUnlisted;
   requestedProductName.required = isUnlisted;
 
-  budgetInput.disabled = !isUnlisted;
-
   if (!isUnlisted) {
     requestedProductName.value = "";
-    budgetInput.value = "";
   }
 }
 
@@ -575,8 +548,6 @@ async function handleQuoteSubmit(event) {
     const additionalDetails =
       document.getElementById("additionalDetails").value.trim();
 
-    const budgetValue = budgetInput.value.trim();
-
     const selectedProduct = isUnlisted
       ? null
       : products.find(function(product) {
@@ -605,18 +576,6 @@ async function handleQuoteSubmit(event) {
       );
     }
 
-    let budget = null;
-
-    if (isUnlisted && budgetValue !== "") {
-      budget = Number(budgetValue);
-
-      if (!Number.isFinite(budget) || budget <= 0) {
-        throw new Error(
-          "Please enter a valid budget greater than zero, or leave it blank."
-        );
-      }
-    }
-
     const productName = isUnlisted
       ? requestedProductName.value.trim()
       : selectedProduct.name;
@@ -637,12 +596,8 @@ async function handleQuoteSubmit(event) {
           : "Catalogue product"
       ),
       "Product: " + productName,
-      "Budget: " + (
-        isUnlisted && budget !== null
-          ? "₦" + budget.toLocaleString("en-NG")
-          : "Not provided"
-      ),
-      "Additional requirements: " + (additionalDetails || "None")
+      "Additional requirements or preferences: " +
+        (additionalDetails || "None")
     ].join("\n");
 
     const requestData = {
@@ -657,7 +612,11 @@ async function handleQuoteSubmit(event) {
       quantity: quantity,
       preferred_brand: preferredBrand ||
         (selectedProduct && selectedProduct.brand) || null,
-      budget: isUnlisted ? budget : null,
+
+      // Budget is intentionally not collected from customers.
+      // Keep the existing database column unchanged.
+      budget: null,
+
       delivery_address: deliveryAddress,
       status: "pending"
     };
