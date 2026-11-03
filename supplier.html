@@ -217,12 +217,12 @@ footer {
   <h2>Supplier Login</h2>
   <p class="muted">Log in with your registered supplier account.</p>
 
-  <form id="loginForm">
+  <form id="loginForm" autocomplete="off">
     <label for="email">Email address</label>
     <input
       id="email"
       type="email"
-      autocomplete="username"
+      autocomplete="off"
       required
     >
 <label for="password">Password</label>
@@ -231,7 +231,7 @@ footer {
   <input
     id="password"
     type="password"
-    autocomplete="current-password"
+    autocomplete="off"
     required
   >
 
