@@ -745,6 +745,323 @@ async function loadAdvertiserApplications() {
 async function openAdvertiserDocument(storagePath) {
     if (!currentAdmin) {
         alert("Please sign in as an administrator.");
+
+async function loadAdvertiserApplications() {
+    const rows = el("advertiserRows");
+    const message = el("advertiserMessage");
+
+    if (!currentAdmin) {
+        rows.textContent = "Please sign in as an administrator first.";
+        return;
+    }
+
+    rows.textContent = "Loading advertiser applications...";
+    message.textContent = "";
+
+    const { data, error } = await db
+        .from("advertisers")
+        .select(`
+            id,
+            company_name,
+            contact_person,
+            email,
+            phone,
+            business_address,
+            registration_number,
+            verification_status,
+            reviewed_at,
+            review_reason,
+            created_at,
+            advertiser_documents (
+                id,
+                document_type,
+                storage_path,
+                review_status,
+                review_reason,
+                reviewed_at,
+                created_at
+            )
+        `)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        rows.textContent =
+            "Unable to load advertiser applications: " + error.message;
+        return;
+    }
+
+    currentAdvertisers = data || [];
+
+    if (!currentAdvertisers.length) {
+        rows.textContent = "No advertiser applications found.";
+        return;
+    }
+
+    rows.innerHTML = currentAdvertisers.map(advertiser => `
+        <article class="card" style="margin-top:15px;">
+            <h3>${escapeHtml(advertiser.company_name || "")}</h3>
+
+            <p><strong>Contact:</strong>
+                ${escapeHtml(advertiser.contact_person || "")}</p>
+            <p><strong>Email:</strong>
+                ${escapeHtml(advertiser.email || "")}</p>
+            <p><strong>Phone:</strong>
+                ${escapeHtml(advertiser.phone || "")}</p>
+            <p><strong>Address:</strong>
+                ${escapeHtml(advertiser.business_address || "")}</p>
+
+            <label for="advertiserCAC_${advertiser.id}">
+                CAC Registration Number
+            </label>
+
+            <input
+                id="advertiserCAC_${advertiser.id}"
+                value="${escapeHtml(advertiser.registration_number || "")}"
+                placeholder="Enter CAC registration number"
+            >
+
+            <button type="button"
+                data-save-advertiser-cac="${escapeHtml(advertiser.id)}">
+                Save CAC Number
+            </button>
+
+            <p><strong>Application Status:</strong>
+                ${escapeHtml(advertiser.verification_status || "pending")}</p>
+
+            <p><strong>Submitted:</strong>
+                ${escapeHtml(dateText(advertiser.created_at))}</p>
+
+            <p><strong>Review Reason:</strong>
+                ${escapeHtml(advertiser.review_reason || "None")}</p>
+
+            <h4>Submitted Documents</h4>
+
+            ${
+                (advertiser.advertiser_documents || []).length
+                ? advertiser.advertiser_documents.map(doc => `
+                    <div style="border:1px solid #ddd;padding:10px;margin:8px 0;">
+
+                        <p><strong>Type:</strong>
+                            ${escapeHtml(doc.document_type)}</p>
+
+                        <p><strong>Status:</strong>
+                            ${escapeHtml(doc.review_status)}</p>
+
+                        <p><strong>Review Reason:</strong>
+                            ${escapeHtml(doc.review_reason || "None")}</p>
+
+                        <button type="button"
+                            data-open-advertiser-document="${escapeHtml(doc.id)}">
+                            View Document
+                        </button>
+
+                        <label for="advertiserDocReason_${doc.id}">
+                            Review Reason
+                        </label>
+
+                        <textarea
+                            id="advertiserDocReason_${doc.id}"
+                            placeholder="Required when rejecting this document"
+                        >${escapeHtml(doc.review_reason || "")}</textarea>
+
+                        <div class="action-row">
+                            <button type="button"
+                                class="success"
+                                data-advertiser-doc-status="accepted"
+                                data-advertiser-id="${escapeHtml(advertiser.id)}"
+                                data-document-id="${escapeHtml(doc.id)}">
+                                Accept Document
+                            </button>
+
+                            <button type="button"
+                                class="danger"
+                                data-advertiser-doc-status="rejected"
+                                data-advertiser-id="${escapeHtml(advertiser.id)}"
+                                data-document-id="${escapeHtml(doc.id)}">
+                                Reject Document
+                            </button>
+                        </div>
+                    </div>
+                `).join("")
+                : "<p>No documents submitted.</p>"
+            }
+        </article>
+    `).join("");
+
+    rows.querySelectorAll("[data-save-advertiser-cac]").forEach(button => {
+        button.addEventListener("click", () =>
+            saveAdvertiserCAC(button.dataset.saveAdvertiserCac)
+        );
+    });
+
+    rows.querySelectorAll("[data-open-advertiser-document]").forEach(button => {
+        button.addEventListener("click", () => {
+            const advertiser = currentAdvertisers.find(item =>
+                item.advertiser_documents.some(doc =>
+                    doc.id === button.dataset.openAdvertiserDocument
+                )
+            );
+
+            const doc = advertiser?.advertiser_documents.find(item =>
+                item.id === button.dataset.openAdvertiserDocument
+            );
+
+            if (doc) openAdvertiserDocument(doc.storage_path);
+        });
+    });
+
+    rows.querySelectorAll("[data-advertiser-doc-status]").forEach(button => {
+        button.addEventListener("click", () =>
+            reviewAdvertiserDocument(
+                button.dataset.advertiserId,
+                button.dataset.documentId,
+                button.dataset.advertiserDocStatus
+            )
+        );
+    });
+
+    showMessage(
+        "advertiserMessage",
+        "Advertiser applications loaded.",
+        "success-message"
+    );
+}
+
+
+async function saveAdvertiserCAC(advertiserId) {
+    if (!currentAdmin) return;
+
+    const advertiser = currentAdvertisers.find(item =>
+        item.id === advertiserId
+    );
+
+    if (!advertiser) return;
+
+    const field = el("advertiserCAC_" + advertiserId);
+    const cacNumber = field ? field.value.trim() : "";
+
+    if (!cacNumber) {
+        showMessage(
+            "advertiserMessage",
+            "Enter the CAC registration number before saving.",
+            "error"
+        );
+        return;
+    }
+
+    const confirmed = await frostTechConfirm(
+        "Save CAC registration number " + cacNumber +
+        " for " + advertiser.company_name + "?",
+        "Yes, Save CAC Number"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await db
+        .from("advertisers")
+        .update({
+            registration_number: cacNumber
+        })
+        .eq("id", advertiserId);
+
+    if (error) {
+        showMessage(
+            "advertiserMessage",
+            "Could not save CAC number: " + errorText(error),
+            "error"
+        );
+        return;
+    }
+
+    showMessage(
+        "advertiserMessage",
+        "CAC registration number saved successfully.",
+        "success-message"
+    );
+
+    await loadAdvertiserApplications();
+}
+
+
+async function reviewAdvertiserDocument(
+    advertiserId,
+    documentId,
+    newStatus
+) {
+    if (!currentAdmin) return;
+
+    if (!["accepted", "rejected"].includes(newStatus)) return;
+
+    const advertiser = currentAdvertisers.find(item =>
+        item.id === advertiserId
+    );
+
+    const doc = advertiser?.advertiser_documents.find(item =>
+        item.id === documentId
+    );
+
+    if (!advertiser || !doc) return;
+
+    const reasonField = el("advertiserDocReason_" + documentId);
+    const reason = reasonField ? reasonField.value.trim() : "";
+
+    if (newStatus === "rejected" && !reason) {
+        showMessage(
+            "advertiserMessage",
+            "Enter a reason before rejecting a document.",
+            "error"
+        );
+        return;
+    }
+
+    const confirmed = await frostTechConfirm(
+        newStatus === "accepted"
+            ? "Accept this " + doc.document_type +
+              " document for " + advertiser.company_name + "?"
+            : "Reject this " + doc.document_type +
+              " document for " + advertiser.company_name + "?",
+        newStatus === "accepted" ? "Yes, Accept Document" : "Yes, Reject Document"
+    );
+
+    if (!confirmed) return;
+
+    const { error } = await db
+        .from("advertiser_documents")
+        .update({
+            review_status: newStatus,
+            reviewed_by: currentAdmin.id,
+            reviewed_at: new Date().toISOString(),
+            review_reason: reason || null
+        })
+        .eq("id", documentId)
+        .eq("advertiser_id", advertiserId);
+
+    if (error) {
+        showMessage(
+            "advertiserMessage",
+            "Document review was not saved: " + errorText(error),
+            "error"
+        );
+        return;
+    }
+
+    showMessage(
+        "advertiserMessage",
+        "Document review saved: " + newStatus + ".",
+        "success-message"
+    );
+
+    await loadAdvertiserApplications();
+}
+
+
+async function openAdvertiserDocument(storagePath) {
+    if (!currentAdmin) {
+        showMessage(
+            "advertiserMessage",
+            "Please sign in as an administrator.",
+            "error"
+        );
         return;
     }
 
@@ -753,8 +1070,11 @@ async function openAdvertiserDocument(storagePath) {
         .createSignedUrl(storagePath, 120);
 
     if (error) {
-        showMessage("advertiserMessage",
-            "Unable to open document: " + error.message, "error");
+        showMessage(
+            "advertiserMessage",
+            "Unable to open document: " + error.message,
+            "error"
+        );
         return;
     }
 
@@ -762,6 +1082,7 @@ async function openAdvertiserDocument(storagePath) {
         window.open(data.signedUrl, "_blank", "noopener");
     }
 }
+
     
 /* PRODUCT MANAGEMENT */
 
