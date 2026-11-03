@@ -447,6 +447,54 @@ async function initializePortal() {
 
   $("loginForm").addEventListener("submit", loginSupplier);
   $("retryButton").addEventListener("click", checkSupplier);
+ $("toggleSupplierPassword").addEventListener("click", () => {
+  const input = $("password");
+  const showing = input.type === "password";
+
+  input.type = showing ? "text" : "password";
+
+  $("toggleSupplierPassword").textContent =
+    showing ? "Hide" : "Show";
+});
+
+  $("forgotSupplierPassword").addEventListener("click", async () => {
+  const email = $("email").value.trim();
+  const button = $("forgotSupplierPassword");
+
+  if (!email) {
+    message("Please enter your registered supplier email address first.", "error");
+    $("email").focus();
+    return;
+  }
+
+  button.disabled = true;
+  message("Requesting password reset...");
+
+  try {
+    const redirectTo = new URL(
+      "customer-login.html?reset=1",
+      window.location.href
+    ).toString();
+
+    const { error } = await db.auth.resetPasswordForEmail(email, {
+      redirectTo
+    });
+
+    if (error) throw error;
+
+    message(
+      "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
+      "success"
+    );
+
+  } catch (error) {
+    message("Password reset request failed: " + error.message, "error");
+
+  } finally {
+    button.disabled = false;
+  }
+});
+  
   $("returnButton").addEventListener("click", returnToLogin);
   $("logoutButton").addEventListener("click", logoutSupplier);
   $("refreshButton").addEventListener("click", loadPortalData);
