@@ -82,7 +82,29 @@ footer{text-align:center;padding:20px;color:#64748b}
         <label for="email">Administrator Email</label>
         <input id="email" type="email" autocomplete="username" required>
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="current-password" required>
+
+<div class="password-wrapper">
+    <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        required
+    >
+
+    <button
+        type="button"
+        id="toggleAdminPassword"
+        class="secondary"
+    >Show</button>
+</div>
+
+<button
+    type="button"
+    id="forgotAdminPassword"
+    class="secondary"
+>
+    Forgot Password?
+</button>
         <button id="loginBtn" type="submit">Login</button>
     </form>
     <div id="loginMessage" role="status"></div>
