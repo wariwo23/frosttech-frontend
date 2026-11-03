@@ -1,0 +1,728 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin Management | FrostTech</title>
+<style>
+:root {
+  --navy:#063b70;
+  --blue:#0879c9;
+  --bg:#f3f6fa;
+  --border:#dce3eb;
+  --text:#172333;
+}
+* { box-sizing:border-box; }
+body {
+  margin:0;
+  font-family:Arial,sans-serif;
+  background:var(--bg);
+  color:var(--text);
+}
+header {
+  background:var(--navy);
+  color:white;
+  padding:18px;
+}
+main {
+  max-width:1000px;
+  margin:auto;
+  padding:16px;
+}
+.card {
+  background:white;
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:18px;
+  margin:16px 0;
+}
+input,select {
+  width:100%;
+  padding:12px;
+  margin:7px 0 12px;
+  border:1px solid #bbc7d4;
+  border-radius:6px;
+  font:inherit;
+  background:white;
+}
+button {
+  padding:11px 15px;
+  border:0;
+  border-radius:6px;
+  background:var(--blue);
+  color:white;
+  font-weight:bold;
+  font:inherit;
+  cursor:pointer;
+  margin:4px 3px 4px 0;
+}
+button:disabled { opacity:.55; }
+button.secondary { background:#536579; }
+button.danger { background:#b42318; }
+button.success { background:#18794e; }
+.message {
+  padding:12px;
+  border-radius:6px;
+  background:#e8f3ff;
+  color:#06477c;
+  overflow-wrap:anywhere;
+}
+.message.error {
+  background:#ffebee;
+  color:#a11919;
+}
+.message.success {
+  background:#e8f5ed;
+  color:#17633c;
+}
+.hidden { display:none !important; }
+.result {
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:14px;
+  margin:12px 0;
+  overflow-wrap:anywhere;
+}
+.result p { margin:7px 0; }
+.small { color:#596979; font-size:13px; }
+.actions { margin-top:10px; }
+a { color:#fff; }
+hr { border:0; border-top:1px solid var(--border); margin:18px 0; }
+#confirmModal {
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:18px;
+  z-index:10;
+}
+.modal-box {
+  background:white;
+  border-radius:10px;
+  padding:22px;
+  max-width:420px;
+  width:100%;
+}
+.modal-actions {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:flex-end;
+  margin-top:18px;
+}
+</style>
+</head>
+
+<body>
+<header>
+  <h1>FrostTech HVAC and Refrigeration</h1>
+  <p>Administrator Management Portal</p>
+  <p><a href="admin.html">Return to Super Admin Dashboard</a></p>
+</header>
+
+<main>
+  <section class="card">
+    <h2 id="pageTitle">Verifying Super Administrator access</h2>
+    <p id="status" class="message">
+      Please wait while your access is checked.
+    </p>
+    <p id="signedIn" class="hidden">
+      Signed in as: <strong id="adminEmail"></strong>
+    </p>
+  </section>
+
+  <div id="managementPanel" class="hidden">
+
+    <section class="card">
+      <h2>Appoint a Departmental Administrator</h2>
+      <p>Search for an existing active FrostTech customer or supplier account by email address.</p>
+
+      <label for="searchEmail">Account email address</label>
+      <input id="searchEmail" type="email"
+        placeholder="Enter the user's registered email">
+
+      <button id="searchButton" type="button">
+        Search Account
+      </button>
+
+      <p id="searchStatus" class="message hidden"></p>
+
+      <div id="searchResult" class="hidden">
+        <div class="result">
+          <p><strong>Name:</strong> <span id="foundName"></span></p>
+          <p><strong>Email:</strong> <span id="foundEmail"></span></p>
+          <p><strong>Account type:</strong> <span id="foundRole"></span></p>
+          <p><strong>User ID:</strong> <span id="foundId"></span></p>
+
+          <label for="departmentRole">Departmental role</label>
+          <select id="departmentRole">
+            <option value="operations_admin">Operations Admin</option>
+            <option value="supplier_admin">Supplier Admin</option>
+            <option value="finance_admin">Finance Admin</option>
+            <option value="catalogue_admin">Catalogue Admin</option>
+          </select>
+
+          <button id="appointButton" type="button">
+            Appoint Administrator
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Administrator Accounts</h2>
+      <p>Review appointments and manage departmental administrator access.</p>
+      <button id="loadAdminsButton" type="button">
+        Load Administrator Accounts
+      </button>
+      <p id="adminListStatus" class="message hidden"></p>
+      <div id="adminList"></div>
+    </section>
+
+    <section class="card">
+      <h2>Administrator Activity Log</h2>
+      <p>Review recorded administrator appointments, status changes and other administrative actions.</p>
+      <button id="loadLogsButton" type="button">
+        Load Activity Log
+      </button>
+      <p id="logStatus" class="message hidden"></p>
+      <div id="activityList"></div>
+    </section>
+
+  </div>
+</main>
+
+<div id="confirmModal" class="hidden">
+  <div class="modal-box">
+    <h2>FrostTech HVAC and Refrigeration Marketplace</h2>
+    <p id="confirmText"></p>
+    <div class="modal-actions">
+      <button id="cancelConfirm" class="secondary" type="button">
+        Cancel
+      </button>
+      <button id="acceptConfirm" type="button">
+        Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+const SUPABASE_URL =
+  "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+let foundUser = null;
+let pendingAction = null;
+
+const roleLabels = {
+  super_admin: "Super Administrator",
+  operations_admin: "Operations Admin",
+  supplier_admin: "Supplier Admin",
+  finance_admin: "Finance Admin",
+  catalogue_admin: "Catalogue Admin"
+};
+
+function showMessage(id, message, type = "") {
+  const box = $(id);
+  box.textContent = message;
+  box.classList.remove("hidden", "error", "success");
+  if (type) box.classList.add(type);
+}
+
+function hideMessage(id) {
+  $(id).classList.add("hidden");
+}
+
+function makeElement(tag, text, className) {
+  const el = document.createElement(tag);
+  if (text !== undefined) el.textContent = text;
+  if (className) el.className = className;
+  return el;
+}
+
+function addButton(parent, label, className, handler) {
+  const button = makeElement("button", label, className);
+  button.type = "button";
+  button.addEventListener("click", handler);
+  parent.appendChild(button);
+  return button;
+}
+
+function showConfirmation(message, action) {
+  $("confirmText").textContent = message;
+  pendingAction = action;
+  $("confirmModal").classList.remove("hidden");
+}
+
+function closeConfirmation() {
+  $("confirmModal").classList.add("hidden");
+  pendingAction = null;
+}
+
+$("cancelConfirm").addEventListener(
+  "click", closeConfirmation
+);
+
+$("acceptConfirm").addEventListener("click", async () => {
+  if (!pendingAction) return;
+
+  const action = pendingAction;
+  $("acceptConfirm").disabled = true;
+
+  try {
+    await action();
+  } finally {
+    $("acceptConfirm").disabled = false;
+    closeConfirmation();
+  }
+});
+
+async function checkAccess() {
+  try {
+    const { data: userData, error: userError } =
+      await db.auth.getUser();
+
+    if (userError || !userData.user) {
+      $("pageTitle").textContent = "Access not available";
+      showMessage(
+        "status",
+        "Please sign in through the FrostTech administrator login.",
+        "error"
+      );
+      return;
+    }
+
+    const { data: role, error: roleError } =
+      await db.rpc("admin_get_my_role");
+
+    if (roleError || role !== "super_admin") {
+      $("pageTitle").textContent = "Access not available";
+      showMessage(
+        "status",
+        "Only the Super Administrator can access administrator management.",
+        "error"
+      );
+      return;
+    }
+
+    $("pageTitle").textContent =
+      "Super Administrator Management";
+
+    showMessage(
+      "status",
+      "Super Administrator access verified.",
+      "success"
+    );
+
+    $("adminEmail").textContent =
+      userData.user.email || "";
+
+    $("signedIn").classList.remove("hidden");
+    $("managementPanel").classList.remove("hidden");
+
+  } catch (error) {
+    $("pageTitle").textContent = "Access not available";
+    showMessage(
+      "status",
+      "Unable to verify access. Please try again.",
+      "error"
+    );
+  }
+}
+
+$("searchButton").addEventListener("click", async () => {
+  const email = $("searchEmail").value.trim();
+
+  foundUser = null;
+  $("searchResult").classList.add("hidden");
+
+  if (!email) {
+    showMessage("searchStatus", "Enter an email address.", "error");
+    return;
+  }
+
+  $("searchButton").disabled = true;
+  showMessage("searchStatus", "Searching for account...");
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_find_user_for_appointment",
+      { p_email: email }
+    );
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      showMessage(
+        "searchStatus",
+        "No eligible active customer or supplier account was found.",
+        "error"
+      );
+      return;
+    }
+
+    foundUser = data[0];
+
+    $("foundName").textContent =
+      foundUser.full_name || "Name not supplied";
+
+    $("foundEmail").textContent =
+      foundUser.email || "";
+
+    $("foundRole").textContent =
+      foundUser.profile_role || "";
+
+    $("foundId").textContent =
+      foundUser.user_id || "";
+
+    $("searchResult").classList.remove("hidden");
+
+    showMessage(
+      "searchStatus",
+      "Account found. Confirm the identity before appointment.",
+      "success"
+    );
+
+  } catch (error) {
+    showMessage(
+      "searchStatus",
+      error.message || "Account search failed.",
+      "error"
+    );
+  } finally {
+    $("searchButton").disabled = false;
+  }
+});
+
+$("appointButton").addEventListener("click", () => {
+  if (!foundUser) return;
+
+  const role = $("departmentRole").value;
+  const roleName = roleLabels[role];
+
+  showConfirmation(
+    "Appoint " + foundUser.email +
+    " as " + roleName + "?",
+    async () => {
+      $("appointButton").disabled = true;
+
+      try {
+        const { error } = await db.rpc(
+          "admin_appoint_departmental_admin",
+          {
+            p_user_id: foundUser.user_id,
+            p_role: role
+          }
+        );
+
+        if (error) throw error;
+
+        showMessage(
+          "searchStatus",
+          "Administrator appointment completed.",
+          "success"
+        );
+
+        foundUser = null;
+        $("searchResult").classList.add("hidden");
+        $("searchEmail").value = "";
+
+        await loadAdministrators();
+
+      } catch (error) {
+        showMessage(
+          "searchStatus",
+          error.message || "Appointment failed.",
+          "error"
+        );
+      } finally {
+        $("appointButton").disabled = false;
+      }
+    }
+  );
+});
+
+async function loadAdministrators() {
+  $("loadAdminsButton").disabled = true;
+  showMessage("adminListStatus", "Loading administrator accounts...");
+  $("adminList").replaceChildren();
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_list_administrator_accounts"
+    );
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      showMessage(
+        "adminListStatus",
+        "No administrator accounts were returned."
+      );
+      return;
+    }
+
+    hideMessage("adminListStatus");
+
+    data.forEach(account => {
+      const card = makeElement("div", undefined, "result");
+
+      const role =
+        account.admin_role || account.role || "";
+
+      const active =
+        account.admin_is_active !== undefined
+          ? account.admin_is_active
+          : account.is_active;
+
+      card.appendChild(makeElement(
+        "h3",
+        account.email || "Administrator"
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Name: " + (account.full_name || "Not supplied")
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Role: " + (roleLabels[role] || role)
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Underlying account: " +
+        (account.profile_role || "Not specified")
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Status: " + (active ? "Active" : "Suspended")
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "User ID: " + (account.user_id || "")
+      ));
+
+      if (role !== "super_admin") {
+        const actions = makeElement("div", undefined, "actions");
+
+        if (active) {
+          addButton(
+            actions,
+            "Suspend",
+            "danger",
+            () => changeStatus(account.user_id, false)
+          );
+        } else {
+          addButton(
+            actions,
+            "Reactivate",
+            "success",
+            () => changeStatus(account.user_id, true)
+          );
+        }
+
+        addButton(
+          actions,
+          "Remove Administrator Access",
+          "secondary",
+          () => removeAdministrator(account.user_id, account.email)
+        );
+
+        card.appendChild(actions);
+      } else {
+        card.appendChild(makeElement(
+          "p",
+          "The Super Administrator account is protected."
+        ));
+      }
+
+      $("adminList").appendChild(card);
+    });
+
+  } catch (error) {
+    showMessage(
+      "adminListStatus",
+      error.message || "Could not load administrator accounts.",
+      "error"
+    );
+  } finally {
+    $("loadAdminsButton").disabled = false;
+  }
+}
+
+async function changeStatus(userId, active) {
+  const actionText = active ? "reactivate" : "suspend";
+
+  showConfirmation(
+    "Are you sure you want to " + actionText +
+    " this departmental administrator?",
+    async () => {
+      try {
+        const { error } = await db.rpc(
+          "admin_set_departmental_admin_status",
+          {
+            p_user_id: userId,
+            p_is_active: active
+          }
+        );
+
+        if (error) throw error;
+
+        showMessage(
+          "adminListStatus",
+          "Administrator status updated.",
+          "success"
+        );
+
+        await loadAdministrators();
+
+      } catch (error) {
+        showMessage(
+          "adminListStatus",
+          error.message || "Status update failed.",
+          "error"
+        );
+      }
+    }
+  );
+}
+
+async function removeAdministrator(userId, email) {
+  showConfirmation(
+    "Remove departmental administrator access for " +
+    email + "? This does not delete the user's FrostTech account.",
+    async () => {
+      try {
+        const { error } = await db.rpc(
+          "admin_remove_departmental_admin",
+          { p_user_id: userId }
+        );
+
+        if (error) throw error;
+
+        showMessage(
+          "adminListStatus",
+          "Departmental administrator access removed. The user's FrostTech account remains.",
+          "success"
+        );
+
+        await loadAdministrators();
+
+      } catch (error) {
+        showMessage(
+          "adminListStatus",
+          error.message || "Removal failed.",
+          "error"
+        );
+      }
+    }
+  );
+}
+
+async function loadActivityLog() {
+  $("loadLogsButton").disabled = true;
+  showMessage("logStatus", "Loading activity log...");
+  $("activityList").replaceChildren();
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_list_activity_log",
+      {
+        p_limit: 100,
+        p_offset: 0
+      }
+    );
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      showMessage("logStatus", "No activity records were returned.");
+      return;
+    }
+
+    hideMessage("logStatus");
+
+    data.forEach(entry => {
+      const card = makeElement("div", undefined, "result");
+
+      card.appendChild(makeElement(
+        "strong",
+        entry.action || "Administrative activity"
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Date: " + (
+          entry.created_at
+            ? new Date(entry.created_at).toLocaleString()
+            : "Not available"
+        )
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Actor ID: " + (entry.actor_user_id || "Not available")
+      ));
+
+      card.appendChild(makeElement(
+        "p",
+        "Target ID: " + (entry.target_user_id || "Not applicable")
+      ));
+
+      if (entry.details) {
+        const details = makeElement("p");
+        details.textContent =
+          "Details: " + (
+            typeof entry.details === "string"
+              ? entry.details
+              : JSON.stringify(entry.details)
+          );
+        card.appendChild(details);
+      }
+
+      $("activityList").appendChild(card);
+    });
+
+  } catch (error) {
+    showMessage(
+      "logStatus",
+      error.message || "Could not load activity log.",
+      "error"
+    );
+  } finally {
+    $("loadLogsButton").disabled = false;
+  }
+}
+
+$("loadAdminsButton").addEventListener(
+  "click", loadAdministrators
+);
+
+$("loadLogsButton").addEventListener(
+  "click", loadActivityLog
+);
+
+checkAccess();
+</script>
+</body>
+</html>
