@@ -198,6 +198,32 @@ hr {
 
 <main>
 
+<section class="card">
+  <h2>Supplier Login Reactivation</h2>
+
+  <p>
+    Reactivate the existing login profile of an approved
+    FrostTech supplier.
+  </p>
+
+  <div class="result">
+    <p><strong>Supplier:</strong> Frosttech test supplier</p>
+    <p><strong>Contact:</strong> Amaka</p>
+    <p><strong>Email:</strong> unajite2@gmail.com</p>
+    <p><strong>Account type:</strong> supplier</p>
+
+    <button
+      id="reactivateSupplierProfileButton"
+      class="success"
+      type="button"
+    >
+      Reactivate Supplier Login
+    </button>
+  </div>
+
+  <p id="supplierAccessStatus" class="message hidden"></p>
+</section>
+
   <section class="card">
     <h2 id="pageTitle">
       Verifying Super Administrator access
@@ -712,6 +738,58 @@ $("appointButton").addEventListener(
         } finally {
 
           $("appointButton").disabled = false;
+        }
+      }
+    );
+  }
+);
+
+
+/* REACTIVATE THE VERIFIED SUPPLIER LOGIN PROFILE */
+
+$("reactivateSupplierProfileButton").addEventListener(
+  "click",
+  () => {
+    showConfirmation(
+      "Reactivate the supplier login for unajite2@gmail.com? This restores login access to the existing supplier account. It does not appoint the user as a departmental administrator.",
+      async () => {
+        const button = $("reactivateSupplierProfileButton");
+        button.disabled = true;
+
+        showMessage(
+          "supplierAccessStatus",
+          "Reactivating the supplier login profile..."
+        );
+
+        try {
+          const { error } = await db.rpc(
+            "admin_update_profile_access",
+            {
+              target_user_id: "7214fc53-43d8-4ca3-9d88-f697a8519d8d",
+              new_role: "supplier",
+              new_is_active: true
+            }
+          );
+
+          if (error) throw error;
+
+          showMessage(
+            "supplierAccessStatus",
+            "Supplier login profile reactivated successfully. The supplier role and approved business record were preserved. No departmental administrator appointment was made.",
+            "success"
+          );
+
+          button.textContent = "Supplier Login Reactivated";
+          button.disabled = true;
+
+          await loadActivityLog();
+        } catch (error) {
+          showMessage(
+            "supplierAccessStatus",
+            error.message || "Supplier login reactivation failed.",
+            "error"
+          );
+          button.disabled = false;
         }
       }
     );
