@@ -49,6 +49,14 @@ a{color:#087f8c}
 Show password
 </label>
 
+<button
+    id="forgotPasswordButton"
+    type="button"
+    style="background:#e2e8f0;color:#183153;margin-top:12px"
+>
+    Forgot Password?
+</button>
+
 <button id="loginButton" type="submit">Sign In</button>
 </form>
 
@@ -74,6 +82,48 @@ const message=document.getElementById("message");
 const button=document.getElementById("loginButton");
 const passwordInput=document.getElementById("password");
 
+  document.getElementById("forgotPasswordButton").addEventListener("click",async function(){
+    const email=document.getElementById("email").value.trim().toLowerCase();
+    const resetButton=document.getElementById("forgotPasswordButton");
+
+    if(!email){
+        show("Please enter your advertiser email address first.","error");
+        document.getElementById("email").focus();
+        return;
+    }
+
+    const db=window.supabaseClient;
+
+    if(!db||!db.auth){
+        show("FrostTech could not connect to the account service. Refresh and try again.","error");
+        return;
+    }
+
+    resetButton.disabled=true;
+    show("Requesting password reset...","success");
+
+    try{
+        const redirectTo=new URL(
+            "customer-login.html?reset=1",
+            window.location.href
+        ).toString();
+
+        const {error}=await db.auth.resetPasswordForEmail(email,{
+            redirectTo:redirectTo
+        });
+
+        if(error)throw error;
+
+        show("If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.","success");
+
+    }catch(error){
+        show("Password reset request failed: "+error.message,"error");
+
+    }finally{
+        resetButton.disabled=false;
+    }
+});
+  
 document.getElementById("showPassword").addEventListener("change",function(){
 passwordInput.type=this.checked?"text":"password";
 });
