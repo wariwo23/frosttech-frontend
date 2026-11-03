@@ -132,6 +132,25 @@ hr {
   margin: 18px 0;
 }
 
+.admin-identity {
+  background: rgba(255,255,255,.12);
+  border-left: 4px solid #ffffff;
+  padding: 12px 14px;
+  margin-top: 12px;
+  border-radius: 5px;
+}
+
+.admin-identity strong {
+  display: block;
+  font-size: 18px;
+  margin-bottom: 5px;
+}
+
+.admin-identity span {
+  display: block;
+  margin-top: 4px;
+}
+
 #confirmModal {
   position: fixed;
   inset: 0;
@@ -165,6 +184,13 @@ hr {
 <header>
   <h1>FrostTech HVAC and Refrigeration</h1>
   <p>Administrator Management Portal</p>
+
+  <div class="admin-identity">
+    <strong>Walter Omonode</strong>
+    <span>Chief Executive Officer (CEO)</span>
+    <span>Super Administrator</span>
+  </div>
+
   <p>
     <a href="admin.html">Return to Super Admin Dashboard</a>
   </p>
@@ -181,10 +207,22 @@ hr {
       Please wait while your access is checked.
     </p>
 
-    <p id="signedIn" class="hidden">
-      Signed in as:
-      <strong id="adminEmail"></strong>
-    </p>
+    <div id="signedIn" class="hidden">
+      <p>
+        Signed in as:
+        <strong id="adminEmail"></strong>
+      </p>
+
+      <p>
+        Administrator:
+        <strong>Walter Omonode</strong>
+      </p>
+
+      <p>
+        Position:
+        <strong>Chief Executive Officer (CEO)</strong>
+      </p>
+    </div>
   </section>
 
   <div id="managementPanel" class="hidden">
@@ -345,6 +383,11 @@ const SUPABASE_URL =
 
 const SUPABASE_PUBLISHABLE_KEY =
   "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const SUPER_ADMIN_NAME = "Walter Omonode";
+
+const SUPER_ADMIN_POSITION =
+  "Chief Executive Officer (CEO)";
 
 const db = window.supabase.createClient(
   SUPABASE_URL,
@@ -716,11 +759,10 @@ async function loadAdministrators() {
         "result"
       );
 
-      /* These are the exact column names returned by Supabase. */
-
       const role = account.administrator_role || "";
 
-      const active = account.administrator_active === true;
+      const active =
+        account.administrator_active === true;
 
       const isSuperAdmin = role === "super_admin";
 
@@ -735,9 +777,23 @@ async function loadAdministrators() {
         makeElement(
           "p",
           "Name: " +
-          (account.full_name || "Not supplied")
+          (
+            isSuperAdmin
+              ? SUPER_ADMIN_NAME
+              : account.full_name || "Not supplied"
+          )
         )
       );
+
+      if (isSuperAdmin) {
+
+        card.appendChild(
+          makeElement(
+            "p",
+            "Position: " + SUPER_ADMIN_POSITION
+          )
+        );
+      }
 
       card.appendChild(
         makeElement(
