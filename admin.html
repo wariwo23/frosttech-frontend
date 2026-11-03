@@ -476,6 +476,62 @@ function requirementsText(request) {
 
 /* AUTHENTICATION */
 
+    el("toggleAdminPassword").addEventListener("click", function() {
+    const input = el("password");
+    const showing = input.type === "password";
+
+    input.type = showing ? "text" : "password";
+    el("toggleAdminPassword").textContent =
+        showing ? "Hide" : "Show";
+});
+
+    el("forgotAdminPassword").addEventListener("click", async function() {
+    const email = el("email").value.trim();
+    const button = el("forgotAdminPassword");
+
+    if (!email) {
+        showMessage(
+            "loginMessage",
+            "Please enter your administrator email address first.",
+            "error"
+        );
+        el("email").focus();
+        return;
+    }
+
+    button.disabled = true;
+    showMessage("loginMessage", "Requesting password reset...", "info");
+
+    try {
+        const redirectTo = new URL(
+            "customer-login.html?reset=1",
+            window.location.href
+        ).toString();
+
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectTo
+        });
+
+        if (error) throw error;
+
+        showMessage(
+            "loginMessage",
+            "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
+            "success"
+        );
+
+    } catch (error) {
+        showMessage(
+            "loginMessage",
+            "Password reset request failed: " + error.message,
+            "error"
+        );
+
+    } finally {
+        button.disabled = false;
+    }
+});
+
 el("loginForm").addEventListener("submit", async function(event) {
     event.preventDefault();
     el("loginBtn").disabled = true;
