@@ -674,28 +674,65 @@
         });
 
       async function initializePage() {
-        if (!db || !db.auth) {
-          showMessage(
-            "The login service did not load. Please check that supabase.js is available and try refreshing the page.",
-            "error"
-          );
-          return;
-        }
-
-        const params = new URLSearchParams(window.location.search);
-        const hash = window.location.hash;
-
-        const isRecovery =
-          params.get("reset") === "1" ||
-          hash.includes("type=recovery");
-
-        if (isRecovery) {
-          showSection(newPasswordSection);
-          return;
-        }
-
+    if (!db || !db.auth) {
         showSection(loginSection);
-      }
+        showMessage(
+            "The login service did not load. Please refresh and try again.",
+            "error"
+        );
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(
+        window.location.hash.replace(/^#/, "")
+    );
+
+    const hasResetRequest = params.get("reset") === "1";
+    const hasRecoveryToken =
+        hashParams.get("type") === "recovery" &&
+        !!hashParams.get("access_token");
+
+    const recoveryError =
+        hashParams.get("error") ||
+        params.get("error");
+
+    if (recoveryError) {
+        showSection(loginSection);
+        showMessage(
+            "Your password-reset link is invalid, expired, or already used. Please request a new reset email.",
+            "error"
+        );
+        return;
+    }
+
+    if (hasResetRequest || hasRecoveryToken) {
+        if (!hasRecoveryToken) {
+            showSection(loginSection);
+            showMessage(
+                "A valid password-reset link is required. Please request a new reset email.",
+                "error"
+            );
+            return;
+        }
+
+        const { data, error } = await db.auth.getSession();
+
+        if (error || !data.session) {
+            showSection(loginSection);
+            showMessage(
+                "Your password-reset session is invalid or expired. Please request a new reset email.",
+                "error"
+            );
+            return;
+        }
+
+        showSection(newPasswordSection);
+        return;
+    }
+
+    showSection(loginSection);
+}
 
       initializePage();
     })();
