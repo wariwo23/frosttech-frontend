@@ -225,15 +225,30 @@ footer {
       autocomplete="username"
       required
     >
+<label for="password">Password</label>
 
-    <label for="password">Password</label>
-    <input
-      id="password"
-      type="password"
-      autocomplete="current-password"
-      required
-    >
+<div class="password-wrapper">
+  <input
+    id="password"
+    type="password"
+    autocomplete="current-password"
+    required
+  >
 
+  <button
+    type="button"
+    id="toggleSupplierPassword"
+    class="secondary"
+  >Show</button>
+</div>
+
+<button
+  type="button"
+  id="forgotSupplierPassword"
+  class="secondary"
+>
+  Forgot Password?
+</button>
     <button id="loginButton" type="submit">Log In</button>
   </form>
 </section>
