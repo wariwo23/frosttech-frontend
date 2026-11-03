@@ -1,0 +1,219 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Departmental Administration | FrostTech</title>
+
+<style>
+:root {
+    --primary: #063b70;
+    --secondary: #0879c9;
+    --background: #f3f6fa;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: var(--background);
+    color: #172333;
+}
+
+header {
+    background: var(--primary);
+    color: white;
+    padding: 18px;
+}
+
+main {
+    max-width: 900px;
+    margin: auto;
+    padding: 16px;
+}
+
+.card {
+    background: white;
+    border: 1px solid #dce3eb;
+    border-radius: 10px;
+    padding: 18px;
+    margin: 16px 0;
+}
+
+button {
+    background: var(--secondary);
+    color: white;
+    border: 0;
+    border-radius: 6px;
+    padding: 12px 18px;
+    font: inherit;
+    font-weight: bold;
+}
+
+button:disabled { opacity: .6; }
+
+.message {
+    padding: 12px;
+    border-radius: 6px;
+    background: #e8f3ff;
+    color: #06477c;
+    overflow-wrap: anywhere;
+}
+
+.error {
+    background: #ffebee;
+    color: #a11919;
+}
+
+.hidden { display: none; }
+</style>
+</head>
+
+<body>
+
+<header>
+    <h1>FrostTech HVAC and Refrigeration</h1>
+    <p>Departmental Administration Portal</p>
+</header>
+
+<main>
+    <section class="card">
+        <h2 id="pageTitle">Verifying administrator access</h2>
+
+        <p id="status" class="message" role="status">
+            Please wait while your access is checked.
+        </p>
+
+        <div id="departmentPanel" class="hidden">
+            <p>Signed in as:
+                <strong id="adminEmail"></strong>
+            </p>
+
+            <p>Department:
+                <strong id="adminRole"></strong>
+            </p>
+
+            <p>
+                Your departmental tools will appear here only after
+                their individual server-side permissions have been
+                enabled and tested.
+            </p>
+
+            <button id="logoutButton" type="button">
+                Log out
+            </button>
+        </div>
+    </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+const SUPABASE_URL =
+    "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+    "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+
+const roleNames = {
+    operations_admin: "Operations Administration",
+    supplier_admin: "Supplier Administration",
+    finance_admin: "Finance Administration",
+    catalogue_admin: "Catalogue Administration"
+};
+
+const statusBox = document.getElementById("status");
+
+function deny(message) {
+    statusBox.textContent = message;
+    statusBox.classList.add("error");
+
+    document.getElementById("pageTitle").textContent =
+        "Access not available";
+}
+
+async function start() {
+    try {
+        const { data: userData, error: userError } =
+            await db.auth.getUser();
+
+        if (userError || !userData.user) {
+            deny(
+                "Please sign in through the FrostTech administrator login."
+            );
+            return;
+        }
+
+        const { data: role, error: roleError } =
+            await db.rpc("admin_get_my_role");
+
+        if (roleError) {
+            deny(
+                "Could not verify your administrator role. Please contact the Super Administrator."
+            );
+            return;
+        }
+
+        if (!roleNames[role]) {
+            deny(
+                "This portal is for active departmental administrators only."
+            );
+            return;
+        }
+
+        document.getElementById("pageTitle").textContent =
+            "Departmental Dashboard";
+
+        document.getElementById("adminEmail").textContent =
+            userData.user.email || "Signed-in administrator";
+
+        document.getElementById("adminRole").textContent =
+            roleNames[role];
+
+        statusBox.textContent =
+            "Your departmental administrator access has been verified.";
+
+        document.getElementById("departmentPanel")
+            .classList.remove("hidden");
+
+    } catch (error) {
+        deny(
+            "An unexpected error occurred while checking access. Please try again."
+        );
+    }
+}
+
+document.getElementById("logoutButton")
+    .addEventListener("click", async () => {
+
+        const button =
+            document.getElementById("logoutButton");
+
+        button.disabled = true;
+
+        const { error } = await db.auth.signOut();
+
+        if (error) {
+            button.disabled = false;
+            statusBox.textContent =
+                "Logout failed. Please try again.";
+            return;
+        }
+
+        window.location.href = "admin.html";
+    });
+
+start();
+</script>
+
+</body>
+</html>
