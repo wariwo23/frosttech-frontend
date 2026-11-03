@@ -471,15 +471,6 @@ function requirementsText(request) {
 
 /* AUTHENTICATION */
 
-    el("toggleAdminPassword").addEventListener("click", function() {
-    const input = el("password");
-    const showing = input.type === "password";
-
-    input.type = showing ? "text" : "password";
-    el("toggleAdminPassword").textContent =
-        showing ? "Hide" : "Show";
-});
-
     el("forgotAdminPassword").addEventListener("click", async function() {
     const email = el("email").value.trim();
     const button = el("forgotAdminPassword");
