@@ -1,0 +1,509 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Employee Management | FrostTech</title>
+
+<style>
+:root {
+  --navy: #063b70;
+  --blue: #0879c9;
+  --bg: #f3f6fa;
+  --border: #dce3eb;
+  --text: #172333;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+header {
+  background: var(--navy);
+  color: white;
+  padding: 18px;
+}
+header h1 { margin: 0 0 6px; }
+header a { color: white; }
+main {
+  max-width: 1000px;
+  margin: auto;
+  padding: 16px;
+}
+.card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 18px;
+  margin: 16px 0;
+}
+label {
+  display: block;
+  font-weight: bold;
+  margin-top: 12px;
+}
+input, select {
+  width: 100%;
+  padding: 12px;
+  margin: 7px 0 12px;
+  border: 1px solid #bbc7d4;
+  border-radius: 6px;
+  font: inherit;
+  background: white;
+}
+button {
+  padding: 11px 15px;
+  border: 0;
+  border-radius: 6px;
+  background: var(--blue);
+  color: white;
+  font: inherit;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 4px 3px 4px 0;
+}
+button:disabled {
+  opacity: .55;
+  cursor: wait;
+}
+button.secondary { background: #536579; }
+.message {
+  padding: 12px;
+  border-radius: 6px;
+  background: #e8f3ff;
+  color: #06477c;
+  overflow-wrap: anywhere;
+}
+.message.error {
+  background: #ffebee;
+  color: #a11919;
+}
+.message.success {
+  background: #e8f5ed;
+  color: #17633c;
+}
+.hidden { display: none !important; }
+.employee {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px;
+  margin: 12px 0;
+  overflow-wrap: anywhere;
+}
+.employee p { margin: 7px 0; }
+.status {
+  display: inline-block;
+  padding: 5px 9px;
+  border-radius: 5px;
+  background: #edf3f8;
+  font-size: 13px;
+  font-weight: bold;
+}
+.note {
+  color: #536579;
+  font-size: 14px;
+  line-height: 1.5;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <h1>FrostTech HVAC and Refrigeration</h1>
+  <p>Employee Management</p>
+  <p><a href="admin-management.html">Return to Administrator Management</a></p>
+</header>
+
+<main>
+
+<section class="card">
+  <h2 id="pageTitle">Verifying Super Administrator access</h2>
+
+  <p id="accessStatus" class="message">
+    Please wait while your access is checked.
+  </p>
+
+  <div id="adminDetails" class="hidden">
+    <p>Signed in as: <strong id="adminEmail"></strong></p>
+    <p>Access level: <strong>Super Administrator</strong></p>
+  </div>
+</section>
+
+<div id="employeePanel" class="hidden">
+
+  <section class="card">
+    <h2>Register a FrostTech Employee</h2>
+
+    <p class="note">
+      This register is for FrostTech employees only.
+      It is separate from customer and supplier accounts.
+      Registering an employee does not create a login or grant
+      departmental administrator access.
+    </p>
+
+    <form id="employeeForm">
+
+      <label for="fullName">Employee Full Name</label>
+      <input
+        id="fullName"
+        type="text"
+        maxlength="150"
+        placeholder="Enter employee's full name"
+        required
+      >
+
+      <label for="email">Employee Email Address</label>
+      <input
+        id="email"
+        type="email"
+        maxlength="254"
+        placeholder="Enter employee's email address"
+        required
+      >
+
+      <label for="jobTitle">Job Title</label>
+      <input
+        id="jobTitle"
+        type="text"
+        maxlength="120"
+        placeholder="Example: Operations Officer"
+        required
+      >
+
+      <label for="department">Department</label>
+      <select id="department" required>
+        <option value="">Select department</option>
+        <option value="operations">Operations</option>
+        <option value="supplier_management">Supplier Management</option>
+        <option value="finance">Finance</option>
+        <option value="catalogue">Catalogue and Products</option>
+      </select>
+
+      <button id="saveEmployeeButton" type="submit">
+        Register Employee
+      </button>
+
+    </form>
+
+    <p id="formStatus" class="message hidden" role="status"></p>
+  </section>
+
+  <section class="card">
+    <h2>FrostTech Employee Register</h2>
+
+    <p class="note">
+      Employee records and onboarding status are displayed here.
+      New records begin with Planned status.
+    </p>
+
+    <button id="refreshButton" class="secondary" type="button">
+      Refresh Employee Register
+    </button>
+
+    <p id="listStatus" class="message">
+      Employee records have not yet been loaded.
+    </p>
+
+    <div id="employeeList"></div>
+  </section>
+
+</div>
+
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+"use strict";
+
+const SUPABASE_URL =
+  "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+const SUPABASE_PUBLISHABLE_KEY =
+  "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const db = window.supabase.createClient(
+  SUPABASE_URL,
+  SUPABASE_PUBLISHABLE_KEY
+);
+
+const $ = id => document.getElementById(id);
+
+const departmentNames = {
+  operations: "Operations",
+  supplier_management: "Supplier Management",
+  finance: "Finance",
+  catalogue: "Catalogue and Products"
+};
+
+function showMessage(id, message, type = "") {
+  const element = $(id);
+  element.textContent = message;
+
+  element.classList.remove(
+    "hidden",
+    "error",
+    "success"
+  );
+
+  if (type) {
+    element.classList.add(type);
+  }
+}
+
+function formatDate(value) {
+  if (!value) return "Not available";
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return "Not available";
+  }
+
+  return date.toLocaleString();
+}
+
+function createTextElement(tag, text) {
+  const element = document.createElement(tag);
+  element.textContent = text;
+  return element;
+}
+
+async function verifySuperAdmin() {
+  try {
+    const {
+      data: userData,
+      error: userError
+    } = await db.auth.getUser();
+
+    if (userError || !userData.user) {
+      denyAccess(
+        "Please sign in through the FrostTech administrator login."
+      );
+      return;
+    }
+
+    const {
+      data: role,
+      error: roleError
+    } = await db.rpc("admin_get_my_role");
+
+    if (roleError || role !== "super_admin") {
+      denyAccess(
+        "Only the Super Administrator can access employee management."
+      );
+      return;
+    }
+
+    $("pageTitle").textContent = "Employee Management";
+
+    $("adminEmail").textContent =
+      userData.user.email || "";
+
+    $("adminDetails").classList.remove("hidden");
+    $("employeePanel").classList.remove("hidden");
+
+    showMessage(
+      "accessStatus",
+      "Super Administrator access verified.",
+      "success"
+    );
+
+    await loadEmployees();
+
+  } catch (error) {
+    console.error(error);
+
+    denyAccess(
+      "Unable to verify access. Please refresh and try again."
+    );
+  }
+}
+
+function denyAccess(message) {
+  $("pageTitle").textContent = "Access not available";
+
+  showMessage(
+    "accessStatus",
+    message,
+    "error"
+  );
+}
+
+async function loadEmployees() {
+  $("refreshButton").disabled = true;
+  $("employeeList").replaceChildren();
+
+  showMessage(
+    "listStatus",
+    "Loading employee records..."
+  );
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_list_frosttech_employees"
+    );
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      showMessage(
+        "listStatus",
+        "No employees have been registered yet."
+      );
+      return;
+    }
+
+    data.forEach(employee => {
+      const card = document.createElement("div");
+      card.className = "employee";
+
+      card.appendChild(
+        createTextElement("h3", employee.full_name)
+      );
+
+      card.appendChild(
+        createTextElement(
+          "p",
+          "Email: " + employee.email
+        )
+      );
+
+      card.appendChild(
+        createTextElement(
+          "p",
+          "Job Title: " + employee.job_title
+        )
+      );
+
+      card.appendChild(
+        createTextElement(
+          "p",
+          "Department: " +
+          (
+            departmentNames[employee.department] ||
+            employee.department
+          )
+        )
+      );
+
+      const status = createTextElement(
+        "span",
+        employee.employment_status
+          ? employee.employment_status.toUpperCase()
+          : "UNKNOWN"
+      );
+
+      status.className = "status";
+      card.appendChild(status);
+
+      card.appendChild(
+        createTextElement(
+          "p",
+          "Registered: " + formatDate(employee.created_at)
+        )
+      );
+
+      $("employeeList").appendChild(card);
+    });
+
+    showMessage(
+      "listStatus",
+      data.length + " employee record(s) loaded successfully.",
+      "success"
+    );
+
+  } catch (error) {
+    console.error(error);
+
+    showMessage(
+      "listStatus",
+      error.message || "Could not load employee records.",
+      "error"
+    );
+
+  } finally {
+    $("refreshButton").disabled = false;
+  }
+}
+
+$("employeeForm").addEventListener(
+  "submit",
+  async event => {
+    event.preventDefault();
+
+    const fullName = $("fullName").value.trim();
+    const email = $("email").value.trim().toLowerCase();
+    const jobTitle = $("jobTitle").value.trim();
+    const department = $("department").value;
+
+    if (!fullName || !email || !jobTitle || !department) {
+      showMessage(
+        "formStatus",
+        "Please complete all employee details.",
+        "error"
+      );
+      return;
+    }
+
+    const button = $("saveEmployeeButton");
+    button.disabled = true;
+
+    showMessage(
+      "formStatus",
+      "Registering employee..."
+    );
+
+    try {
+      const { data, error } = await db.rpc(
+        "admin_create_frosttech_employee",
+        {
+          p_full_name: fullName,
+          p_email: email,
+          p_job_title: jobTitle,
+          p_department: department
+        }
+      );
+
+      if (error) throw error;
+
+      showMessage(
+        "formStatus",
+        "Employee registered successfully. The employee remains in Planned status. No login invitation or administrator access has been issued.",
+        "success"
+      );
+
+      $("employeeForm").reset();
+
+      await loadEmployees();
+
+    } catch (error) {
+      console.error(error);
+
+      showMessage(
+        "formStatus",
+        error.message || "Employee registration failed.",
+        "error"
+      );
+
+    } finally {
+      button.disabled = false;
+    }
+  }
+);
+
+$("refreshButton").addEventListener(
+  "click",
+  loadEmployees
+);
+
+verifySuperAdmin();
+
+</script>
+
+</body>
+</html>
