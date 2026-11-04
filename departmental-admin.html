@@ -11,8 +11,8 @@
     --primary: #063b70;
     --secondary: #0879c9;
     --background: #f3f6fa;
+    --border: #dce3eb;
 }
-
 * { box-sizing: border-box; }
 
 body {
@@ -21,39 +21,26 @@ body {
     background: var(--background);
     color: #172333;
 }
-
 header {
     background: var(--primary);
     color: white;
     padding: 18px;
 }
+header h1 { margin: 0 0 6px; font-size: 22px; }
+header p { margin: 0; }
 
 main {
-    max-width: 900px;
+    max-width: 1100px;
     margin: auto;
     padding: 16px;
 }
-
 .card {
     background: white;
-    border: 1px solid #dce3eb;
+    border: 1px solid var(--border);
     border-radius: 10px;
     padding: 18px;
     margin: 16px 0;
 }
-
-button {
-    background: var(--secondary);
-    color: white;
-    border: 0;
-    border-radius: 6px;
-    padding: 12px 18px;
-    font: inherit;
-    font-weight: bold;
-}
-
-button:disabled { opacity: .6; }
-
 .message {
     padding: 12px;
     border-radius: 6px;
@@ -61,13 +48,65 @@ button:disabled { opacity: .6; }
     color: #06477c;
     overflow-wrap: anywhere;
 }
-
 .error {
     background: #ffebee;
     color: #a11919;
 }
-
+button {
+    background: var(--secondary);
+    color: white;
+    border: 0;
+    border-radius: 6px;
+    padding: 11px 16px;
+    font: inherit;
+    font-weight: bold;
+    cursor: pointer;
+}
+button:disabled {
+    opacity: .6;
+    cursor: wait;
+}
+.secondary-button {
+    background: #536779;
+}
 .hidden { display: none; }
+
+.section-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.section-heading h2 { margin: 0; }
+
+.table-wrap {
+    overflow-x: auto;
+    margin-top: 14px;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    min-width: 650px;
+}
+th, td {
+    border: 1px solid var(--border);
+    padding: 10px;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+}
+th { background: #edf3f8; }
+.empty {
+    color: #667788;
+    padding: 12px 0;
+}
+.record-count {
+    color: #536779;
+    font-size: 13px;
+    margin-top: 10px;
+}
 </style>
 </head>
 
@@ -79,33 +118,111 @@ button:disabled { opacity: .6; }
 </header>
 
 <main>
-    <section class="card">
-        <h2 id="pageTitle">Verifying administrator access</h2>
 
-        <p id="status" class="message" role="status">
-            Please wait while your access is checked.
+<section class="card">
+    <h2 id="pageTitle">Verifying administrator access</h2>
+
+    <p id="status" class="message" role="status">
+        Please wait while your access is checked.
+    </p>
+
+    <div id="departmentPanel" class="hidden">
+        <p>Signed in as:
+            <strong id="adminEmail"></strong>
         </p>
 
-        <div id="departmentPanel" class="hidden">
-            <p>Signed in as:
-                <strong id="adminEmail"></strong>
-            </p>
+        <p>Department:
+            <strong id="adminRole"></strong>
+        </p>
 
-            <p>Department:
-                <strong id="adminRole"></strong>
-            </p>
+        <button id="refreshAllButton" type="button">
+            Refresh All Records
+        </button>
 
-            <p>
-                Your departmental tools will appear here only after
-                their individual server-side permissions have been
-                enabled and tested.
-            </p>
+        <button id="logoutButton" type="button"
+                class="secondary-button">
+            Log Out
+        </button>
+    </div>
+</section>
 
-            <button id="logoutButton" type="button">
-                Log out
+<div id="operationsDashboard" class="hidden">
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Customer Requests</h2>
+            <button type="button" data-refresh="requests">
+                Refresh
             </button>
         </div>
+        <p id="requestsStatus" class="message">
+            Waiting to load customer requests.
+        </p>
+        <div id="requestsTable"></div>
     </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Quotations</h2>
+            <button type="button" data-refresh="quotations">
+                Refresh
+            </button>
+        </div>
+        <p id="quotationsStatus" class="message">
+            Waiting to load quotations.
+        </p>
+        <div id="quotationsTable"></div>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Orders</h2>
+            <button type="button" data-refresh="orders">
+                Refresh
+            </button>
+        </div>
+        <p id="ordersStatus" class="message">
+            Waiting to load orders.
+        </p>
+        <div id="ordersTable"></div>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Order Items</h2>
+            <button type="button" data-refresh="orderItems">
+                Refresh
+            </button>
+        </div>
+        <p id="orderItemsStatus" class="message">
+            Waiting to load order items.
+        </p>
+        <div id="orderItemsTable"></div>
+    </section>
+
+    <section class="card">
+        <div class="section-heading">
+            <h2>Deliveries</h2>
+            <button type="button" data-refresh="deliveries">
+                Refresh
+            </button>
+        </div>
+        <p id="deliveriesStatus" class="message">
+            Waiting to load deliveries.
+        </p>
+        <div id="deliveriesTable"></div>
+    </section>
+
+</div>
+
+<section id="otherDepartmentMessage" class="card hidden">
+    <h2>Departmental access verified</h2>
+    <p>
+        Your account is recognised. The tools for this department
+        will be connected in its implementation stage.
+    </p>
+</section>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -131,7 +248,86 @@ const roleNames = {
     catalogue_admin: "Catalogue Administration"
 };
 
+/*
+ * Only approved operational display fields are shown.
+ * Supplier costs, margins, purchase prices and profit
+ * fields are deliberately excluded.
+ */
+const displayFields = [
+    "id",
+    "reference",
+    "quotation_number",
+    "request_number",
+    "order_number",
+    "customer_name",
+    "customer_email",
+    "customer_phone",
+    "name",
+    "email",
+    "phone",
+    "subject",
+    "product_name",
+    "product",
+    "description",
+    "message",
+    "quantity",
+    "unit",
+    "selling_price",
+    "unit_price",
+    "subtotal",
+    "delivery_fee",
+    "additional_charges",
+    "discount",
+    "total_amount",
+    "status",
+    "payment_status",
+    "delivery_status",
+    "tracking_number",
+    "assigned_to",
+    "delivery_address",
+    "address",
+    "city",
+    "state",
+    "notes",
+    "created_at",
+    "updated_at"
+];
+
+const modules = {
+    requests: {
+        rpc: "ops_list_customer_requests",
+        status: "requestsStatus",
+        table: "requestsTable"
+    },
+    quotations: {
+        rpc: "ops_list_quotations",
+        status: "quotationsStatus",
+        table: "quotationsTable"
+    },
+    orders: {
+        rpc: "ops_list_orders",
+        status: "ordersStatus",
+        table: "ordersTable"
+    },
+    orderItems: {
+        rpc: "ops_list_order_items",
+        status: "orderItemsStatus",
+        table: "orderItemsTable"
+    },
+    deliveries: {
+        rpc: "ops_list_deliveries",
+        status: "deliveriesStatus",
+        table: "deliveriesTable"
+    }
+};
+
 const statusBox = document.getElementById("status");
+
+function setStatus(elementId, message, isError = false) {
+    const element = document.getElementById(elementId);
+    element.textContent = message;
+    element.classList.toggle("error", isError);
+}
 
 function deny(message) {
     statusBox.textContent = message;
@@ -139,6 +335,156 @@ function deny(message) {
 
     document.getElementById("pageTitle").textContent =
         "Access not available";
+}
+
+function normaliseRows(data) {
+    if (Array.isArray(data)) return data;
+
+    if (data && Array.isArray(data.records)) {
+        return data.records;
+    }
+
+    if (data && Array.isArray(data.data)) {
+        return data.data;
+    }
+
+    return [];
+}
+
+function formatValue(value) {
+    if (value === null || value === undefined) return "";
+
+    if (typeof value === "object") {
+        return JSON.stringify(value);
+    }
+
+    return String(value);
+}
+
+function renderTable(containerId, rows) {
+    const container = document.getElementById(containerId);
+    container.replaceChildren();
+
+    if (!rows.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "No records were returned.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const keys = displayFields.filter(key =>
+        rows.some(row =>
+            Object.prototype.hasOwnProperty.call(row, key)
+        )
+    );
+
+    if (!keys.length) {
+        const empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent =
+            "Records were returned, but no approved display fields were found.";
+        container.appendChild(empty);
+        return;
+    }
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "table-wrap";
+
+    const table = document.createElement("table");
+    const thead = document.createElement("thead");
+    const headerRow = document.createElement("tr");
+
+    keys.forEach(key => {
+        const th = document.createElement("th");
+        th.textContent = key.replaceAll("_", " ");
+        headerRow.appendChild(th);
+    });
+
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    const tbody = document.createElement("tbody");
+
+    rows.forEach(row => {
+        const tr = document.createElement("tr");
+
+        keys.forEach(key => {
+            const td = document.createElement("td");
+            td.textContent = formatValue(row[key]);
+            tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+    });
+
+    table.appendChild(tbody);
+    wrapper.appendChild(table);
+    container.appendChild(wrapper);
+
+    const count = document.createElement("p");
+    count.className = "record-count";
+    count.textContent = rows.length + " record(s) displayed.";
+    container.appendChild(count);
+}
+
+async function loadModule(moduleName) {
+    const module = modules[moduleName];
+    if (!module) return;
+
+    setStatus(module.status, "Loading records...");
+
+    const buttons = document.querySelectorAll(
+        '[data-refresh="' + moduleName + '"]'
+    );
+
+    buttons.forEach(button => button.disabled = true);
+
+    try {
+        const { data, error } = await db.rpc(module.rpc);
+
+        if (error) {
+            console.error(module.rpc, error);
+            setStatus(
+                module.status,
+                "Could not load these records. Please check the administrator session and database permissions.",
+                true
+            );
+            return;
+        }
+
+        const rows = normaliseRows(data);
+
+        renderTable(module.table, rows);
+
+        setStatus(
+            module.status,
+            "Records loaded successfully."
+        );
+
+    } catch (error) {
+        console.error(error);
+        setStatus(
+            module.status,
+            "An unexpected error occurred while loading records.",
+            true
+        );
+    } finally {
+        buttons.forEach(button => button.disabled = false);
+    }
+}
+
+async function refreshAll() {
+    const button = document.getElementById("refreshAllButton");
+    button.disabled = true;
+
+    try {
+        for (const moduleName of Object.keys(modules)) {
+            await loadModule(moduleName);
+        }
+    } finally {
+        button.disabled = false;
+    }
 }
 
 async function start() {
@@ -157,6 +503,7 @@ async function start() {
             await db.rpc("admin_get_my_role");
 
         if (roleError) {
+            console.error(roleError);
             deny(
                 "Could not verify your administrator role. Please contact the Super Administrator."
             );
@@ -185,12 +532,32 @@ async function start() {
         document.getElementById("departmentPanel")
             .classList.remove("hidden");
 
+        if (role === "operations_admin") {
+            document.getElementById("operationsDashboard")
+                .classList.remove("hidden");
+
+            await refreshAll();
+        } else {
+            document.getElementById("otherDepartmentMessage")
+                .classList.remove("hidden");
+        }
+
     } catch (error) {
+        console.error(error);
         deny(
             "An unexpected error occurred while checking access. Please try again."
         );
     }
 }
+
+document.querySelectorAll("[data-refresh]").forEach(button => {
+    button.addEventListener("click", () => {
+        loadModule(button.dataset.refresh);
+    });
+});
+
+document.getElementById("refreshAllButton")
+    .addEventListener("click", refreshAll);
 
 document.getElementById("logoutButton")
     .addEventListener("click", async () => {
@@ -204,8 +571,11 @@ document.getElementById("logoutButton")
 
         if (error) {
             button.disabled = false;
-            statusBox.textContent =
-                "Logout failed. Please try again.";
+            setStatus(
+                "status",
+                "Logout failed. Please try again.",
+                true
+            );
             return;
         }
 
