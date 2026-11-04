@@ -745,6 +745,14 @@ removal_reason
             <p><strong>Application Status:</strong>
                 ${escapeHtml(advertiser.verification_status || "pending")}</p>
 
+${(advertiser.verification_status || "pending") === "pending" ? `
+    <button type="button"
+        class="success"
+        data-approve-advertiser="${escapeHtml(advertiser.id)}">
+        Approve Advertiser
+    </button>
+` : ""}
+
             <p><strong>Submitted:</strong>
                 ${escapeHtml(dateText(advertiser.created_at))}</p>
 
