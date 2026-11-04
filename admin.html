@@ -865,6 +865,15 @@ removal_reason
         );
     });
 
+rows.querySelectorAll("[data-remove-advertiser-document]").forEach(button => {
+    button.addEventListener("click", () =>
+        removeAdvertiserDocument(
+            button.dataset.advertiserId,
+            button.dataset.removeAdvertiserDocument
+        )
+    );
+});
+    
     showMessage(
         "advertiserMessage",
         "Advertiser applications loaded.",
