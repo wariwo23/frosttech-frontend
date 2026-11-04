@@ -63,7 +63,8 @@ button {
 button:disabled { opacity:.6; cursor:wait; }
 .secondary-button { background:#536779; }
 .small-button { padding:8px 10px; font-size:12px; }
-.hidden { display:none; }
+.danger-button { background:#a72c2c; }
+.hidden { display:none !important; }
 .section-heading {
     display:flex;
     justify-content:space-between;
@@ -90,6 +91,85 @@ th { background:#edf3f8; }
 .empty { color:#667788; padding:12px 0; }
 .record-count { color:#536779; font-size:13px; margin-top:10px; }
 .action-cell { min-width:125px; }
+.delivery-card {
+    border:1px solid var(--border);
+    border-radius:9px;
+    padding:15px;
+    margin:14px 0;
+    background:#fff;
+}
+.delivery-card h3 { margin:0 0 10px; color:var(--primary); }
+.delivery-details {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+    gap:9px;
+    margin:12px 0;
+}
+.detail {
+    background:#f5f8fb;
+    border-radius:6px;
+    padding:9px;
+    overflow-wrap:anywhere;
+}
+.detail strong {
+    display:block;
+    font-size:12px;
+    color:#526477;
+    margin-bottom:4px;
+}
+.delivery-actions {
+    border-top:1px solid var(--border);
+    margin-top:14px;
+    padding-top:14px;
+}
+.form-grid {
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
+    gap:12px;
+}
+.field { margin-bottom:12px; }
+.field label {
+    display:block;
+    font-weight:bold;
+    font-size:13px;
+    margin-bottom:6px;
+}
+.field input,.field select,.field textarea {
+    width:100%;
+    border:1px solid #bdc9d5;
+    border-radius:6px;
+    padding:10px;
+    font:inherit;
+    background:white;
+}
+.field textarea {
+    min-height:75px;
+    resize:vertical;
+}
+.field small { color:#687888; }
+.form-actions {
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-top:8px;
+}
+.contact-log {
+    border-left:3px solid var(--secondary);
+    background:#f5f8fb;
+    padding:10px;
+    margin:9px 0;
+    border-radius:4px;
+    font-size:13px;
+}
+.contact-log p { margin:5px 0; }
+.subheading {
+    margin:18px 0 10px;
+    font-size:16px;
+}
+.readonly-label {
+    color:#647789;
+    font-size:12px;
+}
 </style>
 </head>
 <body>
@@ -124,8 +204,7 @@ th { background:#edf3f8; }
             Refresh All Records
         </button>
 
-        <button id="logoutButton" type="button"
-                class="secondary-button">
+        <button id="logoutButton" type="button" class="secondary-button">
             Log Out
         </button>
     </div>
@@ -179,7 +258,7 @@ th { background:#edf3f8; }
 
     <section class="card">
         <div class="section-heading">
-            <h2>Deliveries</h2>
+            <h2>Delivery Management</h2>
             <button type="button" data-refresh="deliveries">Refresh</button>
         </div>
         <p id="deliveriesStatus" class="message">
@@ -222,6 +301,7 @@ const roleNames = {
 };
 
 let previewMode = false;
+let currentRole = null;
 
 const displayFields = [
     "id",
@@ -254,7 +334,11 @@ const displayFields = [
     "delivery_status",
     "tracking_number",
     "assigned_to",
+    "driver_phone",
     "delivery_address",
+    "scheduled_delivery_at",
+    "delivery_window_end_at",
+    "tracking_note",
     "address",
     "city",
     "state",
@@ -323,15 +407,94 @@ function formatValue(value) {
     return String(value);
 }
 
+function formatDate(value) {
+    if (!value) return "Not scheduled";
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return date.toLocaleString();
+}
+
+function makeElement(tag,className,text) {
+    const element = document.createElement(tag);
+    if (className) element.className = className;
+    if (text!==undefined) element.textContent = text;
+    return element;
+}
+
+function addDetail(container,label,value) {
+    const detail = makeElement("div","detail");
+    detail.appendChild(makeElement("strong","",label));
+    detail.appendChild(
+        document.createTextNode(
+            value===null || value===undefined || value===""
+                ? "Not provided"
+                : formatValue(value)
+        )
+    );
+    container.appendChild(detail);
+}
+
+function addField(parent,label,type,value,placeholder) {
+    const wrapper = makeElement("div","field");
+    const id = "field_"+Math.random().toString(36).slice(2);
+
+    const caption = makeElement("label","",label);
+    caption.htmlFor = id;
+
+    let control;
+
+    if (type==="textarea") {
+        control = document.createElement("textarea");
+    } else {
+        control = document.createElement("input");
+        control.type = type;
+    }
+
+    control.id = id;
+    control.value = value || "";
+    if (placeholder) control.placeholder = placeholder;
+
+    wrapper.appendChild(caption);
+    wrapper.appendChild(control);
+    parent.appendChild(wrapper);
+
+    return control;
+}
+
+function addSelect(parent,label,options,currentValue) {
+    const wrapper = makeElement("div","field");
+    const id = "field_"+Math.random().toString(36).slice(2);
+
+    const caption = makeElement("label","",label);
+    caption.htmlFor = id;
+
+    const select = document.createElement("select");
+    select.id = id;
+
+    options.forEach(option => {
+        const item = document.createElement("option");
+        item.value = option.value;
+        item.textContent = option.label;
+        select.appendChild(item);
+    });
+
+    if (currentValue) select.value = currentValue;
+
+    wrapper.appendChild(caption);
+    wrapper.appendChild(select);
+    parent.appendChild(wrapper);
+
+    return select;
+}
+
 function renderTable(containerId,rows,moduleName) {
     const container = document.getElementById(containerId);
     container.replaceChildren();
 
     if (!rows.length) {
-        const empty = document.createElement("p");
-        empty.className = "empty";
-        empty.textContent = "No records were returned.";
-        container.appendChild(empty);
+        container.appendChild(
+            makeElement("p","empty","No records were returned.")
+        );
         return;
     }
 
@@ -342,17 +505,17 @@ function renderTable(containerId,rows,moduleName) {
     );
 
     if (!keys.length) {
-        const empty = document.createElement("p");
-        empty.className = "empty";
-        empty.textContent =
-            "Records were returned, but no approved display fields were found.";
-        container.appendChild(empty);
+        container.appendChild(
+            makeElement(
+                "p",
+                "empty",
+                "Records were returned, but no approved display fields were found."
+            )
+        );
         return;
     }
 
-    const wrapper = document.createElement("div");
-    wrapper.className = "table-wrap";
-
+    const wrapper = makeElement("div","table-wrap");
     const table = document.createElement("table");
     const thead = document.createElement("thead");
     const headerRow = document.createElement("tr");
@@ -390,13 +553,13 @@ function renderTable(containerId,rows,moduleName) {
             if (previewMode) {
                 actionCell.textContent = "Preview only";
             } else if (row.status==="pending" && row.id) {
-                const actionButton =
-                    document.createElement("button");
+                const actionButton = makeElement(
+                    "button",
+                    "small-button",
+                    "Mark Reviewing"
+                );
 
                 actionButton.type = "button";
-                actionButton.className = "small-button";
-                actionButton.textContent = "Mark Reviewing";
-
                 actionButton.addEventListener("click",() => {
                     markRequestReviewing(row.id,actionButton);
                 });
@@ -418,10 +581,13 @@ function renderTable(containerId,rows,moduleName) {
     wrapper.appendChild(table);
     container.appendChild(wrapper);
 
-    const count = document.createElement("p");
-    count.className = "record-count";
-    count.textContent = rows.length+" record(s) displayed.";
-    container.appendChild(count);
+    container.appendChild(
+        makeElement(
+            "p",
+            "record-count",
+            rows.length+" record(s) displayed."
+        )
+    );
 }
 
 async function markRequestReviewing(requestId,button) {
@@ -477,6 +643,547 @@ async function markRequestReviewing(requestId,button) {
     }
 }
 
+/* DELIVERY MANAGEMENT */
+
+function renderDeliveryCard(delivery) {
+    const card = makeElement("article","delivery-card");
+
+    const heading = makeElement(
+        "h3",
+        "",
+        "Delivery — "+(delivery.order_number || delivery.order_id || delivery.id)
+    );
+    card.appendChild(heading);
+
+    const details = makeElement("div","delivery-details");
+
+    addDetail(details,"Delivery ID",delivery.id);
+    addDetail(details,"Order number",delivery.order_number);
+    addDetail(details,"Delivery status",delivery.status);
+    addDetail(details,"Assigned driver",delivery.assigned_to);
+    addDetail(details,"Driver phone",delivery.driver_phone);
+    addDetail(details,"Delivery address",delivery.delivery_address);
+    addDetail(details,"Scheduled delivery",formatDate(delivery.scheduled_delivery_at));
+    addDetail(details,"Delivery window ends",formatDate(delivery.delivery_window_end_at));
+    addDetail(details,"Tracking note",delivery.tracking_note);
+
+    card.appendChild(details);
+
+    if (previewMode) {
+        card.appendChild(
+            makeElement(
+                "p",
+                "readonly-label",
+                "Super Admin Preview — delivery actions are disabled."
+            )
+        );
+        return card;
+    }
+
+    const actions = makeElement("div","delivery-actions");
+
+    /* Schedule and driver assignment form */
+
+    actions.appendChild(
+        makeElement("h4","subheading","Schedule and Driver Assignment")
+    );
+
+    const scheduleGrid = makeElement("div","form-grid");
+
+    const scheduledInput = addField(
+        scheduleGrid,
+        "Scheduled delivery date and time",
+        "datetime-local",
+        toDateTimeLocal(delivery.scheduled_delivery_at)
+    );
+
+    const windowInput = addField(
+        scheduleGrid,
+        "Delivery window end (optional)",
+        "datetime-local",
+        toDateTimeLocal(delivery.delivery_window_end_at)
+    );
+
+    const driverInput = addField(
+        scheduleGrid,
+        "Driver / person assigned",
+        "text",
+        delivery.assigned_to || "",
+        "Driver name"
+    );
+
+    const phoneInput = addField(
+        scheduleGrid,
+        "Driver phone",
+        "tel",
+        delivery.driver_phone || "",
+        "Driver contact number"
+    );
+
+    const addressInput = addField(
+        scheduleGrid,
+        "Delivery address",
+        "text",
+        delivery.delivery_address || "",
+        "Confirmed delivery address"
+    );
+
+    const trackingInput = addField(
+        scheduleGrid,
+        "Scheduling or tracking note",
+        "textarea",
+        delivery.tracking_note || "",
+        "Operational details"
+    );
+
+    actions.appendChild(scheduleGrid);
+
+    const scheduleButtons = makeElement("div","form-actions");
+
+    const saveScheduleButton = makeElement(
+        "button",
+        "",
+        "Save Delivery Arrangements"
+    );
+    saveScheduleButton.type = "button";
+
+    saveScheduleButton.addEventListener("click",async () => {
+        if (previewMode) return;
+
+        if (!scheduledInput.value) {
+            setStatus(
+                "deliveriesStatus",
+                "Please enter the scheduled delivery date and time.",
+                "error"
+            );
+            scheduledInput.focus();
+            return;
+        }
+
+        if (
+            windowInput.value &&
+            new Date(windowInput.value) < new Date(scheduledInput.value)
+        ) {
+            setStatus(
+                "deliveriesStatus",
+                "The delivery window end cannot be earlier than the scheduled start.",
+                "error"
+            );
+            return;
+        }
+
+        saveScheduleButton.disabled = true;
+        setStatus("deliveriesStatus","Saving delivery arrangements...");
+
+        try {
+            const {error} = await db.rpc(
+                "ops_schedule_delivery",
+                {
+                    p_delivery_id:delivery.id,
+                    p_scheduled_delivery_at:new Date(
+                        scheduledInput.value
+                    ).toISOString(),
+                    p_delivery_window_end_at:windowInput.value
+                        ? new Date(windowInput.value).toISOString()
+                        : null,
+                    p_assigned_to:driverInput.value.trim() || null,
+                    p_driver_phone:phoneInput.value.trim() || null,
+                    p_delivery_address:addressInput.value.trim() || null,
+                    p_tracking_note:trackingInput.value.trim() || null
+                }
+            );
+
+            if (error) throw error;
+
+            setStatus(
+                "deliveriesStatus",
+                "Delivery arrangements saved successfully.",
+                "success"
+            );
+
+            await loadModule("deliveries");
+
+        } catch (error) {
+            console.error("Delivery scheduling:",error);
+            setStatus(
+                "deliveriesStatus",
+                error.message || "Could not save delivery arrangements.",
+                "error"
+            );
+        } finally {
+            saveScheduleButton.disabled = false;
+        }
+    });
+
+    scheduleButtons.appendChild(saveScheduleButton);
+    actions.appendChild(scheduleButtons);
+
+    /* Delivery progress form */
+
+    actions.appendChild(
+        makeElement("h4","subheading","Update Delivery Progress")
+    );
+
+    const progressGrid = makeElement("div","form-grid");
+
+    const statusOptions = [
+        {value:"pending",label:"Pending"},
+        {value:"assigned",label:"Assigned"},
+        {value:"picked_up",label:"Picked Up"},
+        {value:"in_transit",label:"In Transit"},
+        {value:"delivered",label:"Delivered"},
+        {value:"failed",label:"Failed"},
+        {value:"cancelled",label:"Cancelled"}
+    ];
+
+    const statusSelect = addSelect(
+        progressGrid,
+        "New delivery status",
+        statusOptions,
+        delivery.status
+    );
+
+    const progressNote = addField(
+        progressGrid,
+        "Progress note",
+        "textarea",
+        "",
+        "Enter the latest delivery progress or reason for failure"
+    );
+
+    actions.appendChild(progressGrid);
+
+    const progressButton = makeElement(
+        "button",
+        "small-button",
+        "Update Delivery Status"
+    );
+    progressButton.type = "button";
+
+    progressButton.addEventListener("click",async () => {
+        if (previewMode) return;
+
+        if (statusSelect.value===delivery.status) {
+            setStatus(
+                "deliveriesStatus",
+                "Select a different delivery status before updating.",
+                "error"
+            );
+            return;
+        }
+
+        progressButton.disabled = true;
+        setStatus("deliveriesStatus","Updating delivery progress...");
+
+        try {
+            const {error} = await db.rpc(
+                "ops_update_delivery_status",
+                {
+                    p_delivery_id:delivery.id,
+                    p_new_status:statusSelect.value,
+                    p_tracking_note:progressNote.value.trim() || null
+                }
+            );
+
+            if (error) throw error;
+
+            setStatus(
+                "deliveriesStatus",
+                "Delivery progress updated successfully.",
+                "success"
+            );
+
+            await loadModule("deliveries");
+
+        } catch (error) {
+            console.error("Delivery status:",error);
+            setStatus(
+                "deliveriesStatus",
+                error.message || "The delivery status could not be updated.",
+                "error"
+            );
+        } finally {
+            progressButton.disabled = false;
+        }
+    });
+
+    actions.appendChild(progressButton);
+
+    /* Customer contact form */
+
+    actions.appendChild(
+        makeElement("h4","subheading","Record Customer Contact")
+    );
+
+    const contactGrid = makeElement("div","form-grid");
+
+    const contactMethod = addSelect(
+        contactGrid,
+        "Contact method",
+        [
+            {value:"phone",label:"Phone call"},
+            {value:"whatsapp",label:"WhatsApp"},
+            {value:"email",label:"Email"},
+            {value:"sms",label:"SMS"},
+            {value:"other",label:"Other"}
+        ],
+        "phone"
+    );
+
+    const contactSummary = addField(
+        contactGrid,
+        "Contact summary",
+        "textarea",
+        "",
+        "What was discussed with the customer?"
+    );
+
+    const contactOutcome = addField(
+        contactGrid,
+        "Contact outcome",
+        "textarea",
+        "",
+        "Was the customer reached? What was agreed?"
+    );
+
+    const nextFollowUp = addField(
+        contactGrid,
+        "Next follow-up date and time (optional)",
+        "datetime-local",
+        ""
+    );
+
+    actions.appendChild(contactGrid);
+
+    const contactButton = makeElement(
+        "button",
+        "small-button",
+        "Save Customer Contact"
+    );
+    contactButton.type = "button";
+
+    contactButton.addEventListener("click",async () => {
+        if (previewMode) return;
+
+        if (!contactSummary.value.trim()) {
+            setStatus(
+                "deliveriesStatus",
+                "Enter a contact summary before saving.",
+                "error"
+            );
+            contactSummary.focus();
+            return;
+        }
+
+        contactButton.disabled = true;
+        setStatus("deliveriesStatus","Saving customer contact...");
+
+        try {
+            const {error} = await db.rpc(
+                "ops_log_delivery_customer_contact",
+                {
+                    p_delivery_id:delivery.id,
+                    p_contact_method:contactMethod.value,
+                    p_contact_summary:contactSummary.value.trim(),
+                    p_contact_outcome:contactOutcome.value.trim() || null,
+                    p_next_follow_up_at:nextFollowUp.value
+                        ? new Date(nextFollowUp.value).toISOString()
+                        : null
+                }
+            );
+
+            if (error) throw error;
+
+            setStatus(
+                "deliveriesStatus",
+                "Customer contact record saved successfully.",
+                "success"
+            );
+
+            contactSummary.value = "";
+            contactOutcome.value = "";
+            nextFollowUp.value = "";
+
+            await loadContactHistory(delivery.id,historyContainer);
+
+        } catch (error) {
+            console.error("Customer contact:",error);
+            setStatus(
+                "deliveriesStatus",
+                error.message || "Could not save customer contact.",
+                "error"
+            );
+        } finally {
+            contactButton.disabled = false;
+        }
+    });
+
+    actions.appendChild(contactButton);
+
+    /* Contact history */
+
+    actions.appendChild(
+        makeElement("h4","subheading","Customer Contact History")
+    );
+
+    const historyContainer = makeElement(
+        "div",
+        "contact-history",
+        "Contact history has not been loaded."
+    );
+
+    const historyButton = makeElement(
+        "button",
+        "secondary-button small-button",
+        "Load Contact History"
+    );
+    historyButton.type = "button";
+
+    historyButton.addEventListener("click",async () => {
+        await loadContactHistory(delivery.id,historyContainer);
+    });
+
+    actions.appendChild(historyButton);
+    actions.appendChild(historyContainer);
+
+    card.appendChild(actions);
+
+    return card;
+}
+
+function toDateTimeLocal(value) {
+    if (!value) return "";
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "";
+
+    const local = new Date(
+        date.getTime()-date.getTimezoneOffset()*60000
+    );
+
+    return local.toISOString().slice(0,16);
+}
+
+async function loadContactHistory(deliveryId,container) {
+    container.textContent = "Loading customer contact history...";
+
+    try {
+        const {data,error} = await db.rpc(
+            "ops_list_delivery_contact_logs",
+            {p_delivery_id:deliveryId}
+        );
+
+        if (error) throw error;
+
+        const rows = normaliseRows(data);
+        container.replaceChildren();
+
+        if (!rows.length) {
+            container.appendChild(
+                makeElement(
+                    "p",
+                    "empty",
+                    "No customer contact records have been recorded for this delivery."
+                )
+            );
+            return;
+        }
+
+        rows.forEach(row => {
+            const log = makeElement("div","contact-log");
+
+            log.appendChild(
+                makeElement(
+                    "strong",
+                    "",
+                    (row.contact_method || "Contact").toUpperCase()
+                )
+            );
+
+            log.appendChild(
+                makeElement(
+                    "p",
+                    "",
+                    "Contacted: "+formatDate(row.contacted_at)
+                )
+            );
+
+            log.appendChild(
+                makeElement(
+                    "p",
+                    "",
+                    "Staff: "+(row.contacted_by_name || "Not available")
+                )
+            );
+
+            log.appendChild(
+                makeElement(
+                    "p",
+                    "",
+                    "Summary: "+(row.contact_summary || "")
+                )
+            );
+
+            if (row.contact_outcome) {
+                log.appendChild(
+                    makeElement(
+                        "p",
+                        "",
+                        "Outcome: "+row.contact_outcome
+                    )
+                );
+            }
+
+            if (row.next_follow_up_at) {
+                log.appendChild(
+                    makeElement(
+                        "p",
+                        "",
+                        "Next follow-up: "+formatDate(row.next_follow_up_at)
+                    )
+                );
+            }
+
+            container.appendChild(log);
+        });
+
+    } catch (error) {
+        console.error("Contact history:",error);
+        container.textContent =
+            error.message || "Could not load customer contact history.";
+    }
+}
+
+function renderDeliveries(containerId,rows) {
+    const container = document.getElementById(containerId);
+    container.replaceChildren();
+
+    if (!rows.length) {
+        container.appendChild(
+            makeElement(
+                "p",
+                "empty",
+                "No delivery records were returned."
+            )
+        );
+        return;
+    }
+
+    rows.forEach(delivery => {
+        container.appendChild(renderDeliveryCard(delivery));
+    });
+
+    container.appendChild(
+        makeElement(
+            "p",
+            "record-count",
+            rows.length+" delivery record(s) displayed."
+        )
+    );
+}
+
+/* LOAD DASHBOARD MODULES */
+
 async function loadModule(moduleName) {
     const module = modules[moduleName];
     if (!module) return;
@@ -502,7 +1209,12 @@ async function loadModule(moduleName) {
         }
 
         const rows = normaliseRows(data);
-        renderTable(module.table,rows,moduleName);
+
+        if (moduleName==="deliveries") {
+            renderDeliveries(module.table,rows);
+        } else {
+            renderTable(module.table,rows,moduleName);
+        }
 
         setStatus(module.status,"Records loaded successfully.");
 
@@ -530,6 +1242,8 @@ async function refreshAll() {
         button.disabled = false;
     }
 }
+
+/* ACCESS CONTROL */
 
 async function start() {
     try {
@@ -561,6 +1275,7 @@ async function start() {
             return;
         }
 
+        currentRole = role;
         previewMode = role==="super_admin";
 
         document.getElementById("pageTitle").textContent =
@@ -603,6 +1318,8 @@ async function start() {
         );
     }
 }
+
+/* BUTTON EVENTS */
 
 document.querySelectorAll("[data-refresh]").forEach(button => {
     button.addEventListener("click",() => {
