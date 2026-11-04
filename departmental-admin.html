@@ -6,112 +6,94 @@
 <title>Departmental Administration | FrostTech</title>
 <style>
 :root {
-    --primary: #063b70;
-    --secondary: #0879c9;
-    --background: #f3f6fa;
-    --border: #dce3eb;
+    --primary:#063b70;
+    --secondary:#0879c9;
+    --background:#f3f6fa;
+    --border:#dce3eb;
 }
-* { box-sizing: border-box; }
+* { box-sizing:border-box; }
 body {
-    margin: 0;
-    font-family: Arial, sans-serif;
-    background: var(--background);
-    color: #172333;
+    margin:0;
+    font-family:Arial,sans-serif;
+    background:var(--background);
+    color:#172333;
 }
 header {
-    background: var(--primary);
-    color: white;
-    padding: 18px;
+    background:var(--primary);
+    color:white;
+    padding:18px;
 }
-header h1 { margin: 0 0 6px; font-size: 22px; }
-header p { margin: 0; }
-main {
-    max-width: 1100px;
-    margin: auto;
-    padding: 16px;
-}
+header h1 { margin:0 0 6px; font-size:22px; }
+header p { margin:0; }
+main { max-width:1100px; margin:auto; padding:16px; }
 .card {
-    background: white;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 18px;
-    margin: 16px 0;
+    background:white;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:18px;
+    margin:16px 0;
 }
 .message {
-    padding: 12px;
-    border-radius: 6px;
-    background: #e8f3ff;
-    color: #06477c;
-    overflow-wrap: anywhere;
+    padding:12px;
+    border-radius:6px;
+    background:#e8f3ff;
+    color:#06477c;
+    overflow-wrap:anywhere;
 }
-.error {
-    background: #ffebee;
-    color: #a11919;
-}
-.success-message {
-    background: #e7f6ec;
-    color: #176534;
+.error { background:#ffebee; color:#a11919; }
+.success-message { background:#e7f6ec; color:#176534; }
+.preview-notice {
+    background:#fff4d6;
+    color:#704b00;
+    border:1px solid #e8cf87;
+    padding:14px;
+    border-radius:7px;
+    margin:14px 0;
 }
 button {
-    background: var(--secondary);
-    color: white;
-    border: 0;
-    border-radius: 6px;
-    padding: 11px 16px;
-    font: inherit;
-    font-weight: bold;
-    cursor: pointer;
+    background:var(--secondary);
+    color:white;
+    border:0;
+    border-radius:6px;
+    padding:11px 16px;
+    font:inherit;
+    font-weight:bold;
+    cursor:pointer;
 }
-button:disabled {
-    opacity: .6;
-    cursor: wait;
-}
-.secondary-button { background: #536779; }
-.small-button {
-    padding: 8px 10px;
-    font-size: 12px;
-}
-.hidden { display: none; }
+button:disabled { opacity:.6; cursor:wait; }
+.secondary-button { background:#536779; }
+.small-button { padding:8px 10px; font-size:12px; }
+.hidden { display:none; }
 .section-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-    flex-wrap: wrap;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    flex-wrap:wrap;
 }
-.section-heading h2 { margin: 0; }
-.table-wrap {
-    overflow-x: auto;
-    margin-top: 14px;
-}
+.section-heading h2 { margin:0; }
+.table-wrap { overflow-x:auto; margin-top:14px; }
 table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-    min-width: 650px;
+    width:100%;
+    border-collapse:collapse;
+    font-size:13px;
+    min-width:650px;
 }
-th, td {
-    border: 1px solid var(--border);
-    padding: 10px;
-    text-align: left;
-    vertical-align: top;
-    overflow-wrap: anywhere;
+th,td {
+    border:1px solid var(--border);
+    padding:10px;
+    text-align:left;
+    vertical-align:top;
+    overflow-wrap:anywhere;
 }
-th { background: #edf3f8; }
-.empty {
-    color: #667788;
-    padding: 12px 0;
-}
-.record-count {
-    color: #536779;
-    font-size: 13px;
-    margin-top: 10px;
-}
-.action-cell { min-width: 125px; }
+th { background:#edf3f8; }
+.empty { color:#667788; padding:12px 0; }
+.record-count { color:#536779; font-size:13px; margin-top:10px; }
+.action-cell { min-width:125px; }
 </style>
 </head>
-
 <body>
+
 <header>
     <h1>FrostTech HVAC and Refrigeration</h1>
     <p>Departmental Administration Portal</p>
@@ -120,6 +102,7 @@ th { background: #edf3f8; }
 <main>
 <section class="card">
     <h2 id="pageTitle">Verifying administrator access</h2>
+
     <p id="status" class="message" role="status">
         Please wait while your access is checked.
     </p>
@@ -128,9 +111,19 @@ th { background: #edf3f8; }
         <p>Signed in as: <strong id="adminEmail"></strong></p>
         <p>Department: <strong id="adminRole"></strong></p>
 
+        <div id="previewNotice" class="preview-notice hidden">
+            <strong>SUPER ADMIN PREVIEW MODE</strong>
+            <p>
+                You are viewing the Operations dashboard as Super Administrator.
+                This is a read-only preview. Departmental actions are disabled.
+                No employee appointment or role change is being made.
+            </p>
+        </div>
+
         <button id="refreshAllButton" type="button">
             Refresh All Records
         </button>
+
         <button id="logoutButton" type="button"
                 class="secondary-button">
             Log Out
@@ -221,17 +214,15 @@ const db = window.supabase.createClient(
 );
 
 const roleNames = {
-    operations_admin: "Operations Administration",
-    supplier_admin: "Supplier Administration",
-    finance_admin: "Finance Administration",
-    catalogue_admin: "Catalogue Administration"
+    operations_admin:"Operations Administration",
+    supplier_admin:"Supplier Administration",
+    finance_admin:"Finance Administration",
+    catalogue_admin:"Catalogue Administration",
+    super_admin:"Super Administrator — Preview"
 };
 
-/*
- * Approved display fields only.
- * Supplier costs, margins, purchase prices and profit
- * fields are deliberately excluded.
- */
+let previewMode = false;
+
 const displayFields = [
     "id",
     "reference",
@@ -273,42 +264,42 @@ const displayFields = [
 ];
 
 const modules = {
-    requests: {
-        rpc: "ops_list_customer_requests",
-        status: "requestsStatus",
-        table: "requestsTable"
+    requests:{
+        rpc:"ops_list_customer_requests",
+        status:"requestsStatus",
+        table:"requestsTable"
     },
-    quotations: {
-        rpc: "ops_list_quotations",
-        status: "quotationsStatus",
-        table: "quotationsTable"
+    quotations:{
+        rpc:"ops_list_quotations",
+        status:"quotationsStatus",
+        table:"quotationsTable"
     },
-    orders: {
-        rpc: "ops_list_orders",
-        status: "ordersStatus",
-        table: "ordersTable"
+    orders:{
+        rpc:"ops_list_orders",
+        status:"ordersStatus",
+        table:"ordersTable"
     },
-    orderItems: {
-        rpc: "ops_list_order_items",
-        status: "orderItemsStatus",
-        table: "orderItemsTable"
+    orderItems:{
+        rpc:"ops_list_order_items",
+        status:"orderItemsStatus",
+        table:"orderItemsTable"
     },
-    deliveries: {
-        rpc: "ops_list_deliveries",
-        status: "deliveriesStatus",
-        table: "deliveriesTable"
+    deliveries:{
+        rpc:"ops_list_deliveries",
+        status:"deliveriesStatus",
+        table:"deliveriesTable"
     }
 };
 
 const statusBox = document.getElementById("status");
 
-function setStatus(elementId, message, type = "normal") {
+function setStatus(elementId,message,type="normal") {
     const element = document.getElementById(elementId);
     element.textContent = message;
-    element.classList.toggle("error", type === "error");
+    element.classList.toggle("error",type==="error");
     element.classList.toggle(
         "success-message",
-        type === "success"
+        type==="success"
     );
 }
 
@@ -327,12 +318,12 @@ function normaliseRows(data) {
 }
 
 function formatValue(value) {
-    if (value === null || value === undefined) return "";
-    if (typeof value === "object") return JSON.stringify(value);
+    if (value===null || value===undefined) return "";
+    if (typeof value==="object") return JSON.stringify(value);
     return String(value);
 }
 
-function renderTable(containerId, rows, moduleName) {
+function renderTable(containerId,rows,moduleName) {
     const container = document.getElementById(containerId);
     container.replaceChildren();
 
@@ -346,7 +337,7 @@ function renderTable(containerId, rows, moduleName) {
 
     const keys = displayFields.filter(key =>
         rows.some(row =>
-            Object.prototype.hasOwnProperty.call(row, key)
+            Object.prototype.hasOwnProperty.call(row,key)
         )
     );
 
@@ -368,11 +359,11 @@ function renderTable(containerId, rows, moduleName) {
 
     keys.forEach(key => {
         const th = document.createElement("th");
-        th.textContent = key.replaceAll("_", " ");
+        th.textContent = key.replaceAll("_"," ");
         headerRow.appendChild(th);
     });
 
-    if (moduleName === "requests") {
+    if (moduleName==="requests") {
         const actionHeading = document.createElement("th");
         actionHeading.textContent = "Action";
         headerRow.appendChild(actionHeading);
@@ -392,28 +383,26 @@ function renderTable(containerId, rows, moduleName) {
             tr.appendChild(td);
         });
 
-        if (moduleName === "requests") {
+        if (moduleName==="requests") {
             const actionCell = document.createElement("td");
             actionCell.className = "action-cell";
 
-            if (row.status === "pending" && row.id) {
+            if (previewMode) {
+                actionCell.textContent = "Preview only";
+            } else if (row.status==="pending" && row.id) {
                 const actionButton =
                     document.createElement("button");
 
                 actionButton.type = "button";
                 actionButton.className = "small-button";
                 actionButton.textContent = "Mark Reviewing";
-                actionButton.dataset.requestId = String(row.id);
 
-                actionButton.addEventListener("click", () => {
-                    markRequestReviewing(
-                        row.id,
-                        actionButton
-                    );
+                actionButton.addEventListener("click",() => {
+                    markRequestReviewing(row.id,actionButton);
                 });
 
                 actionCell.appendChild(actionButton);
-            } else if (row.status === "reviewing") {
+            } else if (row.status==="reviewing") {
                 actionCell.textContent = "Under review";
             } else {
                 actionCell.textContent = "No action available";
@@ -431,32 +420,24 @@ function renderTable(containerId, rows, moduleName) {
 
     const count = document.createElement("p");
     count.className = "record-count";
-    count.textContent = rows.length + " record(s) displayed.";
+    count.textContent = rows.length+" record(s) displayed.";
     container.appendChild(count);
 }
 
-/*
- * Secure request action.
- * The database function checks the signed-in administrator's
- * permission and records the action in the activity log.
- */
-async function markRequestReviewing(requestId, button) {
-    if (!requestId || button.disabled) return;
+async function markRequestReviewing(requestId,button) {
+    if (previewMode || !requestId || button.disabled) return;
 
     button.disabled = true;
-    setStatus(
-        "requestsStatus",
-        "Updating customer request..."
-    );
+    setStatus("requestsStatus","Updating customer request...");
 
     try {
-        const { data, error } = await db.rpc(
+        const {data,error} = await db.rpc(
             "ops_mark_request_reviewing",
-            { p_request_id: requestId }
+            {p_request_id:requestId}
         );
 
         if (error) {
-            console.error("Request status update:", error);
+            console.error("Request status update:",error);
             setStatus(
                 "requestsStatus",
                 "The request could not be updated. Please refresh and try again.",
@@ -466,7 +447,7 @@ async function markRequestReviewing(requestId, button) {
             return;
         }
 
-        if (data !== true) {
+        if (data!==true) {
             setStatus(
                 "requestsStatus",
                 "The request was not changed. It may already have been updated or may no longer be available.",
@@ -500,18 +481,18 @@ async function loadModule(moduleName) {
     const module = modules[moduleName];
     if (!module) return;
 
-    setStatus(module.status, "Loading records...");
+    setStatus(module.status,"Loading records...");
 
     const buttons = document.querySelectorAll(
-        '[data-refresh="' + moduleName + '"]'
+        '[data-refresh="'+moduleName+'"]'
     );
-    buttons.forEach(button => button.disabled = true);
+    buttons.forEach(button => button.disabled=true);
 
     try {
-        const { data, error } = await db.rpc(module.rpc);
+        const {data,error} = await db.rpc(module.rpc);
 
         if (error) {
-            console.error(module.rpc, error);
+            console.error(module.rpc,error);
             setStatus(
                 module.status,
                 "Could not load these records. Please check the administrator session and database permissions.",
@@ -521,9 +502,9 @@ async function loadModule(moduleName) {
         }
 
         const rows = normaliseRows(data);
-        renderTable(module.table, rows, moduleName);
+        renderTable(module.table,rows,moduleName);
 
-        setStatus(module.status, "Records loaded successfully.");
+        setStatus(module.status,"Records loaded successfully.");
 
     } catch (error) {
         console.error(error);
@@ -533,7 +514,7 @@ async function loadModule(moduleName) {
             "error"
         );
     } finally {
-        buttons.forEach(button => button.disabled = false);
+        buttons.forEach(button => button.disabled=false);
     }
 }
 
@@ -552,7 +533,7 @@ async function refreshAll() {
 
 async function start() {
     try {
-        const { data: userData, error: userError } =
+        const {data:userData,error:userError} =
             await db.auth.getUser();
 
         if (userError || !userData.user) {
@@ -562,7 +543,7 @@ async function start() {
             return;
         }
 
-        const { data: role, error: roleError } =
+        const {data:role,error:roleError} =
             await db.rpc("admin_get_my_role");
 
         if (roleError) {
@@ -575,13 +556,17 @@ async function start() {
 
         if (!roleNames[role]) {
             deny(
-                "This portal is for active departmental administrators only."
+                "This portal is for active departmental administrators and Super Administrator preview only."
             );
             return;
         }
 
+        previewMode = role==="super_admin";
+
         document.getElementById("pageTitle").textContent =
-            "Departmental Dashboard";
+            previewMode
+                ? "Departmental Dashboard — Preview"
+                : "Departmental Dashboard";
 
         document.getElementById("adminEmail").textContent =
             userData.user.email || "Signed-in administrator";
@@ -589,13 +574,19 @@ async function start() {
         document.getElementById("adminRole").textContent =
             roleNames[role];
 
-        statusBox.textContent =
-            "Your departmental administrator access has been verified.";
+        statusBox.textContent = previewMode
+            ? "Super Administrator access verified. Preview mode is read-only."
+            : "Your departmental administrator access has been verified.";
 
         document.getElementById("departmentPanel")
             .classList.remove("hidden");
 
-        if (role === "operations_admin") {
+        if (previewMode) {
+            document.getElementById("previewNotice")
+                .classList.remove("hidden");
+        }
+
+        if (role==="operations_admin" || previewMode) {
             document.getElementById("operationsDashboard")
                 .classList.remove("hidden");
 
@@ -614,22 +605,20 @@ async function start() {
 }
 
 document.querySelectorAll("[data-refresh]").forEach(button => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click",() => {
         loadModule(button.dataset.refresh);
     });
 });
 
 document.getElementById("refreshAllButton")
-    .addEventListener("click", refreshAll);
+    .addEventListener("click",refreshAll);
 
 document.getElementById("logoutButton")
-    .addEventListener("click", async () => {
-        const button =
-            document.getElementById("logoutButton");
-
+    .addEventListener("click",async () => {
+        const button = document.getElementById("logoutButton");
         button.disabled = true;
 
-        const { error } = await db.auth.signOut();
+        const {error} = await db.auth.signOut();
 
         if (error) {
             button.disabled = false;
