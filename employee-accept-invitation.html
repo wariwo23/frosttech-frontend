@@ -1,0 +1,319 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accept Employee Invitation | FrostTech</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 24px 16px;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f1f5f9;
+      font-family: Arial, sans-serif;
+      color: #1e293b;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 440px;
+      background: #ffffff;
+      padding: 30px 24px;
+      border-radius: 12px;
+      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #123b63;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #64748b;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin: 18px 0 7px;
+      font-weight: bold;
+    }
+
+    input {
+      width: 100%;
+      padding: 13px;
+      border: 1px solid #cbd5e1;
+      border-radius: 7px;
+      font-size: 16px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 22px;
+      background: #123b63;
+      color: white;
+      border: none;
+      border-radius: 7px;
+      font-size: 16px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 12px;
+      border-radius: 7px;
+      display: none;
+      line-height: 1.5;
+    }
+
+    .error {
+      display: block;
+      color: #991b1b;
+      background: #fee2e2;
+    }
+
+    .success {
+      display: block;
+      color: #166534;
+      background: #dcfce7;
+    }
+
+    .notice {
+      margin-top: 18px;
+      padding: 12px;
+      background: #eff6ff;
+      color: #1e40af;
+      border-radius: 7px;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 25px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    #setupForm {
+      display: none;
+    }
+  </style>
+</head>
+
+<body>
+  <main class="container">
+    <h2>FrostTech Employee Account</h2>
+
+    <p class="subtitle">
+      Welcome to FrostTech HVAC and Refrigeration Marketplace.
+      Set your personal password to complete your account setup.
+    </p>
+
+    <div id="loadingMessage">
+      Verifying your invitation. Please wait...
+    </div>
+
+    <form id="setupForm">
+      <label for="password">Create Password</label>
+      <input
+        type="password"
+        id="password"
+        minlength="8"
+        autocomplete="new-password"
+        placeholder="Enter your password"
+        required
+      >
+
+      <label for="confirmPassword">Confirm Password</label>
+      <input
+        type="password"
+        id="confirmPassword"
+        minlength="8"
+        autocomplete="new-password"
+        placeholder="Enter your password again"
+        required
+      >
+
+      <button type="submit" id="submitButton">
+        Complete Account Setup
+      </button>
+    </form>
+
+    <div id="message" class="message"></div>
+
+    <div class="notice">
+      Your account setup does not automatically grant departmental
+      administrator access. Your Super Administrator must activate
+      your employment and assign your department role.
+    </div>
+
+    <div class="footer">
+      FrostTech HVAC and Refrigeration Marketplace
+    </div>
+  </main>
+
+  <script type="module">
+    import { createClient } from
+      "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+    const SUPABASE_URL =
+      "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+    const SUPABASE_ANON_KEY =
+      "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+    const supabase = createClient(
+      SUPABASE_URL,
+      SUPABASE_ANON_KEY
+    );
+
+    const loadingMessage =
+      document.getElementById("loadingMessage");
+
+    const setupForm =
+      document.getElementById("setupForm");
+
+    const message =
+      document.getElementById("message");
+
+    const submitButton =
+      document.getElementById("submitButton");
+
+    let verifiedUser = null;
+
+    function showMessage(text, type) {
+      message.textContent = text;
+      message.className = "message " + type;
+    }
+
+    async function verifyInvitation() {
+      try {
+        const { data, error } =
+          await supabase.auth.getSession();
+
+        if (error) throw error;
+
+        const session = data.session;
+
+        if (!session || !session.user) {
+          throw new Error(
+            "Your invitation could not be verified. " +
+            "Please open the original invitation email link again."
+          );
+        }
+
+        const user = session.user;
+
+        if (
+          user.app_metadata?.frosttech_account_type !== "employee"
+        ) {
+          throw new Error(
+            "This invitation is not registered as a FrostTech employee account."
+          );
+        }
+
+        verifiedUser = user;
+
+        loadingMessage.style.display = "none";
+        setupForm.style.display = "block";
+
+      } catch (error) {
+        loadingMessage.style.display = "none";
+        showMessage(error.message, "error");
+      }
+    }
+
+    setupForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+
+      const password =
+        document.getElementById("password").value;
+
+      const confirmPassword =
+        document.getElementById("confirmPassword").value;
+
+      if (password.length < 8) {
+        showMessage(
+          "Your password must contain at least 8 characters.",
+          "error"
+        );
+        return;
+      }
+
+      if (password !== confirmPassword) {
+        showMessage(
+          "The passwords do not match.",
+          "error"
+        );
+        return;
+      }
+
+      if (!verifiedUser) {
+        showMessage(
+          "Your invitation session is no longer valid. Please open your invitation email again.",
+          "error"
+        );
+        return;
+      }
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Setting up your account...";
+
+      try {
+        const { data, error } =
+          await supabase.auth.updateUser({
+            password: password
+          });
+
+        if (error) throw error;
+
+        if (
+          !data.user ||
+          data.user.id !== verifiedUser.id
+        ) {
+          throw new Error(
+            "Account verification failed. Please contact FrostTech support."
+          );
+        }
+
+        setupForm.style.display = "none";
+
+        showMessage(
+          "Your password has been set successfully. " +
+          "Your FrostTech employee account is now ready. " +
+          "Your Super Administrator will activate your employment " +
+          "and assign your departmental access.",
+          "success"
+        );
+
+      } catch (error) {
+        showMessage(error.message, "error");
+
+        submitButton.disabled = false;
+        submitButton.textContent = "Complete Account Setup";
+      }
+    });
+
+    verifyInvitation();
+  </script>
+</body>
+</html>
