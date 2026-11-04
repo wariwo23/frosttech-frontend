@@ -312,6 +312,7 @@ await loadDocuments();
 }
 
 async function loadDocuments(){
+async function loadDocuments(){
 if(!advertiser)return;
 
 const list=document.getElementById("documentList");
@@ -321,6 +322,7 @@ const {data,error}=await db
 .from("advertiser_documents")
 .select("document_type,review_status,created_at")
 .eq("advertiser_id",advertiser.id)
+.is("removed_at",null)
 .order("created_at",{ascending:false});
 
 if(error){
