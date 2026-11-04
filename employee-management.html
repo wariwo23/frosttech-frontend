@@ -70,6 +70,7 @@ button:disabled {
   cursor: wait;
 }
 button.secondary { background: #536579; }
+button.success { background: #18794e; }
 .message {
   padding: 12px;
   border-radius: 6px;
@@ -145,31 +146,16 @@ button.secondary { background: #536579; }
     <form id="employeeForm">
 
       <label for="fullName">Employee Full Name</label>
-      <input
-        id="fullName"
-        type="text"
-        maxlength="150"
-        placeholder="Enter employee's full name"
-        required
-      >
+      <input id="fullName" type="text" maxlength="150"
+        placeholder="Enter employee's full name" required>
 
       <label for="email">Employee Email Address</label>
-      <input
-        id="email"
-        type="email"
-        maxlength="254"
-        placeholder="Enter employee's email address"
-        required
-      >
+      <input id="email" type="email" maxlength="254"
+        placeholder="Enter employee's email address" required>
 
       <label for="jobTitle">Job Title</label>
-      <input
-        id="jobTitle"
-        type="text"
-        maxlength="120"
-        placeholder="Example: Operations Officer"
-        required
-      >
+      <input id="jobTitle" type="text" maxlength="120"
+        placeholder="Example: Operations Officer" required>
 
       <label for="department">Department</label>
       <select id="department" required>
@@ -183,7 +169,6 @@ button.secondary { background: #536579; }
       <button id="saveEmployeeButton" type="submit">
         Register Employee
       </button>
-
     </form>
 
     <p id="formStatus" class="message hidden" role="status"></p>
@@ -209,7 +194,6 @@ button.secondary { background: #536579; }
   </section>
 
 </div>
-
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -241,15 +225,9 @@ function showMessage(id, message, type = "") {
   const element = $(id);
   element.textContent = message;
 
-  element.classList.remove(
-    "hidden",
-    "error",
-    "success"
-  );
+  element.classList.remove("hidden", "error", "success");
 
-  if (type) {
-    element.classList.add(type);
-  }
+  if (type) element.classList.add(type);
 }
 
 function formatDate(value) {
@@ -272,10 +250,8 @@ function createTextElement(tag, text) {
 
 async function verifySuperAdmin() {
   try {
-    const {
-      data: userData,
-      error: userError
-    } = await db.auth.getUser();
+    const { data: userData, error: userError } =
+      await db.auth.getUser();
 
     if (userError || !userData.user) {
       denyAccess(
@@ -284,10 +260,8 @@ async function verifySuperAdmin() {
       return;
     }
 
-    const {
-      data: role,
-      error: roleError
-    } = await db.rpc("admin_get_my_role");
+    const { data: role, error: roleError } =
+      await db.rpc("admin_get_my_role");
 
     if (roleError || role !== "super_admin") {
       denyAccess(
@@ -297,9 +271,7 @@ async function verifySuperAdmin() {
     }
 
     $("pageTitle").textContent = "Employee Management";
-
-    $("adminEmail").textContent =
-      userData.user.email || "";
+    $("adminEmail").textContent = userData.user.email || "";
 
     $("adminDetails").classList.remove("hidden");
     $("employeePanel").classList.remove("hidden");
@@ -314,7 +286,6 @@ async function verifySuperAdmin() {
 
   } catch (error) {
     console.error(error);
-
     denyAccess(
       "Unable to verify access. Please refresh and try again."
     );
@@ -323,22 +294,91 @@ async function verifySuperAdmin() {
 
 function denyAccess(message) {
   $("pageTitle").textContent = "Access not available";
+  showMessage("accessStatus", message, "error");
+}
+
+async function sendEmployeeInvitation(employee, button) {
+  const confirmed = window.confirm(
+    "Send an employee invitation to " +
+    employee.full_name + " at " + employee.email + "?"
+  );
+
+  if (!confirmed) return;
+
+  button.disabled = true;
+  button.textContent = "Sending invitation...";
 
   showMessage(
-    "accessStatus",
-    message,
-    "error"
+    "listStatus",
+    "Sending invitation to " + employee.email + "..."
   );
+
+  try {
+    const { data, error } = await db.functions.invoke(
+      "invite-frosttech-employee",
+      {
+        body: {
+          employee_id: employee.employee_id
+        }
+      }
+    );
+
+    if (error) {
+      let detail = error.message || "Invitation request failed.";
+
+      if (error.context && typeof error.context.json === "function") {
+        try {
+          const responseBody = await error.context.json();
+
+          if (responseBody.error) {
+            detail = responseBody.error;
+
+            if (responseBody.invitation_sent) {
+              detail +=
+                " The invitation email was sent, but database linking needs recovery. Do not send another invitation yet.";
+            }
+          }
+        } catch (_) {
+          // Keep the original error message.
+        }
+      }
+
+      throw new Error(detail);
+    }
+
+    if (!data || data.success !== true) {
+      throw new Error(
+        data?.error || "The invitation could not be confirmed."
+      );
+    }
+
+    showMessage(
+      "listStatus",
+      "Invitation sent successfully to " + employee.email + ".",
+      "success"
+    );
+
+    await loadEmployees();
+
+  } catch (error) {
+    console.error(error);
+
+    showMessage(
+      "listStatus",
+      error.message || "Employee invitation failed.",
+      "error"
+    );
+
+    button.disabled = false;
+    button.textContent = "Send Invitation";
+  }
 }
 
 async function loadEmployees() {
   $("refreshButton").disabled = true;
   $("employeeList").replaceChildren();
 
-  showMessage(
-    "listStatus",
-    "Loading employee records..."
-  );
+  showMessage("listStatus", "Loading employee records...");
 
   try {
     const { data, error } = await db.rpc(
@@ -364,27 +404,18 @@ async function loadEmployees() {
       );
 
       card.appendChild(
-        createTextElement(
-          "p",
-          "Email: " + employee.email
-        )
+        createTextElement("p", "Email: " + employee.email)
       );
 
       card.appendChild(
-        createTextElement(
-          "p",
-          "Job Title: " + employee.job_title
-        )
+        createTextElement("p", "Job Title: " + employee.job_title)
       );
 
       card.appendChild(
         createTextElement(
           "p",
           "Department: " +
-          (
-            departmentNames[employee.department] ||
-            employee.department
-          )
+          (departmentNames[employee.department] || employee.department)
         )
       );
 
@@ -404,6 +435,43 @@ async function loadEmployees() {
           "Registered: " + formatDate(employee.created_at)
         )
       );
+
+      if (
+        employee.employment_status === "planned" &&
+        !employee.auth_user_id
+      ) {
+        const inviteButton = createTextElement(
+          "button",
+          "Send Invitation"
+        );
+
+        inviteButton.type = "button";
+        inviteButton.className = "success";
+
+        inviteButton.addEventListener("click", () => {
+          sendEmployeeInvitation(employee, inviteButton);
+        });
+
+        card.appendChild(inviteButton);
+      }
+
+      if (employee.employment_status === "invited") {
+        card.appendChild(
+          createTextElement(
+            "p",
+            "Invitation issued. Employee account setup is pending."
+          )
+        );
+      }
+
+      if (employee.employment_status === "active") {
+        card.appendChild(
+          createTextElement(
+            "p",
+            "Employment is active."
+          )
+        );
+      }
 
       $("employeeList").appendChild(card);
     });
@@ -428,78 +496,67 @@ async function loadEmployees() {
   }
 }
 
-$("employeeForm").addEventListener(
-  "submit",
-  async event => {
-    event.preventDefault();
+$("employeeForm").addEventListener("submit", async event => {
+  event.preventDefault();
 
-    const fullName = $("fullName").value.trim();
-    const email = $("email").value.trim().toLowerCase();
-    const jobTitle = $("jobTitle").value.trim();
-    const department = $("department").value;
+  const fullName = $("fullName").value.trim();
+  const email = $("email").value.trim().toLowerCase();
+  const jobTitle = $("jobTitle").value.trim();
+  const department = $("department").value;
 
-    if (!fullName || !email || !jobTitle || !department) {
-      showMessage(
-        "formStatus",
-        "Please complete all employee details.",
-        "error"
-      );
-      return;
-    }
+  if (!fullName || !email || !jobTitle || !department) {
+    showMessage(
+      "formStatus",
+      "Please complete all employee details.",
+      "error"
+    );
+    return;
+  }
 
-    const button = $("saveEmployeeButton");
-    button.disabled = true;
+  const button = $("saveEmployeeButton");
+  button.disabled = true;
+
+  showMessage("formStatus", "Registering employee...");
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_create_frosttech_employee",
+      {
+        p_full_name: fullName,
+        p_email: email,
+        p_job_title: jobTitle,
+        p_department: department
+      }
+    );
+
+    if (error) throw error;
 
     showMessage(
       "formStatus",
-      "Registering employee..."
+      "Employee registered successfully. The employee remains in Planned status. No login invitation or administrator access has been issued.",
+      "success"
     );
 
-    try {
-      const { data, error } = await db.rpc(
-        "admin_create_frosttech_employee",
-        {
-          p_full_name: fullName,
-          p_email: email,
-          p_job_title: jobTitle,
-          p_department: department
-        }
-      );
+    $("employeeForm").reset();
+    await loadEmployees();
 
-      if (error) throw error;
+  } catch (error) {
+    console.error(error);
 
-      showMessage(
-        "formStatus",
-        "Employee registered successfully. The employee remains in Planned status. No login invitation or administrator access has been issued.",
-        "success"
-      );
+    showMessage(
+      "formStatus",
+      error.message || "Employee registration failed.",
+      "error"
+    );
 
-      $("employeeForm").reset();
-
-      await loadEmployees();
-
-    } catch (error) {
-      console.error(error);
-
-      showMessage(
-        "formStatus",
-        error.message || "Employee registration failed.",
-        "error"
-      );
-
-    } finally {
-      button.disabled = false;
-    }
+  } finally {
+    button.disabled = false;
   }
-);
+});
 
-$("refreshButton").addEventListener(
-  "click",
-  loadEmployees
-);
+$("refreshButton").addEventListener("click", loadEmployees);
 
 verifySuperAdmin();
-
 </script>
 
 </body>
