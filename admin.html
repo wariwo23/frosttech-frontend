@@ -754,53 +754,81 @@ removal_reason
             <h4>Submitted Documents</h4>
 
             ${
-                (advertiser.advertiser_documents || []).length
-                ? advertiser.advertiser_documents.map(doc => `
-                    <div style="border:1px solid #ddd;padding:10px;margin:8px 0;">
 
-                        <p><strong>Type:</strong>
-                            ${escapeHtml(doc.document_type)}</p>
+(advertiser.advertiser_documents || []).length
+? advertiser.advertiser_documents.map(doc => `
+    <div style="border:1px solid #ddd;padding:10px;margin:8px 0;">
 
-                        <p><strong>Status:</strong>
-                            ${escapeHtml(doc.review_status)}</p>
+        <p><strong>Type:</strong>
+            ${escapeHtml(doc.document_type)}</p>
 
-                        <p><strong>Review Reason:</strong>
-                            ${escapeHtml(doc.review_reason || "None")}</p>
+        ${doc.removed_at ? `
+            <p><strong>Status:</strong> Removed from active review</p>
+            <p><strong>Removed:</strong>
+                ${escapeHtml(dateText(doc.removed_at))}</p>
+            <p><strong>Removal reason:</strong>
+                ${escapeHtml(doc.removal_reason || "Not recorded")}</p>
+        ` : `
+            <p><strong>Status:</strong>
+                ${escapeHtml(doc.review_status)}</p>
 
-                        <button type="button"
-                            data-open-advertiser-document="${escapeHtml(doc.id)}">
-                            View Document
-                        </button>
+            <p><strong>Review Reason:</strong>
+                ${escapeHtml(doc.review_reason || "None")}</p>
 
-                        <label for="advertiserDocReason_${doc.id}">
-                            Review Reason
-                        </label>
+            <button type="button"
+                data-open-advertiser-document="${escapeHtml(doc.id)}">
+                View Document
+            </button>
 
-                        <textarea
-                            id="advertiserDocReason_${doc.id}"
-                            placeholder="Required when rejecting this document"
-                        >${escapeHtml(doc.review_reason || "")}</textarea>
+            <label for="advertiserDocReason_${doc.id}">
+                Review Reason
+            </label>
 
-                        <div class="action-row">
-                            <button type="button"
-                                class="success"
-                                data-advertiser-doc-status="accepted"
-                                data-advertiser-id="${escapeHtml(advertiser.id)}"
-                                data-document-id="${escapeHtml(doc.id)}">
-                                Accept Document
-                            </button>
+            <textarea
+                id="advertiserDocReason_${doc.id}"
+                placeholder="Required when rejecting this document"
+            >${escapeHtml(doc.review_reason || "")}</textarea>
 
-                            <button type="button"
-                                class="danger"
-                                data-advertiser-doc-status="rejected"
-                                data-advertiser-id="${escapeHtml(advertiser.id)}"
-                                data-document-id="${escapeHtml(doc.id)}">
-                                Reject Document
-                            </button>
-                        </div>
-                    </div>
-                `).join("")
-                : "<p>No documents submitted.</p>"
+            <div class="action-row">
+                <button type="button"
+                    class="success"
+                    data-advertiser-doc-status="accepted"
+                    data-advertiser-id="${escapeHtml(advertiser.id)}"
+                    data-document-id="${escapeHtml(doc.id)}">
+                    Accept Document
+                </button>
+
+                <button type="button"
+                    class="danger"
+                    data-advertiser-doc-status="rejected"
+                    data-advertiser-id="${escapeHtml(advertiser.id)}"
+                    data-document-id="${escapeHtml(doc.id)}">
+                    Reject Document
+                </button>
+            </div>
+
+            ${doc.review_status === "pending" ? `
+                <label for="advertiserRemoveReason_${doc.id}">
+                    Removal Reason
+                </label>
+
+                <textarea
+                    id="advertiserRemoveReason_${doc.id}"
+                    placeholder="Explain why this document should be removed"
+                ></textarea>
+
+                <button type="button"
+                    class="danger"
+                    data-remove-advertiser-document="${escapeHtml(doc.id)}"
+                    data-advertiser-id="${escapeHtml(advertiser.id)}">
+                    Remove from Active Review
+                </button>
+            ` : ""}
+        `}
+    </div>
+`).join("")
+: "<p>No documents submitted.</p>"
+    
             }
         </article>
     `).join("");
