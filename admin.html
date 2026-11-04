@@ -693,7 +693,10 @@ async function loadAdvertiserApplications() {
                 review_status,
                 review_reason,
                 reviewed_at,
-                created_at
+created_at,
+removed_at,
+removed_by,
+removal_reason
             )
         `)
         .order("created_at", { ascending: false });
