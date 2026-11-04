@@ -873,6 +873,12 @@ ${(advertiser.verification_status || "pending") === "pending" ? `
         );
     });
 
+rows.querySelectorAll("[data-approve-advertiser]").forEach(button => {
+    button.addEventListener("click", () =>
+        approveAdvertiser(button.dataset.approveAdvertiser)
+    );
+});
+    
 rows.querySelectorAll("[data-remove-advertiser-document]").forEach(button => {
     button.addEventListener("click", () =>
         removeAdvertiserDocument(
