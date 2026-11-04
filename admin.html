@@ -951,6 +951,123 @@ async function saveAdvertiserCAC(advertiserId) {
 }
 
 
+async function approveAdvertiser(advertiserId) {
+    try {
+        if (!currentAdmin) {
+            showMessage(
+                "advertiserMessage",
+                "Please sign in as an administrator.",
+                "error"
+            );
+            return;
+        }
+
+        const advertiser = currentAdvertisers.find(item =>
+            item.id === advertiserId
+        );
+
+        if (!advertiser) {
+            showMessage(
+                "advertiserMessage",
+                "Advertiser application not found. Reload the applications.",
+                "error"
+            );
+            return;
+        }
+
+        if ((advertiser.verification_status || "pending") !== "pending") {
+            showMessage(
+                "advertiserMessage",
+                "This application is no longer pending approval.",
+                "error"
+            );
+            return;
+        }
+
+        if (!advertiser.registration_number ||
+            !advertiser.registration_number.trim()) {
+            showMessage(
+                "advertiserMessage",
+                "Enter and save the CAC registration number before approval.",
+                "error"
+            );
+            return;
+        }
+
+        const activeDocuments =
+            (advertiser.advertiser_documents || []).filter(doc =>
+                !doc.removed_at
+            );
+
+        const cacAccepted = activeDocuments.some(doc =>
+            doc.document_type === "CAC_CERTIFICATE" &&
+            doc.review_status === "accepted"
+        );
+
+        const addressAccepted = activeDocuments.some(doc =>
+            doc.document_type === "BUSINESS_ADDRESS" &&
+            doc.review_status === "accepted"
+        );
+
+        const allActiveDocumentsAccepted =
+            activeDocuments.length > 0 &&
+            activeDocuments.every(doc =>
+                doc.review_status === "accepted"
+            );
+
+        if (!cacAccepted || !addressAccepted ||
+            !allActiveDocumentsAccepted) {
+            showMessage(
+                "advertiserMessage",
+                "Approval blocked. The CAC certificate, proof of business address and all active submitted documents must be accepted first.",
+                "error"
+            );
+            return;
+        }
+
+        const confirmed = await frostTechConfirm(
+            "Approve " + advertiser.company_name +
+            " as a verified FrostTech advertiser? This will change the application status to approved.",
+            "Yes, Approve Advertiser"
+        );
+
+        if (!confirmed) return;
+
+        const { error } = await db
+            .from("advertisers")
+            .update({
+                verification_status: "approved",
+                reviewed_at: new Date().toISOString()
+            })
+            .eq("id", advertiserId)
+            .eq("verification_status", "pending");
+
+        if (error) {
+            showMessage(
+                "advertiserMessage",
+                "Advertiser approval failed: " + errorText(error),
+                "error"
+            );
+            return;
+        }
+
+        showMessage(
+            "advertiserMessage",
+            "Advertiser approved successfully.",
+            "success-message"
+        );
+
+        await loadAdvertiserApplications();
+
+    } catch (error) {
+        showMessage(
+            "advertiserMessage",
+            "Approval error: " + errorText(error),
+            "error"
+        );
+    }
+}
+    
 async function reviewAdvertiserDocument(
     advertiserId,
     documentId,
