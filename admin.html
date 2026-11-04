@@ -1010,73 +1010,124 @@ async function reviewAdvertiserDocument(
 
 
 async function removeAdvertiserDocument(advertiserId, documentId) {
-    if (!currentAdmin) return;
-
-    const advertiser = currentAdvertisers.find(item =>
-        item.id === advertiserId
-    );
-
-    const doc = advertiser?.advertiser_documents.find(item =>
-        item.id === documentId
-    );
-
-    if (!advertiser || !doc) return;
-
-    if (doc.review_status !== "pending" || doc.removed_at) {
-        showMessage(
-            "advertiserMessage",
-            "Only pending, active documents can be removed.",
-            "error"
-        );
-        return;
-    }
-
-    const reasonField = el("advertiserRemoveReason_" + documentId);
-    const reason = reasonField ? reasonField.value.trim() : "";
-
-    if (!reason) {
-        showMessage(
-            "advertiserMessage",
-            "Enter a reason before removing this document.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        "Remove this " + doc.document_type +
-        " document from active review for " +
-        advertiser.company_name +
-        "? Its audit record and stored file will be retained.",
-        "Yes, Remove Document"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db.rpc(
-        "admin_remove_advertiser_document",
-        {
-            p_document_id: documentId,
-            p_reason: reason
+    try {
+        if (!currentAdmin) {
+            showMessage(
+                "advertiserMessage",
+                "Administrator session not found. Please sign in again.",
+                "error"
+            );
+            return;
         }
-    );
 
-    if (error) {
+        const advertiser = currentAdvertisers.find(item =>
+            item.id === advertiserId
+        );
+
+        if (!advertiser) {
+            showMessage(
+                "advertiserMessage",
+                "Advertiser record could not be found. Refresh the applications.",
+                "error"
+            );
+            return;
+        }
+
+        const doc = (advertiser.advertiser_documents || []).find(item =>
+            item.id === documentId
+        );
+
+        if (!doc) {
+            showMessage(
+                "advertiserMessage",
+                "Document record could not be found. Refresh the applications.",
+                "error"
+            );
+            return;
+        }
+
+        if (doc.review_status !== "pending" || doc.removed_at) {
+            showMessage(
+                "advertiserMessage",
+                "Only pending, active documents can be removed.",
+                "error"
+            );
+            return;
+        }
+
+        const reasonField = el("advertiserRemoveReason_" + documentId);
+        const reason = reasonField ? reasonField.value.trim() : "";
+
+        if (!reason) {
+            showMessage(
+                "advertiserMessage",
+                "Enter a removal reason before continuing.",
+                "error"
+            );
+            return;
+        }
+
         showMessage(
             "advertiserMessage",
-            "Document removal failed: " + errorText(error),
+            "Preparing document removal confirmation...",
+            "info"
+        );
+
+        const confirmed = await frostTechConfirm(
+            "Remove this " + doc.document_type +
+            " document from active review for " +
+            advertiser.company_name +
+            "? Its audit record and stored file will be retained.",
+            "Yes, Remove Document"
+        );
+
+        if (!confirmed) {
+            showMessage(
+                "advertiserMessage",
+                "Removal cancelled. No document was changed.",
+                "info"
+            );
+            return;
+        }
+
+        showMessage(
+            "advertiserMessage",
+            "Processing document removal...",
+            "info"
+        );
+
+        const { error } = await db.rpc(
+            "admin_remove_advertiser_document",
+            {
+                p_document_id: documentId,
+                p_reason: reason
+            }
+        );
+
+        if (error) {
+            showMessage(
+                "advertiserMessage",
+                "Document removal failed: " + errorText(error),
+                "error"
+            );
+            return;
+        }
+
+        showMessage(
+            "advertiserMessage",
+            "Document removed from active review. Audit history and stored file retained.",
+            "success-message"
+        );
+
+        await loadAdvertiserApplications();
+
+    } catch (error) {
+        showMessage(
+            "advertiserMessage",
+            "Removal process error: " + errorText(error),
             "error"
         );
-        return;
     }
-
-    showMessage(
-        "advertiserMessage",
-        "Document removed from active review. Audit history retained.",
-        "success-message"
-    );
-
-    await loadAdvertiserApplications();
 }
     
 async function openAdvertiserDocument(storagePath) {
