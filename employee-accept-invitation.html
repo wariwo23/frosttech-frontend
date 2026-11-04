@@ -5,12 +5,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Accept Employee Invitation | FrostTech</title>
-
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 24px 16px;
@@ -22,34 +18,17 @@
       font-family: Arial, sans-serif;
       color: #1e293b;
     }
-
     .container {
       width: 100%;
       max-width: 440px;
-      background: #ffffff;
+      background: white;
       padding: 30px 24px;
       border-radius: 12px;
-      box-shadow: 0 5px 25px rgba(0, 0, 0, 0.08);
+      box-shadow: 0 5px 25px rgba(0,0,0,.08);
     }
-
-    h2 {
-      margin-top: 0;
-      color: #123b63;
-      text-align: center;
-    }
-
-    .subtitle {
-      text-align: center;
-      color: #64748b;
-      line-height: 1.5;
-    }
-
-    label {
-      display: block;
-      margin: 18px 0 7px;
-      font-weight: bold;
-    }
-
+    h2 { margin-top: 0; color: #123b63; text-align: center; }
+    .subtitle { text-align: center; color: #64748b; line-height: 1.5; }
+    label { display: block; margin: 18px 0 7px; font-weight: bold; }
     input {
       width: 100%;
       padding: 13px;
@@ -57,7 +36,6 @@
       border-radius: 7px;
       font-size: 16px;
     }
-
     button {
       width: 100%;
       padding: 14px;
@@ -70,12 +48,7 @@
       font-weight: bold;
       cursor: pointer;
     }
-
-    button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
+    button:disabled { opacity: .6; cursor: not-allowed; }
     .message {
       margin-top: 18px;
       padding: 12px;
@@ -83,19 +56,8 @@
       display: none;
       line-height: 1.5;
     }
-
-    .error {
-      display: block;
-      color: #991b1b;
-      background: #fee2e2;
-    }
-
-    .success {
-      display: block;
-      color: #166534;
-      background: #dcfce7;
-    }
-
+    .error { display: block; color: #991b1b; background: #fee2e2; }
+    .success { display: block; color: #166534; background: #dcfce7; }
     .notice {
       margin-top: 18px;
       padding: 12px;
@@ -105,20 +67,15 @@
       font-size: 13px;
       line-height: 1.5;
     }
-
     .footer {
       text-align: center;
       margin-top: 25px;
       font-size: 12px;
       color: #64748b;
     }
-
-    #setupForm {
-      display: none;
-    }
+    #setupForm { display: none; }
   </style>
 </head>
-
 <body>
   <main class="container">
     <h2>FrostTech Employee Account</h2>
@@ -161,9 +118,9 @@
     <div id="message" class="message"></div>
 
     <div class="notice">
-      Your account setup does not automatically grant departmental
-      administrator access. Your Super Administrator must activate
-      your employment and assign your department role.
+      Completing account setup does not automatically grant
+      departmental administrator access. Your Super Administrator
+      must activate your employment and assign your department role.
     </div>
 
     <div class="footer">
@@ -295,13 +252,27 @@
           );
         }
 
+        // Record completed account setup in FrostTech.
+        const { error: setupError } =
+          await supabase.rpc(
+            "employee_complete_frosttech_account_setup"
+          );
+
+        if (setupError) {
+          throw new Error(
+            "Your password was saved, but FrostTech could not " +
+            "record the completion of your account setup. " +
+            "Please try again or contact the Super Administrator. " +
+            setupError.message
+          );
+        }
+
         setupForm.style.display = "none";
 
         showMessage(
-          "Your password has been set successfully. " +
-          "Your FrostTech employee account is now ready. " +
-          "Your Super Administrator will activate your employment " +
-          "and assign your departmental access.",
+          "Your password has been saved and your account setup " +
+          "has been recorded successfully. Your employment is " +
+          "now awaiting activation by the FrostTech Super Administrator.",
           "success"
         );
 
