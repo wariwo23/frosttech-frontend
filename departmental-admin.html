@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Departmental Administration | FrostTech</title>
-
 <style>
 :root {
     --primary: #063b70;
@@ -14,7 +12,6 @@
     --border: #dce3eb;
 }
 * { box-sizing: border-box; }
-
 body {
     margin: 0;
     font-family: Arial, sans-serif;
@@ -28,7 +25,6 @@ header {
 }
 header h1 { margin: 0 0 6px; font-size: 22px; }
 header p { margin: 0; }
-
 main {
     max-width: 1100px;
     margin: auto;
@@ -52,6 +48,10 @@ main {
     background: #ffebee;
     color: #a11919;
 }
+.success-message {
+    background: #e7f6ec;
+    color: #176534;
+}
 button {
     background: var(--secondary);
     color: white;
@@ -66,11 +66,12 @@ button:disabled {
     opacity: .6;
     cursor: wait;
 }
-.secondary-button {
-    background: #536779;
+.secondary-button { background: #536779; }
+.small-button {
+    padding: 8px 10px;
+    font-size: 12px;
 }
 .hidden { display: none; }
-
 .section-heading {
     display: flex;
     justify-content: space-between;
@@ -79,7 +80,6 @@ button:disabled {
     flex-wrap: wrap;
 }
 .section-heading h2 { margin: 0; }
-
 .table-wrap {
     overflow-x: auto;
     margin-top: 14px;
@@ -107,38 +107,30 @@ th { background: #edf3f8; }
     font-size: 13px;
     margin-top: 10px;
 }
+.action-cell { min-width: 125px; }
 </style>
 </head>
 
 <body>
-
 <header>
     <h1>FrostTech HVAC and Refrigeration</h1>
     <p>Departmental Administration Portal</p>
 </header>
 
 <main>
-
 <section class="card">
     <h2 id="pageTitle">Verifying administrator access</h2>
-
     <p id="status" class="message" role="status">
         Please wait while your access is checked.
     </p>
 
     <div id="departmentPanel" class="hidden">
-        <p>Signed in as:
-            <strong id="adminEmail"></strong>
-        </p>
-
-        <p>Department:
-            <strong id="adminRole"></strong>
-        </p>
+        <p>Signed in as: <strong id="adminEmail"></strong></p>
+        <p>Department: <strong id="adminRole"></strong></p>
 
         <button id="refreshAllButton" type="button">
             Refresh All Records
         </button>
-
         <button id="logoutButton" type="button"
                 class="secondary-button">
             Log Out
@@ -151,9 +143,7 @@ th { background: #edf3f8; }
     <section class="card">
         <div class="section-heading">
             <h2>Customer Requests</h2>
-            <button type="button" data-refresh="requests">
-                Refresh
-            </button>
+            <button type="button" data-refresh="requests">Refresh</button>
         </div>
         <p id="requestsStatus" class="message">
             Waiting to load customer requests.
@@ -164,9 +154,7 @@ th { background: #edf3f8; }
     <section class="card">
         <div class="section-heading">
             <h2>Quotations</h2>
-            <button type="button" data-refresh="quotations">
-                Refresh
-            </button>
+            <button type="button" data-refresh="quotations">Refresh</button>
         </div>
         <p id="quotationsStatus" class="message">
             Waiting to load quotations.
@@ -177,9 +165,7 @@ th { background: #edf3f8; }
     <section class="card">
         <div class="section-heading">
             <h2>Orders</h2>
-            <button type="button" data-refresh="orders">
-                Refresh
-            </button>
+            <button type="button" data-refresh="orders">Refresh</button>
         </div>
         <p id="ordersStatus" class="message">
             Waiting to load orders.
@@ -190,9 +176,7 @@ th { background: #edf3f8; }
     <section class="card">
         <div class="section-heading">
             <h2>Order Items</h2>
-            <button type="button" data-refresh="orderItems">
-                Refresh
-            </button>
+            <button type="button" data-refresh="orderItems">Refresh</button>
         </div>
         <p id="orderItemsStatus" class="message">
             Waiting to load order items.
@@ -203,16 +187,13 @@ th { background: #edf3f8; }
     <section class="card">
         <div class="section-heading">
             <h2>Deliveries</h2>
-            <button type="button" data-refresh="deliveries">
-                Refresh
-            </button>
+            <button type="button" data-refresh="deliveries">Refresh</button>
         </div>
         <p id="deliveriesStatus" class="message">
             Waiting to load deliveries.
         </p>
         <div id="deliveriesTable"></div>
     </section>
-
 </div>
 
 <section id="otherDepartmentMessage" class="card hidden">
@@ -222,11 +203,9 @@ th { background: #edf3f8; }
         will be connected in its implementation stage.
     </p>
 </section>
-
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
 <script>
 "use strict";
 
@@ -249,7 +228,7 @@ const roleNames = {
 };
 
 /*
- * Only approved operational display fields are shown.
+ * Approved display fields only.
  * Supplier costs, margins, purchase prices and profit
  * fields are deliberately excluded.
  */
@@ -323,45 +302,37 @@ const modules = {
 
 const statusBox = document.getElementById("status");
 
-function setStatus(elementId, message, isError = false) {
+function setStatus(elementId, message, type = "normal") {
     const element = document.getElementById(elementId);
     element.textContent = message;
-    element.classList.toggle("error", isError);
+    element.classList.toggle("error", type === "error");
+    element.classList.toggle(
+        "success-message",
+        type === "success"
+    );
 }
 
 function deny(message) {
     statusBox.textContent = message;
     statusBox.classList.add("error");
-
     document.getElementById("pageTitle").textContent =
         "Access not available";
 }
 
 function normaliseRows(data) {
     if (Array.isArray(data)) return data;
-
-    if (data && Array.isArray(data.records)) {
-        return data.records;
-    }
-
-    if (data && Array.isArray(data.data)) {
-        return data.data;
-    }
-
+    if (data && Array.isArray(data.records)) return data.records;
+    if (data && Array.isArray(data.data)) return data.data;
     return [];
 }
 
 function formatValue(value) {
     if (value === null || value === undefined) return "";
-
-    if (typeof value === "object") {
-        return JSON.stringify(value);
-    }
-
+    if (typeof value === "object") return JSON.stringify(value);
     return String(value);
 }
 
-function renderTable(containerId, rows) {
+function renderTable(containerId, rows, moduleName) {
     const container = document.getElementById(containerId);
     container.replaceChildren();
 
@@ -401,6 +372,12 @@ function renderTable(containerId, rows) {
         headerRow.appendChild(th);
     });
 
+    if (moduleName === "requests") {
+        const actionHeading = document.createElement("th");
+        actionHeading.textContent = "Action";
+        headerRow.appendChild(actionHeading);
+    }
+
     thead.appendChild(headerRow);
     table.appendChild(thead);
 
@@ -415,6 +392,36 @@ function renderTable(containerId, rows) {
             tr.appendChild(td);
         });
 
+        if (moduleName === "requests") {
+            const actionCell = document.createElement("td");
+            actionCell.className = "action-cell";
+
+            if (row.status === "pending" && row.id) {
+                const actionButton =
+                    document.createElement("button");
+
+                actionButton.type = "button";
+                actionButton.className = "small-button";
+                actionButton.textContent = "Mark Reviewing";
+                actionButton.dataset.requestId = String(row.id);
+
+                actionButton.addEventListener("click", () => {
+                    markRequestReviewing(
+                        row.id,
+                        actionButton
+                    );
+                });
+
+                actionCell.appendChild(actionButton);
+            } else if (row.status === "reviewing") {
+                actionCell.textContent = "Under review";
+            } else {
+                actionCell.textContent = "No action available";
+            }
+
+            tr.appendChild(actionCell);
+        }
+
         tbody.appendChild(tr);
     });
 
@@ -428,6 +435,67 @@ function renderTable(containerId, rows) {
     container.appendChild(count);
 }
 
+/*
+ * Secure request action.
+ * The database function checks the signed-in administrator's
+ * permission and records the action in the activity log.
+ */
+async function markRequestReviewing(requestId, button) {
+    if (!requestId || button.disabled) return;
+
+    button.disabled = true;
+    setStatus(
+        "requestsStatus",
+        "Updating customer request..."
+    );
+
+    try {
+        const { data, error } = await db.rpc(
+            "ops_mark_request_reviewing",
+            { p_request_id: requestId }
+        );
+
+        if (error) {
+            console.error("Request status update:", error);
+            setStatus(
+                "requestsStatus",
+                "The request could not be updated. Please refresh and try again.",
+                "error"
+            );
+            button.disabled = false;
+            return;
+        }
+
+        if (data !== true) {
+            setStatus(
+                "requestsStatus",
+                "The request was not changed. It may already have been updated or may no longer be available.",
+                "error"
+            );
+            button.disabled = false;
+            await loadModule("requests");
+            return;
+        }
+
+        setStatus(
+            "requestsStatus",
+            "Customer request successfully marked as Reviewing.",
+            "success"
+        );
+
+        await loadModule("requests");
+
+    } catch (error) {
+        console.error(error);
+        setStatus(
+            "requestsStatus",
+            "An unexpected error occurred. Please refresh the request list.",
+            "error"
+        );
+        button.disabled = false;
+    }
+}
+
 async function loadModule(moduleName) {
     const module = modules[moduleName];
     if (!module) return;
@@ -437,7 +505,6 @@ async function loadModule(moduleName) {
     const buttons = document.querySelectorAll(
         '[data-refresh="' + moduleName + '"]'
     );
-
     buttons.forEach(button => button.disabled = true);
 
     try {
@@ -448,26 +515,22 @@ async function loadModule(moduleName) {
             setStatus(
                 module.status,
                 "Could not load these records. Please check the administrator session and database permissions.",
-                true
+                "error"
             );
             return;
         }
 
         const rows = normaliseRows(data);
+        renderTable(module.table, rows, moduleName);
 
-        renderTable(module.table, rows);
-
-        setStatus(
-            module.status,
-            "Records loaded successfully."
-        );
+        setStatus(module.status, "Records loaded successfully.");
 
     } catch (error) {
         console.error(error);
         setStatus(
             module.status,
             "An unexpected error occurred while loading records.",
-            true
+            "error"
         );
     } finally {
         buttons.forEach(button => button.disabled = false);
@@ -561,7 +624,6 @@ document.getElementById("refreshAllButton")
 
 document.getElementById("logoutButton")
     .addEventListener("click", async () => {
-
         const button =
             document.getElementById("logoutButton");
 
@@ -574,7 +636,7 @@ document.getElementById("logoutButton")
             setStatus(
                 "status",
                 "Logout failed. Please try again.",
-                true
+                "error"
             );
             return;
         }
@@ -584,6 +646,5 @@ document.getElementById("logoutButton")
 
 start();
 </script>
-
 </body>
 </html>
