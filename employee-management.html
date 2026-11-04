@@ -71,12 +71,14 @@ button:disabled {
 }
 button.secondary { background: #536579; }
 button.success { background: #18794e; }
+button.activate { background: #0879c9; }
 .message {
   padding: 12px;
   border-radius: 6px;
   background: #e8f3ff;
   color: #06477c;
   overflow-wrap: anywhere;
+  line-height: 1.5;
 }
 .message.error {
   background: #ffebee;
@@ -178,8 +180,9 @@ button.success { background: #18794e; }
     <h2>FrostTech Employee Register</h2>
 
     <p class="note">
-      Employee records and onboarding status are displayed here.
-      New records begin with Planned status.
+      New employees begin with Planned status. After an invitation
+      is accepted and account setup is completed, you can activate
+      the employee here.
     </p>
 
     <button id="refreshButton" class="secondary" type="button">
@@ -298,13 +301,6 @@ function denyAccess(message) {
 }
 
 async function sendEmployeeInvitation(employee, button) {
-  const confirmed = window.confirm(
-    "Send an employee invitation to " +
-    employee.full_name + " at " + employee.email + "?"
-  );
-
-  if (!confirmed) return;
-
   button.disabled = true;
   button.textContent = "Sending invitation...";
 
@@ -371,6 +367,56 @@ async function sendEmployeeInvitation(employee, button) {
 
     button.disabled = false;
     button.textContent = "Send Invitation";
+  }
+}
+
+async function activateEmployee(employee, button) {
+  button.disabled = true;
+  button.textContent = "Activating employee...";
+
+  showMessage(
+    "listStatus",
+    "Checking account setup and activating " +
+    employee.full_name + "..."
+  );
+
+  try {
+    const { data, error } = await db.rpc(
+      "admin_activate_frosttech_employee",
+      {
+        p_employee_id: employee.employee_id
+      }
+    );
+
+    if (error) throw error;
+
+    if (data !== true) {
+      throw new Error(
+        "FrostTech could not confirm employee activation."
+      );
+    }
+
+    showMessage(
+      "listStatus",
+      employee.full_name +
+      " has been activated successfully. You can now appoint the employee to the matching departmental administrator role.",
+      "success"
+    );
+
+    await loadEmployees();
+
+  } catch (error) {
+    console.error(error);
+
+    showMessage(
+      "listStatus",
+      error.message ||
+      "Activation failed. Confirm that the employee has completed account setup.",
+      "error"
+    );
+
+    button.disabled = false;
+    button.textContent = "Activate Employee";
   }
 }
 
@@ -459,16 +505,48 @@ async function loadEmployees() {
         card.appendChild(
           createTextElement(
             "p",
-            "Invitation issued. Employee account setup is pending."
+            "Invitation issued. Complete account setup is required before activation."
           )
         );
+
+        const activateButton = createTextElement(
+          "button",
+          "Activate Employee"
+        );
+
+        activateButton.type = "button";
+        activateButton.className = "activate";
+
+        activateButton.addEventListener("click", () => {
+          activateEmployee(employee, activateButton);
+        });
+
+        card.appendChild(activateButton);
       }
 
       if (employee.employment_status === "active") {
         card.appendChild(
           createTextElement(
             "p",
-            "Employment is active."
+            "Employment is active. The employee is eligible for departmental administrator appointment."
+          )
+        );
+      }
+
+      if (employee.employment_status === "suspended") {
+        card.appendChild(
+          createTextElement(
+            "p",
+            "Employment is suspended."
+          )
+        );
+      }
+
+      if (employee.employment_status === "terminated") {
+        card.appendChild(
+          createTextElement(
+            "p",
+            "Employment has been terminated."
           )
         );
       }
