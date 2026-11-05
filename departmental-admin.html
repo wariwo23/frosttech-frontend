@@ -660,6 +660,21 @@ function renderDeliveryCard(delivery) {
     addDetail(details,"Delivery ID",delivery.id);
     addDetail(details,"Order number",delivery.order_number);
     addDetail(details,"Delivery status",delivery.status);
+    const linkedOrder = orderRows.find(
+    order => order.id === delivery.order_id
+);
+
+addDetail(
+    details,
+    "Order fulfilment status",
+    linkedOrder ? linkedOrder.status : "Order status unavailable"
+);
+
+addDetail(
+    details,
+    "Order payment status",
+    linkedOrder ? linkedOrder.payment_status : "Not available"
+);
     addDetail(details,"Assigned driver",delivery.assigned_to);
     addDetail(details,"Driver phone",delivery.driver_phone);
     addDetail(details,"Delivery address",delivery.delivery_address);
