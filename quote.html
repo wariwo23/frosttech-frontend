@@ -680,13 +680,40 @@ async function handleQuoteSubmit(event) {
       );
     }
 
+// Send administrator email notification.
+// Email failure must not affect the saved quotation request.
+try {
+  const { error: notificationError } =
+    await client.functions.invoke(
+      "send-frosttech-notification",
+      {
+        body: {
+          event_type: "quote_request_submitted",
+          request_number: requestNumber
+        }
+      }
+    );
+
+  if (notificationError) {
+    console.warn(
+      "Quotation email notification failed:",
+      notificationError
+    );
+  }
+} catch (notificationError) {
+  console.warn(
+    "Quotation email notification error:",
+    notificationError
+  );
+}
+    
     showMessage(
       "Your quote request was submitted successfully. Reference: " +
       requestNumber +
       ". FrostTech will review your request.",
       "success"
     );
-
+    
     form.reset();
     document.getElementById("quantity").value = "1";
 
