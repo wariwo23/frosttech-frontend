@@ -265,6 +265,40 @@ recordError.message
 );
 }
 
+// Notify FrostTech only after a CAC document record is saved.
+if(
+type==="CAC_CERTIFICATE" &&
+advertiser &&
+documentResult &&
+documentResult.document_id
+){
+try{
+const {error:notificationError}=await db.functions.invoke(
+"send-frosttech-notification",
+{
+body:{
+event_type:"advertiser_application_submitted",
+advertiser_id:advertiser.id,
+document_id:documentResult.document_id
+}
+}
+);
+
+if(notificationError){
+console.warn(
+"Advertiser email notification failed:",
+notificationError
+);
+}
+
+}catch(notificationError){
+console.warn(
+"Advertiser email notification error:",
+notificationError
+);
+}
+}
+
 await loadDocuments();
 
 return true;
