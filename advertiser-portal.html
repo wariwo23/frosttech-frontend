@@ -247,7 +247,10 @@ contentType:file.type
 
 if(uploadError)throw uploadError;
 
-const {error:recordError}=await db.rpc(
+const {
+data:documentResult,
+error:recordError
+}=await db.rpc(
 "register_advertiser_document",
 {
 p_document_type:type,
