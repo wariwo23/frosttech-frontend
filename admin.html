@@ -1781,7 +1781,116 @@ async function updateRequestStatus(requestId, status) {
     await loadCustomerRequests();
 }
 
+/* FROSTTECH QUOTATION ADMINISTRATION FEE */
 
+function calculateQuotationAdminFee(quote) {
+    const subtotal = Number(quote.subtotal || 0);
+    const additional = Number(quote.additional_charges || 0);
+    const discount = Number(quote.discount || 0);
+    const delivery = Number(quote.delivery_cost || 0);
+
+    const feeBasis = Math.max(
+        0,
+        subtotal + additional - discount - delivery
+    );
+
+    const fee = Math.round(feeBasis * 0.02 * 100) / 100;
+
+    return {
+        feeBasis,
+        fee,
+        rate: 2
+    };
+}
+
+
+async function notifyCustomerFeeRequired(request, quote, fee) {
+    if (!request.customer_id) {
+        return {
+            sent: false,
+            reason: "guest"
+        };
+    }
+
+    try {
+        const { data: customer, error: customerError } = await db
+            .from("customers")
+            .select("user_id")
+            .eq("id", request.customer_id)
+            .maybeSingle();
+
+        if (customerError) throw customerError;
+
+        if (!customer || !customer.user_id) {
+            return {
+                sent: false,
+                reason: "guest"
+            };
+        }
+
+        // Prevent duplicate fee notifications for this quotation.
+        const { data: existing, error: checkError } = await db
+            .from("notifications")
+            .select("id")
+            .eq("user_id", customer.user_id)
+            .eq("reference_type", "admin_quotation")
+            .eq("reference_id", quote.id)
+            .eq("title", "Quotation processing fee required")
+            .limit(1);
+
+        if (checkError) throw checkError;
+
+        if (existing && existing.length > 0) {
+            return {
+                sent: true,
+                duplicate: true
+            };
+        }
+
+        const message =
+            "FrostTech has prepared your quotation " +
+            quote.quotation_number +
+            ". Before the full quotation details can be released, " +
+            "a separate quotation-processing and marketplace " +
+            "administration fee of 2% is required. " +
+            "Your fee is " + money(fee) +
+            ". This fee covers the cost incurred in processing " +
+            "your quotation. Delivery cost is excluded from the " +
+            "fee calculation. Your full quotation will be made " +
+            "available after payment is confirmed.";
+
+        const { error: notificationError } = await db
+            .from("notifications")
+            .insert({
+                user_id: customer.user_id,
+                title: "Quotation processing fee required",
+                message: message,
+                type: "quotation",
+                reference_type: "admin_quotation",
+                reference_id: quote.id
+            });
+
+        if (notificationError) throw notificationError;
+
+        return {
+            sent: true,
+            duplicate: false
+        };
+
+    } catch (error) {
+        console.error(
+            "FrostTech fee notification error:",
+            error
+        );
+
+        return {
+            sent: false,
+            reason: "error",
+            error: error.message
+        };
+    }
+}
+    
 /* DIRECT QUOTATION CALCULATOR */
 
 function calculateDirectTotal() {
