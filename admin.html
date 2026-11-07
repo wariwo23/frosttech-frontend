@@ -2320,66 +2320,85 @@ async function saveDirectQuotation(status) {
             try {
                 const { data: customer, error: customerError } = await db
                     .from("customers")
-                    .select("user_id")
-                    .eq("id", request.customer_id)
-                    .maybeSingle();
 
-                if (!customerError && customer?.user_id) {
-                    const { error: notificationError } = await db
-                        .from("notifications")
-                        .insert({
-                            user_id: customer.user_id,
-                            title: "FrostTech quotation available",
-                            message:
-                                "Your quotation " +
-                                saved.quotation_number +
-                                " is ready for review.",
-                            type: "quotation",
-                            reference_type: "admin_quotation",
-                            reference_id: saved.id
-                        });
+async function submitExistingDraft(id) {
+    const quote = currentDirectQuotes.find(
+        item => String(item.id) === String(id)
+    );
 
-                    if (notificationError) {
-                        console.warn(
-                            "Quotation saved but notification failed:",
-                            notificationError.message
-                        );
-                    }
-                }
-            } catch (notificationError) {
-                console.warn(
-                    "Customer notification failed.",
-                    notificationError
-                );
-            }
+    if (!quote || quote.status !== "draft") return;
 
-            const { error: requestUpdateError } = await db
-                .from("quote_requests")
-                .update({
-                    status: "quoted",
-                    updated_at: new Date().toISOString()
-                })
-                .eq("id", request.id);
+    const request = currentRequests.find(
+        item => String(item.id) === String(quote.request_id)
+    );
 
-            if (requestUpdateError) {
-                console.warn(
-                    "Quotation saved, but request status update failed:",
-                    requestUpdateError.message
-                );
-            }
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "The original customer request is not loaded. Refresh requests first.",
+            "error"
+        );
+        return;
+    }
+
+    const fee = calculateQuotationAdminFee(quote);
+
+    const confirmed = await frostTechConfirm(
+        "Submit quotation " + quote.quotation_number +
+        " and notify the customer of the separate 2% " +
+        "quotation-processing administration fee of " +
+        money(fee.fee) + "? The full quotation will remain " +
+        "subject to payment verification.",
+        "Yes, Submit and Notify"
+    );
+
+    if (!confirmed) return;
+
+    try {
+        const { data: saved, error } = await db
+            .from("admin_quotations")
+            .update({
+                status: "submitted",
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id)
+            .eq("status", "draft")
+            .select("*")
+            .single();
+
+        if (error) throw error;
+
+        const notification = await notifyCustomerFeeRequired(
+            request,
+            saved,
+            fee.fee
+        );
+
+        let message =
+            "Quotation " + saved.quotation_number +
+            " submitted. Separate 2% processing fee: " +
+            money(fee.fee) +
+            ". Full quotation remains subject to payment verification.";
+
+        if (notification.reason === "guest") {
+            message +=
+                " Guest request: contact the customer using the displayed contact details.";
+        } else if (!notification.sent) {
+            message +=
+                " Customer notification failed. Check the notification error.";
+        } else if (notification.duplicate) {
+            message +=
+                " The fee notification already exists.";
+        } else {
+            message +=
+                " Customer fee notification sent.";
         }
 
         showMessage(
             "directQuoteMessage",
-            status === "draft"
-                ? "Quotation draft saved: " + saved.quotation_number
-                : "Quotation submitted: " +
-                  saved.quotation_number +
-                  ". Payment has not been initiated.",
+            message,
             "success-message"
         );
-
-        el("directQuoteForm").classList.add("hidden");
 
         await Promise.allSettled([
             loadDirectQuotations(),
@@ -2389,14 +2408,11 @@ async function saveDirectQuotation(status) {
     } catch (error) {
         showMessage(
             "directQuoteMessage",
-            "Quotation could not be saved: " + errorText(error),
+            "Draft submission failed: " + errorText(error),
             "error"
         );
-    } finally {
-        button.disabled = false;
     }
 }
-
 
 el("loadDirectQuotesBtn").addEventListener("click", loadDirectQuotations);
 
