@@ -1783,18 +1783,22 @@ async function updateRequestStatus(requestId, status) {
 
 /* FROSTTECH QUOTATION ADMINISTRATION FEE */
 
+
 function calculateQuotationAdminFee(quote) {
     const subtotal = Number(quote.subtotal || 0);
     const additional = Number(quote.additional_charges || 0);
     const discount = Number(quote.discount || 0);
-    const delivery = Number(quote.delivery_cost || 0);
 
+    // Delivery is excluded from the administration fee.
+    // Do not subtract delivery again.
     const feeBasis = Math.max(
         0,
-        subtotal + additional - discount - delivery
+        subtotal + additional - discount
     );
 
-    const fee = Math.round(feeBasis * 0.02 * 100) / 100;
+    const fee = Math.round(
+        feeBasis * 0.02 * 100
+    ) / 100;
 
     return {
         feeBasis,
@@ -1802,6 +1806,7 @@ function calculateQuotationAdminFee(quote) {
         rate: 2
     };
 }
+
 
 
 async function notifyCustomerFeeRequired(request, quote, fee) {
