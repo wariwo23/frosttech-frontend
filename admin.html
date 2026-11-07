@@ -2635,70 +2635,13 @@ async function editDirectQuotation(id) {
 }
 
 
-async function submitExistingDraft(id) {
-    const quote = currentDirectQuotes.find(item => item.id === id);
-    if (!quote || quote.status !== "draft") return;
+el("loadDirectQuotesBtn").addEventListener(
+    "click",
+    loadDirectQuotations
+);
 
-    const request = currentRequests.find(
-        item => item.id === quote.request_id
-    );
 
-    if (!request) {
-        showMessage(
-            "directQuoteMessage",
-            "The original request is not loaded.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        "Submit quotation " + quote.quotation_number + "?",
-        "Yes, Continue"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db.from("admin_quotations")
-        .update({
-            status: "submitted",
-            updated_at: new Date().toISOString()
-        })
-        .eq("id", id)
-        .eq("status", "draft");
-
-    if (error) {
-        showMessage("directQuoteMessage", errorText(error), "error");
-        return;
-    }
-
-    const { error: requestError } = await db.from("quote_requests")
-        .update({
-            status: "quoted",
-            updated_at: new Date().toISOString()
-        })
-        .eq("id", request.id);
-
-    if (requestError) {
-        showMessage(
-            "directQuoteMessage",
-            "Quotation submitted, but the request status could not be updated: " +
-            errorText(requestError),
-            "warning-message"
-        );
-    } else {
-        showMessage(
-            "directQuoteMessage",
-            "Quotation submitted. Payment has not been initiated.",
-            "success-message"
-        );
-    }
-
-    await Promise.allSettled([
-        loadDirectQuotations(),
-        loadCustomerRequests()
-    ]);
-}
+/* End of direct quotation event wiring */
 
 
 /* SUPPLIER QUOTATIONS */
