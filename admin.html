@@ -2113,9 +2113,15 @@ el("submitDirectQuoteBtn").addEventListener("click", async function() {
 });
 
 
+
 async function saveDirectQuotation(status) {
     if (!currentAdmin) {
         showMessage("directQuoteMessage", "Admin login required.", "error");
+        return;
+    }
+
+    if (!["draft", "submitted"].includes(status)) {
+        showMessage("directQuoteMessage", "Invalid quotation status.", "error");
         return;
     }
 
@@ -2149,7 +2155,7 @@ async function saveDirectQuotation(status) {
     if (calculation.unitCost <= 0) {
         showMessage(
             "directQuoteMessage",
-            "Enter a verified supplier cost greater than zero before saving this quotation.",
+            "Enter a verified supplier cost greater than zero.",
             "error"
         );
         return;
@@ -2186,7 +2192,7 @@ async function saveDirectQuotation(status) {
     ) {
         showMessage(
             "directQuoteMessage",
-            "Check all quantities and costs. Quantities must be whole, non-negative numbers, and product quantity must be at least 1.",
+            "Check all quantities and costs. Product quantity must be at least one, and other quantities and costs cannot be negative.",
             "error"
         );
         return;
@@ -2215,7 +2221,7 @@ async function saveDirectQuotation(status) {
     if (status === "submitted" && totalAmount <= 0) {
         showMessage(
             "directQuoteMessage",
-            "The total must be greater than zero before submitting.",
+            "The quotation total must be greater than zero.",
             "error"
         );
         return;
@@ -2266,12 +2272,17 @@ async function saveDirectQuotation(status) {
         unit_price: Math.round(
             calculation.customerUnitPrice * 100
         ) / 100,
+        subtotal: subtotal,
         delivery_cost: calculation.delivery,
         additional_charges: additionalCharges,
         discount: calculation.discount,
+        total_amount: totalAmount,
         validity_date: el("directValidity").value || null,
         notes: itemisedNotes,
-        status: status,
+
+        // A submitted quotation remains a draft until
+        // the separate processing fee is recorded.
+        status: "draft",
         updated_at: new Date().toISOString()
     };
 
@@ -2288,7 +2299,9 @@ async function saveDirectQuotation(status) {
 
     showMessage(
         "directQuoteMessage",
-        status === "draft" ? "Saving draft..." : "Submitting quotation...",
+        status === "draft"
+            ? "Saving quotation draft..."
+            : "Preparing quotation and recording its processing fee...",
         "info"
     );
 
@@ -2300,11 +2313,13 @@ async function saveDirectQuotation(status) {
                 .from("admin_quotations")
                 .update(record)
                 .eq("id", quoteId)
+                .eq("status", "draft")
                 .select("*")
                 .single();
 
             if (result.error) throw result.error;
             saved = result.data;
+
         } else {
             const result = await db
                 .from("admin_quotations")
@@ -2316,17 +2331,140 @@ async function saveDirectQuotation(status) {
             saved = result.data;
         }
 
-        if (status === "submitted") {
-            try {
-                const { data: customer, error: customerError } = await db
-                    .from("customers")
+        if (status === "draft") {
+            showMessage(
+                "directQuoteMessage",
+                "Quotation draft saved successfully. It has not been submitted to the customer.",
+                "success-message"
+            );
+
+        } else {
+            await submitSavedQuotation(saved, request);
+        }
+
+        await Promise.allSettled([
+            loadDirectQuotations(),
+            loadCustomerRequests()
+        ]);
+
+    } catch (error) {
+        console.error("Direct quotation save error:", error);
+
+        showMessage(
+            "directQuoteMessage",
+            "Quotation operation failed: " + errorText(error),
+            "error"
+        );
+
+        await loadDirectQuotations().catch(() => {});
+
+    } finally {
+        button.disabled = false;
+    }
+}
+
+
+/* SUBMIT A SAVED QUOTATION AFTER RECORDING THE FEE */
+
+async function submitSavedQuotation(quote, request) {
+    const feeDetails = calculateQuotationAdminFee(quote);
+
+    if (!Number.isFinite(feeDetails.fee) || feeDetails.fee <= 0) {
+        throw new Error(
+            "The quotation processing fee could not be calculated."
+        );
+    }
+
+    // Record the fee before changing the quotation to submitted.
+    const { error: requestError } = await db
+        .from("quote_requests")
+        .update({
+            admin_fee: feeDetails.fee,
+            admin_fee_status: "pending",
+            admin_fee_transaction_reference: null,
+            admin_fee_paid_at: null,
+            status: "quoted",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", request.id);
+
+    if (requestError) {
+        throw new Error(
+            "The processing fee could not be recorded. " +
+            errorText(requestError)
+        );
+    }
+
+    const { data: submittedQuote, error: quoteError } = await db
+        .from("admin_quotations")
+        .update({
+            status: "submitted",
+            updated_at: new Date().toISOString()
+        })
+        .eq("id", quote.id)
+        .eq("status", "draft")
+        .select("*")
+        .single();
+
+    if (quoteError) {
+        throw new Error(
+            "The fee was recorded, but quotation submission failed: " +
+            errorText(quoteError)
+        );
+    }
+
+    const notification = await notifyCustomerFeeRequired(
+        request,
+        submittedQuote,
+        feeDetails.fee
+    );
+
+    let message =
+        "Quotation " + submittedQuote.quotation_number +
+        " submitted. Separate 2% quotation-processing and " +
+        "marketplace administration fee: " +
+        money(feeDetails.fee) +
+        ". Delivery is excluded from the fee calculation. " +
+        "The full quotation remains subject to confirmed fee payment.";
+
+    if (notification.reason === "guest") {
+        message +=
+            " This is a guest request. Contact the customer using the request contact details.";
+    } else if (!notification.sent) {
+        message +=
+            " The quotation was submitted, but customer notification failed: " +
+            (notification.error || "Unknown notification error.");
+    } else if (notification.duplicate) {
+        message +=
+            " The customer fee notification already exists.";
+    } else {
+        message +=
+            " The customer fee notification was sent.";
+    }
+
+    showMessage(
+        "directQuoteMessage",
+        message,
+        "success-message"
+    );
+}
+
+
+/* SUBMIT AN EXISTING DRAFT */
 
 async function submitExistingDraft(id) {
     const quote = currentDirectQuotes.find(
         item => String(item.id) === String(id)
     );
 
-    if (!quote || quote.status !== "draft") return;
+    if (!quote || quote.status !== "draft") {
+        showMessage(
+            "directQuoteMessage",
+            "This quotation is not an editable draft.",
+            "error"
+        );
+        return;
+    }
 
     const request = currentRequests.find(
         item => String(item.id) === String(quote.request_id)
@@ -2345,60 +2483,16 @@ async function submitExistingDraft(id) {
 
     const confirmed = await frostTechConfirm(
         "Submit quotation " + quote.quotation_number +
-        " and notify the customer of the separate 2% " +
-        "quotation-processing administration fee of " +
-        money(fee.fee) + "? The full quotation will remain " +
-        "subject to payment verification.",
+        " and record the separate 2% quotation-processing " +
+        "administration fee of " + money(fee.fee) +
+        "? The full quotation will remain subject to confirmed payment.",
         "Yes, Submit and Notify"
     );
 
     if (!confirmed) return;
 
     try {
-        const { data: saved, error } = await db
-            .from("admin_quotations")
-            .update({
-                status: "submitted",
-                updated_at: new Date().toISOString()
-            })
-            .eq("id", id)
-            .eq("status", "draft")
-            .select("*")
-            .single();
-
-        if (error) throw error;
-
-        const notification = await notifyCustomerFeeRequired(
-            request,
-            saved,
-            fee.fee
-        );
-
-        let message =
-            "Quotation " + saved.quotation_number +
-            " submitted. Separate 2% processing fee: " +
-            money(fee.fee) +
-            ". Full quotation remains subject to payment verification.";
-
-        if (notification.reason === "guest") {
-            message +=
-                " Guest request: contact the customer using the displayed contact details.";
-        } else if (!notification.sent) {
-            message +=
-                " Customer notification failed. Check the notification error.";
-        } else if (notification.duplicate) {
-            message +=
-                " The fee notification already exists.";
-        } else {
-            message +=
-                " Customer fee notification sent.";
-        }
-
-        showMessage(
-            "directQuoteMessage",
-            message,
-            "success-message"
-        );
+        await submitSavedQuotation(quote, request);
 
         await Promise.allSettled([
             loadDirectQuotations(),
@@ -2406,6 +2500,8 @@ async function submitExistingDraft(id) {
         ]);
 
     } catch (error) {
+        console.error("Draft submission error:", error);
+
         showMessage(
             "directQuoteMessage",
             "Draft submission failed: " + errorText(error),
@@ -2413,8 +2509,6 @@ async function submitExistingDraft(id) {
         );
     }
 }
-
-el("loadDirectQuotesBtn").addEventListener("click", loadDirectQuotations);
 
 
 async function loadDirectQuotations() {
