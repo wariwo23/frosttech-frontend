@@ -1968,6 +1968,9 @@ function calculateDirectTotal() {
     "directDiscount"
 ].forEach(id => {
     el(id).addEventListener("input", calculateDirectTotal);
+    el(id).addEventListener("change", calculateDirectTotal);
+});
+    el(id).addEventListener("input", calculateDirectTotal);
 });
 
 
