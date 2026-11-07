@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -475,23 +474,45 @@ productSelect.addEventListener("change", function() {
   updateProductFields();
 });
 
-async function getActiveCustomer() {
+// Optional customer verification.
+// Guests are allowed to continue without signing in.
+// Existing signed-in customers must still have an active customer profile.
+async function getOptionalCustomer() {
+  const {
+    data: { session },
+    error: sessionError
+  } = await client.auth.getSession();
+
+  if (sessionError) {
+    console.error(
+      "FrostTech session check error:",
+      sessionError
+    );
+
+    throw new Error(
+      "We could not verify your session. Please refresh the page and try again."
+    );
+  }
+
+  // No signed-in session: continue as a guest.
+  if (!session) {
+    return null;
+  }
+
+  // A session exists, so verify the actual authenticated user.
   const {
     data: { user },
     error: authError
   } = await client.auth.getUser();
 
-  if (authError) {
-    console.error("FrostTech authentication error:", authError);
-
-    throw new Error(
-      "We could not verify your login. Please try again."
+  if (authError || !user) {
+    console.error(
+      "FrostTech authentication error:",
+      authError
     );
-  }
 
-  if (!user) {
     throw new Error(
-      "Your customer session was not found. Please sign in again."
+      "We could not verify your customer login. Please sign in again."
     );
   }
 
@@ -547,7 +568,8 @@ async function handleQuoteSubmit(event) {
       client = getClient();
     }
 
-    const user = await getActiveCustomer();
+    // This returns null for a guest visitor.
+    const user = await getOptionalCustomer();
 
     const customerName =
       document.getElementById("customerName").value.trim();
@@ -630,7 +652,11 @@ async function handleQuoteSubmit(event) {
     const description = [
       "Customer: " + customerName,
       "Phone: " + customerPhone,
-      "Email: " + (customerEmail || user.email || "Not provided"),
+      "Email: " + (
+        customerEmail ||
+        (user && user.email) ||
+        "Not provided"
+      ),
       "Request type: " + (
         isUnlisted
           ? "Product not listed in catalogue"
@@ -646,10 +672,14 @@ async function handleQuoteSubmit(event) {
     ].join("\n");
 
     const requestData = {
-      customer_id: user.id,
+      // Guests have no customer account ID.
+      customer_id: user ? user.id : null,
+
       customer_name: customerName,
       customer_phone: customerPhone,
-      customer_email: customerEmail || user.email || null,
+
+      customer_email:
+        customerEmail || (user && user.email) || null,
 
       request_number: requestNumber,
       title: "Quote Request - " + productName,
@@ -680,40 +710,40 @@ async function handleQuoteSubmit(event) {
       );
     }
 
-// Send administrator email notification.
-// Email failure must not affect the saved quotation request.
-try {
-  const { error: notificationError } =
-    await client.functions.invoke(
-      "send-frosttech-notification",
-      {
-        body: {
-          event_type: "quote_request_submitted",
-          request_number: requestNumber
-        }
-      }
-    );
+    // Send administrator email notification.
+    // Email failure must not affect the saved quotation request.
+    try {
+      const { error: notificationError } =
+        await client.functions.invoke(
+          "send-frosttech-notification",
+          {
+            body: {
+              event_type: "quote_request_submitted",
+              request_number: requestNumber
+            }
+          }
+        );
 
-  if (notificationError) {
-    console.warn(
-      "Quotation email notification failed:",
-      notificationError
-    );
-  }
-} catch (notificationError) {
-  console.warn(
-    "Quotation email notification error:",
-    notificationError
-  );
-}
-    
+      if (notificationError) {
+        console.warn(
+          "Quotation email notification failed:",
+          notificationError
+        );
+      }
+    } catch (notificationError) {
+      console.warn(
+        "Quotation email notification error:",
+        notificationError
+      );
+    }
+
     showMessage(
       "Your quote request was submitted successfully. Reference: " +
       requestNumber +
       ". FrostTech will review your request.",
       "success"
     );
-    
+
     form.reset();
     document.getElementById("quantity").value = "1";
 
