@@ -2115,18 +2115,36 @@ el("submitDirectQuoteBtn").addEventListener("click", async function() {
 
 
 
+/* =========================================================
+   DIRECT QUOTATION SAVING AND SUBMISSION
+   Generated columns subtotal and total_amount are excluded.
+   Supabase calculates both automatically.
+   ========================================================= */
+
+
+/* SAVE DRAFT OR START SUBMISSION */
+
 async function saveDirectQuotation(status) {
     if (!currentAdmin) {
-        showMessage("directQuoteMessage", "Admin login required.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "Admin login required.",
+            "error"
+        );
         return;
     }
 
-    if (!["draft", "submitted"].includes(status)) {
-        showMessage("directQuoteMessage", "Invalid quotation status.", "error");
+    if (status !== "draft" && status !== "submitted") {
+        showMessage(
+            "directQuoteMessage",
+            "Invalid quotation status.",
+            "error"
+        );
         return;
     }
 
     const requestId = el("directRequestId").value;
+
     const request = currentRequests.find(
         item => String(item.id) === String(requestId)
     );
@@ -2141,8 +2159,12 @@ async function saveDirectQuotation(status) {
     }
 
     const calculation = calculateDirectTotal();
-    const description = el("directProductDescription").value.trim();
-    const existingNotes = el("directNotes").value.trim();
+
+    const description =
+        el("directProductDescription").value.trim();
+
+    const existingNotes =
+        el("directNotes").value.trim();
 
     if (!description) {
         showMessage(
@@ -2199,9 +2221,13 @@ async function saveDirectQuotation(status) {
         return;
     }
 
-    const subtotal = Math.round(calculation.subtotal * 100) / 100;
-    const additionalCharges =
-        Math.round(calculation.additional * 100) / 100;
+    const subtotal = Math.round(
+        calculation.subtotal * 100
+    ) / 100;
+
+    const additionalCharges = Math.round(
+        calculation.additional * 100
+    ) / 100;
 
     const totalAmount = Math.round((
         subtotal +
@@ -2232,19 +2258,29 @@ async function saveDirectQuotation(status) {
 
     const itemisedNotes = [
         "PRODUCT: " + description,
-        "UNIT PRICE: " + money(calculation.customerUnitPrice),
-        "PRODUCT QUANTITY: " + calculation.quantity,
-        "PRODUCT SUBTOTAL: " + money(subtotal),
+
+        "UNIT PRICE: " +
+            money(calculation.customerUnitPrice),
+
+        "PRODUCT QUANTITY: " +
+            calculation.quantity,
+
+        "PRODUCT SUBTOTAL: " +
+            money(subtotal),
 
         "OUTDOOR BRACKETS: " +
-            calculation.bracketQuantity + " sets × " +
+            calculation.bracketQuantity +
+            " sets × " +
             money(calculation.bracketUnitCost) +
-            " = " + money(calculation.brackets),
+            " = " +
+            money(calculation.brackets),
 
         "INSTALLATION: " +
-            calculation.quantity + " AC × " +
+            calculation.quantity +
+            " AC × " +
             money(calculation.installationPerAc) +
-            " per AC = " + money(calculation.installation),
+            " per AC = " +
+            money(calculation.installation),
 
         "ACCESSORY DESCRIPTION: " +
             (calculation.accessoryDescription || "Not specified"),
@@ -2253,61 +2289,100 @@ async function saveDirectQuotation(status) {
             (calculation.accessoryUnit || "Not specified"),
 
         "ACCESSORIES: " +
-            calculation.accessoryQuantity + " × " +
+            calculation.accessoryQuantity +
+            " × " +
             money(calculation.accessoryUnitCost) +
-            " = " + money(calculation.accessories),
+            " = " +
+            money(calculation.accessories),
 
-        "TOTAL ADDITIONAL CHARGES: " + money(additionalCharges),
-        "DELIVERY COST: " + money(calculation.delivery),
-        "DISCOUNT: " + money(calculation.discount),
-        "FINAL QUOTATION TOTAL: " + money(totalAmount),
+        "TOTAL ADDITIONAL CHARGES: " +
+            money(additionalCharges),
 
-        existingNotes ? "CUSTOMER NOTES: " + existingNotes : ""
+        "DELIVERY COST: " +
+            money(calculation.delivery),
+
+        "DISCOUNT: " +
+            money(calculation.discount),
+
+        "FINAL QUOTATION TOTAL: " +
+            money(totalAmount),
+
+        existingNotes
+            ? "CUSTOMER NOTES: " + existingNotes
+            : ""
+
     ].filter(Boolean).join("\n");
+
+
+    /*
+       IMPORTANT:
+       subtotal and total_amount are GENERATED
+       ALWAYS columns in Supabase.
+
+       DO NOT include either column in this record.
+       Supabase calculates them automatically.
+    */
 
     const record = {
         request_id: request.id,
         customer_id: request.customer_id,
+
         product_description: description,
+
         quantity: calculation.quantity,
+
         unit_price: Math.round(
             calculation.customerUnitPrice * 100
         ) / 100,
-        subtotal: subtotal,
+
         delivery_cost: calculation.delivery,
+
         additional_charges: additionalCharges,
+
         discount: calculation.discount,
-        total_amount: totalAmount,
-        validity_date: el("directValidity").value || null,
+
+        validity_date:
+            el("directValidity").value || null,
+
         notes: itemisedNotes,
 
-        // A submitted quotation remains a draft until
-        // the separate processing fee is recorded.
+        // Every quotation is first saved as a draft.
+        // Submission is a separate deliberate action.
         status: "draft",
+
         updated_at: new Date().toISOString()
     };
+
 
     if (!quoteId) {
         record.quotation_number = makeReference("FT-Q");
         record.created_by = currentAdmin.id;
     }
 
+
     const button = status === "draft"
         ? el("saveDraftBtn")
         : el("submitDirectQuoteBtn");
 
+    if (button.disabled) return;
+
     button.disabled = true;
+
 
     showMessage(
         "directQuoteMessage",
         status === "draft"
             ? "Saving quotation draft..."
-            : "Preparing quotation and recording its processing fee...",
+            : "Preparing quotation for submission...",
         "info"
     );
 
+
     try {
         let saved;
+
+
+        /* UPDATE AN EXISTING DRAFT */
 
         if (quoteId) {
             const result = await db
@@ -2318,8 +2393,14 @@ async function saveDirectQuotation(status) {
                 .select("*")
                 .single();
 
-            if (result.error) throw result.error;
+            if (result.error) {
+                throw result.error;
+            }
+
             saved = result.data;
+
+
+        /* INSERT A NEW DRAFT */
 
         } else {
             const result = await db
@@ -2328,9 +2409,20 @@ async function saveDirectQuotation(status) {
                 .select("*")
                 .single();
 
-            if (result.error) throw result.error;
+            if (result.error) {
+                throw result.error;
+            }
+
             saved = result.data;
         }
+
+
+        /*
+           SAVE DRAFT:
+           Stop here. Do not call the submission function.
+           Do not record an administration fee.
+           Do not notify the customer.
+        */
 
         if (status === "draft") {
             showMessage(
@@ -2340,16 +2432,28 @@ async function saveDirectQuotation(status) {
             );
 
         } else {
+
+            /*
+               SUBMISSION:
+               Only the deliberate Submit Quotation action
+               reaches this function.
+            */
+
             await submitSavedQuotation(saved, request);
         }
+
 
         await Promise.allSettled([
             loadDirectQuotations(),
             loadCustomerRequests()
         ]);
 
+
     } catch (error) {
-        console.error("Direct quotation save error:", error);
+        console.error(
+            "Direct quotation save error:",
+            error
+        );
 
         showMessage(
             "directQuoteMessage",
@@ -2359,24 +2463,32 @@ async function saveDirectQuotation(status) {
 
         await loadDirectQuotations().catch(() => {});
 
+
     } finally {
         button.disabled = false;
     }
 }
 
 
-/* SUBMIT A SAVED QUOTATION AFTER RECORDING THE FEE */
+/* =========================================================
+   SUBMIT A SAVED QUOTATION AFTER RECORDING THE FEE
+   ========================================================= */
 
 async function submitSavedQuotation(quote, request) {
     const feeDetails = calculateQuotationAdminFee(quote);
 
-    if (!Number.isFinite(feeDetails.fee) || feeDetails.fee <= 0) {
+    if (
+        !Number.isFinite(feeDetails.fee) ||
+        feeDetails.fee <= 0
+    ) {
         throw new Error(
             "The quotation processing fee could not be calculated."
         );
     }
 
-    // Record the fee before changing the quotation to submitted.
+
+    // Record the processing fee first.
+
     const { error: requestError } = await db
         .from("quote_requests")
         .update({
@@ -2389,6 +2501,7 @@ async function submitSavedQuotation(quote, request) {
         })
         .eq("id", request.id);
 
+
     if (requestError) {
         throw new Error(
             "The processing fee could not be recorded. " +
@@ -2396,7 +2509,13 @@ async function submitSavedQuotation(quote, request) {
         );
     }
 
-    const { data: submittedQuote, error: quoteError } = await db
+
+    // Only now change the quotation to submitted.
+
+    const {
+        data: submittedQuote,
+        error: quoteError
+    } = await db
         .from("admin_quotations")
         .update({
             status: "submitted",
@@ -2407,6 +2526,7 @@ async function submitSavedQuotation(quote, request) {
         .select("*")
         .single();
 
+
     if (quoteError) {
         throw new Error(
             "The fee was recorded, but quotation submission failed: " +
@@ -2414,34 +2534,44 @@ async function submitSavedQuotation(quote, request) {
         );
     }
 
+
+    // Notify the customer about the processing fee.
+
     const notification = await notifyCustomerFeeRequired(
         request,
         submittedQuote,
         feeDetails.fee
     );
 
+
     let message =
-        "Quotation " + submittedQuote.quotation_number +
+        "Quotation " +
+        submittedQuote.quotation_number +
         " submitted. Separate 2% quotation-processing and " +
         "marketplace administration fee: " +
         money(feeDetails.fee) +
         ". Delivery is excluded from the fee calculation. " +
         "The full quotation remains subject to confirmed fee payment.";
 
+
     if (notification.reason === "guest") {
         message +=
             " This is a guest request. Contact the customer using the request contact details.";
+
     } else if (!notification.sent) {
         message +=
             " The quotation was submitted, but customer notification failed: " +
             (notification.error || "Unknown notification error.");
+
     } else if (notification.duplicate) {
         message +=
             " The customer fee notification already exists.";
+
     } else {
         message +=
             " The customer fee notification was sent.";
     }
+
 
     showMessage(
         "directQuoteMessage",
@@ -2451,12 +2581,15 @@ async function submitSavedQuotation(quote, request) {
 }
 
 
-/* SUBMIT AN EXISTING DRAFT */
+/* =========================================================
+   SUBMIT AN EXISTING DRAFT
+   ========================================================= */
 
 async function submitExistingDraft(id) {
     const quote = currentDirectQuotes.find(
         item => String(item.id) === String(id)
     );
+
 
     if (!quote || quote.status !== "draft") {
         showMessage(
@@ -2467,9 +2600,11 @@ async function submitExistingDraft(id) {
         return;
     }
 
+
     const request = currentRequests.find(
         item => String(item.id) === String(quote.request_id)
     );
+
 
     if (!request) {
         showMessage(
@@ -2480,17 +2615,23 @@ async function submitExistingDraft(id) {
         return;
     }
 
+
     const fee = calculateQuotationAdminFee(quote);
 
+
     const confirmed = await frostTechConfirm(
-        "Submit quotation " + quote.quotation_number +
+        "Submit quotation " +
+        quote.quotation_number +
         " and record the separate 2% quotation-processing " +
-        "administration fee of " + money(fee.fee) +
+        "administration fee of " +
+        money(fee.fee) +
         "? The full quotation will remain subject to confirmed payment.",
         "Yes, Submit and Notify"
     );
 
+
     if (!confirmed) return;
+
 
     try {
         await submitSavedQuotation(quote, request);
@@ -2500,8 +2641,12 @@ async function submitExistingDraft(id) {
             loadCustomerRequests()
         ]);
 
+
     } catch (error) {
-        console.error("Draft submission error:", error);
+        console.error(
+            "Draft submission error:",
+            error
+        );
 
         showMessage(
             "directQuoteMessage",
@@ -2510,6 +2655,8 @@ async function submitExistingDraft(id) {
         );
     }
 }
+
+
 
 
 async function loadDirectQuotations() {
