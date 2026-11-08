@@ -235,43 +235,96 @@
       placeholder="e.g. LG, Samsung, Daikin"
     >
 
-    <label for="deliveryAddress">Delivery Address *</label>
-    <textarea
-      id="deliveryAddress"
-      name="deliveryAddress"
-      maxlength="1000"
-      rows="3"
-      autocomplete="street-address"
-      required
-    ></textarea>
-
     
-const description = [
-  "Customer: " + customerName,
-  "Phone: " + customerPhone,
-  "Email: " + (
-    customerEmail ||
-    (user && user.email) ||
-    "Not provided"
-  ),
-  "Request type: " + (
-    isUnlisted
-      ? "Product not listed in catalogue"
-      : "Catalogue product"
-  ),
-  "Product: " + productName,
-  "Budget: " + (
-    isUnlisted && budget !== null
-      ? "₦" + budget.toLocaleString("en-NG")
-      : "Not provided"
-  ),
+<label for="deliveryAddress">Delivery Address *</label>
+<textarea
+  id="deliveryAddress"
+  name="deliveryAddress"
+  maxlength="1000"
+  rows="3"
+  autocomplete="street-address"
+  required
+></textarea>
 
-  "FROSTTECH_REQUESTED_ITEMS_V1:",
-  JSON.stringify(requestedItems),
+<h3>Additional Items and Services</h3>
 
-  "Other specifications or questions: " +
-    (additionalDetails || "None")
-].join("\n");
+<p class="field-help">
+  Select only the additional items or services you specifically require.
+  FrostTech will not add unrequested items to your quotation.
+</p>
+
+<label style="font-weight:normal;">
+  <input
+    type="checkbox"
+    id="requestInstallation"
+    style="width:auto;display:inline-block;"
+  >
+  I specifically request installation.
+</label>
+
+<label style="font-weight:normal;">
+  <input
+    type="checkbox"
+    id="requestBrackets"
+    style="width:auto;display:inline-block;"
+  >
+  I specifically request outdoor brackets.
+</label>
+
+<div id="bracketRequestFields" hidden>
+  <label for="requestedBracketQuantity">
+    Number of outdoor bracket sets requested *
+  </label>
+  <input
+    type="number"
+    id="requestedBracketQuantity"
+    min="1"
+    max="1000"
+    step="1"
+    value="1"
+  >
+</div>
+
+<label style="font-weight:normal;">
+  <input
+    type="checkbox"
+    id="requestAccessories"
+    style="width:auto;display:inline-block;"
+  >
+  I specifically request accessories.
+</label>
+
+<div id="accessoryRequestFields" hidden>
+  <label for="requestedAccessories">
+    Describe the accessories requested *
+  </label>
+  <textarea
+    id="requestedAccessories"
+    rows="3"
+    maxlength="1000"
+    placeholder="List the accessories you require"
+  ></textarea>
+</div>
+
+<label for="otherRequestedItems">
+  Other items specifically requested
+</label>
+<textarea
+  id="otherRequestedItems"
+  rows="3"
+  maxlength="1500"
+  placeholder="Describe any other products or items you want included"
+></textarea>
+
+<label for="additionalDetails">
+  Other specifications or questions
+</label>
+<textarea
+  id="additionalDetails"
+  rows="3"
+  maxlength="2000"
+  placeholder="Enter any relevant specifications or questions"
+></textarea>
 
 
     <button id="submitButton" type="submit">
