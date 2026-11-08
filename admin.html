@@ -1792,13 +1792,34 @@ async function toggleProduct(id) {
    ------------------------- */
 
 (async function initialiseAdminPortal() {
-    const { data: { session } } = await db.auth.getSession();
+    try {
+        const {
+            data: { session },
+            error
+        } = await db.auth.getSession();
 
-    if (session) {
-        await refreshAdminSession();
-    } else {
-        if ($("loginSection")) $("loginSection").hidden = false;
-        if ($("dashboard")) $("dashboard").hidden = true;
+        if (error) throw error;
+
+        if (session?.user) {
+            await refreshAdminSession();
+        } else {
+            showAdminLogin();
+
+            showMessage(
+                "systemStatus",
+                "Please log in as a FrostTech administrator.",
+                "info"
+            );
+        }
+
+    } catch (error) {
+        showAdminLogin();
+
+        showMessage(
+            "systemStatus",
+            "Connection error: " + errorText(error),
+            "error"
+        );
     }
 })();
 </script> 
