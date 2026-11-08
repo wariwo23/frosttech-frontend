@@ -2111,37 +2111,97 @@ async function prepareDirectQuotation(requestId) {
     );
 
     if (!request) {
-        showMessage("directQuoteMessage", "Request not found.", "error");
+        showMessage(
+            "directQuoteMessage",
+            "Request not found.",
+            "error"
+        );
         return;
     }
+
+    const requestedItems = getCustomerRequestedItems(request);
 
     el("directQuoteForm").reset();
 
     el("directQuoteId").value = "";
     el("directRequestId").value = request.id;
+
     el("directRequestReference").textContent =
         request.request_number || request.id;
 
     el("directRequestRequirements").textContent =
         requirementsText(request);
 
+    // Customer's original product and quantity cannot be altered.
     el("directProductDescription").value =
         request.title || request.description || "";
 
+    el("directProductDescription").readOnly = true;
+
     el("directQuantity").value = request.quantity || 1;
+    el("directQuantity").readOnly = true;
 
     el("directUnitCost").value = "";
     el("directMarkup").value = "15";
     el("directDeliveryCost").value = "0";
 
-    el("directBracketQuantity").value = "0";
-    el("directBracketUnitCost").value = "0";
-    el("directInstallationPerAc").value = "0";
+    // Only restore additional items specifically requested.
+    const bracketsRequested =
+        requestedItems !== null &&
+        requestedItems.outdoor_brackets === true &&
+        Number.isInteger(Number(requestedItems.bracket_quantity)) &&
+        Number(requestedItems.bracket_quantity) > 0;
 
-    el("directAccessoryDescription").value = "";
+    const installationRequested =
+        requestedItems !== null &&
+        requestedItems.installation === true;
+
+    const requestedAccessoryText = requestedItems
+        ? [
+            requestedItems.accessories,
+            requestedItems.other_items
+        ].filter(Boolean).join("; ")
+        : "";
+
+    const accessoriesRequested =
+        requestedAccessoryText.length > 0;
+
+    // Outdoor brackets
+    el("directBracketQuantity").value =
+        bracketsRequested
+            ? String(Number(requestedItems.bracket_quantity))
+            : "0";
+
+    el("directBracketQuantity").readOnly = true;
+    el("directBracketQuantity").disabled = !bracketsRequested;
+
+    el("directBracketUnitCost").value = "0";
+    el("directBracketUnitCost").disabled = !bracketsRequested;
+
+    // Installation
+    el("directInstallationPerAc").value = "0";
+    el("directInstallationPerAc").disabled =
+        !installationRequested;
+
+    // Accessories and other specifically requested items
+    el("directAccessoryDescription").value =
+        requestedAccessoryText;
+
+    el("directAccessoryDescription").readOnly = true;
+
     el("directAccessoryUnit").value = "";
-    el("directAccessoryQuantity").value = "0";
+    el("directAccessoryUnit").disabled =
+        !accessoriesRequested;
+
+    el("directAccessoryQuantity").value =
+        accessoriesRequested ? "1" : "0";
+
+    el("directAccessoryQuantity").disabled =
+        !accessoriesRequested;
+
     el("directAccessoryUnitCost").value = "0";
+    el("directAccessoryUnitCost").disabled =
+        !accessoriesRequested;
 
     el("directDiscount").value = "0";
     el("directValidity").value = "";
@@ -2179,8 +2239,9 @@ async function prepareDirectQuotation(requestId) {
 
             showMessage(
                 "directQuoteMessage",
-                "Selected supplier cost loaded: " + money(supplierCost) +
-                ". Review all quotation figures before saving.",
+                "Verified supplier cost loaded: " +
+                money(supplierCost) +
+                ". Review the quotation before saving.",
                 "success-message"
             );
         } else {
@@ -2194,6 +2255,14 @@ async function prepareDirectQuotation(requestId) {
         showMessage(
             "directQuoteMessage",
             "No linked catalogue product was found. Enter the verified supplier cost manually.",
+            "warning-message"
+        );
+    }
+
+    if (!requestedItems) {
+        showMessage(
+            "directQuoteMessage",
+            "This is an older request without recorded item selections. Additional charges are disabled. Only the original product or service can be quoted.",
             "warning-message"
         );
     }
