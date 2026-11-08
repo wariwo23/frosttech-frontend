@@ -245,14 +245,34 @@
       required
     ></textarea>
 
-    <label for="additionalDetails">Additional Requirements</label>
-    <textarea
-      id="additionalDetails"
-      name="additionalDetails"
-      maxlength="2000"
-      rows="4"
-      placeholder="Installation, accessories, specifications or other requirements"
-    ></textarea>
+    
+const description = [
+  "Customer: " + customerName,
+  "Phone: " + customerPhone,
+  "Email: " + (
+    customerEmail ||
+    (user && user.email) ||
+    "Not provided"
+  ),
+  "Request type: " + (
+    isUnlisted
+      ? "Product not listed in catalogue"
+      : "Catalogue product"
+  ),
+  "Product: " + productName,
+  "Budget: " + (
+    isUnlisted && budget !== null
+      ? "₦" + budget.toLocaleString("en-NG")
+      : "Not provided"
+  ),
+
+  "FROSTTECH_REQUESTED_ITEMS_V1:",
+  JSON.stringify(requestedItems),
+
+  "Other specifications or questions: " +
+    (additionalDetails || "None")
+].join("\n");
+
 
     <button id="submitButton" type="submit">
       Submit Quote Request
