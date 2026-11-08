@@ -666,59 +666,15 @@ async function openDashboard(user) {
     el("loggedUser").textContent =
         currentAdmin.full_name || currentAdmin.email;
 
-    showMessage("systemStatus",
-        "Connected. Administrator access verified.",
-        "success-message");
 
-    await loadDashboard();
-}
+/* Authentication is handled once in the unified Part 2 section. */
 
-async function checkExistingSession() {
-    try {
-        const { data, error } = await db.auth.getSession();
-        if (error) throw error;
+    
 
-        if (data.session?.user) {
-            await openDashboard(data.session.user);
-        } else {
-            showMessage("systemStatus",
-                "Please log in as a FrostTech administrator.",
-                "info");
-        }
-    } catch (error) {
-        showMessage("systemStatus",
-            "Connection error: " + errorText(error),
-            "error");
-    }
-}
-
-el("logoutBtn").addEventListener("click", async function() {
-    const { error } = await db.auth.signOut();
-
-    if (error) {
-        showMessage("message", errorText(error), "error");
-        return;
-    }
-
-    currentAdmin = null;
-    el("dashboard").classList.add("hidden");
-    el("loginSection").classList.remove("hidden");
-    showMessage("systemStatus", "You have logged out.", "info");
-});
-
-db.auth.onAuthStateChange(function(event) {
-    if (event === "SIGNED_OUT") {
-        currentAdmin = null;
-        el("dashboard").classList.add("hidden");
-        el("loginSection").classList.remove("hidden");
-    }
-});
-
+    
 /* DASHBOARD REFRESH */
 
-el("refreshBtn").addEventListener("click", loadDashboard);
-
-async function loadDashboard() {
+async function refreshAllDashboardSections() {
     if (!currentAdmin) return;
 
     showMessage("message", "Refreshing dashboard...", "info");
@@ -728,18 +684,28 @@ async function loadDashboard() {
         loadCustomerRequests(),
         loadSupplierQuotations(),
         loadSupplierManagement(),
-        loadDirectQuotations()
+        loadDirectQuotations(),
+        loadDashboardCounts()
     ]);
 
     const failed = results.filter(result =>
         result.status === "rejected"
     );
 
-    showMessage("message",
+    showMessage(
+        "message",
         failed.length
             ? "Dashboard refreshed with some errors. Check each section."
             : "Dashboard refresh completed.",
-        failed.length ? "warning-message" : "success-message");
+        failed.length ? "warning-message" : "success-message"
+    );
+}
+
+if (el("refreshBtn")) {
+    el("refreshBtn").addEventListener(
+        "click",
+        refreshAllDashboardSections
+    );
 }
 
 <script>
