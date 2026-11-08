@@ -733,15 +733,34 @@ if (accessoriesRequested && !accessoriesDescription) {
   );
 }
 
+
+let bracketQuantity = null;
+
+if (bracketsRequested) {
+  bracketQuantity = Number(requestedBracketQuantity.value);
+
+  if (
+    !Number.isInteger(bracketQuantity) ||
+    bracketQuantity < 1 ||
+    bracketQuantity > 1000
+  ) {
+    throw new Error(
+      "Please enter a valid outdoor bracket quantity between 1 and 1,000."
+    );
+  }
+}
+
 const requestedItems = {
   version: 1,
   installation: installationRequested,
   outdoor_brackets: bracketsRequested,
+  bracket_quantity: bracketQuantity,
   accessories: accessoriesRequested
     ? accessoriesDescription
     : null,
   other_items: otherRequestedItems || null
 };
+
 
 
     const budgetValue = budgetInput.value.trim();
