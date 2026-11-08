@@ -916,9 +916,18 @@ const requestedItems = {
     );
 
     form.reset();
-    document.getElementById("quantity").value = "1";
 
-    updateProductFields();
+document.getElementById("quantity").value = "1";
+
+updateProductFields();
+
+bracketRequestFields.hidden = true;
+requestedBracketQuantity.required = false;
+requestedBracketQuantity.value = "1";
+
+accessoryRequestFields.hidden = true;
+requestedAccessories.required = false;
+requestedAccessories.value = "";
 
   } catch (error) {
     console.error("FrostTech quote submission failed:", error);
