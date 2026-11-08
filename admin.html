@@ -1956,32 +1956,79 @@ function calculateDirectTotal() {
     const delivery = numericInput("directDeliveryCost");
     const discount = numericInput("directDiscount");
 
+    // Requested outdoor brackets
     const bracketQuantity = numericInput("directBracketQuantity");
     const bracketUnitCost = numericInput("directBracketUnitCost");
-    const brackets = bracketQuantity * bracketUnitCost;
+    const rawBrackets = bracketQuantity * bracketUnitCost;
 
+    // Requested installation
     const installationPerAc = numericInput("directInstallationPerAc");
-    const installation = quantity * installationPerAc;
+    const rawInstallation = quantity * installationPerAc;
 
-    const accessoryDescription = el("directAccessoryDescription").value.trim();
-    const accessoryUnit = el("directAccessoryUnit").value.trim();
-    const accessoryQuantity = numericInput("directAccessoryQuantity");
-    const accessoryUnitCost = numericInput("directAccessoryUnitCost");
-    const accessories = accessoryQuantity * accessoryUnitCost;
+    // Requested accessories or other approved items
+    const accessoryDescription =
+        el("directAccessoryDescription").value.trim();
 
-    const customerUnitPrice = unitCost * (1 + markup / 100);
-    const subtotal = quantity * customerUnitPrice;
-    const additional = brackets + installation + accessories;
-    const total = subtotal + delivery + additional - discount;
+    const accessoryUnit =
+        el("directAccessoryUnit").value.trim();
 
+    const accessoryQuantity =
+        numericInput("directAccessoryQuantity");
+
+    const accessoryUnitCost =
+        numericInput("directAccessoryUnitCost");
+
+    const rawAccessories =
+        accessoryQuantity * accessoryUnitCost;
+
+    // Apply markup once to the combined requested-item costs
+    const markupFactor = 1 + (markup / 100);
+
+    const rawProductSubtotal = quantity * unitCost;
+
+    const rawAdditional =
+        rawBrackets +
+        rawInstallation +
+        rawAccessories;
+
+    const rawRequestSubtotal =
+        rawProductSubtotal + rawAdditional;
+
+    const subtotal =
+        rawProductSubtotal * markupFactor;
+
+    const customerUnitPrice =
+        unitCost * markupFactor;
+
+    const brackets =
+        rawBrackets * markupFactor;
+
+    const installation =
+        rawInstallation * markupFactor;
+
+    const accessories =
+        rawAccessories * markupFactor;
+
+    const additional =
+        rawAdditional * markupFactor;
+
+    // Delivery is excluded from markup
+    const total =
+        subtotal + additional + delivery - discount;
+
+    // Update quotation preview
     el("displayUnitCost").textContent = money(unitCost);
     el("displayMarkup").textContent = markup + "%";
-    el("displayCustomerUnitPrice").textContent = money(customerUnitPrice);
+    el("displayCustomerUnitPrice").textContent =
+        money(customerUnitPrice);
+
     el("directSubtotal").textContent = money(subtotal);
     el("displayDelivery").textContent = money(delivery);
     el("displayBrackets").textContent = money(brackets);
-    el("displayInstallation").textContent = money(installation);
-    el("displayAccessories").textContent = money(accessories);
+    el("displayInstallation").textContent =
+        money(installation);
+    el("displayAccessories").textContent =
+        money(accessories);
     el("displayDiscount").textContent = money(discount);
     el("directTotal").textContent = money(total);
 
@@ -1992,22 +2039,29 @@ function calculateDirectTotal() {
         customerUnitPrice,
         subtotal,
         delivery,
+
         bracketQuantity,
         bracketUnitCost,
         brackets,
+
         installationPerAc,
         installation,
+
         accessoryDescription,
         accessoryUnit,
         accessoryQuantity,
         accessoryUnitCost,
         accessories,
+
+        rawProductSubtotal,
+        rawAdditional,
+        rawRequestSubtotal,
+
         additional,
         discount,
         total
     };
 }
-
 
 [
     "directQuantity",
