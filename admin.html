@@ -1221,7 +1221,7 @@ db.auth.onAuthStateChange((event) => {
    DASHBOARD COUNTS
    ------------------------- */
 
-async function loadDashboard() {
+async function loadDashboardCounts() {
     await requireAdmin();
 
     const countRows = async (table, filters = []) => {
