@@ -729,31 +729,6 @@ const requestedItems = {
       Math.random().toString(36).slice(2, 7).toUpperCase();
 
     
-const description = [
-  "Customer: " + customerName,
-  "Phone: " + customerPhone,
-  "Email: " + (
-    customerEmail ||
-    (user && user.email) ||
-    "Not provided"
-  ),
-  "Request type: " + (
-    isUnlisted
-      ? "Product not listed in catalogue"
-      : "Catalogue product"
-  ),
-  "Product: " + productName,
-  "Budget: " + (
-    isUnlisted && budget !== null
-      ? "₦" + budget.toLocaleString("en-NG")
-      : "Not provided"
-  ),
-  "FROSTTECH_REQUESTED_ITEMS_V1:",
-  JSON.stringify(requestedItems),
-  "Other specifications or questions: " +
-    (additionalDetails || "None")
-].join("\n");
-
 
     const requestData = {
       // Guests have no customer account ID.
