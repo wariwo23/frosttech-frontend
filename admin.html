@@ -2105,685 +2105,17 @@ async function getSelectedProductSupplierCost(productId) {
 }
 
 
-async function prepareDirectQuotation(requestId) {
-    const request = currentRequests.find(
-        item => String(item.id) === String(requestId)
-    );
 
-    if (!request) {
-        showMessage(
-            "directQuoteMessage",
-            "Request not found.",
-            "error"
-        );
-        return;
-    }
-
-    const requestedItems = getCustomerRequestedItems(request);
-
-    el("directQuoteForm").reset();
-
-    el("directQuoteId").value = "";
-    el("directRequestId").value = request.id;
-
-    el("directRequestReference").textContent =
-        request.request_number || request.id;
-
-    el("directRequestRequirements").textContent =
-        requirementsText(request);
-
-    // Customer's original product and quantity cannot be altered.
-    el("directProductDescription").value =
-        request.title || request.description || "";
-
-    el("directProductDescription").readOnly = true;
-
-    el("directQuantity").value = request.quantity || 1;
-    el("directQuantity").readOnly = true;
-
-    el("directUnitCost").value = "";
-    el("directMarkup").value = "15";
-    el("directDeliveryCost").value = "0";
-
-    // Only restore additional items specifically requested.
-    const bracketsRequested =
-        requestedItems !== null &&
-        requestedItems.outdoor_brackets === true &&
-        Number.isInteger(Number(requestedItems.bracket_quantity)) &&
-        Number(requestedItems.bracket_quantity) > 0;
-
-    const installationRequested =
-        requestedItems !== null &&
-        requestedItems.installation === true;
-
-    const requestedAccessoryText = requestedItems
-        ? [
-            requestedItems.accessories,
-            requestedItems.other_items
-        ].filter(Boolean).join("; ")
-        : "";
-
-    const accessoriesRequested =
-        requestedAccessoryText.length > 0;
-
-    // Outdoor brackets
-    el("directBracketQuantity").value =
-        bracketsRequested
-            ? String(Number(requestedItems.bracket_quantity))
-            : "0";
-
-    el("directBracketQuantity").readOnly = true;
-    el("directBracketQuantity").disabled = !bracketsRequested;
-
-    el("directBracketUnitCost").value = "0";
-    el("directBracketUnitCost").disabled = !bracketsRequested;
-
-    // Installation
-    el("directInstallationPerAc").value = "0";
-    el("directInstallationPerAc").disabled =
-        !installationRequested;
-
-    // Accessories and other specifically requested items
-    el("directAccessoryDescription").value =
-        requestedAccessoryText;
-
-    el("directAccessoryDescription").readOnly = true;
-
-    el("directAccessoryUnit").value = "";
-    el("directAccessoryUnit").disabled =
-        !accessoriesRequested;
-
-    el("directAccessoryQuantity").value =
-        accessoriesRequested ? "1" : "0";
-
-    el("directAccessoryQuantity").disabled =
-        !accessoriesRequested;
-
-    el("directAccessoryUnitCost").value = "0";
-    el("directAccessoryUnitCost").disabled =
-        !accessoriesRequested;
-
-    el("directDiscount").value = "0";
-    el("directValidity").value = "";
-    el("directNotes").value = "";
-
-    el("directQuoteFormTitle").textContent =
-        "Prepare Direct Quotation";
-
-    el("directQuoteForm").classList.remove("hidden");
-
-    calculateDirectTotal();
-
-    el("directQuotationSection").scrollIntoView({
-        behavior: "smooth"
-    });
-
-    const product = currentProducts.find(item =>
-        request.product_id &&
-        String(item.id) === String(request.product_id)
-    );
-
-    if (product) {
-        showMessage(
-            "directQuoteMessage",
-            "Checking the protected supplier-cost record for this product...",
-            "info"
-        );
-
-        const supplierCost =
-            await getSelectedProductSupplierCost(product.id);
-
-        if (supplierCost !== null) {
-            el("directUnitCost").value = supplierCost;
-            calculateDirectTotal();
-
-            showMessage(
-                "directQuoteMessage",
-                "Verified supplier cost loaded: " +
-                money(supplierCost) +
-                ". Review the quotation before saving.",
-                "success-message"
-            );
-        } else {
-            showMessage(
-                "directQuoteMessage",
-                "No selected supplier cost was found. Enter the verified supplier cost manually. The public catalogue selling price has not been used.",
-                "warning-message"
-            );
-        }
-    } else {
-        showMessage(
-            "directQuoteMessage",
-            "No linked catalogue product was found. Enter the verified supplier cost manually.",
-            "warning-message"
-        );
-    }
-
-    if (!requestedItems) {
-        showMessage(
-            "directQuoteMessage",
-            "This is an older request without recorded item selections. Additional charges are disabled. Only the original product or service can be quoted.",
-            "warning-message"
-        );
-    }
-}
-
-
-el("cancelDirectQuoteBtn").addEventListener("click", function() {
-    el("directQuoteForm").classList.add("hidden");
-    el("directQuoteForm").reset();
-    clearMessage("directQuoteMessage");
-});
-
-
-el("saveDraftBtn").addEventListener("click", () =>
-    saveDirectQuotation("draft")
-);
-
-
-el("submitDirectQuoteBtn").addEventListener("click", async function() {
-    const confirmed = await frostTechConfirm(
-        "Are you sure you want to submit this quotation to the customer?",
-        "Yes, Submit Quotation"
-    );
-
-    if (!confirmed) return;
-
-    await saveDirectQuotation("submitted");
-});
-
-
-
-/* =========================================================
-   DIRECT QUOTATION SAVING AND SUBMISSION
-   Generated columns subtotal and total_amount are excluded.
-   Supabase calculates both automatically.
-   ========================================================= */
-
-
-/* SAVE DRAFT OR START SUBMISSION */
-
-async function saveDirectQuotation(status) {
-    if (!currentAdmin) {
-        showMessage(
-            "directQuoteMessage",
-            "Admin login required.",
-            "error"
-        );
-        return;
-    }
-
-    if (status !== "draft" && status !== "submitted") {
-        showMessage(
-            "directQuoteMessage",
-            "Invalid quotation status.",
-            "error"
-        );
-        return;
-    }
-
-    const requestId = el("directRequestId").value;
-
-    const request = currentRequests.find(
-        item => String(item.id) === String(requestId)
-    );
-
-    if (!request) {
-        showMessage(
-            "directQuoteMessage",
-            "Customer request not found. Refresh requests first.",
-            "error"
-        );
-        return;
-    }
-
-    const calculation = calculateDirectTotal();
-
-    const description =
-        el("directProductDescription").value.trim();
-
-    const existingNotes =
-        el("directNotes").value.trim();
-
-    if (!description) {
-        showMessage(
-            "directQuoteMessage",
-            "Enter a product or service description.",
-            "error"
-        );
-        return;
-    }
-
-    if (calculation.unitCost <= 0) {
-        showMessage(
-            "directQuoteMessage",
-            "Enter a verified supplier cost greater than zero.",
-            "error"
-        );
-        return;
-    }
-
-    const valuesToCheck = [
-        calculation.quantity,
-        calculation.unitCost,
-        calculation.markup,
-        calculation.delivery,
-        calculation.bracketQuantity,
-        calculation.bracketUnitCost,
-        calculation.installationPerAc,
-        calculation.accessoryQuantity,
-        calculation.accessoryUnitCost,
-        calculation.discount
-    ];
-
-    if (
-        !valuesToCheck.every(Number.isFinite) ||
-        !Number.isInteger(calculation.quantity) ||
-        calculation.quantity < 1 ||
-        !Number.isInteger(calculation.bracketQuantity) ||
-        calculation.bracketQuantity < 0 ||
-        !Number.isInteger(calculation.accessoryQuantity) ||
-        calculation.accessoryQuantity < 0 ||
-        calculation.unitCost < 0 ||
-        calculation.markup < 0 ||
-        calculation.delivery < 0 ||
-        calculation.bracketUnitCost < 0 ||
-        calculation.installationPerAc < 0 ||
-        calculation.accessoryUnitCost < 0 ||
-        calculation.discount < 0
-    ) {
-        showMessage(
-            "directQuoteMessage",
-            "Check all quantities and costs. Product quantity must be at least one, and other quantities and costs cannot be negative.",
-            "error"
-        );
-        return;
-    }
-
-    const subtotal = Math.round(
-        calculation.subtotal * 100
-    ) / 100;
-
-    const additionalCharges = Math.round(
-        calculation.additional * 100
-    ) / 100;
-
-    const totalAmount = Math.round((
-        subtotal +
-        calculation.delivery +
-        additionalCharges -
-        calculation.discount
-    ) * 100) / 100;
-
-    if (!Number.isFinite(totalAmount) || totalAmount < 0) {
-        showMessage(
-            "directQuoteMessage",
-            "The discount cannot exceed the subtotal plus delivery and additional charges.",
-            "error"
-        );
-        return;
-    }
-
-    if (status === "submitted" && totalAmount <= 0) {
-        showMessage(
-            "directQuoteMessage",
-            "The quotation total must be greater than zero.",
-            "error"
-        );
-        return;
-    }
-
-    const quoteId = el("directQuoteId").value.trim();
-
-    const itemisedNotes = [
-        "PRODUCT: " + description,
-
-        "UNIT PRICE: " +
-            money(calculation.customerUnitPrice),
-
-        "PRODUCT QUANTITY: " +
-            calculation.quantity,
-
-        "PRODUCT SUBTOTAL: " +
-            money(subtotal),
-
-        "OUTDOOR BRACKETS: " +
-            calculation.bracketQuantity +
-            " sets × " +
-            money(calculation.bracketUnitCost) +
-            " = " +
-            money(calculation.brackets),
-
-        "INSTALLATION: " +
-            calculation.quantity +
-            " AC × " +
-            money(calculation.installationPerAc) +
-            " per AC = " +
-            money(calculation.installation),
-
-        "ACCESSORY DESCRIPTION: " +
-            (calculation.accessoryDescription || "Not specified"),
-
-        "ACCESSORY UNIT / PACK: " +
-            (calculation.accessoryUnit || "Not specified"),
-
-        "ACCESSORIES: " +
-            calculation.accessoryQuantity +
-            " × " +
-            money(calculation.accessoryUnitCost) +
-            " = " +
-            money(calculation.accessories),
-
-        "TOTAL ADDITIONAL CHARGES: " +
-            money(additionalCharges),
-
-        "DELIVERY COST: " +
-            money(calculation.delivery),
-
-        "DISCOUNT: " +
-            money(calculation.discount),
-
-        "FINAL QUOTATION TOTAL: " +
-            money(totalAmount),
-
-        existingNotes
-            ? "CUSTOMER NOTES: " + existingNotes
-            : ""
-
-    ].filter(Boolean).join("\n");
-
-
-    /*
-       IMPORTANT:
-       subtotal and total_amount are GENERATED
-       ALWAYS columns in Supabase.
-
-       DO NOT include either column in this record.
-       Supabase calculates them automatically.
-    */
-
-    const record = {
-        request_id: request.id,
-        customer_id: request.customer_id,
-
-        product_description: description,
-
-        quantity: calculation.quantity,
-
-        unit_price: Math.round(
-            calculation.customerUnitPrice * 100
-        ) / 100,
-
-        delivery_cost: calculation.delivery,
-
-        additional_charges: additionalCharges,
-
-        discount: calculation.discount,
-
-        validity_date:
-            el("directValidity").value || null,
-
-        notes: itemisedNotes,
-
-        // Every quotation is first saved as a draft.
-        // Submission is a separate deliberate action.
-        status: "draft",
-
-        updated_at: new Date().toISOString()
-    };
-
-
-    if (!quoteId) {
-        record.quotation_number = makeReference("FT-Q");
-        record.created_by = currentAdmin.id;
-    }
-
-
-    const button = status === "draft"
-        ? el("saveDraftBtn")
-        : el("submitDirectQuoteBtn");
-
-    if (button.disabled) return;
-
-    button.disabled = true;
-
-
-    showMessage(
-        "directQuoteMessage",
-        status === "draft"
-            ? "Saving quotation draft..."
-            : "Preparing quotation for submission...",
-        "info"
-    );
-
-
-    try {
-        let saved;
-
-
-        /* UPDATE AN EXISTING DRAFT */
-
-        if (quoteId) {
-            const result = await db
-                .from("admin_quotations")
-                .update(record)
-                .eq("id", quoteId)
-                .eq("status", "draft")
-                .select("*")
-                .single();
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            saved = result.data;
-
-
-        /* INSERT A NEW DRAFT */
-
-        } else {
-            const result = await db
-                .from("admin_quotations")
-                .insert(record)
-                .select("*")
-                .single();
-
-            if (result.error) {
-                throw result.error;
-            }
-
-            saved = result.data;
-        }
-
-
-        /*
-           SAVE DRAFT:
-           Stop here. Do not call the submission function.
-           Do not record an administration fee.
-           Do not notify the customer.
-        */
-
-        if (status === "draft") {
-            showMessage(
-                "directQuoteMessage",
-                "Quotation draft saved successfully. It has not been submitted to the customer.",
-                "success-message"
-            );
-
-        } else {
-
-            /*
-               SUBMISSION:
-               Only the deliberate Submit Quotation action
-               reaches this function.
-            */
-
-            await submitSavedQuotation(saved, request);
-        }
-
-
-        await Promise.allSettled([
-            loadDirectQuotations(),
-            loadCustomerRequests()
-        ]);
-
-
-    } catch (error) {
-        console.error(
-            "Direct quotation save error:",
-            error
-        );
-
-        showMessage(
-            "directQuoteMessage",
-            "Quotation operation failed: " + errorText(error),
-            "error"
-        );
-
-        await loadDirectQuotations().catch(() => {});
-
-
-    } finally {
-        button.disabled = false;
-    }
-}
-
-
-/* =========================================================
-   SUBMIT A SAVED QUOTATION AFTER RECORDING THE FEE
-   ========================================================= */
-
-async function submitSavedQuotation(quote, request) {
-    const feeDetails = calculateQuotationAdminFee(quote);
-
-    if (
-        !Number.isFinite(feeDetails.fee) ||
-        feeDetails.fee <= 0
-    ) {
-        throw new Error(
-            "The quotation processing fee could not be calculated."
-        );
-    }
-
-
-    // Record the processing fee first.
-
-    const { error: requestError } = await db
-        .from("quote_requests")
-        .update({
-            admin_fee: feeDetails.fee,
-            admin_fee_status: "pending",
-            admin_fee_transaction_reference: null,
-            admin_fee_paid_at: null,
-            status: "quoted",
-            updated_at: new Date().toISOString()
-        })
-        .eq("id", request.id);
-
-
-    if (requestError) {
-        throw new Error(
-            "The processing fee could not be recorded. " +
-            errorText(requestError)
-        );
-    }
-
-
-    // Only now change the quotation to submitted.
-
-    const {
-        data: submittedQuote,
-        error: quoteError
-    } = await db
-        .from("admin_quotations")
-        .update({
-            status: "submitted",
-            updated_at: new Date().toISOString()
-        })
-        .eq("id", quote.id)
-        .eq("status", "draft")
-        .select("*")
-        .single();
-
-
-    if (quoteError) {
-        throw new Error(
-            "The fee was recorded, but quotation submission failed: " +
-            errorText(quoteError)
-        );
-    }
-
-
-    // Notify the customer about the processing fee.
-
-    const notification = await notifyCustomerFeeRequired(
-        request,
-        submittedQuote,
-        feeDetails.fee
-    );
-
-
-    let message =
-        "Quotation " +
-        submittedQuote.quotation_number +
-        " submitted. Separate 2% quotation-processing and " +
-        "marketplace administration fee: " +
-        money(feeDetails.fee) +
-        ". Delivery is excluded from the fee calculation. " +
-        "The full quotation remains subject to confirmed fee payment.";
-
-
-    if (notification.reason === "guest") {
-        message +=
-            " This is a guest request. Contact the customer using the request contact details.";
-
-    } else if (!notification.sent) {
-        message +=
-            " The quotation was submitted, but customer notification failed: " +
-            (notification.error || "Unknown notification error.");
-
-    } else if (notification.duplicate) {
-        message +=
-            " The customer fee notification already exists.";
-
-    } else {
-        message +=
-            " The customer fee notification was sent.";
-    }
-
-
-    showMessage(
-        "directQuoteMessage",
-        message,
-        "success-message"
-    );
-}
-
-
-/* =========================================================
-   SUBMIT AN EXISTING DRAFT
-   ========================================================= */
-
-async function submitExistingDraft(id) {
+async function editDirectQuotation(id) {
     const quote = currentDirectQuotes.find(
         item => String(item.id) === String(id)
     );
 
-
-    if (!quote || quote.status !== "draft") {
-        showMessage(
-            "directQuoteMessage",
-            "This quotation is not an editable draft.",
-            "error"
-        );
-        return;
-    }
-
+    if (!quote || quote.status !== "draft") return;
 
     const request = currentRequests.find(
         item => String(item.id) === String(quote.request_id)
     );
-
 
     if (!request) {
         showMessage(
@@ -2794,119 +2126,77 @@ async function submitExistingDraft(id) {
         return;
     }
 
+    const requestedItems = getCustomerRequestedItems(request);
 
-    const fee = calculateQuotationAdminFee(quote);
+    const hasAdditionalCharges =
+        Number(quote.additional_charges || 0) > 0;
 
-
-    const confirmed = await frostTechConfirm(
-        "Submit quotation " +
-        quote.quotation_number +
-        " and record the separate 2% quotation-processing " +
-        "administration fee of " +
-        money(fee.fee) +
-        "? The full quotation will remain subject to confirmed payment.",
-        "Yes, Submit and Notify"
-    );
-
-
-    if (!confirmed) return;
-
-
-    try {
-        await submitSavedQuotation(quote, request);
-
-        await Promise.allSettled([
-            loadDirectQuotations(),
-            loadCustomerRequests()
-        ]);
-
-
-    } catch (error) {
-        console.error(
-            "Draft submission error:",
-            error
-        );
-
+    if (
+        hasAdditionalCharges &&
+        !requestedItems
+    ) {
         showMessage(
             "directQuoteMessage",
-            "Draft submission failed: " + errorText(error),
-            "error"
+            "This older draft contains additional charges, but the original request does not record which items the customer requested. It cannot be safely edited or resubmitted. The existing draft has been preserved.",
+            "warning-message"
         );
-    }
-}
-
-
-
-
-async function loadDirectQuotations() {
-    const target = el("directQuoteList");
-    target.textContent = "Loading direct quotations...";
-
-    const { data, error } = await db.from("admin_quotations")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        target.textContent =
-            "Could not load direct quotations: " + errorText(error);
-        showMessage("directQuoteMessage", errorText(error), "error");
-        el("directQuoteCount").textContent = "—";
         return;
     }
 
-    currentDirectQuotes = data || [];
-    el("directQuoteCount").textContent = currentDirectQuotes.length;
+    await prepareDirectQuotation(request.id);
 
-    if (!currentDirectQuotes.length) {
-        target.textContent = "No direct quotations found.";
+    el("directQuoteId").value = quote.id;
+
+    el("directProductDescription").value =
+        quote.product_description || "";
+
+    el("directQuantity").value = quote.quantity || 1;
+
+    /*
+     * Existing saved unit price is a customer-facing price.
+     * Restore it with zero markup to avoid marking it up twice.
+     */
+    el("directUnitCost").value = quote.unit_price ?? "";
+    el("directMarkup").value = "0";
+
+    el("directDeliveryCost").value =
+        quote.delivery_cost ?? 0;
+
+    /*
+     * Do not convert old additional charges into generic
+     * accessories. Only restore separately recorded items
+     * that the original customer request permits.
+     *
+     * Existing additional charges are preserved only when
+     * they can be safely represented by the request.
+     */
+    if (hasAdditionalCharges) {
+        showMessage(
+            "directQuoteMessage",
+            "This draft contains combined additional charges. Please review the original customer request and prepare a fresh itemised quotation rather than carrying forward unverified charges.",
+            "warning-message"
+        );
+
+        el("directQuoteId").value = "";
+        el("directAccessoryQuantity").value = "0";
+        el("directAccessoryUnitCost").value = "0";
+        el("directBracketUnitCost").value = "0";
+        el("directInstallationPerAc").value = "0";
+
+        calculateDirectTotal();
         return;
     }
 
-    target.innerHTML = currentDirectQuotes.map(quote => `
-        <article class="card">
-            <h3>${escapeHtml(quote.quotation_number)}</h3>
-            <p><strong>Request ID:</strong> ${escapeHtml(quote.request_id)}</p>
-            <p><strong>Description:</strong> ${escapeHtml(quote.product_description)}</p>
-            <p><strong>Quantity:</strong> ${escapeHtml(quote.quantity)}</p>
-            <p><strong>Customer Unit Price:</strong> ${money(quote.unit_price)}</p>
-            <p><strong>Subtotal:</strong> ${money(quote.subtotal)}</p>
-            <p><strong>Delivery:</strong> ${money(quote.delivery_cost)}</p>
-            <p><strong>Additional Charges:</strong> ${money(quote.additional_charges)}</p>
-            <p><strong>Discount:</strong> ${money(quote.discount)}</p>
-            <p><strong>Total:</strong> <strong>${money(quote.total_amount)}</strong></p>
-            <p><strong>Status:</strong> ${badge(quote.status)}</p>
-            <p><strong>Valid Until:</strong> ${escapeHtml(quote.validity_date || "Not specified")}</p>
-            <p><strong>Notes / Cost Breakdown:</strong><br>
-                ${escapeHtml(quote.notes || "None").replace(/\n/g, "<br>")}</p>
-            <p><strong>Created:</strong> ${dateText(quote.created_at)}</p>
+    el("directDiscount").value = quote.discount ?? 0;
+    el("directValidity").value = quote.validity_date || "";
+    el("directNotes").value = quote.notes || "";
 
-            ${quote.status === "draft" ? `
-                <button type="button"
-                    data-edit-direct="${escapeHtml(quote.id)}">
-                    Edit Draft
-                </button>
-                <button type="button" class="success"
-                    data-submit-direct="${escapeHtml(quote.id)}">
-                    Submit Draft
-                </button>
-            ` : ""}
-        </article>
-    `).join("");
+    el("directQuoteFormTitle").textContent =
+        "Edit Draft " + quote.quotation_number;
 
-    target.querySelectorAll("[data-edit-direct]").forEach(button => {
-        button.addEventListener("click", () =>
-            editDirectQuotation(button.dataset.editDirect)
-        );
-    });
-
-    target.querySelectorAll("[data-submit-direct]").forEach(button => {
-        button.addEventListener("click", () =>
-            submitExistingDraft(button.dataset.submitDirect)
-        );
-    });
+    calculateDirectTotal();
 }
-
-
+    
 async function editDirectQuotation(id) {
     const quote = currentDirectQuotes.find(item => item.id === id);
 
