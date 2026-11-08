@@ -415,6 +415,15 @@ accessoriesCheckbox.addEventListener("change", function () {
   }
 });
 
+  
+bracketsCheckbox.addEventListener("change", function () {
+  bracketRequestFields.hidden = !this.checked;
+  requestedBracketQuantity.required = this.checked;
+
+  if (!this.checked) {
+    requestedBracketQuantity.value = "1";
+  }
+});
 
 function showMessage(message, type) {
   formMessage.textContent = message;
