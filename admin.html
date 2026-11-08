@@ -708,9 +708,6 @@ if (el("refreshBtn")) {
     );
 }
 
-<script>
-"use strict";
-
 /* =========================================================
    FROSTTECH ADMIN PORTAL
    PART 2: CONNECTION, AUTHENTICATION, DASHBOARD,
@@ -950,49 +947,273 @@ if ($("forgotAdminPassword")) {
                 "loginMessage",
                 "If the account is registered, a password-reset email will be sent.",
                 "success"
+
+
+/* =========================================================
+   UNIFIED ADMIN CONNECTION AND AUTHENTICATION
+   Uses the existing Supabase client from Part 1.
+   ========================================================= */
+
+window.db = db;
+window.supabaseClient = db;
+
+const $ = (id) => document.getElementById(id);
+
+/* Variables used by quotation sections. */
+let currentQuoteRequests = [];
+let currentDirectQuoteRequest = null;
+
+const setButtonLoading = (
+    button,
+    loading,
+    loadingText = "Please wait..."
+) => {
+    if (!button) return;
+
+    if (loading) {
+        button.dataset.originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = loadingText;
+    } else {
+        button.disabled = false;
+
+        if (button.dataset.originalText) {
+            button.textContent = button.dataset.originalText;
+        }
+    }
+};
+
+/* Verify administrator access against the profiles table. */
+async function requireAdmin() {
+    const {
+        data: { user },
+        error: authError
+    } = await db.auth.getUser();
+
+    if (authError || !user) {
+        throw new Error("Please sign in again.");
+    }
+
+    const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("id, email, full_name, role, is_active")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (profileError) {
+        throw profileError;
+    }
+
+    if (
+        !profile ||
+        profile.role !== "admin" ||
+        profile.is_active !== true
+    ) {
+        await db.auth.signOut();
+        throw new Error(
+            "This account is not authorised to access the admin portal."
+        );
+    }
+
+    currentAdmin = user;
+
+    return { user, profile };
+}
+
+/* Show the login screen and hide the dashboard. */
+function showAdminLogin() {
+    currentAdmin = null;
+
+    if ($("dashboard")) {
+        $("dashboard").classList.add("hidden");
+    }
+
+    if ($("loginSection")) {
+        $("loginSection").classList.remove("hidden");
+    }
+}
+
+/* Show the dashboard and hide the login screen. */
+function showAdminDashboard() {
+    if ($("loginSection")) {
+        $("loginSection").classList.add("hidden");
+    }
+
+    if ($("dashboard")) {
+        $("dashboard").classList.remove("hidden");
+    }
+}
+
+/* Restore and verify an existing administrator session. */
+async function refreshAdminSession() {
+    try {
+        const { user, profile } = await requireAdmin();
+
+        if ($("loggedUser")) {
+            $("loggedUser").textContent =
+                profile.full_name ||
+                profile.email ||
+                user.email ||
+                "Administrator";
+        }
+
+        showAdminDashboard();
+
+        showMessage(
+            "systemStatus",
+            "Connected. Administrator access verified.",
+            "success-message"
+        );
+
+        await refreshAllDashboardSections();
+
+        return true;
+
+    } catch (error) {
+        showAdminLogin();
+
+        showMessage(
+            "systemStatus",
+            error.message || "Please sign in to continue.",
+            "error"
+        );
+
+        return false;
+    }
+}
+
+/* ADMIN LOGIN */
+if ($("loginForm")) {
+    $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const email = $("email")?.value.trim();
+        const password = $("password")?.value;
+
+        if (!email || !password) {
+            showMessage(
+                "loginMessage",
+                "Enter your email and password.",
+                "error"
             );
+            return;
+        }
+
+        const button = $("loginBtn");
+        setButtonLoading(button, true, "Signing in...");
+
+        try {
+            const { error } = await db.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            const verified = await refreshAdminSession();
+
+            if (!verified) return;
+
+            showMessage(
+                "loginMessage",
+                "Login successful.",
+                "success-message"
+            );
+
         } catch (error) {
             showMessage(
                 "loginMessage",
-                error.message || "Password reset could not be requested.",
+                "Login failed: " + errorText(error),
+                "error"
+            );
+
+        } finally {
+            setButtonLoading(button, false);
+        }
+    });
+}
+
+/* PASSWORD RESET */
+if ($("forgotAdminPassword")) {
+    $("forgotAdminPassword").addEventListener(
+        "click",
+        async (event) => {
+            event.preventDefault();
+
+            const email = $("email")?.value.trim();
+
+            if (!email) {
+                showMessage(
+                    "loginMessage",
+                    "Please enter your administrator email address first.",
+                    "error"
+                );
+
+                $("email")?.focus();
+                return;
+            }
+
+            try {
+                const redirectTo = new URL(
+                    "customer-login.html?reset=1",
+                    window.location.href
+                ).toString();
+
+                const { error } =
+                    await db.auth.resetPasswordForEmail(email, {
+                        redirectTo
+                    });
+
+                if (error) throw error;
+
+                showMessage(
+                    "loginMessage",
+                    "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
+                    "success-message"
+                );
+
+            } catch (error) {
+                showMessage(
+                    "loginMessage",
+                    "Password reset request failed: " +
+                    errorText(error),
+                    "error"
+                );
+            }
+        }
+    );
+}
+
+/* LOGOUT */
+if ($("logoutBtn")) {
+    $("logoutBtn").addEventListener("click", async () => {
+        try {
+            const { error } = await db.auth.signOut();
+
+            if (error) throw error;
+
+            showAdminLogin();
+
+            showMessage(
+                "systemStatus",
+                "You have logged out.",
+                "info"
+            );
+
+        } catch (error) {
+            showMessage(
+                "message",
+                errorText(error),
                 "error"
             );
         }
     });
 }
 
-/* -------------------------
-   LOGOUT
-   ------------------------- */
-
-if ($("logoutBtn")) {
-    $("logoutBtn").addEventListener("click", async () => {
-        const { error } = await db.auth.signOut();
-
-        if (error) {
-            showMessage("message", error.message, "error");
-            return;
-        }
-
-        currentAdmin = null;
-
-        if ($("dashboard")) $("dashboard").hidden = true;
-        if ($("loginSection")) $("loginSection").hidden = false;
-
-        showMessage("systemStatus", "You have signed out.", "info");
-    });
-}
-
-/* -------------------------
-   AUTH STATE
-   ------------------------- */
-
-db.auth.onAuthStateChange((event, session) => {
+/* AUTH STATE */
+db.auth.onAuthStateChange((event) => {
     if (event === "SIGNED_OUT") {
-        currentAdmin = null;
-
-        if ($("dashboard")) $("dashboard").hidden = true;
-        if ($("loginSection")) $("loginSection").hidden = false;
+        showAdminLogin();
     }
 });
 
