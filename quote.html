@@ -331,6 +331,32 @@ let client = null;
 let products = [];
 let submissionInProgress = false;
 
+  
+const installationCheckbox =
+  document.getElementById("requestInstallation");
+
+const bracketsCheckbox =
+  document.getElementById("requestBrackets");
+
+const accessoriesCheckbox =
+  document.getElementById("requestAccessories");
+
+const accessoryRequestFields =
+  document.getElementById("accessoryRequestFields");
+
+const requestedAccessories =
+  document.getElementById("requestedAccessories");
+
+accessoriesCheckbox.addEventListener("change", function () {
+  accessoryRequestFields.hidden = !this.checked;
+  requestedAccessories.required = this.checked;
+
+  if (!this.checked) {
+    requestedAccessories.value = "";
+  }
+});
+
+
 function showMessage(message, type) {
   formMessage.textContent = message;
   formMessage.className = type;
