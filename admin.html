@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,17 +7,15 @@
 <title>FrostTech Administration</title>
 
 <style>
-.ft-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55)}
-.ft-modal.hidden{display:none!important}
-.ft-modal-box{width:100%;max-width:420px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
-.ft-modal-header{background:var(--primary);color:#fff;padding:18px}
-.ft-modal-header h2{color:#fff;margin:0;font-size:21px}
-.ft-modal-body{padding:20px;line-height:1.6}
-.ft-modal-actions{display:flex;gap:10px;padding:0 20px 20px}
-.ft-modal-actions button{flex:1;margin:0}
-.ft-modal-actions .ft-cancel{background:#596579}
-body.ft-modal-open{overflow:hidden}
-:root{--primary:#063b70;--secondary:#0879c9;--background:#f3f6fa;--border:#dce3eb;--success:#16803c;--danger:#c62828;--warning:#a76500}
+:root {
+    --primary:#063b70;
+    --secondary:#0879c9;
+    --background:#f3f6fa;
+    --border:#dce3eb;
+    --success:#16803c;
+    --danger:#c62828;
+    --warning:#a76500;
+}
 *{box-sizing:border-box}
 body{margin:0;font-family:Arial,sans-serif;background:var(--background);color:#172333}
 header{background:var(--primary);color:white;padding:18px}
@@ -63,7 +62,21 @@ th{background:#edf3fa}
 small{color:#596579}
 hr{border:0;border-top:1px solid var(--border);margin:22px 0}
 footer{text-align:center;padding:20px;color:#64748b}
-@media(max-width:600px){main{padding:10px}.card{padding:13px}header h1{font-size:20px}}
+.ft-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55)}
+.ft-modal.hidden{display:none!important}
+.ft-modal-box{width:100%;max-width:420px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.ft-modal-header{background:var(--primary);color:#fff;padding:18px}
+.ft-modal-header h2{color:#fff;margin:0;font-size:21px}
+.ft-modal-body{padding:20px;line-height:1.6}
+.ft-modal-actions{display:flex;gap:10px;padding:0 20px 20px}
+.ft-modal-actions button{flex:1;margin:0}
+.ft-modal-actions .ft-cancel{background:#596579}
+body.ft-modal-open{overflow:hidden}
+@media(max-width:600px){
+    main{padding:10px}
+    .card{padding:13px}
+    header h1{font-size:20px}
+}
 </style>
 </head>
 
@@ -82,272 +95,265 @@ footer{text-align:center;padding:20px;color:#64748b}
         <label for="email">Administrator Email</label>
         <input id="email" type="email" autocomplete="off" required>
         <label for="password">Password</label>
-
-<div class="password-wrapper">
-    <input
-        id="password"
-        type="password"
-        autocomplete="off"
-        required
-    >
-
-</div>
-
-<button
-    type="button"
-    id="forgotAdminPassword"
-    class="secondary"
->
-    Forgot Password?
-</button>
+        <input id="password" type="password" autocomplete="off" required>
+        <button type="button" id="forgotAdminPassword" class="neutral">Forgot Password?</button>
         <button id="loginBtn" type="submit">Login</button>
     </form>
     <div id="loginMessage" role="status"></div>
 </section>
 
 <section id="dashboard" class="hidden">
-    <section class="card">
-        <h2>Administration Overview</h2>
-        <p>Signed in as: <strong id="loggedUser"></strong></p>
-        <div class="action-row">
-            <button id="refreshBtn" type="button">Refresh Dashboard</button>
-            <button id="logoutBtn" type="button" class="danger">Logout</button>
-        </div>
-        <div id="message" role="status"></div>
-    </section>
 
-    <section class="card">
-        <h2>Marketplace Summary</h2>
-        <div class="grid">
-            <div class="stat">Products<strong id="productCount">0</strong></div>
-            <div class="stat">Customer Requests<strong id="requestCount">0</strong></div>
-            <div class="stat">Supplier Applications<strong id="supplierCount">0</strong></div>
-            <div class="stat">Pending Supplier Reviews<strong id="pendingSupplierCount">0</strong></div>
-            <div class="stat">Supplier Quotations<strong id="quotationCount">0</strong></div>
-            <div class="stat">Direct Quotations<strong id="directQuoteCount">0</strong></div>
-        </div>
-    </section>
+<section class="card">
+    <h2>Administration Overview</h2>
+    <p>Signed in as: <strong id="loggedUser"></strong></p>
+    <div class="action-row">
+        <button id="refreshBtn" type="button">Refresh Dashboard</button>
+        <button id="logoutBtn" type="button" class="danger">Logout</button>
+    </div>
+    <div id="message" role="status"></div>
+</section>
 
-    <!-- PRODUCT MANAGEMENT -->
-    <section class="card" id="productManagement">
-        <h2>Product Management</h2>
-        <p>Manage catalogue descriptions, pictures, stock and customer visibility. Supplier costs are maintained separately through the protected supplier-cost process.</p>
-        <div id="productMessage" role="status"></div>
-        <h3 id="productFormTitle">Add Product</h3>
-
-        <form id="productForm">
-            <input type="hidden" id="productId">
-
-            <label for="productName">Product Name *</label>
-            <input id="productName" required placeholder="LG 1.5HP Split Air Conditioner">
-
-            <label for="productCategory">Category</label>
-            <select id="productCategory">
-                <option value="">Select category</option>
-                <option>Air Conditioners</option>
-                <option>Refrigeration Parts</option>
-                <option>HVAC Accessories</option>
-                <option>HVAC Services</option>
-            </select>
-
-            <label for="productBrand">Brand</label>
-            <input id="productBrand" placeholder="LG">
-
-            <label for="productModel">Model</label>
-            <input id="productModel">
-
-            <label for="productSku">SKU / Product Code</label>
-            <input id="productSku">
-
-            <label for="productUnit">Unit</label>
-            <select id="productUnit">
-                <option value="piece">Piece</option>
-                <option value="set">Set</option>
-                <option value="pack">Pack</option>
-                <option value="meter">Meter</option>
-                <option value="service">Service</option>
-            </select>
-
-            <label for="productDescription">Description</label>
-            <textarea id="productDescription"></textarea>
-
-            <label for="productSellingPrice">Current Catalogue Selling Price (₦)</label>
-            <input id="productSellingPrice" type="number" min="0" step="0.01" readonly placeholder="Assigned through supplier pricing">
-            <small>This value is displayed for reference only. General Product Management does not edit supplier costs or selling prices.</small>
-
-            <label for="productStock">Stock Quantity *</label>
-            <input id="productStock" type="number" min="0" step="1" value="0" required>
-
-            <label for="productMinStock">Minimum Stock Level</label>
-            <input id="productMinStock" type="number" min="0" step="1" value="0" required>
-
-            <label for="productImage">Product Image</label>
-            <input id="productImage" type="file" accept="image/*">
-
-            <label for="productActive">Catalogue Visibility</label>
-            <select id="productActive">
-    <option value="false" selected>Inactive — hidden from catalogue</option>
-    <option value="true">Active — visible to customers</option>
-</select>
-
-            <button id="saveProductBtn" type="submit">Save Product</button>
-            <button id="cancelProductEditBtn" type="button" class="neutral hidden">Cancel Editing</button>
-        </form>
-
-        <hr>
-        <h3>Existing Products</h3>
-        <button id="loadProductsBtn" type="button">Load Products</button>
-        <div id="productList">Load products to view the catalogue.</div>
-    </section>
-
-    <!-- DIRECT QUOTATIONS -->
-    <section class="card" id="directQuotationSection">
-        <h2>Admin-Direct Quotations</h2>
-        <p>Prepare quotations directly for customers without requiring supplier participation.</p>
-        <div class="message info">
-            Enter the product cost, markup, delivery, and applicable additional charges. The system calculates the proposed customer price and total. Review everything before submitting.
-        </div>
-        <div id="directQuoteMessage" role="status"></div>
-
-        <form id="directQuoteForm" class="hidden">
-            <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
-            <input type="hidden" id="directQuoteId">
-            <input type="hidden" id="directRequestId">
-            <p>Request reference: <strong id="directRequestReference"></strong></p>
-            <div id="directRequestRequirements" class="requirements">Customer requirements will appear here.</div>
-
-            <label for="directProductDescription">Product / Service *</label>
-            <textarea id="directProductDescription" required></textarea>
-
-            <label for="directQuantity">Quantity *</label>
-            <input id="directQuantity" type="number" min="1" step="1" required value="1">
-
-            <label for="directUnitCost">Product Unit Cost (₦) *</label>
-            <input id="directUnitCost" type="number" min="0" step="0.01" required>
-
-            <label for="directMarkup">Markup (%)</label>
-            <input id="directMarkup" type="number" min="0" step="0.01" value="15" required>
-
-            <div class="message info">The markup is applied to the product unit cost. It does not change the public catalogue selling price.</div>
-
-            <label for="directDeliveryCost">Delivery Cost (₦)</label>
-            <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
-
-            <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
-            <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
-
-            <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
-            <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
-
-            <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
-            <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
-
-            <label for="directAccessoryDescription">Accessory Description</label>
-            <input id="directAccessoryDescription" type="text" placeholder="e.g. Copper pipe, installation kit">
-
-            <label for="directAccessoryUnit">Accessory Unit / Pack Description</label>
-            <input id="directAccessoryUnit" type="text" placeholder="e.g. metre, pack, roll, kit">
-
-            <label for="directAccessoryQuantity">Accessories Quantity</label>
-            <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
-
-            <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
-            <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
-
-            <label for="directDiscount">Discount (₦)</label>
-            <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
-
-            <div class="quote-breakdown">
-                <h3>Quotation Calculation</h3>
-                <div class="quote-line"><span>Product cost per unit</span><span id="displayUnitCost">₦0.00</span></div>
-                <div class="quote-line"><span>Markup percentage</span><span id="displayMarkup">15%</span></div>
-                <div class="quote-line"><span>Customer unit price after markup</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
-                <div class="quote-line"><span>Product subtotal</span><span id="directSubtotal">₦0.00</span></div>
-                <div class="quote-line"><span>Delivery</span><span id="displayDelivery">₦0.00</span></div>
-                <div class="quote-line"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
-                <div class="quote-line"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
-                <div class="quote-line"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
-                <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
-                <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
-            </div>
-
-            <label for="directValidity">Valid Until</label>
-            <input id="directValidity" type="date">
-
-            <label for="directNotes">Notes for Customer</label>
-            <textarea id="directNotes" placeholder="Delivery arrangements, warranty, or other details"></textarea>
-
-            <div class="action-row">
-                <button id="saveDraftBtn" type="button" class="neutral">Save Draft</button>
-                <button id="submitDirectQuoteBtn" type="button" class="success">Submit Quotation</button>
-                <button id="cancelDirectQuoteBtn" type="button" class="danger">Cancel</button>
-            </div>
-        </form>
-
-        <hr>
-        <h3>Saved Direct Quotations</h3>
-        <button id="loadDirectQuotesBtn" type="button">Load Direct Quotations</button>
-        <div id="directQuoteList">Tap the button to load direct quotations.</div>
-    </section>
-
-    <!-- CUSTOMER REQUESTS -->
-    <section class="card">
-        <h2>Customer Quote Requests</h2>
-        <div id="requestMessage" role="status"></div>
-        <div id="quoteRequests">Loading requests...</div>
-    </section>
-
-    <!-- SUPPLIER QUOTATIONS -->
-    <section class="card">
-        <h2>Saved Supplier Quotations</h2>
-        <p>Review supplier pricing and select or reject supplier quotations.</p>
-        <div id="quotationMessage" role="status"></div>
-        <div id="supplierQuotes">Loading supplier quotations...</div>
-    </section>
-
-    <!-- SUPPLIER MANAGEMENT -->
-    <section class="card" id="supplierManagement">
-        <h2>Supplier Management</h2>
-        <p>Review supplier applications and make approval decisions.</p>
-        <button id="loadSuppliersBtn" type="button">Load Supplier Applications</button>
-        <div id="supplierManagementMessage" role="status"></div>
-        <div id="supplierManagementRows">Supplier applications will appear here.</div>
-    </section>
-
-    <!-- ADVERTISER VERIFICATION -->
-<section class="card" id="advertiserVerification">
-    <h2>Advertiser Verification</h2>
-    <p>Review advertiser applications, CAC certificates and supporting documents. Accept the CAC certificate before approving a company.</p>
-
-    <button id="loadAdvertisersBtn" type="button" onclick="loadAdvertiserApplications()">
-        Load Advertiser Applications
-    </button>
-
-    <div id="advertiserMessage" role="status"></div>
-
-    <div id="advertiserRows">
-        Advertiser applications will appear here.
+<section class="card">
+    <h2>Marketplace Summary</h2>
+    <div class="grid">
+        <div class="stat">Products<strong id="productCount">0</strong></div>
+        <div class="stat">Customer Requests<strong id="requestCount">0</strong></div>
+        <div class="stat">Supplier Applications<strong id="supplierCount">0</strong></div>
+        <div class="stat">Pending Supplier Reviews<strong id="pendingSupplierCount">0</strong></div>
+        <div class="stat">Supplier Quotations<strong id="quotationCount">0</strong></div>
+        <div class="stat">Direct Quotations<strong id="directQuoteCount">0</strong></div>
     </div>
 </section>
 
-    <!-- PAYMENTS -->
-    <section class="card">
-        <h2>Payment Records</h2>
-        <p>This section displays payment records only. It does not initiate payments or change payment statuses.</p>
-        <button id="loadPaymentsBtn" type="button">Load Payment Records</button>
-        <div id="paymentMessage" role="status"></div>
-        <div id="paymentRecords">Tap the button to load payment records.</div>
-    </section>
+<!-- PRODUCT MANAGEMENT -->
+<section class="card" id="productManagement">
+<h2>Product Management</h2>
+<p>Manage catalogue descriptions, pictures, stock and customer visibility. Supplier costs are maintained separately through the protected supplier-cost process.</p>
+<div id="productMessage" role="status"></div>
+<h3 id="productFormTitle">Add Product</h3>
+
+<form id="productForm">
+    <input type="hidden" id="productId">
+
+    <label for="productName">Product Name *</label>
+    <input id="productName" required placeholder="LG 1.5HP Split Air Conditioner">
+
+    <label for="productCategory">Category</label>
+    <select id="productCategory">
+        <option value="">Select category</option>
+        <option>Air Conditioners</option>
+        <option>Refrigeration Parts</option>
+        <option>HVAC Accessories</option>
+        <option>HVAC Services</option>
+    </select>
+
+    <label for="productBrand">Brand</label>
+    <input id="productBrand" placeholder="LG">
+
+    <label for="productModel">Model</label>
+    <input id="productModel">
+
+    <label for="productSku">SKU / Product Code</label>
+    <input id="productSku">
+
+    <label for="productUnit">Unit</label>
+    <select id="productUnit">
+        <option value="piece">Piece</option>
+        <option value="set">Set</option>
+        <option value="pack">Pack</option>
+        <option value="meter">Meter</option>
+        <option value="service">Service</option>
+    </select>
+
+    <label for="productDescription">Description</label>
+    <textarea id="productDescription"></textarea>
+
+    <label for="productSellingPrice">Current Catalogue Selling Price (₦)</label>
+    <input id="productSellingPrice" type="number" min="0" step="0.01" readonly placeholder="Assigned through supplier pricing">
+    <small>Reference only. Product Management cannot edit supplier costs or selling prices.</small>
+
+    <label for="productStock">Stock Quantity *</label>
+    <input id="productStock" type="number" min="0" step="1" value="0" required>
+
+    <label for="productMinStock">Minimum Stock Level</label>
+    <input id="productMinStock" type="number" min="0" step="1" value="0" required>
+
+    <label for="productImage">Product Image</label>
+    <input id="productImage" type="file" accept="image/*">
+
+    <label for="productActive">Catalogue Visibility</label>
+    <select id="productActive">
+        <option value="false" selected>Inactive — hidden from catalogue</option>
+        <option value="true">Active — visible to customers</option>
+    </select>
+
+    <button id="saveProductBtn" type="submit">Save Product</button>
+    <button id="cancelProductEditBtn" type="button" class="neutral hidden">Cancel Editing</button>
+</form>
+
+<hr>
+<h3>Existing Products</h3>
+<button id="loadProductsBtn" type="button">Load Products</button>
+<div id="productList">Load products to view the catalogue.</div>
+</section>
+
+<!-- DIRECT QUOTATIONS -->
+<section class="card" id="directQuotationSection">
+<h2>Admin-Direct Quotations</h2>
+<p>Prepare quotations directly for customers without requiring supplier participation.</p>
+<div class="message info">
+    Enter the product cost, markup, delivery and applicable additional charges. Review the calculation before submitting.
+</div>
+<div id="directQuoteMessage" role="status"></div>
+
+<form id="directQuoteForm" class="hidden">
+    <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
+    <input type="hidden" id="directQuoteId">
+    <input type="hidden" id="directRequestId">
+
+    <p>Request reference: <strong id="directRequestReference"></strong></p>
+    <div id="directRequestRequirements" class="requirements">Customer requirements will appear here.</div>
+
+    <label for="directProductDescription">Product / Service *</label>
+    <textarea id="directProductDescription" required></textarea>
+
+    <label for="directQuantity">Quantity *</label>
+    <input id="directQuantity" type="number" min="1" step="1" required value="1">
+
+    <label for="directUnitCost">Product Unit Cost (₦) *</label>
+    <input id="directUnitCost" type="number" min="0" step="0.01" required>
+
+    <label for="directMarkup">Markup (%)</label>
+    <input id="directMarkup" type="number" min="0" step="0.01" value="15" required>
+
+    <div class="message info">Markup applies to the product and permitted additional items. Delivery is excluded.</div>
+
+    <label for="directDeliveryCost">Delivery Cost (₦)</label>
+    <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
+    <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
+
+    <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
+    <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
+    <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directAccessoryDescription">Accessory Description</label>
+    <input id="directAccessoryDescription" type="text" placeholder="e.g. Copper pipe, installation kit">
+
+    <label for="directAccessoryUnit">Accessory Unit / Pack Description</label>
+    <input id="directAccessoryUnit" type="text" placeholder="e.g. metre, pack, roll, kit">
+
+    <label for="directAccessoryQuantity">Accessories Quantity</label>
+    <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
+
+    <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
+    <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directDiscount">Discount (₦)</label>
+    <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
+
+    <div class="quote-breakdown">
+        <h3>Quotation Calculation</h3>
+        <div class="quote-line"><span>Product cost per unit</span><span id="displayUnitCost">₦0.00</span></div>
+        <div class="quote-line"><span>Markup percentage</span><span id="displayMarkup">15%</span></div>
+        <div class="quote-line"><span>Customer unit price after markup</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
+        <div class="quote-line"><span>Product subtotal</span><span id="directSubtotal">₦0.00</span></div>
+        <div class="quote-line"><span>Delivery</span><span id="displayDelivery">₦0.00</span></div>
+        <div class="quote-line"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
+        <div class="quote-line"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
+        <div class="quote-line"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
+        <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
+        <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
+    </div>
+
+    <label for="directValidity">Valid Until</label>
+    <input id="directValidity" type="date">
+
+    <label for="directNotes">Notes for Customer</label>
+    <textarea id="directNotes" placeholder="Delivery arrangements, warranty, or other details"></textarea>
+
+    <div class="action-row">
+        <button id="saveDraftBtn" type="button" class="neutral">Save Draft</button>
+        <button id="submitDirectQuoteBtn" type="button" class="success">Submit Quotation</button>
+        <button id="cancelDirectQuoteBtn" type="button" class="danger">Cancel</button>
+    </div>
+</form>
+
+<hr>
+<h3>Saved Direct Quotations</h3>
+<button id="loadDirectQuotesBtn" type="button">Load Direct Quotations</button>
+<div id="directQuoteList">Tap the button to load direct quotations.</div>
+</section>
+
+<!-- CUSTOMER REQUESTS -->
+<section class="card">
+<h2>Customer Quote Requests</h2>
+<div id="requestMessage" role="status"></div>
+<div id="quoteRequests">Loading requests...</div>
+</section>
+
+<!-- SUPPLIER QUOTATIONS -->
+<section class="card">
+<h2>Saved Supplier Quotations</h2>
+<p>Review supplier pricing and select or reject supplier quotations.</p>
+<div id="quotationMessage" role="status"></div>
+<div id="supplierQuotes">Loading supplier quotations...</div>
+</section>
+
+<!-- SUPPLIER MANAGEMENT -->
+<section class="card" id="supplierManagement">
+<h2>Supplier Management</h2>
+<p>Review supplier applications and make approval decisions.</p>
+<button id="loadSuppliersBtn" type="button">Load Supplier Applications</button>
+<div id="supplierManagementMessage" role="status"></div>
+<div id="supplierManagementRows">Supplier applications will appear here.</div>
+</section>
+
+<!-- ADVERTISER VERIFICATION -->
+<section class="card" id="advertiserVerification">
+<h2>Advertiser Verification</h2>
+<p>Review advertiser applications, CAC certificates and supporting documents.</p>
+<button id="loadAdvertisersBtn" type="button">Load Advertiser Applications</button>
+<div id="advertiserMessage" role="status"></div>
+<div id="advertiserRows">Advertiser applications will appear here.</div>
+</section>
+
+<!-- PAYMENTS -->
+<section class="card">
+<h2>Payment Records</h2>
+<p>This section displays payment records only. It does not initiate payments or change payment statuses.</p>
+<button id="loadPaymentsBtn" type="button">Load Payment Records</button>
+<div id="paymentMessage" role="status"></div>
+<div id="paymentRecords">Tap the button to load payment records.</div>
+</section>
+
+<!-- SUPPLIER ACCOUNT MAINTENANCE -->
+<section class="card">
+<h2>Supplier Account Maintenance</h2>
+<p>Confirm the existing supplier email using administrator access.</p>
+<button id="confirmSupplierEmailBtn" type="button">Confirm Supplier Email</button>
+<p id="confirmSupplierEmailResult" role="status" aria-live="polite"></p>
+</section>
+
 </section>
 </main>
 
 <footer>FrostTech HVAC and Refrigeration Marketplace</footer>
 
-<!-- FROSTTECH BRANDED CONFIRMATION -->
-<div id="ftConfirmModal" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftConfirmTitle" aria-describedby="ftConfirmText">
+<div id="ftConfirmModal" class="ft-modal hidden" role="dialog"
+     aria-modal="true" aria-labelledby="ftConfirmTitle"
+     aria-describedby="ftConfirmText">
     <div class="ft-modal-box">
-        <div class="ft-modal-header"><h2 id="ftConfirmTitle">FrostTech</h2></div>
-        <div class="ft-modal-body"><p id="ftConfirmText">Are you sure you want to continue?</p></div>
+        <div class="ft-modal-header">
+            <h2 id="ftConfirmTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+        </div>
+        <div class="ft-modal-body">
+            <p id="ftConfirmText">Are you sure you want to continue?</p>
+        </div>
         <div class="ft-modal-actions">
             <button id="ftConfirmCancel" type="button" class="ft-cancel">Cancel</button>
             <button id="ftConfirmYes" type="button" class="success">Yes, Continue</button>
@@ -362,7 +368,10 @@ footer{text-align:center;padding:20px;color:#64748b}
 const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
 const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 
-const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY);
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
 window.supabaseClient = db;
 
 let currentAdmin = null;
@@ -388,21 +397,28 @@ function escapeHtml(value) {
 }
 
 function money(value) {
-    return "₦" + Number(value ?? 0).toLocaleString("en-NG", {
-        minimumFractionDigits:2,
-        maximumFractionDigits:2
-    });
+    const amount = Number(value ?? 0);
+    return "₦" + (Number.isFinite(amount) ? amount : 0)
+        .toLocaleString("en-NG", {
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+        });
 }
 
 function dateText(value) {
     if (!value) return "Not recorded";
     const date = new Date(value);
-    return Number.isNaN(date.getTime()) ? escapeHtml(value) : date.toLocaleString("en-NG");
+    return Number.isNaN(date.getTime())
+        ? escapeHtml(value)
+        : date.toLocaleString("en-NG");
 }
 
 function badge(status) {
-    const safe = String(status || "unknown").toLowerCase().replace(/[^a-z0-9_-]/g, "");
-    return '<span class="badge ' + safe + '">' + escapeHtml(status || "unknown") + '</span>';
+    const safe = String(status || "unknown")
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
+    return '<span class="badge ' + safe + '">' +
+        escapeHtml(status || "unknown") + '</span>';
 }
 
 function showMessage(id, text, type = "info") {
@@ -411,6 +427,30 @@ function showMessage(id, text, type = "info") {
     target.className = "message " + type;
     target.textContent = text;
 }
+
+function clearMessage(id) {
+    const target = el(id);
+    if (!target) return;
+    target.className = "";
+    target.textContent = "";
+}
+
+function errorText(error) {
+    return error?.message || String(error || "Unknown error");
+}
+
+function numericInput(id) {
+    const field = el(id);
+    const value = Number(field?.value);
+    return Number.isFinite(value) ? value : 0;
+}
+
+function makeReference(prefix) {
+    return prefix + "-" + Date.now() + "-" +
+        Math.random().toString(36).slice(2,7).toUpperCase();
+}
+
+/* FROSTTECH BRANDED CONFIRMATION */
 
 function frostTechConfirm(message, confirmLabel = "Yes, Continue") {
     return new Promise(resolve => {
@@ -456,35 +496,14 @@ function frostTechConfirm(message, confirmLabel = "Yes, Continue") {
     });
 }
 
-function clearMessage(id) {
-    const target = el(id);
-    if (!target) return;
-    target.className = "";
-    target.textContent = "";
-}
-
-function errorText(error) {
-    return error?.message || String(error || "Unknown error");
-}
-
-function makeReference(prefix) {
-    return prefix + "-" + Date.now() + "-" + Math.random().toString(36).slice(2,7).toUpperCase();
-}
-
-function numericInput(id) {
-    const value = Number(el(id).value);
-    return Number.isFinite(value) ? value : 0;
-}
-
+/* CUSTOMER REQUEST ITEM MARKER */
 
 function getCustomerRequestedItems(request) {
-    const description = String(request.description || "");
+    const description = String(request?.description || "");
     const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
     const markerIndex = description.indexOf(marker);
 
-    if (markerIndex === -1) {
-        return null;
-    }
+    if (markerIndex === -1) return null;
 
     const jsonText = description
         .slice(markerIndex + marker.length)
@@ -493,12 +512,7 @@ function getCustomerRequestedItems(request) {
 
     try {
         const items = JSON.parse(jsonText);
-
-        if (!items || items.version !== 1) {
-            return null;
-        }
-
-        return items;
+        return items && items.version === 1 ? items : null;
     } catch (error) {
         console.error("Could not read customer selections:", error);
         return null;
@@ -508,21 +522,17 @@ function getCustomerRequestedItems(request) {
 function requirementsText(request) {
     const items = getCustomerRequestedItems(request);
 
-    const requested = items
-        ? [
-            "Installation requested: " +
-                (items.installation ? "YES" : "NO"),
-
-            "Outdoor brackets requested: " +
-                (items.outdoor_brackets ? "YES" : "NO"),
-
-            "Accessories requested: " +
-                (items.accessories || "NO"),
-
-            "Other requested items: " +
-                (items.other_items || "NONE")
-        ].join("\n")
-        : "Additional item selections: Not recorded in this request.";
+    const requested = items ? [
+        "Installation requested: " +
+            (items.installation ? "YES" : "NO"),
+        "Outdoor brackets requested: " +
+            (items.outdoor_brackets ? "YES" : "NO"),
+        "Accessories requested: " +
+            (items.accessories || "NO"),
+        "Other requested items: " +
+            (items.other_items || "NONE")
+    ].join("\n") :
+    "Additional item selections: Not recorded in this request.";
 
     return [
         "CUSTOMER REQUEST — DO NOT ALTER",
@@ -530,25 +540,21 @@ function requirementsText(request) {
         "Quantity: " + (request.quantity ?? 1),
         "Preferred brand: " + (request.preferred_brand || "Any"),
         requested,
-        "Original request details: " +
-            (request.description || "None"),
+        "Original request details: " + (request.description || "None"),
         "Delivery address: " + (request.delivery_address || "Not provided")
     ].join("\n");
 }
 
-
 /* AUTHENTICATION */
 
-    el("forgotAdminPassword").addEventListener("click", async function() {
+el("forgotAdminPassword").addEventListener("click", async function() {
     const email = el("email").value.trim();
     const button = el("forgotAdminPassword");
 
     if (!email) {
-        showMessage(
-            "loginMessage",
+        showMessage("loginMessage",
             "Please enter your administrator email address first.",
-            "error"
-        );
+            "error");
         el("email").focus();
         return;
     }
@@ -563,24 +569,18 @@ function requirementsText(request) {
         ).toString();
 
         const { error } = await db.auth.resetPasswordForEmail(email, {
-            redirectTo: redirectTo
+            redirectTo
         });
 
         if (error) throw error;
 
-        showMessage(
-            "loginMessage",
+        showMessage("loginMessage",
             "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
-            "success"
-        );
-
+            "success-message");
     } catch (error) {
-        showMessage(
-            "loginMessage",
-            "Password reset request failed: " + error.message,
-            "error"
-        );
-
+        showMessage("loginMessage",
+            "Password reset request failed: " + errorText(error),
+            "error");
     } finally {
         button.disabled = false;
     }
@@ -588,7 +588,9 @@ function requirementsText(request) {
 
 el("loginForm").addEventListener("submit", async function(event) {
     event.preventDefault();
-    el("loginBtn").disabled = true;
+
+    const button = el("loginBtn");
+    button.disabled = true;
     showMessage("loginMessage", "Checking credentials...", "info");
 
     try {
@@ -596,19 +598,25 @@ el("loginForm").addEventListener("submit", async function(event) {
             email:el("email").value.trim(),
             password:el("password").value
         });
+
         if (error) throw error;
 
         const authorized = await checkAdminProfile(data.user);
+
         if (!authorized) {
             await db.auth.signOut();
-            showMessage("loginMessage", "Access denied. This account is not an active administrator.", "error");
+            showMessage("loginMessage",
+                "Access denied. This account is not an active administrator.",
+                "error");
             return;
         }
+
         await openDashboard(data.user);
     } catch (error) {
-        showMessage("loginMessage", "Login failed: " + errorText(error), "error");
+        showMessage("loginMessage",
+            "Login failed: " + errorText(error), "error");
     } finally {
-        el("loginBtn").disabled = false;
+        button.disabled = false;
     }
 });
 
@@ -622,13 +630,18 @@ async function checkAdminProfile(user) {
             .eq("id", user.id)
             .maybeSingle();
 
-        if (error || !data || data.role !== "admin" || data.is_active !== true) return false;
+        if (error || !data ||
+            data.role !== "admin" ||
+            data.is_active !== true) {
+            return false;
+        }
 
         currentAdmin = {
             id:user.id,
             email:user.email,
             full_name:data.full_name
         };
+
         return true;
     } catch (error) {
         console.error("Admin profile check failed:", error);
@@ -641,14 +654,21 @@ async function openDashboard(user) {
         await db.auth.signOut();
         el("dashboard").classList.add("hidden");
         el("loginSection").classList.remove("hidden");
-        showMessage("loginMessage", "Your account does not have active administrator access.", "error");
+        showMessage("loginMessage",
+            "Your account does not have active administrator access.",
+            "error");
         return;
     }
 
     el("loginSection").classList.add("hidden");
     el("dashboard").classList.remove("hidden");
-    el("loggedUser").textContent = currentAdmin.full_name || currentAdmin.email;
-    showMessage("systemStatus", "Connected. Administrator access verified.", "success-message");
+    el("loggedUser").textContent =
+        currentAdmin.full_name || currentAdmin.email;
+
+    showMessage("systemStatus",
+        "Connected. Administrator access verified.",
+        "success-message");
+
     await loadDashboard();
 }
 
@@ -660,19 +680,25 @@ async function checkExistingSession() {
         if (data.session?.user) {
             await openDashboard(data.session.user);
         } else {
-            showMessage("systemStatus", "Please log in as a FrostTech administrator.", "info");
+            showMessage("systemStatus",
+                "Please log in as a FrostTech administrator.",
+                "info");
         }
     } catch (error) {
-        showMessage("systemStatus", "Connection error: " + errorText(error), "error");
+        showMessage("systemStatus",
+            "Connection error: " + errorText(error),
+            "error");
     }
 }
 
 el("logoutBtn").addEventListener("click", async function() {
     const { error } = await db.auth.signOut();
+
     if (error) {
         showMessage("message", errorText(error), "error");
         return;
     }
+
     currentAdmin = null;
     el("dashboard").classList.add("hidden");
     el("loginSection").classList.remove("hidden");
@@ -693,6 +719,7 @@ el("refreshBtn").addEventListener("click", loadDashboard);
 
 async function loadDashboard() {
     if (!currentAdmin) return;
+
     showMessage("message", "Refreshing dashboard...", "info");
 
     const results = await Promise.allSettled([
@@ -703,2069 +730,2687 @@ async function loadDashboard() {
         loadDirectQuotations()
     ]);
 
-    const failed = results.filter(result => result.status === "rejected");
-    showMessage(
-        "message",
-        failed.length ? "Dashboard refreshed with some errors. Check each section." : "Dashboard refresh completed.",
-        failed.length ? "warning-message" : "success-message"
+    const failed = results.filter(result =>
+        result.status === "rejected"
     );
+
+    showMessage("message",
+        failed.length
+            ? "Dashboard refreshed with some errors. Check each section."
+            : "Dashboard refresh completed.",
+        failed.length ? "warning-message" : "success-message");
 }
 
-async function loadAdvertiserApplications() {
-    const rows = el("advertiserRows");
-    const message = el("advertiserMessage");
+<script>
+"use strict";
 
-    if (!currentAdmin) {
-        rows.textContent = "Please sign in as an administrator first.";
-        return;
+/* =========================================================
+   FROSTTECH ADMIN PORTAL
+   PART 2: CONNECTION, AUTHENTICATION, DASHBOARD,
+   ADVERTISER VERIFICATION AND PRODUCT MANAGEMENT
+   ========================================================= */
+
+const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
+
+/*
+ * Use the existing public anon/publishable key from your
+ * current admin.html. Never put the service-role key here.
+ */
+const SUPABASE_ANON_KEY = "PASTE_YOUR_EXISTING_SUPABASE_ANON_KEY_HERE";
+
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
+
+window.supabaseClient = supabaseClient;
+window.db = supabaseClient;
+
+const db = supabaseClient;
+
+const $ = (id) => document.getElementById(id);
+
+let currentAdmin = null;
+let currentProducts = [];
+let currentQuoteRequests = [];
+let currentSuppliers = [];
+let currentAdvertisers = [];
+let currentSupplierQuotes = [];
+let currentDirectQuoteRequest = null;
+
+const money = (value) => {
+    const amount = Number(value || 0);
+
+    return new Intl.NumberFormat("en-NG", {
+        style: "currency",
+        currency: "NGN",
+        maximumFractionDigits: 2
+    }).format(amount);
+};
+
+const escapeHtml = (value) => {
+    return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+};
+
+const showMessage = (elementId, message, type = "info") => {
+    const element = $(elementId);
+
+    if (!element) return;
+
+    element.textContent = message;
+    element.className = `message ${type}`;
+};
+
+const setButtonLoading = (button, loading, loadingText = "Please wait...") => {
+    if (!button) return;
+
+    if (loading) {
+        button.dataset.originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = loadingText;
+    } else {
+        button.disabled = false;
+
+        if (button.dataset.originalText) {
+            button.textContent = button.dataset.originalText;
+        }
+    }
+};
+
+const badge = (status) => {
+    const value = String(status || "unknown")
+        .toLowerCase()
+        .replaceAll("_", " ");
+
+    return `<span class="status-badge">${escapeHtml(value)}</span>`;
+};
+
+async function requireAdmin() {
+    const {
+        data: { user },
+        error: authError
+    } = await db.auth.getUser();
+
+    if (authError || !user) {
+        throw new Error("Please sign in again.");
     }
 
-    rows.textContent = "Loading advertiser applications...";
-    message.textContent = "";
+    const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("id, email, role, is_active")
+        .eq("id", user.id)
+        .maybeSingle();
 
-    const { data, error } = await db
-        .from("advertisers")
-        .select(`
-            id,
-            company_name,
-            contact_person,
-            email,
-            phone,
-            business_address,
-            registration_number,
-            verification_status,
-            reviewed_at,
-            review_reason,
-            created_at,
-            advertiser_documents (
-                id,
-                document_type,
-                storage_path,
-                review_status,
-                review_reason,
-                reviewed_at,
-created_at,
-removed_at,
-removed_by,
-removal_reason
-            )
-        `)
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        rows.textContent =
-            "Unable to load advertiser applications: " + error.message;
-        return;
+    if (profileError) {
+        throw profileError;
     }
 
-    currentAdvertisers = data || [];
+    if (
+        !profile ||
+        profile.role !== "admin" ||
+        profile.is_active !== true
+    ) {
+        await db.auth.signOut();
+        throw new Error("This account is not authorised to access the admin portal.");
+    }
+
+    currentAdmin = user;
+
+    return { user, profile };
+}
+
+async function refreshAdminSession() {
+    try {
+        const { profile } = await requireAdmin();
+
+        if ($("loggedUser")) {
+            $("loggedUser").textContent =
+                profile.email || currentAdmin.email || "Administrator";
+        }
+
+        if ($("loginSection")) {
+            $("loginSection").hidden = true;
+        }
+
+        if ($("dashboard")) {
+            $("dashboard").hidden = false;
+        }
+
+        showMessage("systemStatus", "Admin session verified.", "success");
+
+        await loadDashboard();
+
+        return true;
+    } catch (error) {
+        currentAdmin = null;
+
+        if ($("dashboard")) {
+            $("dashboard").hidden = true;
+        }
+
+        if ($("loginSection")) {
+            $("loginSection").hidden = false;
+        }
+
+        showMessage(
+            "systemStatus",
+            error.message || "Please sign in to continue.",
+            "error"
+        );
+
+        return false;
+    }
+}
+
+/* -------------------------
+   ADMIN LOGIN
+   ------------------------- */
+
+if ($("loginForm")) {
+    $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const email = $("email")?.value.trim();
+        const password = $("password")?.value;
+
+        if (!email || !password) {
+            showMessage("loginMessage", "Enter your email and password.", "error");
+            return;
+        }
+
+        const button = $("loginBtn");
+        setButtonLoading(button, true, "Signing in...");
+
+        try {
+            const { error } = await db.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            const verified = await refreshAdminSession();
+
+            if (!verified) {
+                return;
+            }
+
+            showMessage("loginMessage", "Login successful.", "success");
+        } catch (error) {
+            showMessage(
+                "loginMessage",
+                error.message || "Unable to sign in.",
+                "error"
+            );
+        } finally {
+            setButtonLoading(button, false);
+        }
+    });
+}
+
+/* -------------------------
+   PASSWORD RESET
+   ------------------------- */
+
+if ($("forgotAdminPassword")) {
+    $("forgotAdminPassword").addEventListener("click", async (event) => {
+        event.preventDefault();
+
+        const email = $("email")?.value.trim();
+
+        if (!email) {
+            showMessage(
+                "loginMessage",
+                "Enter your registered email address first.",
+                "error"
+            );
+            return;
+        }
+
+        try {
+            const { error } = await db.auth.resetPasswordForEmail(email, {
+                redirectTo: window.location.origin + window.location.pathname
+            });
+
+            if (error) throw error;
+
+            showMessage(
+                "loginMessage",
+                "If the account is registered, a password-reset email will be sent.",
+                "success"
+            );
+        } catch (error) {
+            showMessage(
+                "loginMessage",
+                error.message || "Password reset could not be requested.",
+                "error"
+            );
+        }
+    });
+}
+
+/* -------------------------
+   LOGOUT
+   ------------------------- */
+
+if ($("logoutBtn")) {
+    $("logoutBtn").addEventListener("click", async () => {
+        const { error } = await db.auth.signOut();
+
+        if (error) {
+            showMessage("message", error.message, "error");
+            return;
+        }
+
+        currentAdmin = null;
+
+        if ($("dashboard")) $("dashboard").hidden = true;
+        if ($("loginSection")) $("loginSection").hidden = false;
+
+        showMessage("systemStatus", "You have signed out.", "info");
+    });
+}
+
+/* -------------------------
+   AUTH STATE
+   ------------------------- */
+
+db.auth.onAuthStateChange((event, session) => {
+    if (event === "SIGNED_OUT") {
+        currentAdmin = null;
+
+        if ($("dashboard")) $("dashboard").hidden = true;
+        if ($("loginSection")) $("loginSection").hidden = false;
+    }
+});
+
+/* -------------------------
+   DASHBOARD COUNTS
+   ------------------------- */
+
+async function loadDashboard() {
+    await requireAdmin();
+
+    const countRows = async (table, filters = []) => {
+        let query = db
+            .from(table)
+            .select("*", { count: "exact", head: true });
+
+        for (const filter of filters) {
+            query = query.eq(filter.column, filter.value);
+        }
+
+        const { count, error } = await query;
+
+        if (error) throw error;
+
+        return count || 0;
+    };
+
+    try {
+        const [
+            products,
+            requests,
+            suppliers,
+            quotations,
+            directQuotes,
+            pendingSuppliers
+        ] = await Promise.all([
+            countRows("products"),
+            countRows("quote_requests"),
+            countRows("suppliers"),
+            countRows("admin_quotations", [
+                { column: "status", value: "submitted" }
+            ]),
+            countRows("admin_quotations", [
+                { column: "status", value: "draft" }
+            ]),
+            countRows("suppliers")
+        ]);
+
+        if ($("productCount")) $("productCount").textContent = products;
+        if ($("requestCount")) $("requestCount").textContent = requests;
+        if ($("supplierCount")) $("supplierCount").textContent = suppliers;
+        if ($("quotationCount")) $("quotationCount").textContent = quotations;
+        if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
+
+        /*
+         * The pending supplier count is calculated from the
+         * supplier records rather than assuming a database
+         * status-count RPC.
+         */
+        const { data: supplierRows, error: supplierError } = await db
+            .from("suppliers")
+            .select("review_status");
+
+        if (supplierError) throw supplierError;
+
+        const pendingCount = (supplierRows || []).filter((supplier) => {
+            const status = String(supplier.review_status || "pending").toLowerCase();
+
+            return ![
+                "approved",
+                "rejected",
+                "suspended"
+            ].includes(status);
+        }).length;
+
+        if ($("pendingSupplierCount")) {
+            $("pendingSupplierCount").textContent = pendingCount;
+        }
+
+        showMessage("message", "Dashboard updated.", "success");
+    } catch (error) {
+        showMessage(
+            "message",
+            error.message || "Unable to load dashboard counts.",
+            "error"
+        );
+    }
+}
+
+if ($("refreshBtn")) {
+    $("refreshBtn").addEventListener("click", loadDashboard);
+}
+
+/* =========================================================
+   ADVERTISER APPLICATION MANAGEMENT
+   ========================================================= */
+
+async function loadAdvertisers() {
+    await requireAdmin();
+
+    showMessage("advertiserMessage", "Loading advertiser applications...", "info");
+
+    try {
+        const { data, error } = await db
+            .from("advertisers")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentAdvertisers = data || [];
+
+        renderAdvertisers();
+
+        showMessage(
+            "advertiserMessage",
+            `${currentAdvertisers.length} advertiser application(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "advertiserMessage",
+            error.message || "Unable to load advertiser applications.",
+            "error"
+        );
+    }
+}
+
+function renderAdvertisers() {
+    const container = $("advertiserRows");
+
+    if (!container) return;
 
     if (!currentAdvertisers.length) {
-        rows.textContent = "No advertiser applications found.";
+        container.innerHTML = "<p>No advertiser applications found.</p>";
         return;
     }
 
-    rows.innerHTML = currentAdvertisers.map(advertiser => `
-        <article class="card" style="margin-top:15px;">
-            <h3>${escapeHtml(advertiser.company_name || "")}</h3>
+    container.innerHTML = currentAdvertisers.map((advertiser) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(advertiser.company_name || "Unnamed company")}</h3>
 
             <p><strong>Contact:</strong>
-                ${escapeHtml(advertiser.contact_person || "")}</p>
+                ${escapeHtml(advertiser.contact_person || "Not supplied")}
+            </p>
+
             <p><strong>Email:</strong>
-                ${escapeHtml(advertiser.email || "")}</p>
+                ${escapeHtml(advertiser.email || "")}
+            </p>
+
             <p><strong>Phone:</strong>
-                ${escapeHtml(advertiser.phone || "")}</p>
-            <p><strong>Address:</strong>
-                ${escapeHtml(advertiser.business_address || "")}</p>
+                ${escapeHtml(advertiser.phone || "")}
+            </p>
 
-            <label for="advertiserCAC_${advertiser.id}">
-                CAC Registration Number
-            </label>
+            <p><strong>Business address:</strong>
+                ${escapeHtml(advertiser.business_address || "Not supplied")}
+            </p>
 
-            <input
-                id="advertiserCAC_${advertiser.id}"
-                value="${escapeHtml(advertiser.registration_number || "")}"
-                placeholder="Enter CAC registration number"
-            >
+            <p><strong>CAC registration number:</strong>
+                ${escapeHtml(advertiser.registration_number || "Not supplied")}
+            </p>
 
-            <button type="button"
-                data-save-advertiser-cac="${escapeHtml(advertiser.id)}">
-                Save CAC Number
-            </button>
-
-            <p><strong>Application Status:</strong>
-                ${escapeHtml(advertiser.verification_status || "pending")}</p>
-
-${(advertiser.verification_status || "pending") === "pending" ? `
-    <button type="button"
-        class="success"
-        data-approve-advertiser="${escapeHtml(advertiser.id)}">
-        Approve Advertiser
-    </button>
-` : ""}
-
-            <p><strong>Submitted:</strong>
-                ${escapeHtml(dateText(advertiser.created_at))}</p>
-
-            <p><strong>Review Reason:</strong>
-                ${escapeHtml(advertiser.review_reason || "None")}</p>
-
-            <h4>Submitted Documents</h4>
-
-            ${
-
-(advertiser.advertiser_documents || []).length
-? advertiser.advertiser_documents.map(doc => `
-    <div style="border:1px solid #ddd;padding:10px;margin:8px 0;">
-
-        <p><strong>Type:</strong>
-            ${escapeHtml(doc.document_type)}</p>
-
-        ${doc.removed_at ? `
-            <p><strong>Status:</strong> Removed from active review</p>
-            <p><strong>Removed:</strong>
-                ${escapeHtml(dateText(doc.removed_at))}</p>
-            <p><strong>Removal reason:</strong>
-                ${escapeHtml(doc.removal_reason || "Not recorded")}</p>
-        ` : `
-            <p><strong>Status:</strong>
-                ${escapeHtml(doc.review_status)}</p>
-
-            <p><strong>Review Reason:</strong>
-                ${escapeHtml(doc.review_reason || "None")}</p>
+            <p><strong>Verification status:</strong>
+                ${badge(advertiser.verification_status)}
+            </p>
 
             <button type="button"
-                data-open-advertiser-document="${escapeHtml(doc.id)}">
-                View Document
+                class="view-advertiser-documents"
+                data-id="${escapeHtml(advertiser.id)}">
+                View Documents
             </button>
-
-            <label for="advertiserDocReason_${doc.id}">
-                Review Reason
-            </label>
-
-            <textarea
-                id="advertiserDocReason_${doc.id}"
-                placeholder="Required when rejecting this document"
-            >${escapeHtml(doc.review_reason || "")}</textarea>
-
-            <div class="action-row">
-                <button type="button"
-                    class="success"
-                    data-advertiser-doc-status="accepted"
-                    data-advertiser-id="${escapeHtml(advertiser.id)}"
-                    data-document-id="${escapeHtml(doc.id)}">
-                    Accept Document
-                </button>
-
-                <button type="button"
-                    class="danger"
-                    data-advertiser-doc-status="rejected"
-                    data-advertiser-id="${escapeHtml(advertiser.id)}"
-                    data-document-id="${escapeHtml(doc.id)}">
-                    Reject Document
-                </button>
-            </div>
-
-            ${doc.review_status === "pending" ? `
-                <label for="advertiserRemoveReason_${doc.id}">
-                    Removal Reason
-                </label>
-
-                <textarea
-                    id="advertiserRemoveReason_${doc.id}"
-                    placeholder="Explain why this document should be removed"
-                ></textarea>
-
-                <button type="button"
-                    class="danger"
-                    data-remove-advertiser-document="${escapeHtml(doc.id)}"
-                    data-advertiser-id="${escapeHtml(advertiser.id)}">
-                    Remove from Active Review
-                </button>
-            ` : ""}
-        `}
-    </div>
-`).join("")
-: "<p>No documents submitted.</p>"
-    
-            }
         </article>
     `).join("");
-
-    rows.querySelectorAll("[data-save-advertiser-cac]").forEach(button => {
-        button.addEventListener("click", () =>
-            saveAdvertiserCAC(button.dataset.saveAdvertiserCac)
-        );
-    });
-
-    rows.querySelectorAll("[data-open-advertiser-document]").forEach(button => {
-        button.addEventListener("click", () => {
-            const advertiser = currentAdvertisers.find(item =>
-                item.advertiser_documents.some(doc =>
-                    doc.id === button.dataset.openAdvertiserDocument
-                )
-            );
-
-            const doc = advertiser?.advertiser_documents.find(item =>
-                item.id === button.dataset.openAdvertiserDocument
-            );
-
-            if (doc) openAdvertiserDocument(doc.storage_path);
-        });
-    });
-
-    rows.querySelectorAll("[data-advertiser-doc-status]").forEach(button => {
-        button.addEventListener("click", () =>
-            reviewAdvertiserDocument(
-                button.dataset.advertiserId,
-                button.dataset.documentId,
-                button.dataset.advertiserDocStatus
-            )
-        );
-    });
-
-rows.querySelectorAll("[data-approve-advertiser]").forEach(button => {
-    button.addEventListener("click", () =>
-        approveAdvertiser(button.dataset.approveAdvertiser)
-    );
-});
-    
-rows.querySelectorAll("[data-remove-advertiser-document]").forEach(button => {
-    button.addEventListener("click", () =>
-        removeAdvertiserDocument(
-            button.dataset.advertiserId,
-            button.dataset.removeAdvertiserDocument
-        )
-    );
-});
-    
-    showMessage(
-        "advertiserMessage",
-        "Advertiser applications loaded.",
-        "success-message"
-    );
 }
 
-
-async function saveAdvertiserCAC(advertiserId) {
-    if (!currentAdmin) return;
-
-    const advertiser = currentAdvertisers.find(item =>
-        item.id === advertiserId
-    );
-
-    if (!advertiser) return;
-
-    const field = el("advertiserCAC_" + advertiserId);
-    const cacNumber = field ? field.value.trim() : "";
-
-    if (!cacNumber) {
-        showMessage(
-            "advertiserMessage",
-            "Enter the CAC registration number before saving.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        "Save CAC registration number " + cacNumber +
-        " for " + advertiser.company_name + "?",
-        "Yes, Save CAC Number"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db
-        .from("advertisers")
-        .update({
-            registration_number: cacNumber
-        })
-        .eq("id", advertiserId);
-
-    if (error) {
-        showMessage(
-            "advertiserMessage",
-            "Could not save CAC number: " + errorText(error),
-            "error"
-        );
-        return;
-    }
-
-    showMessage(
-        "advertiserMessage",
-        "CAC registration number saved successfully.",
-        "success-message"
-    );
-
-    await loadAdvertiserApplications();
+if ($("loadAdvertisersBtn")) {
+    $("loadAdvertisersBtn").addEventListener("click", loadAdvertisers);
 }
 
+/*
+ * Advertiser document review is intentionally not implemented
+ * in this part. It will be connected in the next section only
+ * after preserving the existing document-review workflow and
+ * its exact database fields/RPCs.
+ */
 
-async function approveAdvertiser(advertiserId) {
-    try {
-        if (!currentAdmin) {
-            showMessage(
-                "advertiserMessage",
-                "Please sign in as an administrator.",
-                "error"
-            );
-            return;
-        }
-
-        const advertiser = currentAdvertisers.find(item =>
-            item.id === advertiserId
-        );
-
-        if (!advertiser) {
-            showMessage(
-                "advertiserMessage",
-                "Advertiser application not found. Reload the applications.",
-                "error"
-            );
-            return;
-        }
-
-        if ((advertiser.verification_status || "pending") !== "pending") {
-            showMessage(
-                "advertiserMessage",
-                "This application is no longer pending approval.",
-                "error"
-            );
-            return;
-        }
-
-        if (!advertiser.registration_number ||
-            !advertiser.registration_number.trim()) {
-            showMessage(
-                "advertiserMessage",
-                "Enter and save the CAC registration number before approval.",
-                "error"
-            );
-            return;
-        }
-
-        const activeDocuments =
-            (advertiser.advertiser_documents || []).filter(doc =>
-                !doc.removed_at
-            );
-
-        const cacAccepted = activeDocuments.some(doc =>
-            doc.document_type === "CAC_CERTIFICATE" &&
-            doc.review_status === "accepted"
-        );
-
-        const addressAccepted = activeDocuments.some(doc =>
-            doc.document_type === "BUSINESS_ADDRESS" &&
-            doc.review_status === "accepted"
-        );
-
-        const allActiveDocumentsAccepted =
-            activeDocuments.length > 0 &&
-            activeDocuments.every(doc =>
-                doc.review_status === "accepted"
-            );
-
-        if (!cacAccepted || !addressAccepted ||
-            !allActiveDocumentsAccepted) {
-            showMessage(
-                "advertiserMessage",
-                "Approval blocked. The CAC certificate, proof of business address and all active submitted documents must be accepted first.",
-                "error"
-            );
-            return;
-        }
-
-        const confirmed = await frostTechConfirm(
-            "Approve " + advertiser.company_name +
-            " as a verified FrostTech advertiser? This will change the application status to approved.",
-            "Yes, Approve Advertiser"
-        );
-
-        if (!confirmed) return;
-
-        const { error } = await db
-            .from("advertisers")
-            .update({
-                verification_status: "approved",
-                reviewed_at: new Date().toISOString()
-            })
-            .eq("id", advertiserId)
-            .eq("verification_status", "pending");
-
-        if (error) {
-            showMessage(
-                "advertiserMessage",
-                "Advertiser approval failed: " + errorText(error),
-                "error"
-            );
-            return;
-        }
-
-        showMessage(
-            "advertiserMessage",
-            "Advertiser approved successfully.",
-            "success-message"
-        );
-
-        await loadAdvertiserApplications();
-
-    } catch (error) {
-        showMessage(
-            "advertiserMessage",
-            "Approval error: " + errorText(error),
-            "error"
-        );
-    }
-}
-    
-async function reviewAdvertiserDocument(
-    advertiserId,
-    documentId,
-    newStatus
-) {
-    if (!currentAdmin) return;
-
-    if (!["accepted", "rejected"].includes(newStatus)) return;
-
-    const advertiser = currentAdvertisers.find(item =>
-        item.id === advertiserId
-    );
-
-    const doc = advertiser?.advertiser_documents.find(item =>
-        item.id === documentId
-    );
-
-    if (!advertiser || !doc) return;
-
-    const reasonField = el("advertiserDocReason_" + documentId);
-    const reason = reasonField ? reasonField.value.trim() : "";
-
-    if (newStatus === "rejected" && !reason) {
-        showMessage(
-            "advertiserMessage",
-            "Enter a reason before rejecting a document.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        newStatus === "accepted"
-            ? "Accept this " + doc.document_type +
-              " document for " + advertiser.company_name + "?"
-            : "Reject this " + doc.document_type +
-              " document for " + advertiser.company_name + "?",
-        newStatus === "accepted" ? "Yes, Accept Document" : "Yes, Reject Document"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db
-        .from("advertiser_documents")
-        .update({
-            review_status: newStatus,
-            reviewed_by: currentAdmin.id,
-            reviewed_at: new Date().toISOString(),
-            review_reason: reason || null
-        })
-        .eq("id", documentId)
-        .eq("advertiser_id", advertiserId);
-
-    if (error) {
-        showMessage(
-            "advertiserMessage",
-            "Document review was not saved: " + errorText(error),
-            "error"
-        );
-        return;
-    }
-
-    showMessage(
-        "advertiserMessage",
-        "Document review saved: " + newStatus + ".",
-        "success-message"
-    );
-
-    await loadAdvertiserApplications();
-}
-
-
-async function removeAdvertiserDocument(advertiserId, documentId) {
-    try {
-        if (!currentAdmin) {
-            showMessage(
-                "advertiserMessage",
-                "Administrator session not found. Please sign in again.",
-                "error"
-            );
-            return;
-        }
-
-        const advertiser = currentAdvertisers.find(item =>
-            item.id === advertiserId
-        );
-
-        if (!advertiser) {
-            showMessage(
-                "advertiserMessage",
-                "Advertiser record could not be found. Refresh the applications.",
-                "error"
-            );
-            return;
-        }
-
-        const doc = (advertiser.advertiser_documents || []).find(item =>
-            item.id === documentId
-        );
-
-        if (!doc) {
-            showMessage(
-                "advertiserMessage",
-                "Document record could not be found. Refresh the applications.",
-                "error"
-            );
-            return;
-        }
-
-        if (doc.review_status !== "pending" || doc.removed_at) {
-            showMessage(
-                "advertiserMessage",
-                "Only pending, active documents can be removed.",
-                "error"
-            );
-            return;
-        }
-
-        const reasonField = el("advertiserRemoveReason_" + documentId);
-        const reason = reasonField ? reasonField.value.trim() : "";
-
-        if (!reason) {
-            showMessage(
-                "advertiserMessage",
-                "Enter a removal reason before continuing.",
-                "error"
-            );
-            return;
-        }
-
-        showMessage(
-            "advertiserMessage",
-            "Preparing document removal confirmation...",
-            "info"
-        );
-
-        const confirmed = await frostTechConfirm(
-            "Remove this " + doc.document_type +
-            " document from active review for " +
-            advertiser.company_name +
-            "? Its audit record and stored file will be retained.",
-            "Yes, Remove Document"
-        );
-
-        if (!confirmed) {
-            showMessage(
-                "advertiserMessage",
-                "Removal cancelled. No document was changed.",
-                "info"
-            );
-            return;
-        }
-
-        showMessage(
-            "advertiserMessage",
-            "Processing document removal...",
-            "info"
-        );
-
-        const { error } = await db.rpc(
-            "admin_remove_advertiser_document",
-            {
-                p_document_id: documentId,
-                p_reason: reason
-            }
-        );
-
-        if (error) {
-            showMessage(
-                "advertiserMessage",
-                "Document removal failed: " + errorText(error),
-                "error"
-            );
-            return;
-        }
-
-        showMessage(
-            "advertiserMessage",
-            "Document removed from active review. Audit history and stored file retained.",
-            "success-message"
-        );
-
-        await loadAdvertiserApplications();
-
-    } catch (error) {
-        showMessage(
-            "advertiserMessage",
-            "Removal process error: " + errorText(error),
-            "error"
-        );
-    }
-}
-    
-async function openAdvertiserDocument(storagePath) {
-    if (!currentAdmin) {
-        showMessage(
-            "advertiserMessage",
-            "Please sign in as an administrator.",
-            "error"
-        );
-        return;
-    }
-
-    const { data, error } = await db.storage
-        .from("advertiser-documents")
-        .createSignedUrl(storagePath, 120);
-
-    if (error) {
-        showMessage(
-            "advertiserMessage",
-            "Unable to open document: " + error.message,
-            "error"
-        );
-        return;
-    }
-
-    if (data && data.signedUrl) {
-        window.open(data.signedUrl, "_blank", "noopener");
-    }
-}
-
-    
-/* PRODUCT MANAGEMENT */
-
-el("productForm").addEventListener("submit", saveProduct);
-el("loadProductsBtn").addEventListener("click", loadProducts);
-el("cancelProductEditBtn").addEventListener("click", resetProductForm);
+/* =========================================================
+   PRODUCT MANAGEMENT
+   ========================================================= */
 
 async function loadProducts() {
-    const target = el("productList");
-    target.textContent = "Loading products...";
+    await requireAdmin();
 
-    const { data, error } = await db
-        .from("products")
-        .select("id,name,category,brand,model,sku,unit,description,selling_price,stock_quantity,min_stock_level,image_url,is_active,created_at,updated_at")
-        .order("created_at", { ascending: false });
+    showMessage("productMessage", "Loading products...", "info");
 
-    if (error) {
-        target.textContent = "Could not load products: " + errorText(error);
-        showMessage("productMessage", errorText(error), "error");
-        el("productCount").textContent = "—";
-        return;
+    try {
+        const { data, error } = await db
+            .from("products")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentProducts = data || [];
+
+        renderProducts();
+
+        showMessage(
+            "productMessage",
+            `${currentProducts.length} product(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            error.message || "Unable to load products.",
+            "error"
+        );
     }
+}
 
-    currentProducts = data || [];
-    el("productCount").textContent = currentProducts.length;
+function renderProducts() {
+    const container = $("productList");
+
+    if (!container) return;
 
     if (!currentProducts.length) {
-        target.textContent = "No products found.";
-        clearMessage("productMessage");
+        container.innerHTML = "<p>No products found.</p>";
         return;
     }
 
-    target.innerHTML = currentProducts.map(product => `
-        <article class="card">
-            <h3>${escapeHtml(product.name)}</h3>
-
+    container.innerHTML = currentProducts.map((product) => `
+        <article class="admin-card product-card">
             ${product.image_url ? `
-                <img class="product-image"
-                     src="${escapeHtml(product.image_url)}"
-                     alt="Product image">
+                <img
+                    src="${escapeHtml(product.image_url)}"
+                    alt="${escapeHtml(product.name)}"
+                    class="product-admin-image"
+                >
             ` : ""}
 
+            <h3>${escapeHtml(product.name)}</h3>
+
             <p><strong>Category:</strong>
-                ${escapeHtml(product.category || "Not specified")}</p>
+                ${escapeHtml(product.category || "")}
+            </p>
 
-            <p><strong>Brand / Model:</strong>
-                ${escapeHtml(product.brand || "")}
-                ${escapeHtml(product.model || "")}</p>
-
-            <p><strong>SKU:</strong>
-                ${escapeHtml(product.sku || "Not specified")}</p>
+            <p><strong>Brand:</strong>
+                ${escapeHtml(product.brand || "Not specified")}
+            </p>
 
             <p><strong>Catalogue Selling Price:</strong>
                 ${Number(product.selling_price) > 0
                     ? money(product.selling_price)
-                    : "Not yet priced"}</p>
+                    : "Not yet priced"}
+            </p>
 
             <p><strong>Stock:</strong>
-                ${escapeHtml(product.stock_quantity)}</p>
+                ${escapeHtml(product.stock_quantity)}
+            </p>
 
             <p><strong>Visibility:</strong>
-                ${product.is_active ? badge("active") : badge("inactive")}</p>
+                ${product.is_active ? badge("active") : badge("inactive")}
+            </p>
 
-            <div class="action-row">
-                <button type="button"
-                    data-edit-product="${escapeHtml(product.id)}">
-                    Edit Product
-                </button>
+            <button type="button"
+                class="edit-product"
+                data-id="${escapeHtml(product.id)}">
+                Edit Product
+            </button>
 
-                <button type="button"
-                    class="${product.is_active ? "warning" : "success"}"
-                    data-toggle-product="${escapeHtml(product.id)}">
-                    ${product.is_active ? "Deactivate" : "Activate"}
-                </button>
-            </div>
+            <button type="button"
+                class="toggle-product"
+                data-id="${escapeHtml(product.id)}"
+                data-active="${product.is_active ? "true" : "false"}">
+                ${product.is_active ? "Deactivate" : "Activate"}
+            </button>
         </article>
     `).join("");
-
-    target.querySelectorAll("[data-edit-product]").forEach(button => {
-        button.addEventListener("click", () =>
-            editProduct(button.dataset.editProduct)
-        );
-    });
-
-    target.querySelectorAll("[data-toggle-product]").forEach(button => {
-        button.addEventListener("click", () =>
-            toggleProduct(button.dataset.toggleProduct)
-        );
-    });
-
-    clearMessage("productMessage");
 }
 
+if ($("loadProductsBtn")) {
+    $("loadProductsBtn").addEventListener("click", loadProducts);
+}
 
-/*
- * Checks the protected supplier-cost records.
- * Supplier cost is never displayed in Product Management.
- */
+if ($("productList")) {
+    $("productList").addEventListener("click", async (event) => {
+        const editButton = event.target.closest(".edit-product");
+        const toggleButton = event.target.closest(".toggle-product");
+
+        if (editButton) {
+            editProduct(editButton.dataset.id);
+        }
+
+        if (toggleButton) {
+            await toggleProduct(toggleButton.dataset.id);
+        }
+    });
+}
+
 async function hasApprovedSelectedPricing(product) {
-    if (!product || !product.id) return false;
-
-    const sellingPrice = Number(product.selling_price);
-
-    if (!Number.isFinite(sellingPrice) || sellingPrice <= 0) {
-        return false;
-    }
-
     const { data, error } = await db.rpc(
         "admin_list_product_supplier_costs",
-        { p_product_id: product.id }
+        {
+            p_product_id: product.id
+        }
     );
 
-    if (error) {
-        throw new Error(
-            "Could not verify the selected supplier pricing: " +
-            errorText(error)
-        );
-    }
+    if (error) throw error;
 
-    const selected = (data || []).find(item =>
-        item.is_selected === true &&
-        Number(item.supplier_cost) > 0
+    return (data || []).some((row) =>
+        row.is_selected === true &&
+        Number(row.supplier_cost) > 0
     );
-
-    return Boolean(selected);
 }
 
+function editProduct(id) {
+    const product = currentProducts.find((item) => item.id === id);
+
+    if (!product) {
+        showMessage("productMessage", "Product not found.", "error");
+        return;
+    }
+
+    $("productId").value = product.id;
+    $("productName").value = product.name || "";
+    $("productCategory").value = product.category || "";
+    $("productBrand").value = product.brand || "";
+    $("productModel").value = product.model || "";
+    $("productSku").value = product.sku || "";
+    $("productUnit").value = product.unit || "";
+    $("productDescription").value = product.description || "";
+    $("productSellingPrice").value = product.selling_price ?? "";
+    $("productStock").value = product.stock_quantity ?? 0;
+    $("productMinStock").value = product.min_stock_level ?? 0;
+    $("productActive").checked = product.is_active === true;
+
+    showMessage(
+        "productMessage",
+        "Editing product. Save your changes when ready.",
+        "info"
+    );
+
+    $("productName")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
+function resetProductForm() {
+    $("productId").value = "";
+    $("productName").value = "";
+    $("productCategory").value = "";
+    $("productBrand").value = "";
+    $("productModel").value = "";
+    $("productSku").value = "";
+    $("productUnit").value = "";
+    $("productDescription").value = "";
+    $("productSellingPrice").value = "";
+    $("productStock").value = "0";
+    $("productMinStock").value = "0";
+    $("productImage").value = "";
+    $("productActive").checked = false;
+
+    showMessage("productMessage", "Product form cleared.", "info");
+}
+
+if ($("cancelProductEditBtn")) {
+    $("cancelProductEditBtn").addEventListener("click", resetProductForm);
+}
 
 async function saveProduct(event) {
     event.preventDefault();
 
-    if (!currentAdmin) return;
+    await requireAdmin();
 
-    const button = el("saveProductBtn");
-    button.disabled = true;
+    const productId = $("productId").value.trim();
+    const existing = currentProducts.find((item) => item.id === productId);
+
+    const name = $("productName").value.trim();
+    const category = $("productCategory").value.trim();
+
+    if (!name || !category) {
+        showMessage(
+            "productMessage",
+            "Product name and category are required.",
+            "error"
+        );
+        return;
+    }
+
+    const stock = Number($("productStock").value);
+    const minStock = Number($("productMinStock").value);
+
+    if (
+        !Number.isFinite(stock) ||
+        stock < 0 ||
+        !Number.isFinite(minStock) ||
+        minStock < 0
+    ) {
+        showMessage(
+            "productMessage",
+            "Enter valid stock quantities.",
+            "error"
+        );
+        return;
+    }
+
+    const values = {
+        name,
+        category,
+        brand: $("productBrand").value.trim() || null,
+        model: $("productModel").value.trim() || null,
+        sku: $("productSku").value.trim() || null,
+        unit: $("productUnit").value.trim() || null,
+        description: $("productDescription").value.trim() || null,
+        stock_quantity: stock,
+        min_stock_level: minStock,
+        updated_at: new Date().toISOString()
+    };
+
+    const button = $("saveProductBtn");
+    setButtonLoading(button, true, "Saving product...");
 
     try {
-        const id = el("productId").value.trim();
-        const imageFile = el("productImage").files[0];
+        const imageFile = $("productImage").files?.[0];
 
-        const stock = numericInput("productStock");
-        const minimumStock = numericInput("productMinStock");
-
-        if (!Number.isInteger(stock) || !Number.isInteger(minimumStock) ||
-            stock < 0 || minimumStock < 0) {
-            throw new Error(
-                "Stock values must be whole numbers and cannot be negative."
-            );
-        }
-
-        const record = {
-            name: el("productName").value.trim(),
-            category: el("productCategory").value || null,
-            brand: el("productBrand").value.trim() || null,
-            model: el("productModel").value.trim() || null,
-            sku: el("productSku").value.trim() || null,
-            unit: el("productUnit").value,
-            description: el("productDescription").value.trim() || null,
-            stock_quantity: stock,
-            min_stock_level: minimumStock,
-            updated_at: new Date().toISOString()
-        };
-
-        if (!record.name) {
-            throw new Error("Enter the product name.");
-        }
+        let imageUrl = existing?.image_url || null;
 
         if (imageFile) {
-            if (!imageFile.type.startsWith("image/")) {
-                throw new Error("Please select a valid image file.");
+            const extension = imageFile.name.split(".").pop()?.toLowerCase();
+
+            if (!["jpg", "jpeg", "png", "webp"].includes(extension)) {
+                throw new Error("Use a JPG, PNG or WEBP product image.");
             }
 
-            if (imageFile.size > 5 * 1024 * 1024) {
-                throw new Error("Image must be 5 MB or smaller.");
-            }
-
-            const extension = (imageFile.name.split(".").pop() || "jpg")
-                .replace(/[^a-zA-Z0-9]/g, "")
-                .toLowerCase();
-
-            const imagePath =
-                "products/" + crypto.randomUUID() + "." + extension;
+            const path = `products/${crypto.randomUUID()}.${extension}`;
 
             const { error: uploadError } = await db.storage
                 .from("product-images")
-                .upload(imagePath, imageFile, {
+                .upload(path, imageFile, {
                     upsert: false,
                     contentType: imageFile.type
                 });
 
-            if (uploadError) {
-                throw new Error(
-                    "Image upload failed: " + errorText(uploadError)
-                );
-            }
+            if (uploadError) throw uploadError;
 
-            const { data: publicUrlData } = db.storage
+            const { data: publicData } = db.storage
                 .from("product-images")
-                .getPublicUrl(imagePath);
+                .getPublicUrl(path);
 
-            record.image_url = publicUrlData.publicUrl;
+            imageUrl = publicData.publicUrl;
         }
 
-        if (id) {
+        if (imageUrl) {
+            values.image_url = imageUrl;
+        }
+
+        if (existing) {
             /*
-             * Editing an existing product:
-             * Do not update supplier_cost, selling_price or supplier_id.
+             * Preserve existing supplier pricing and supplier link.
+             * This form must not directly edit supplier cost.
              */
-            const existingProduct = currentProducts.find(
-                product => String(product.id) === String(id)
-            );
+            values.supplier_cost = existing.supplier_cost;
+            values.selling_price = existing.selling_price;
+            values.supplier_id = existing.supplier_id;
 
-            if (!existingProduct) {
-                throw new Error(
-                    "Product record not found. Reload products and try again."
-                );
-            }
+            if ($("productActive").checked) {
+                const hasPricing = await hasApprovedSelectedPricing(existing);
 
-            const wantsActive =
-                el("productActive").value === "true";
-
-            if (wantsActive) {
-                const pricingVerified =
-                    await hasApprovedSelectedPricing(existingProduct);
-
-                if (!pricingVerified) {
+                if (!hasPricing) {
                     throw new Error(
-                        "This product cannot be activated yet. " +
-                        "First add and select an approved supplier cost " +
-                        "through Supplier Cost Management."
+                        "This product cannot be activated until an approved supplier price is selected."
                     );
                 }
             }
 
-            record.is_active = wantsActive;
+            values.is_active = $("productActive").checked;
 
             const { error } = await db
                 .from("products")
-                .update(record)
-                .eq("id", id);
+                .update(values)
+                .eq("id", productId);
 
             if (error) throw error;
-
-            showMessage(
-                "productMessage",
-                "Product details updated. Protected supplier pricing was preserved.",
-                "success-message"
-            );
-
         } else {
             /*
-             * New products are created without pricing.
-             * They must remain inactive until supplier pricing is selected.
-             *
-             * No supplier cost, selling price or supplier ID is written here.
+             * New products start inactive and unpriced.
+             * Supplier cost and selling price are managed
+             * through the supplier-pricing workflow.
              */
-            record.is_active = false;
+            values.is_active = false;
+            values.supplier_cost = null;
+            values.selling_price = null;
+            values.supplier_id = null;
 
             const { error } = await db
                 .from("products")
-                .insert(record);
+                .insert(values);
 
             if (error) throw error;
-
-            showMessage(
-                "productMessage",
-                "New product created successfully as inactive. " +
-                "Next, add and select its approved supplier cost through " +
-                "Supplier Cost Management.",
-                "success-message"
-            );
         }
 
-        resetProductForm();
         await loadProducts();
+        resetProductForm();
 
+        showMessage(
+            "productMessage",
+            existing
+                ? "Product updated successfully."
+                : "Product created. Select approved supplier pricing before activation.",
+            "success"
+        );
     } catch (error) {
         showMessage(
             "productMessage",
-            "Product could not be saved: " + errorText(error),
+            error.message || "Unable to save product.",
             "error"
         );
     } finally {
-        button.disabled = false;
+        setButtonLoading(button, false);
     }
 }
 
-
-function editProduct(id) {
-    const product = currentProducts.find(item => item.id === id);
-    if (!product) return;
-
-    el("productId").value = product.id;
-    el("productName").value = product.name || "";
-    el("productCategory").value = product.category || "";
-    el("productBrand").value = product.brand || "";
-    el("productModel").value = product.model || "";
-    el("productSku").value = product.sku || "";
-    el("productUnit").value = product.unit || "piece";
-    el("productDescription").value = product.description || "";
-    el("productStock").value = product.stock_quantity ?? 0;
-    el("productMinStock").value = product.min_stock_level ?? 0;
-    el("productSellingPrice").value = product.selling_price ?? "";
-    el("productActive").value = String(product.is_active);
-    el("productImage").value = "";
-
-    el("productFormTitle").textContent = "Edit Product";
-    el("saveProductBtn").textContent = "Update Product";
-    el("cancelProductEditBtn").classList.remove("hidden");
-
-    el("productManagement").scrollIntoView({ behavior: "smooth" });
-
-    showMessage(
-        "productMessage",
-        "Editing product details. Supplier cost and catalogue selling price cannot be changed here.",
-        "info"
-    );
+if ($("productForm")) {
+    $("productForm").addEventListener("submit", saveProduct);
 }
-
-
-function resetProductForm() {
-    el("productForm").reset();
-    el("productId").value = "";
-    el("productStock").value = 0;
-    el("productMinStock").value = 0;
-    el("productSellingPrice").value = "";
-    el("productActive").value = "false";
-    el("productFormTitle").textContent = "Add Product";
-    el("saveProductBtn").textContent = "Save Product";
-    el("cancelProductEditBtn").classList.add("hidden");
-}
-
 
 async function toggleProduct(id) {
-    const product = currentProducts.find(item => item.id === id);
-    if (!product) return;
+    await requireAdmin();
 
-    const activating = !product.is_active;
+    const product = currentProducts.find((item) => item.id === id);
 
-    if (activating) {
-        try {
-            const pricingVerified =
-                await hasApprovedSelectedPricing(product);
-
-            if (!pricingVerified) {
-                showMessage(
-                    "productMessage",
-                    "This product cannot be activated yet. " +
-                    "First add and select an approved supplier cost " +
-                    "through Supplier Cost Management.",
-                    "error"
-                );
-                return;
-            }
-        } catch (error) {
-            showMessage(
-                "productMessage",
-                "Activation check failed: " + errorText(error),
-                "error"
-            );
-            return;
-        }
-    }
-
-    const action = activating ? "activate" : "deactivate";
-
-    const confirmed = await frostTechConfirm(
-        "Do you want to " + action + " " + product.name + "?",
-        "Yes, Continue"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db.from("products")
-        .update({
-            is_active: activating,
-            updated_at: new Date().toISOString()
-        })
-        .eq("id", id);
-
-    if (error) {
-        showMessage("productMessage", errorText(error), "error");
+    if (!product) {
+        showMessage("productMessage", "Product not found.", "error");
         return;
     }
 
-    showMessage(
-        "productMessage",
-        "Product visibility updated.",
-        "success-message"
-    );
+    const nextActive = !product.is_active;
 
-    await loadProducts();
+    try {
+        if (nextActive) {
+            const hasPricing = await hasApprovedSelectedPricing(product);
+
+            if (!hasPricing) {
+                throw new Error(
+                    "An approved supplier price must be selected before this product can be activated."
+                );
+            }
+        }
+
+        const { error } = await db
+            .from("products")
+            .update({
+                is_active: nextActive,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (error) throw error;
+
+        await loadProducts();
+
+        showMessage(
+            "productMessage",
+            nextActive ? "Product activated." : "Product deactivated.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            error.message || "Unable to change product visibility.",
+            "error"
+        );
+    }
 }
 
+/* -------------------------
+   INITIAL PAGE CHECK
+   ------------------------- */
 
-/* CUSTOMER REQUESTS */
+(async function initialiseAdminPortal() {
+    const { data: { session } } = await db.auth.getSession();
+
+    if (session) {
+        await refreshAdminSession();
+    } else {
+        if ($("loginSection")) $("loginSection").hidden = false;
+        if ($("dashboard")) $("dashboard").hidden = true;
+    }
+})();
+</script> 
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN PORTAL
+   PART 3: CUSTOMER REQUESTS, ADMIN FEE AND DIRECT QUOTATIONS
+   ========================================================= */
+
+/* -------------------------
+   CUSTOMER QUOTATION REQUESTS
+   ------------------------- */
 
 async function loadCustomerRequests() {
-    const target = el("quoteRequests");
-    target.textContent = "Loading customer requests...";
+    await requireAdmin();
 
-    const { data, error } = await db.from("quote_requests")
-        .select("*")
-        .order("created_at", { ascending: false });
+    showMessage("requestMessage", "Loading customer requests...", "info");
 
-    if (error) {
-        target.textContent = "Could not load requests: " + errorText(error);
-        showMessage("requestMessage", errorText(error), "error");
-        el("requestCount").textContent = "—";
-        return;
-    }
+    try {
+        const { data, error } = await db
+            .from("quote_requests")
+            .select("*")
+            .order("created_at", { ascending: false });
 
-    currentRequests = data || [];
-    el("requestCount").textContent = currentRequests.length;
+        if (error) throw error;
 
-    if (!currentRequests.length) {
-        target.textContent = "No customer quote requests found.";
-        clearMessage("requestMessage");
-        return;
-    }
+        currentQuoteRequests = data || [];
 
-    target.innerHTML = currentRequests.map(request => {
-        const reference = request.request_number || request.id;
-        const description = request.title || request.description ||
-            request.product_id || "Product not specified";
+        renderCustomerRequests();
 
-        return `
-        <article class="card">
-            <h3>${escapeHtml(reference)}</h3>
-            <p><strong>Customer:</strong> ${escapeHtml(request.customer_name || "Customer")}</p>
-            <p><strong>Email:</strong> ${escapeHtml(request.customer_email || "Not provided")}</p>
-            <p><strong>Phone:</strong> ${escapeHtml(request.customer_phone || "Not provided")}</p>
-            <p><strong>Product:</strong> ${escapeHtml(description)}</p>
-            <p><strong>Quantity:</strong> ${escapeHtml(request.quantity ?? 1)}</p>
-            <p><strong>Preferred Brand:</strong> ${escapeHtml(request.preferred_brand || "Any")}</p>
-
-            <div class="requirements">
-                <strong>Full customer requirements</strong>
-                <p>${escapeHtml(request.description || "No additional description provided").replace(/\n/g, "<br>")}</p>
-                <p><strong>Delivery address:</strong><br>${escapeHtml(request.delivery_address || "Not provided")}</p>
-            </div>
-
-            <p><strong>Status:</strong> ${badge(request.status || "pending")}</p>
-            <p><strong>Date:</strong> ${dateText(request.created_at)}</p>
-
-            <div class="action-row">
-                <button type="button" data-prepare-direct="${escapeHtml(request.id)}">
-                    Prepare Direct Quotation
-                </button>
-                <button type="button" class="neutral"
-                    data-mark-reviewing="${escapeHtml(request.id)}">
-                    Mark Reviewing
-                </button>
-            </div>
-        </article>`;
-    }).join("");
-
-    target.querySelectorAll("[data-prepare-direct]").forEach(button => {
-        button.addEventListener("click", () =>
-            prepareDirectQuotation(button.dataset.prepareDirect)
+        showMessage(
+            "requestMessage",
+            `${currentQuoteRequests.length} customer request(s) loaded.`,
+            "success"
         );
-    });
-
-    target.querySelectorAll("[data-mark-reviewing]").forEach(button => {
-        button.addEventListener("click", () =>
-            updateRequestStatus(button.dataset.markReviewing, "reviewing")
+    } catch (error) {
+        showMessage(
+            "requestMessage",
+            error.message || "Unable to load customer requests.",
+            "error"
         );
-    });
-
-    clearMessage("requestMessage");
+    }
 }
 
+function renderCustomerRequests() {
+    const container = $("quoteRequests");
 
-async function updateRequestStatus(requestId, status) {
-    const { error } = await db.from("quote_requests")
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq("id", requestId);
+    if (!container) return;
 
-    if (error) {
-        showMessage("requestMessage", errorText(error), "error");
+    if (!currentQuoteRequests.length) {
+        container.innerHTML = "<p>No customer requests found.</p>";
         return;
     }
 
-    showMessage(
-        "requestMessage",
-        "Customer request status updated.",
-        "success-message"
-    );
+    container.innerHTML = currentQuoteRequests.map((request) => `
+        <article class="admin-card">
+            <h3>
+                Request ${escapeHtml(request.request_number || request.id)}
+            </h3>
 
-    await loadCustomerRequests();
+            <p><strong>Customer:</strong>
+                ${escapeHtml(request.customer_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(request.customer_email || "Not supplied")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(request.customer_phone || "Not supplied")}
+            </p>
+
+            <p><strong>Requirement:</strong><br>
+                ${escapeHtml(request.description || "No description supplied")}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(request.status)}
+            </p>
+
+            <p><strong>Submitted:</strong>
+                ${escapeHtml(request.created_at || "")}
+            </p>
+
+            <button type="button"
+                class="mark-request-reviewing"
+                data-id="${escapeHtml(request.id)}">
+                Mark Reviewing
+            </button>
+
+            <button type="button"
+                class="create-direct-quotation"
+                data-id="${escapeHtml(request.id)}">
+                Prepare Direct Quotation
+            </button>
+        </article>
+    `).join("");
 }
 
-/* FROSTTECH QUOTATION ADMINISTRATION FEE */
+if ($("loadRequestsBtn")) {
+    $("loadRequestsBtn").addEventListener("click", loadCustomerRequests);
+}
 
+if ($("quoteRequests")) {
+    $("quoteRequests").addEventListener("click", async (event) => {
+        const reviewingButton = event.target.closest(".mark-request-reviewing");
+        const quotationButton = event.target.closest(".create-direct-quotation");
+
+        if (reviewingButton) {
+            await markRequestReviewing(reviewingButton.dataset.id);
+        }
+
+        if (quotationButton) {
+            await openDirectQuotationForRequest(quotationButton.dataset.id);
+        }
+    });
+}
+
+async function markRequestReviewing(id) {
+    await requireAdmin();
+
+    try {
+        const { error } = await db
+            .from("quote_requests")
+            .update({
+                status: "reviewing",
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (error) throw error;
+
+        await loadCustomerRequests();
+
+        showMessage(
+            "requestMessage",
+            "Customer request marked as reviewing.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "requestMessage",
+            error.message || "Unable to update request status.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   QUOTATION PROCESSING FEE
+   ========================================================= */
+
+/*
+ * The processing fee is 2% of:
+ *
+ * Product subtotal
+ * + additional charges
+ * - discount
+ *
+ * Delivery is excluded.
+ *
+ * The fee is paid separately before the customer receives
+ * the full quotation details.
+ */
 
 function calculateQuotationAdminFee(quote) {
     const subtotal = Number(quote.subtotal || 0);
     const additional = Number(quote.additional_charges || 0);
     const discount = Number(quote.discount || 0);
 
-    // Delivery is excluded from the administration fee.
-    // Do not subtract delivery again.
     const feeBasis = Math.max(
         0,
         subtotal + additional - discount
     );
 
-    const fee = Math.round(
-        feeBasis * 0.02 * 100
-    ) / 100;
+    const fee = Math.round(feeBasis * 0.02 * 100) / 100;
 
     return {
+        subtotal,
+        additional,
+        discount,
         feeBasis,
-        fee,
-        rate: 2
+        fee
     };
 }
 
-
-
 async function notifyCustomerFeeRequired(request, quote, fee) {
-    if (!request.customer_id) {
-        return {
-            sent: false,
-            reason: "guest"
-        };
-    }
+    /*
+     * Guest customers do not have an authenticated customer
+     * account to receive an in-app notification.
+     */
+    if (!request.customer_id) return;
+
+    const { data: customer, error: customerError } = await db
+        .from("customers")
+        .select("user_id")
+        .eq("id", request.customer_id)
+        .maybeSingle();
+
+    if (customerError) throw customerError;
+
+    if (!customer?.user_id) return;
+
+    const notificationTitle = "Quotation processing fee required";
+
+    const { data: existing, error: existingError } = await db
+        .from("notifications")
+        .select("id")
+        .eq("user_id", customer.user_id)
+        .eq("reference_type", "admin_quotation")
+        .eq("reference_id", quote.id)
+        .eq("title", notificationTitle)
+        .limit(1);
+
+    if (existingError) throw existingError;
+
+    if (existing?.length) return;
+
+    const reference = request.request_number || request.id;
+
+    const { error: insertError } = await db
+        .from("notifications")
+        .insert({
+            user_id: customer.user_id,
+            title: notificationTitle,
+            message:
+                `Quotation ${reference} has been prepared. ` +
+                `A separate quotation processing and marketplace ` +
+                `administration fee of ${money(fee)} is required ` +
+                `before the full quotation details are released. ` +
+                `Delivery charges are excluded from the fee calculation.`,
+            type: "quotation",
+            reference_type: "admin_quotation",
+            reference_id: quote.id
+        });
+
+    if (insertError) throw insertError;
+}
+
+/* =========================================================
+   DIRECT QUOTATION FORM
+   ========================================================= */
+
+function resetDirectQuotationForm() {
+    const form = $("directQuoteForm");
+
+    if (form) form.reset();
+
+    $("directQuoteId").value = "";
+    $("directRequestId").value = "";
+    $("directRequestReference").textContent = "";
+    $("directRequestRequirements").textContent = "";
+
+    currentDirectQuoteRequest = null;
+
+    updateDirectQuotationPreview();
+
+    showMessage(
+        "directQuoteMessage",
+        "Quotation form cleared.",
+        "info"
+    );
+}
+
+function readRequestedItems(request) {
+    const description = String(request?.description || "");
+
+    const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+
+    const markerPosition = description.indexOf(marker);
+
+    if (markerPosition === -1) return null;
+
+    const jsonText = description
+        .slice(markerPosition + marker.length)
+        .trim();
 
     try {
-        const { data: customer, error: customerError } = await db
-            .from("customers")
-            .select("user_id")
-            .eq("id", request.customer_id)
-            .maybeSingle();
+        const parsed = JSON.parse(jsonText);
 
-        if (customerError) throw customerError;
-
-        if (!customer || !customer.user_id) {
-            return {
-                sent: false,
-                reason: "guest"
-            };
+        if (
+            !parsed ||
+            typeof parsed !== "object" ||
+            Array.isArray(parsed) ||
+            parsed.version !== 1
+        ) {
+            return null;
         }
 
-        // Prevent duplicate fee notifications for this quotation.
-        const { data: existing, error: checkError } = await db
-            .from("notifications")
-            .select("id")
-            .eq("user_id", customer.user_id)
-            .eq("reference_type", "admin_quotation")
-            .eq("reference_id", quote.id)
-            .eq("title", "Quotation processing fee required")
-            .limit(1);
-
-        if (checkError) throw checkError;
-
-        if (existing && existing.length > 0) {
-            return {
-                sent: true,
-                duplicate: true
-            };
-        }
-
-        const message =
-            "FrostTech has prepared your quotation " +
-            quote.quotation_number +
-            ". Before the full quotation details can be released, " +
-            "a separate quotation-processing and marketplace " +
-            "administration fee of 2% is required. " +
-            "Your fee is " + money(fee) +
-            ". This fee covers the cost incurred in processing " +
-            "your quotation. Delivery cost is excluded from the " +
-            "fee calculation. Your full quotation will be made " +
-            "available after payment is confirmed.";
-
-        const { error: notificationError } = await db
-            .from("notifications")
-            .insert({
-                user_id: customer.user_id,
-                title: "Quotation processing fee required",
-                message: message,
-                type: "quotation",
-                reference_type: "admin_quotation",
-                reference_id: quote.id
-            });
-
-        if (notificationError) throw notificationError;
-
-        return {
-            sent: true,
-            duplicate: false
-        };
-
-    } catch (error) {
-        console.error(
-            "FrostTech fee notification error:",
-            error
-        );
-
-        return {
-            sent: false,
-            reason: "error",
-            error: error.message
-        };
+        return parsed;
+    } catch {
+        return null;
     }
 }
-    
-/* DIRECT QUOTATION CALCULATOR */
 
-function calculateDirectTotal() {
-    const quantity = numericInput("directQuantity");
-    const unitCost = numericInput("directUnitCost");
-    const markup = numericInput("directMarkup");
-    const delivery = numericInput("directDeliveryCost");
-    const discount = numericInput("directDiscount");
+async function openDirectQuotationForRequest(requestId) {
+    await requireAdmin();
 
-    // Requested outdoor brackets
-    const bracketQuantity = numericInput("directBracketQuantity");
-    const bracketUnitCost = numericInput("directBracketUnitCost");
-    const rawBrackets = bracketQuantity * bracketUnitCost;
+    const request = currentQuoteRequests.find(
+        (item) => item.id === requestId
+    );
 
-    // Requested installation
-    const installationPerAc = numericInput("directInstallationPerAc");
-    const rawInstallation = quantity * installationPerAc;
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "Customer request not found. Refresh the requests list.",
+            "error"
+        );
+        return;
+    }
 
-    // Requested accessories or other approved items
+    resetDirectQuotationForm();
+
+    currentDirectQuoteRequest = request;
+
+    $("directRequestId").value = request.id;
+
+    $("directRequestReference").textContent =
+        request.request_number || request.id;
+
+    $("directRequestRequirements").textContent =
+        request.description || "No description supplied.";
+
+    $("directQuotationSection").hidden = false;
+
+    $("directQuotationSection").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    showMessage(
+        "directQuoteMessage",
+        "Enter the quotation details and review the calculated total.",
+        "info"
+    );
+}
+
+/* =========================================================
+   DIRECT QUOTATION CALCULATIONS
+   ========================================================= */
+
+function getDirectQuotationValues() {
+    const quantity = Number($("directQuantity").value || 0);
+    const unitCost = Number($("directUnitCost").value || 0);
+    const markup = Number($("directMarkup").value || 0);
+
+    const delivery = Number($("directDeliveryCost").value || 0);
+
+    const bracketQuantity = Number(
+        $("directBracketQuantity").value || 0
+    );
+
+    const bracketUnitCost = Number(
+        $("directBracketUnitCost").value || 0
+    );
+
+    const installationPerAc = Number(
+        $("directInstallationPerAc").value || 0
+    );
+
     const accessoryDescription =
-        el("directAccessoryDescription").value.trim();
+        $("directAccessoryDescription").value.trim();
 
     const accessoryUnit =
-        el("directAccessoryUnit").value.trim();
+        $("directAccessoryUnit").value.trim();
 
-    const accessoryQuantity =
-        numericInput("directAccessoryQuantity");
+    const accessoryQuantity = Number(
+        $("directAccessoryQuantity").value || 0
+    );
 
-    const accessoryUnitCost =
-        numericInput("directAccessoryUnitCost");
+    const accessoryUnitCost = Number(
+        $("directAccessoryUnitCost").value || 0
+    );
 
-    const rawAccessories =
-        accessoryQuantity * accessoryUnitCost;
-
-    // Apply markup once to the combined requested-item costs
-    const markupFactor = 1 + (markup / 100);
-
-    const rawProductSubtotal = quantity * unitCost;
-
-    const rawAdditional =
-        rawBrackets +
-        rawInstallation +
-        rawAccessories;
-
-    const rawRequestSubtotal =
-        rawProductSubtotal + rawAdditional;
-
-    const subtotal =
-        rawProductSubtotal * markupFactor;
-
-    const customerUnitPrice =
-        unitCost * markupFactor;
-
-    const brackets =
-        rawBrackets * markupFactor;
-
-    const installation =
-        rawInstallation * markupFactor;
-
-    const accessories =
-        rawAccessories * markupFactor;
-
-    const additional =
-        rawAdditional * markupFactor;
-
-    // Delivery is excluded from markup
-    const total =
-        subtotal + additional + delivery - discount;
-
-    // Update quotation preview
-    el("displayUnitCost").textContent = money(unitCost);
-    el("displayMarkup").textContent = markup + "%";
-    el("displayCustomerUnitPrice").textContent =
-        money(customerUnitPrice);
-
-    el("directSubtotal").textContent = money(subtotal);
-    el("displayDelivery").textContent = money(delivery);
-    el("displayBrackets").textContent = money(brackets);
-    el("displayInstallation").textContent =
-        money(installation);
-    el("displayAccessories").textContent =
-        money(accessories);
-    el("displayDiscount").textContent = money(discount);
-    el("directTotal").textContent = money(total);
+    const discount = Number(
+        $("directDiscount").value || 0
+    );
 
     return {
         quantity,
         unitCost,
         markup,
-        customerUnitPrice,
-        subtotal,
         delivery,
-
         bracketQuantity,
         bracketUnitCost,
-        brackets,
-
         installationPerAc,
-        installation,
-
         accessoryDescription,
         accessoryUnit,
         accessoryQuantity,
         accessoryUnitCost,
-        accessories,
+        discount
+    };
+}
 
-        rawProductSubtotal,
-        rawAdditional,
-        rawRequestSubtotal,
+function calculateDirectQuotation() {
+    const v = getDirectQuotationValues();
 
-        additional,
-        discount,
+    const productCost = v.quantity * v.unitCost;
+
+    const customerUnitPrice =
+        v.unitCost * (1 + v.markup / 100);
+
+    const productSellingTotal =
+        v.quantity * customerUnitPrice;
+
+    const bracketsCost =
+        v.bracketQuantity * v.bracketUnitCost;
+
+    const bracketsSellingTotal =
+        bracketsCost * (1 + v.markup / 100);
+
+    const installationCost =
+        v.quantity * v.installationPerAc;
+
+    const installationSellingTotal =
+        installationCost * (1 + v.markup / 100);
+
+    const accessoriesCost =
+        v.accessoryQuantity * v.accessoryUnitCost;
+
+    const accessoriesSellingTotal =
+        accessoriesCost * (1 + v.markup / 100);
+
+    const subtotal =
+        productSellingTotal +
+        bracketsSellingTotal +
+        installationSellingTotal +
+        accessoriesSellingTotal;
+
+    const total =
+        Math.max(0, subtotal - v.discount) + v.delivery;
+
+    const additionalCharges =
+        bracketsSellingTotal +
+        installationSellingTotal +
+        accessoriesSellingTotal;
+
+    return {
+        ...v,
+        productCost,
+        customerUnitPrice,
+        productSellingTotal,
+        bracketsCost,
+        bracketsSellingTotal,
+        installationCost,
+        installationSellingTotal,
+        accessoriesCost,
+        accessoriesSellingTotal,
+        subtotal,
+        additionalCharges,
         total
     };
 }
 
-[
-    "directQuantity",
-    "directUnitCost",
-    "directMarkup",
-    "directDeliveryCost",
-    "directBracketQuantity",
-    "directBracketUnitCost",
-    "directInstallationPerAc",
-    "directAccessoryDescription",
-    "directAccessoryUnit",
-    "directAccessoryQuantity",
-    "directAccessoryUnitCost",
-    "directDiscount"
-].forEach(id => {
-    el(id).addEventListener("input", calculateDirectTotal);
-    el(id).addEventListener("change", calculateDirectTotal);
-});
-    
+function updateDirectQuotationPreview() {
+    if (!$("directQuoteForm")) return;
+
+    const v = getDirectQuotationValues();
+
+    const values = [
+        v.quantity,
+        v.unitCost,
+        v.markup,
+        v.delivery,
+        v.bracketQuantity,
+        v.bracketUnitCost,
+        v.installationPerAc,
+        v.accessoryQuantity,
+        v.accessoryUnitCost,
+        v.discount
+    ];
+
+    if (values.some((value) => !Number.isFinite(value))) {
+        return;
+    }
+
+    const result = calculateDirectQuotation();
+
+    if ($("displayUnitCost")) {
+        $("displayUnitCost").textContent = money(result.unitCost);
+    }
+
+    if ($("displayMarkup")) {
+        $("displayMarkup").textContent = `${result.markup}%`;
+    }
+
+    if ($("displayCustomerUnitPrice")) {
+        $("displayCustomerUnitPrice").textContent =
+            money(result.customerUnitPrice);
+    }
+
+    if ($("directSubtotal")) {
+        $("directSubtotal").textContent = money(result.subtotal);
+    }
+
+    if ($("displayDelivery")) {
+        $("displayDelivery").textContent = money(result.delivery);
+    }
+
+    if ($("displayBrackets")) {
+        $("displayBrackets").textContent =
+            money(result.bracketsSellingTotal);
+    }
+
+    if ($("displayInstallation")) {
+        $("displayInstallation").textContent =
+            money(result.installationSellingTotal);
+    }
+
+    if ($("displayAccessories")) {
+        $("displayAccessories").textContent =
+            money(result.accessoriesSellingTotal);
+    }
+
+    if ($("displayDiscount")) {
+        $("displayDiscount").textContent = money(result.discount);
+    }
+
+    if ($("directTotal")) {
+        $("directTotal").textContent = money(result.total);
+    }
+}
+
+if ($("directQuoteForm")) {
+    $("directQuoteForm").addEventListener("input", updateDirectQuotationPreview);
+    $("directQuoteForm").addEventListener("change", updateDirectQuotationPreview);
+}
 
 async function getSelectedProductSupplierCost(productId) {
-    if (!productId) return null;
-
     const { data, error } = await db.rpc(
         "admin_list_product_supplier_costs",
-        { p_product_id: productId }
+        {
+            p_product_id: productId
+        }
     );
 
-    if (error) {
-        console.warn("Protected supplier-cost lookup failed:", error.message);
-        return null;
+    if (error) throw error;
+
+    const selected = (data || []).find((row) =>
+        row.is_selected === true &&
+        Number(row.supplier_cost) > 0
+    );
+
+    if (!selected) {
+        throw new Error(
+            "No approved selected supplier cost is available for this product."
+        );
     }
 
-    const selected = (data || []).find(item =>
-        item.is_selected === true
-    );
-
-    const cost = Number(selected?.supplier_cost);
-
-    return Number.isFinite(cost) && cost > 0 ? cost : null;
+    return Number(selected.supplier_cost);
 }
 
+/* =========================================================
+   DIRECT QUOTATION RECORD HELPERS
+   ========================================================= */
 
+function getDirectQuotationRecord() {
+    const result = calculateDirectQuotation();
 
-async function editDirectQuotation(id) {
-    const quote = currentDirectQuotes.find(
-        item => String(item.id) === String(id)
-    );
+    const description = $("directProductDescription").value.trim();
 
-    if (!quote || quote.status !== "draft") return;
-
-    const request = currentRequests.find(
-        item => String(item.id) === String(quote.request_id)
-    );
-
-    if (!request) {
-        showMessage(
-            "directQuoteMessage",
-            "The original customer request is not loaded. Refresh requests first.",
-            "error"
-        );
-        return;
+    if (!description) {
+        throw new Error("Enter the product or service description.");
     }
-
-    const requestedItems = getCustomerRequestedItems(request);
-
-    const hasAdditionalCharges =
-        Number(quote.additional_charges || 0) > 0;
 
     if (
-        hasAdditionalCharges &&
-        !requestedItems
+        !Number.isInteger(result.quantity) ||
+        result.quantity < 1
     ) {
-        showMessage(
-            "directQuoteMessage",
-            "This older draft contains additional charges, but the original request does not record which items the customer requested. It cannot be safely edited or resubmitted. The existing draft has been preserved.",
-            "warning-message"
-        );
-        return;
+        throw new Error("Quantity must be a whole number greater than zero.");
     }
 
-    await prepareDirectQuotation(request.id);
-
-    el("directQuoteId").value = quote.id;
-
-    el("directProductDescription").value =
-        quote.product_description || "";
-
-    el("directQuantity").value = quote.quantity || 1;
-
-    /*
-     * Existing saved unit price is a customer-facing price.
-     * Restore it with zero markup to avoid marking it up twice.
-     */
-    el("directUnitCost").value = quote.unit_price ?? "";
-    el("directMarkup").value = "0";
-
-    el("directDeliveryCost").value =
-        quote.delivery_cost ?? 0;
-
-    /*
-     * Do not convert old additional charges into generic
-     * accessories. Only restore separately recorded items
-     * that the original customer request permits.
-     *
-     * Existing additional charges are preserved only when
-     * they can be safely represented by the request.
-     */
-    if (hasAdditionalCharges) {
-        showMessage(
-            "directQuoteMessage",
-            "This draft contains combined additional charges. Please review the original customer request and prepare a fresh itemised quotation rather than carrying forward unverified charges.",
-            "warning-message"
-        );
-
-        el("directQuoteId").value = "";
-        el("directAccessoryQuantity").value = "0";
-        el("directAccessoryUnitCost").value = "0";
-        el("directBracketUnitCost").value = "0";
-        el("directInstallationPerAc").value = "0";
-
-        calculateDirectTotal();
-        return;
+    if (
+        result.unitCost <= 0 ||
+        result.markup < 0 ||
+        result.delivery < 0 ||
+        result.bracketQuantity < 0 ||
+        result.bracketUnitCost < 0 ||
+        result.installationPerAc < 0 ||
+        result.accessoryQuantity < 0 ||
+        result.accessoryUnitCost < 0 ||
+        result.discount < 0
+    ) {
+        throw new Error("Enter valid non-negative quotation values.");
     }
 
-    el("directDiscount").value = quote.discount ?? 0;
-    el("directValidity").value = quote.validity_date || "";
-    el("directNotes").value = quote.notes || "";
+    if (
+        result.accessoryQuantity > 0 &&
+        !result.accessoryDescription
+    ) {
+        throw new Error("Describe the accessory being quoted.");
+    }
 
-    el("directQuoteFormTitle").textContent =
-        "Edit Draft " + quote.quotation_number;
+    if (
+        result.discount >
+        result.subtotal
+    ) {
+        throw new Error("Discount cannot exceed the quotation subtotal.");
+    }
 
-    calculateDirectTotal();
+    const requestedItems = {
+        version: 1,
+        items: {
+            installation: {
+                per_unit: result.installationPerAc,
+                quantity: result.quantity
+            },
+            outdoor_brackets: {
+                quantity: result.bracketQuantity,
+                unit_cost: result.bracketUnitCost
+            },
+            accessories: result.accessoryQuantity > 0 ? [{
+                description: result.accessoryDescription,
+                unit: result.accessoryUnit || null,
+                quantity: result.accessoryQuantity,
+                unit_cost: result.accessoryUnitCost
+            }] : [],
+            other_items: []
+        }
+    };
+
+    return {
+        request_id: $("directRequestId").value || null,
+        customer_id: currentDirectQuoteRequest?.customer_id || null,
+        product_description: description,
+        quantity: result.quantity,
+        unit_price: result.customerUnitPrice,
+        delivery_cost: result.delivery,
+        additional_charges: result.additionalCharges,
+        discount: result.discount,
+        validity_date: $("directValidity").value || null,
+        notes: [
+            $("directNotes").value.trim(),
+            "",
+            "FROSTTECH_REQUESTED_ITEMS_V1:",
+            JSON.stringify(requestedItems)
+        ].filter(Boolean).join("\n"),
+        status: "draft"
+    };
 }
-    
-async function editDirectQuotation(id) {
-    const quote = currentDirectQuotes.find(item => item.id === id);
 
-    if (!quote || quote.status !== "draft") return;
+async function saveDirectDraftRecord() {
+    await requireAdmin();
 
-    const request = currentRequests.find(
-        item => item.id === quote.request_id
-    );
+    const values = getDirectQuotationRecord();
 
-    if (!request) {
+    const quotationId = $("directQuoteId").value.trim();
+
+    if (quotationId) {
+        const { data, error } = await db
+            .from("admin_quotations")
+            .update(values)
+            .eq("id", quotationId)
+            .select("id")
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+            throw new Error("Draft was not found or could not be updated.");
+        }
+
+        return data.id;
+    }
+
+    const { data, error } = await db
+        .from("admin_quotations")
+        .insert(values)
+        .select("id")
+        .single();
+
+    if (error) throw error;
+
+    $("directQuoteId").value = data.id;
+
+    return data.id;
+}
+
+async function saveDirectDraft() {
+    const button = $("saveDraftBtn");
+
+    setButtonLoading(button, true, "Saving draft...");
+
+    try {
+        const id = await saveDirectDraftRecord();
+
+        await loadDirectQuotes();
+
         showMessage(
             "directQuoteMessage",
-            "The original customer request is not loaded. Refresh requests first.",
+            `Quotation draft saved successfully. Reference: ${id}`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to save quotation draft.",
             "error"
         );
-        return;
+    } finally {
+        setButtonLoading(button, false);
     }
-
-    await prepareDirectQuotation(request.id);
-
-    el("directQuoteId").value = quote.id;
-    el("directProductDescription").value = quote.product_description || "";
-    el("directQuantity").value = quote.quantity || 1;
-
-    /*
-     * Saved quotation unit_price is the customer-facing price.
-     * Restore it with zero markup so the saved price is preserved.
-     */
-    el("directUnitCost").value = quote.unit_price ?? "";
-    el("directMarkup").value = "0";
-    el("directDeliveryCost").value = quote.delivery_cost ?? 0;
-
-    el("directBracketQuantity").value = "0";
-    el("directBracketUnitCost").value = "0";
-    el("directInstallationPerAc").value = "0";
-
-    el("directAccessoryDescription").value =
-        "Previously combined additional charges";
-    el("directAccessoryUnit").value = "lump sum";
-    el("directAccessoryQuantity").value =
-        Number(quote.additional_charges || 0) > 0 ? "1" : "0";
-    el("directAccessoryUnitCost").value =
-        quote.additional_charges ?? 0;
-
-    el("directDiscount").value = quote.discount ?? 0;
-    el("directValidity").value = quote.validity_date || "";
-    el("directNotes").value = quote.notes || "";
-
-    el("directQuoteFormTitle").textContent =
-        "Edit Draft " + quote.quotation_number;
-
-    calculateDirectTotal();
 }
 
+if ($("saveDraftBtn")) {
+    $("saveDraftBtn").addEventListener("click", saveDirectDraft);
+}
 
-el("loadDirectQuotesBtn").addEventListener(
-    "click",
-    loadDirectQuotations
-);
+/* =========================================================
+   DIRECT QUOTATION SUBMISSION
+   ========================================================= */
 
+async function submitDirectQuotation() {
+    await requireAdmin();
 
-/* End of direct quotation event wiring */
+    const button = $("submitDirectQuoteBtn");
 
+    setButtonLoading(button, true, "Submitting quotation...");
 
-/* SUPPLIER QUOTATIONS */
+    try {
+        const quotationId = await saveDirectDraftRecord();
 
-async function loadSupplierQuotations() {
-    const target = el("supplierQuotes");
-    target.textContent = "Loading supplier quotations...";
+        const { data: quote, error: quoteError } = await db
+            .from("admin_quotations")
+            .select("*")
+            .eq("id", quotationId)
+            .single();
 
-    const { data, error } = await db.rpc("admin_list_supplier_quotes");
+        if (quoteError) throw quoteError;
 
-    if (error) {
-        target.textContent =
-            "Could not load supplier quotations: " + errorText(error);
-        el("quotationCount").textContent = "—";
-        showMessage("quotationMessage", errorText(error), "error");
-        return;
+        if (!quote.request_id) {
+            throw new Error(
+                "This quotation is not linked to a customer request."
+            );
+        }
+
+        const request = currentQuoteRequests.find(
+            (item) => item.id === quote.request_id
+        );
+
+        if (!request) {
+            const { data: savedRequest, error: requestError } = await db
+                .from("quote_requests")
+                .select("*")
+                .eq("id", quote.request_id)
+                .single();
+
+            if (requestError) throw requestError;
+
+            currentDirectQuoteRequest = savedRequest;
+        } else {
+            currentDirectQuoteRequest = request;
+        }
+
+        const currentRequest = currentDirectQuoteRequest;
+
+        const fee = calculateQuotationAdminFee(quote);
+
+        if (fee.feeBasis <= 0) {
+            throw new Error(
+                "The quotation amount must be greater than zero before submission."
+            );
+        }
+
+        /*
+         * The quotation is saved first as a draft.
+         * The fee and request status are then recorded.
+         * These operations are sequential, not one atomic
+         * database transaction. If a later operation fails,
+         * inspect the saved records before retrying.
+         */
+
+        const { error: requestUpdateError } = await db
+            .from("quote_requests")
+            .update({
+                admin_fee: fee.fee,
+                admin_fee_status: "pending"
+            })
+            .eq("id", currentRequest.id);
+
+        if (requestUpdateError) throw requestUpdateError;
+
+        const { error: quoteUpdateError } = await db
+            .from("admin_quotations")
+            .update({
+                status: "submitted"
+            })
+            .eq("id", quotationId);
+
+        if (quoteUpdateError) throw quoteUpdateError;
+
+        await notifyCustomerFeeRequired(
+            currentRequest,
+            quote,
+            fee.fee
+        );
+
+        await loadDirectQuotes();
+        await loadCustomerRequests();
+        await loadDashboard();
+
+        showMessage(
+            "directQuoteMessage",
+            `Quotation submitted. The separate 2% processing fee is ${money(fee.fee)}. Delivery is excluded from the fee calculation.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to submit quotation.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
     }
+}
 
-    currentSupplierQuotes = data || [];
-    el("quotationCount").textContent = currentSupplierQuotes.length;
+if ($("submitDirectQuoteBtn")) {
+    $("submitDirectQuoteBtn").addEventListener(
+        "click",
+        submitDirectQuotation
+    );
+}
+
+if ($("cancelDirectQuoteBtn")) {
+    $("cancelDirectQuoteBtn").addEventListener(
+        "click",
+        resetDirectQuotationForm
+    );
+}
+
+/* =========================================================
+   EXISTING DIRECT QUOTATION DRAFTS
+   ========================================================= */
+
+async function loadDirectQuotes() {
+    await requireAdmin();
+
+    showMessage(
+        "directQuoteMessage",
+        "Loading direct quotations...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db
+            .from("admin_quotations")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        const container = $("directQuoteList");
+
+        if (!container) return;
+
+        const drafts = (data || []).filter(
+            (quote) => quote.status === "draft"
+        );
+
+        if (!drafts.length) {
+            container.innerHTML = "<p>No quotation drafts found.</p>";
+            return;
+        }
+
+        container.innerHTML = drafts.map((quote) => `
+            <article class="admin-card">
+                <h3>${escapeHtml(quote.product_description || "Quotation draft")}</h3>
+
+                <p><strong>Quantity:</strong>
+                    ${escapeHtml(quote.quantity)}
+                </p>
+
+                <p><strong>Unit price:</strong>
+                    ${money(quote.unit_price)}
+                </p>
+
+                <p><strong>Delivery:</strong>
+                    ${money(quote.delivery_cost)}
+                </p>
+
+                <p><strong>Additional charges:</strong>
+                    ${money(quote.additional_charges)}
+                </p>
+
+                <p><strong>Status:</strong>
+                    ${badge(quote.status)}
+                </p>
+
+                <button type="button"
+                    class="edit-direct-quotation"
+                    data-id="${escapeHtml(quote.id)}">
+                    Edit Draft
+                </button>
+            </article>
+        `).join("");
+
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to load direct quotations.",
+            "error"
+        );
+    }
+}
+
+if ($("loadDirectQuotesBtn")) {
+    $("loadDirectQuotesBtn").addEventListener("click", loadDirectQuotes);
+}
+
+if ($("directQuoteList")) {
+    $("directQuoteList").addEventListener("click", async (event) => {
+        const button = event.target.closest(".edit-direct-quotation");
+
+        if (button) {
+            await editDirectQuotation(button.dataset.id);
+        }
+    });
+}
+
+async function editDirectQuotation(id) {
+    await requireAdmin();
+
+    try {
+        const { data: quote, error } = await db
+            .from("admin_quotations")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (error) throw error;
+
+        if (quote.status !== "draft") {
+            throw new Error("Only quotation drafts can be edited.");
+        }
+
+        /*
+         * Do not guess how legacy combined additional charges
+         * were distributed. An old draft without the structured
+         * marker must be recreated as an itemised quotation.
+         */
+        const requestedItems = readRequestedItems(quote);
+
+        if (
+            Number(quote.additional_charges || 0) > 0 &&
+            !requestedItems
+        ) {
+            throw new Error(
+                "This older draft contains combined additional charges that cannot be safely itemised. Please prepare a fresh quotation."
+            );
+        }
+
+        $("directQuoteId").value = quote.id;
+        $("directRequestId").value = quote.request_id || "";
+
+        $("directProductDescription").value =
+            quote.product_description || "";
+
+        $("directQuantity").value = quote.quantity || 1;
+
+        /*
+         * The saved unit_price is the customer-facing unit price.
+         * Recovering the original supplier cost and markup from
+         * this value is not reliable, so the user must review
+         * and enter the current supplier cost and markup.
+         */
+        $("directUnitCost").value = "";
+        $("directMarkup").value = "";
+
+        $("directDeliveryCost").value =
+            quote.delivery_cost || 0;
+
+        $("directDiscount").value =
+            quote.discount || 0;
+
+        $("directValidity").value =
+            quote.validity_date || "";
+
+        const noteText = String(quote.notes || "");
+
+        const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+
+        const markerPosition = noteText.indexOf(marker);
+
+        $("directNotes").value = markerPosition >= 0
+            ? noteText.slice(0, markerPosition).trim()
+            : noteText;
+
+        const items = requestedItems?.items || {};
+
+        $("directInstallationPerAc").value =
+            items.installation?.per_unit || 0;
+
+        $("directBracketQuantity").value =
+            items.outdoor_brackets?.quantity || 0;
+
+        $("directBracketUnitCost").value =
+            items.outdoor_brackets?.unit_cost || 0;
+
+        const accessories = Array.isArray(items.accessories)
+            ? items.accessories
+            : [];
+
+        const firstAccessory = accessories[0] || {};
+
+        $("directAccessoryDescription").value =
+            firstAccessory.description || "";
+
+        $("directAccessoryUnit").value =
+            firstAccessory.unit || "";
+
+        $("directAccessoryQuantity").value =
+            firstAccessory.quantity || 0;
+
+        $("directAccessoryUnitCost").value =
+            firstAccessory.unit_cost || 0;
+
+        const request = currentQuoteRequests.find(
+            (item) => item.id === quote.request_id
+        );
+
+        currentDirectQuoteRequest = request || null;
+
+        $("directRequestReference").textContent =
+            request?.request_number || quote.request_id || "";
+
+        $("directRequestRequirements").textContent =
+            request?.description || "";
+
+        $("directQuotationSection").hidden = false;
+
+        updateDirectQuotationPreview();
+
+        $("directQuotationSection").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        showMessage(
+            "directQuoteMessage",
+            "Draft loaded. Review and re-enter supplier cost and markup before saving.",
+            "info"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to edit quotation draft.",
+            "error"
+        );
+    }
+}
+
+/* -------------------------
+   INITIAL CALCULATION
+   ------------------------- */
+
+updateDirectQuotationPreview();
+
+</script>
+
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN PORTAL
+   PART 4: SUPPLIER QUOTATIONS, SUPPLIERS, PAYMENTS
+   AND SUPPLIER ACCOUNT MAINTENANCE
+   ========================================================= */
+
+/* =========================================================
+   BRANDED ADMIN CONFIRMATION MODAL
+   ========================================================= */
+
+function adminConfirm(options = {}) {
+    return new Promise((resolve) => {
+        const modal = $("ftConfirmModal");
+        const title = $("ftConfirmTitle");
+        const message = $("ftConfirmText");
+        const cancelButton = $("ftConfirmCancel");
+        const yesButton = $("ftConfirmYes");
+
+        if (!modal || !cancelButton || !yesButton) {
+            resolve({
+                confirmed: false,
+                reason: ""
+            });
+            return;
+        }
+
+        title.textContent =
+            options.title || "FrostTech HVAC and Refrigeration Marketplace";
+
+        message.textContent = options.message || "Are you sure?";
+
+        let reasonInput = modal.querySelector("#ftConfirmReason");
+
+        if (reasonInput) reasonInput.remove();
+
+        if (options.requireReason) {
+            reasonInput = document.createElement("textarea");
+            reasonInput.id = "ftConfirmReason";
+            reasonInput.placeholder =
+                options.reasonPlaceholder || "Enter the reason...";
+            reasonInput.rows = 3;
+            reasonInput.maxLength = 1000;
+            reasonInput.style.width = "100%";
+            reasonInput.style.marginTop = "12px";
+            reasonInput.style.padding = "10px";
+
+            message.insertAdjacentElement("afterend", reasonInput);
+        }
+
+        yesButton.textContent = options.confirmText || "Yes, Continue";
+        cancelButton.textContent = options.cancelText || "Cancel";
+
+        modal.hidden = false;
+
+        const finish = (confirmed) => {
+            modal.hidden = true;
+
+            const reason = reasonInput
+                ? reasonInput.value.trim()
+                : "";
+
+            if (reasonInput) reasonInput.remove();
+
+            cancelButton.removeEventListener("click", cancel);
+            yesButton.removeEventListener("click", accept);
+
+            resolve({
+                confirmed,
+                reason
+            });
+        };
+
+        const cancel = () => finish(false);
+
+        const accept = () => {
+            const reason = reasonInput
+                ? reasonInput.value.trim()
+                : "";
+
+            if (options.requireReason && !reason) {
+                reasonInput.focus();
+                reasonInput.setCustomValidity(
+                    "Please enter a reason before continuing."
+                );
+                reasonInput.reportValidity();
+                return;
+            }
+
+            finish(true);
+        };
+
+        cancelButton.addEventListener("click", cancel);
+        yesButton.addEventListener("click", accept);
+    });
+}
+
+/* =========================================================
+   SUPPLIER QUOTATIONS
+   ========================================================= */
+
+async function loadSupplierQuotes() {
+    await requireAdmin();
+
+    showMessage(
+        "quotationMessage",
+        "Loading supplier quotations...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db.rpc(
+            "admin_list_supplier_quotes"
+        );
+
+        if (error) throw error;
+
+        currentSupplierQuotes = data || [];
+
+        renderSupplierQuotes();
+
+        showMessage(
+            "quotationMessage",
+            `${currentSupplierQuotes.length} supplier quotation(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to load supplier quotations.",
+            "error"
+        );
+    }
+}
+
+function renderSupplierQuotes() {
+    const container = $("supplierQuotes");
+
+    if (!container) return;
 
     if (!currentSupplierQuotes.length) {
-        target.textContent = "No supplier quotations found.";
+        container.innerHTML = "<p>No supplier quotations found.</p>";
         return;
     }
 
-    target.innerHTML = currentSupplierQuotes.map(quote => `
-        <article class="card">
-            <h3>Supplier Quotation</h3>
-            <p><strong>Quotation ID:</strong> ${escapeHtml(quote.id)}</p>
-            <p><strong>Request ID:</strong> ${escapeHtml(quote.request_id)}</p>
-            <p><strong>Supplier ID:</strong> ${escapeHtml(quote.supplier_id)}</p>
-            <p><strong>Supplier Unit Price:</strong> ${money(quote.supplier_unit_price)}</p>
-            <p><strong>Supplier Total:</strong> ${money(quote.supplier_total)}</p>
-            <p><strong>Delivery:</strong> ${money(quote.delivery_cost)}</p>
-            <p><strong>FrostTech Margin:</strong> ${money(quote.frosttech_margin_amount)}</p>
-            <p><strong>Customer Total:</strong> ${money(quote.customer_total)}</p>
-            <p><strong>Status:</strong> ${badge(quote.status)}</p>
-            <p><strong>Customer Quote Status:</strong> ${badge(quote.customer_quote_status || "draft")}</p>
-            <div class="action-row">
-                <button type="button" class="success"
-                    data-select-supplier-quote="${escapeHtml(quote.id)}">
-                    Select
+    container.innerHTML = currentSupplierQuotes.map((quote) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                quote.product_name ||
+                quote.product_description ||
+                "Supplier quotation"
+            )}</h3>
+
+            <p><strong>Supplier:</strong>
+                ${escapeHtml(
+                    quote.supplier_name ||
+                    quote.business_name ||
+                    "Supplier"
+                )}
+            </p>
+
+            <p><strong>Supplier price:</strong>
+                ${money(quote.supplier_price ?? quote.unit_price)}
+            </p>
+
+            <p><strong>Total supplier cost:</strong>
+                ${money(quote.total_cost ?? quote.total_amount)}
+            </p>
+
+            <p><strong>Delivery:</strong>
+                ${money(quote.delivery_cost)}
+            </p>
+
+            <p><strong>FrostTech margin:</strong>
+                ${money(quote.frosttech_margin ?? quote.margin)}
+            </p>
+
+            <p><strong>Customer total:</strong>
+                ${money(quote.customer_total)}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(quote.status)}
+            </p>
+
+            <button type="button"
+                class="select-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Select Supplier Quotation
+            </button>
+
+            <button type="button"
+                class="reject-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Reject Supplier Quotation
+            </button>
+        </article>
+    `).join("");
+}
+
+if ($("loadSupplierQuotesBtn")) {
+    $("loadSupplierQuotesBtn").addEventListener(
+        "click",
+        loadSupplierQuotes
+    );
+}
+
+if ($("supplierQuotes")) {
+    $("supplierQuotes").addEventListener("click", async (event) => {
+        const selectButton = event.target.closest(".select-supplier-quote");
+        const rejectButton = event.target.closest(".reject-supplier-quote");
+
+        if (selectButton) {
+            await selectSupplierQuote(selectButton.dataset.id);
+        }
+
+        if (rejectButton) {
+            await rejectSupplierQuote(rejectButton.dataset.id);
+        }
+    });
+}
+
+async function selectSupplierQuote(id) {
+    await requireAdmin();
+
+    const confirmation = await adminConfirm({
+        message:
+            "Select this supplier quotation? This may update the selected supplier pricing for the product.",
+        confirmText: "Yes, Select Quotation"
+    });
+
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_select_supplier_quote",
+            {
+                p_quote_id: id
+            }
+        );
+
+        if (error) throw error;
+
+        await loadSupplierQuotes();
+        await loadProducts();
+
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation selected successfully.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to select supplier quotation.",
+            "error"
+        );
+    }
+}
+
+async function rejectSupplierQuote(id) {
+    await requireAdmin();
+
+    const confirmation = await adminConfirm({
+        message: "Are you sure you want to reject this supplier quotation?",
+        confirmText: "Yes, Reject Quotation"
+    });
+
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_reject_supplier_quote",
+            {
+                p_quote_id: id
+            }
+        );
+
+        if (error) throw error;
+
+        await loadSupplierQuotes();
+
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation rejected.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to reject supplier quotation.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   SUPPLIER MANAGEMENT
+   ========================================================= */
+
+async function loadSuppliers() {
+    await requireAdmin();
+
+    showMessage(
+        "supplierManagementMessage",
+        "Loading suppliers...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db
+            .from("suppliers")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentSuppliers = data || [];
+
+        renderSuppliers();
+
+        const pendingCount = currentSuppliers.filter((supplier) => {
+            const status = String(
+                supplier.review_status || "pending"
+            ).toLowerCase();
+
+            return ![
+                "approved",
+                "rejected",
+                "suspended"
+            ].includes(status);
+        }).length;
+
+        if ($("pendingSupplierCount")) {
+            $("pendingSupplierCount").textContent = pendingCount;
+        }
+
+        showMessage(
+            "supplierManagementMessage",
+            `${currentSuppliers.length} supplier record(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "supplierManagementMessage",
+            error.message || "Unable to load suppliers.",
+            "error"
+        );
+    }
+}
+
+function renderSuppliers() {
+    const container = $("supplierManagementRows");
+
+    if (!container) return;
+
+    if (!currentSuppliers.length) {
+        container.innerHTML = "<p>No supplier records found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentSuppliers.map((supplier) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                supplier.business_name || "Unnamed supplier"
+            )}</h3>
+
+            <p><strong>Contact person:</strong>
+                ${escapeHtml(supplier.contact_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(supplier.email || "")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(supplier.phone || "")}
+            </p>
+
+            <p><strong>Address:</strong>
+                ${escapeHtml(supplier.address || "Not supplied")}
+            </p>
+
+            <p><strong>Review status:</strong>
+                ${badge(supplier.review_status)}
+            </p>
+
+            <p><strong>Verified:</strong>
+                ${supplier.is_verified ? "Yes" : "No"}
+            </p>
+
+            <p><strong>Account active:</strong>
+                ${supplier.is_active ? "Yes" : "No"}
+            </p>
+
+            <div class="supplier-review-actions">
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="approved">
+                    Approve
                 </button>
-                <button type="button" class="danger"
-                    data-reject-supplier-quote="${escapeHtml(quote.id)}">
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="more_info">
+                    Request More Information
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="rejected">
                     Reject
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="suspended">
+                    Suspend
                 </button>
             </div>
         </article>
     `).join("");
-
-    target.querySelectorAll("[data-select-supplier-quote]").forEach(button => {
-        button.addEventListener("click", () =>
-            selectSupplierQuotation(button.dataset.selectSupplierQuote)
-        );
-    });
-
-    target.querySelectorAll("[data-reject-supplier-quote]").forEach(button => {
-        button.addEventListener("click", () =>
-            rejectSupplierQuotation(button.dataset.rejectSupplierQuote)
-        );
-    });
 }
 
-
-async function selectSupplierQuotation(id) {
-    const quote = currentSupplierQuotes.find(item => item.id === id);
-
-    if (!quote) {
-        showMessage(
-            "quotationMessage",
-            "Supplier quotation not found.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        "Select this supplier quotation?",
-        "Yes, Continue"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db.rpc(
-        "admin_select_supplier_quote",
-        { p_quote_id: id }
-    );
-
-    if (error) {
-        showMessage(
-            "quotationMessage",
-            "Could not select quotation: " + errorText(error),
-            "error"
-        );
-        return;
-    }
-
-    showMessage(
-        "quotationMessage",
-        "Supplier quotation selected successfully.",
-        "success-message"
-    );
-
-    await Promise.allSettled([
-        loadSupplierQuotations(),
-        loadCustomerRequests()
-    ]);
+if ($("loadSuppliersBtn")) {
+    $("loadSuppliersBtn").addEventListener("click", loadSuppliers);
 }
 
+if ($("supplierManagementRows")) {
+    $("supplierManagementRows").addEventListener(
+        "click",
+        async (event) => {
+            const button = event.target.closest(".review-supplier");
 
-async function rejectSupplierQuotation(id) {
-    const quote = currentSupplierQuotes.find(item => item.id === id);
+            if (!button) return;
 
-    if (!quote) {
-        showMessage(
-            "quotationMessage",
-            "Supplier quotation not found.",
-            "error"
-        );
-        return;
-    }
-
-    const confirmed = await frostTechConfirm(
-        "Reject this supplier quotation?",
-        "Yes, Reject"
-    );
-
-    if (!confirmed) return;
-
-    const { error } = await db.rpc(
-        "admin_reject_supplier_quote",
-        { p_quote_id: id }
-    );
-
-    if (error) {
-        showMessage("quotationMessage", errorText(error), "error");
-        return;
-    }
-
-    showMessage(
-        "quotationMessage",
-        "Supplier quotation rejected.",
-        "success-message"
-    );
-
-    await loadSupplierQuotations();
-}
-
-
-/* SUPPLIER MANAGEMENT */
-
-el("loadSuppliersBtn").addEventListener("click", loadSupplierManagement);
-
-
-async function loadSupplierManagement() {
-    const target = el("supplierManagementRows");
-    target.textContent = "Loading supplier applications...";
-
-    const { data, error } = await db.from("suppliers")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        target.textContent =
-            "Could not load suppliers: " + errorText(error);
-        showMessage("supplierManagementMessage", errorText(error), "error");
-        return;
-    }
-
-    currentSuppliers = data || [];
-    el("supplierCount").textContent = currentSuppliers.length;
-
-    el("pendingSupplierCount").textContent =
-        currentSuppliers.filter(supplier =>
-            !["approved", "rejected", "suspended"].includes(
-                supplier.review_status ||
-                (supplier.is_verified ? "approved" : "pending")
-            )
-        ).length;
-
-    if (!currentSuppliers.length) {
-        target.textContent = "No supplier applications found.";
-        return;
-    }
-
-    target.innerHTML = currentSuppliers.map(supplier => {
-        const status = supplier.review_status ||
-            (supplier.is_verified ? "approved" : "pending");
-
-        return `
-        <article class="card">
-            <h3>${escapeHtml(supplier.business_name)}</h3>
-            <p><strong>Supplier ID:</strong> ${escapeHtml(supplier.id)}</p>
-            <p><strong>Email:</strong> ${escapeHtml(supplier.email || "Not provided")}</p>
-            <p><strong>Contact:</strong> ${escapeHtml(supplier.contact_name || "Not provided")}</p>
-            <p><strong>Phone:</strong> ${escapeHtml(supplier.phone || "Not provided")}</p>
-            <p><strong>Address:</strong> ${escapeHtml(supplier.address || "Not provided")}</p>
-            <p><strong>Status:</strong> ${badge(status)}</p>
-            <p><strong>Active:</strong> ${supplier.is_active ? "Yes" : "No"}</p>
-
-            <label for="reviewReason_${supplier.id}">Review Reason</label>
-            <textarea id="reviewReason_${supplier.id}"
-                placeholder="Required when rejecting or suspending"></textarea>
-
-            <div class="action-row">
-                <button type="button" class="success"
-                    data-supplier-status="approved"
-                    data-supplier-id="${escapeHtml(supplier.id)}">Approve</button>
-
-                <button type="button" class="danger"
-                    data-supplier-status="rejected"
-                    data-supplier-id="${escapeHtml(supplier.id)}">Reject</button>
-
-                <button type="button" class="warning"
-                    data-supplier-status="more_info"
-                    data-supplier-id="${escapeHtml(supplier.id)}">Request Information</button>
-
-                <button type="button" class="warning"
-                    data-supplier-status="in_review"
-                    data-supplier-id="${escapeHtml(supplier.id)}">In Review</button>
-
-                <button type="button" class="danger"
-                    data-supplier-status="suspended"
-                    data-supplier-id="${escapeHtml(supplier.id)}">Suspend</button>
-
-                <button type="button" class="neutral"
-                    data-supplier-status="pending"
-                    data-supplier-id="${escapeHtml(supplier.id)}">Return to Pending</button>
-            </div>
-        </article>`;
-    }).join("");
-
-    target.querySelectorAll("[data-supplier-status]").forEach(button => {
-        button.addEventListener("click", () =>
-            reviewSupplier(
-                button.dataset.supplierId,
-                button.dataset.supplierStatus
-            )
-        );
-    });
-
-    showMessage(
-        "supplierManagementMessage",
-        "Supplier applications loaded.",
-        "success-message"
+            await reviewSupplier(
+                button.dataset.id,
+                button.dataset.status
+            );
+        }
     );
 }
-
 
 async function reviewSupplier(supplierId, newStatus) {
-    const supplier = currentSuppliers.find(item => item.id === supplierId);
-    if (!supplier || !currentAdmin) return;
+    await requireAdmin();
 
-    const reasonField = el("reviewReason_" + supplierId);
-    const reason = reasonField ? reasonField.value.trim() : "";
+    const supplier = currentSuppliers.find(
+        (item) => item.id === supplierId
+    );
 
-    if (["rejected", "suspended"].includes(newStatus) && !reason) {
+    if (!supplier) {
         showMessage(
             "supplierManagementMessage",
-            "Enter a reason before rejecting or suspending a supplier.",
+            "Supplier record not found. Refresh the supplier list.",
             "error"
         );
         return;
     }
 
-    const confirmed = await frostTechConfirm(
-        "Are you sure you want to mark " +
-        supplier.business_name + " as " + newStatus + "?",
-        "Yes, Continue"
-    );
+    const needsReason = [
+        "rejected",
+        "suspended",
+        "more_info"
+    ].includes(newStatus);
 
-    if (!confirmed) return;
-
-    const { error } = await db.rpc("admin_review_supplier", {
-        target_supplier_id: supplierId,
-        new_status: newStatus,
-        reason: reason || null
+    const confirmation = await adminConfirm({
+        message:
+            newStatus === "approved"
+                ? `Approve ${supplier.business_name || "this supplier"}?`
+                : newStatus === "suspended"
+                    ? `Suspend ${supplier.business_name || "this supplier"}?`
+                    : newStatus === "rejected"
+                        ? `Reject ${supplier.business_name || "this supplier"}?`
+                        : `Request more information from ${supplier.business_name || "this supplier"}?`,
+        confirmText:
+            newStatus === "approved"
+                ? "Yes, Approve"
+                : newStatus === "suspended"
+                    ? "Yes, Suspend"
+                    : newStatus === "rejected"
+                        ? "Yes, Reject"
+                        : "Send Request",
+        requireReason: needsReason,
+        reasonPlaceholder: "Enter the reason for this decision..."
     });
 
-    if (error) {
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_review_supplier",
+            {
+                target_supplier_id: supplierId,
+                new_status: newStatus,
+                reason: confirmation.reason || null
+            }
+        );
+
+        if (error) throw error;
+
+        await loadSuppliers();
+        await loadDashboard();
+
         showMessage(
             "supplierManagementMessage",
-            "Decision not completed: " + errorText(error),
+            `Supplier review status updated to ${newStatus.replaceAll("_", " ")}.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "supplierManagementMessage",
+            error.message || "Unable to update supplier review status.",
             "error"
         );
-        return;
     }
-
-    showMessage(
-        "supplierManagementMessage",
-        "Supplier decision saved: " + newStatus,
-        "success-message"
-    );
-
-    await loadSupplierManagement();
 }
 
+/* =========================================================
+   PAYMENT RECORDS — READ ONLY
+   ========================================================= */
 
-/* PAYMENT RECORD VISIBILITY */
-
-el("loadPaymentsBtn").addEventListener("click", loadPaymentRecords);
-
-
-async function loadPaymentRecords() {
-    const target = el("paymentRecords");
-    target.textContent = "Loading payment records...";
-
-    const { data, error } = await db.from("payments")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-    if (error) {
-        target.textContent =
-            "Could not load payments: " + errorText(error);
-        showMessage("paymentMessage", errorText(error), "error");
-        return;
-    }
-
-    if (!data || !data.length) {
-        target.textContent = "No payment records found.";
-        showMessage(
-            "paymentMessage",
-            "Payment records loaded.",
-            "success-message"
-        );
-        return;
-    }
-
-    const columns = Object.keys(data[0]);
-
-    target.innerHTML = `
-        <div class="table-wrap">
-            <table>
-                <thead>
-                    <tr>${columns.map(column =>
-                        "<th>" + escapeHtml(column) + "</th>"
-                    ).join("")}</tr>
-                </thead>
-                <tbody>
-                    ${data.map(row =>
-                        "<tr>" + columns.map(column =>
-                            "<td>" + escapeHtml(
-                                row[column] === null ? "" :
-                                typeof row[column] === "object"
-                                    ? JSON.stringify(row[column])
-                                    : row[column]
-                            ) + "</td>"
-                        ).join("") + "</tr>"
-                    ).join("")}
-                </tbody>
-            </table>
-        </div>`;
+async function loadPayments() {
+    await requireAdmin();
 
     showMessage(
         "paymentMessage",
-        "Payment records loaded. No payment statuses were changed.",
-        "success-message"
+        "Loading payment records...",
+        "info"
     );
+
+    try {
+        const { data, error } = await db
+            .from("payments")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        renderPayments(data || []);
+
+        showMessage(
+            "paymentMessage",
+            `${(data || []).length} payment record(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "paymentMessage",
+            error.message || "Unable to load payment records.",
+            "error"
+        );
+    }
 }
 
+function renderPayments(payments) {
+    const container = $("paymentRecords");
 
-/* STARTUP */
+    if (!container) return;
 
-checkExistingSession();
-
-</script>
-
-<!-- Supplier Account Maintenance -->
-<div style="margin:20px;padding:16px;border:1px solid #ccc;border-radius:8px;">
-    <h3>Supplier Account Maintenance</h3>
-
-    <p>
-        Confirm the existing supplier email using administrator access.
-    </p>
-
-    <button
-        id="confirmSupplierEmailBtn"
-        type="button"
-        style="padding:12px 16px;background:#176b45;color:white;border:0;border-radius:6px;"
-    >
-        Confirm Supplier Email
-    </button>
-
-    <p
-        id="confirmSupplierEmailResult"
-        role="status"
-        aria-live="polite"
-    ></p>
-</div>
-
-<script>
-(function () {
-    const button = document.getElementById(
-        "confirmSupplierEmailBtn"
-    );
-
-    const result = document.getElementById(
-        "confirmSupplierEmailResult"
-    );
-
-    if (!button || !result) {
-        console.error(
-            "Supplier Account Maintenance elements were not found."
-        );
+    if (!payments.length) {
+        container.innerHTML = "<p>No payment records found.</p>";
         return;
     }
 
-    button.addEventListener("click", async function () {
-        button.disabled = true;
-        result.textContent = "Checking administrator access...";
+    container.innerHTML = payments.map((payment) => {
+        const fields = Object.entries(payment)
+            .map(([key, value]) => {
+                let displayValue = value;
 
-        try {
-            let client = window.supabaseClient;
+                if (value && typeof value === "object") {
+                    displayValue = JSON.stringify(value);
+                }
 
-            if (!client && typeof db !== "undefined") {
-                client = db;
-            }
+                return `
+                    <p>
+                        <strong>${escapeHtml(
+                            key.replaceAll("_", " ")
+                        )}:</strong>
+                        ${escapeHtml(displayValue ?? "")}
+                    </p>
+                `;
+            })
+            .join("");
 
-            if (!client) {
-                result.textContent =
-                    "Supabase client not found. Check the main admin dashboard script.";
-                return;
-            }
+        return `
+            <article class="admin-card payment-record">
+                ${fields}
+            </article>
+        `;
+    }).join("");
+}
 
-            const {
-                data: userData,
-                error: userError
-            } = await client.auth.getUser();
+if ($("loadPaymentsBtn")) {
+    $("loadPaymentsBtn").addEventListener("click", loadPayments);
+}
 
-            if (userError || !userData.user) {
-                result.textContent =
-                    "Please sign in to the admin dashboard first.";
-                return;
-            }
+/* =========================================================
+   SUPPLIER ACCOUNT EMAIL MAINTENANCE
+   ========================================================= */
 
-            const {
-                data: profile,
-                error: profileError
-            } = await client
-                .from("profiles")
-                .select("role, is_active")
-                .eq("id", userData.user.id)
-                .maybeSingle();
+if ($("confirmSupplierEmailBtn")) {
+    $("confirmSupplierEmailBtn").addEventListener(
+        "click",
+        async () => {
+            const button = $("confirmSupplierEmailBtn");
 
-            if (profileError) {
-                result.textContent =
-                    "Could not verify administrator access: " +
-                    profileError.message;
-                return;
-            }
-
-            if (
-                !profile ||
-                profile.role !== "admin" ||
-                profile.is_active !== true
-            ) {
-                result.textContent =
-                    "Your account does not have active administrator access.";
-                return;
-            }
-
-            result.textContent =
-                "Administrator verified. Processing supplier confirmation...";
-
-            const {
-                data,
-                error
-            } = await client.functions.invoke(
-                "confirm-existing-supplier",
-                { body: {} }
+            setButtonLoading(
+                button,
+                true,
+                "Checking account..."
             );
 
-            if (error) {
-                console.error("Supplier confirmation error:", error);
+            showMessage(
+                "confirmSupplierEmailResult",
+                "Verifying administrator access...",
+                "info"
+            );
 
-                result.textContent =
-                    "Confirmation failed: " +
-                    (error.message || "Check the Edge Function logs.");
+            try {
+                const { data: { user }, error: authError } =
+                    await db.auth.getUser();
 
-                return;
+                if (authError || !user) {
+                    throw new Error(
+                        "Your administrator session has expired. Sign in again."
+                    );
+                }
+
+                const { data: profile, error: profileError } = await db
+                    .from("profiles")
+                    .select("role, is_active")
+                    .eq("id", user.id)
+                    .maybeSingle();
+
+                if (profileError) throw profileError;
+
+                if (
+                    !profile ||
+                    profile.role !== "admin" ||
+                    profile.is_active !== true
+                ) {
+                    throw new Error(
+                        "Only an active administrator can perform this operation."
+                    );
+                }
+
+                /*
+                 * Preserve the existing Edge Function call.
+                 * The exact payload expected by the deployed
+                 * function still needs to be checked before
+                 * production use.
+                 */
+                const { data, error } = await db.functions.invoke(
+                    "confirm-existing-supplier",
+                    {
+                        body: {}
+                    }
+                );
+
+                if (error) throw error;
+
+                showMessage(
+                    "confirmSupplierEmailResult",
+                    data?.message ||
+                        "Supplier account confirmation function completed.",
+                    "success"
+                );
+            } catch (error) {
+                showMessage(
+                    "confirmSupplierEmailResult",
+                    error.message ||
+                        "Supplier account confirmation failed.",
+                    "error"
+                );
+            } finally {
+                setButtonLoading(button, false);
             }
-
-            if (data && data.error) {
-                result.textContent =
-                    "Confirmation failed: " + data.error;
-                return;
-            }
-
-            result.textContent =
-                (data && data.message) ||
-                "The function responded. Verify the supplier's email confirmation status.";
-
-        } catch (error) {
-            console.error("Unexpected supplier confirmation error:", error);
-
-            result.textContent =
-                "Unexpected error: " +
-                (error.message || "Please check the browser console.");
-
-        } finally {
-            button.disabled = false;
         }
-    });
-})();
-</script>
+    );
+}
 
+/* =========================================================
+   STARTUP AND EVENT WIRING
+   ========================================================= */
+
+/*
+ * Part 2 already performs the initial authentication check.
+ * This section deliberately does not create a second login
+ * or authentication listener.
+ */
+
+async function refreshAllAdminSections() {
+    try {
+        await requireAdmin();
+
+        await Promise.all([
+            loadDashboard(),
+            loadProducts(),
+            loadCustomerRequests(),
+            loadDirectQuotes(),
+            loadSupplierQuotes(),
+            loadSuppliers(),
+            loadAdvertisers(),
+            loadPayments()
+        ]);
+
+        showMessage(
+            "message",
+            "Admin portal information refreshed.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "message",
+            error.message || "Unable to refresh admin information.",
+            "error"
+        );
+    }
+}
+
+/*
+ * Keep the existing Refresh button behaviour from Part 2.
+ * This replaces its click handler with a complete refresh.
+ */
+if ($("refreshBtn")) {
+    $("refreshBtn").onclick = refreshAllAdminSections;
+}
+
+</script>
+    
+</script>
 </body>
 </html>
