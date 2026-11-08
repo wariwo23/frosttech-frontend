@@ -476,15 +476,66 @@ function numericInput(id) {
     return Number.isFinite(value) ? value : 0;
 }
 
+
+function getCustomerRequestedItems(request) {
+    const description = String(request.description || "");
+    const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+    const markerIndex = description.indexOf(marker);
+
+    if (markerIndex === -1) {
+        return null;
+    }
+
+    const jsonText = description
+        .slice(markerIndex + marker.length)
+        .split("\n")[0]
+        .trim();
+
+    try {
+        const items = JSON.parse(jsonText);
+
+        if (!items || items.version !== 1) {
+            return null;
+        }
+
+        return items;
+    } catch (error) {
+        console.error("Could not read customer selections:", error);
+        return null;
+    }
+}
+
 function requirementsText(request) {
+    const items = getCustomerRequestedItems(request);
+
+    const requested = items
+        ? [
+            "Installation requested: " +
+                (items.installation ? "YES" : "NO"),
+
+            "Outdoor brackets requested: " +
+                (items.outdoor_brackets ? "YES" : "NO"),
+
+            "Accessories requested: " +
+                (items.accessories || "NO"),
+
+            "Other requested items: " +
+                (items.other_items || "NONE")
+        ].join("\n")
+        : "Additional item selections: Not recorded in this request.";
+
     return [
+        "CUSTOMER REQUEST — DO NOT ALTER",
         "Product: " + (request.title || request.product_id || "Not specified"),
         "Quantity: " + (request.quantity ?? 1),
         "Preferred brand: " + (request.preferred_brand || "Any"),
-        "Description: " + (request.description || "No further description provided"),
+        requested,
+        "Original request details: " +
+            (request.description || "None"),
         "Delivery address: " + (request.delivery_address || "Not provided")
     ].join("\n");
 }
+
 
 /* AUTHENTICATION */
 
