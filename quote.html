@@ -640,8 +640,41 @@ async function handleQuoteSubmit(event) {
     const deliveryAddress =
       document.getElementById("deliveryAddress").value.trim();
 
-    const additionalDetails =
-      document.getElementById("additionalDetails").value.trim();
+    
+const additionalDetails =
+  document.getElementById("additionalDetails").value.trim();
+
+const installationRequested =
+  installationCheckbox.checked;
+
+const bracketsRequested =
+  bracketsCheckbox.checked;
+
+const accessoriesRequested =
+  accessoriesCheckbox.checked;
+
+const accessoriesDescription =
+  requestedAccessories.value.trim();
+
+const otherRequestedItems =
+  document.getElementById("otherRequestedItems").value.trim();
+
+if (accessoriesRequested && !accessoriesDescription) {
+  throw new Error(
+    "Please describe the accessories you specifically requested."
+  );
+}
+
+const requestedItems = {
+  version: 1,
+  installation: installationRequested,
+  outdoor_brackets: bracketsRequested,
+  accessories: accessoriesRequested
+    ? accessoriesDescription
+    : null,
+  other_items: otherRequestedItems || null
+};
+
 
     const budgetValue = budgetInput.value.trim();
 
