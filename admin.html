@@ -293,6 +293,7 @@ body.ft-modal-open{overflow:hidden}
 <!-- CUSTOMER REQUESTS -->
 <section class="card">
 <h2>Customer Quote Requests</h2>
+<button id="loadRequestsBtn" type="button">Load Customer Requests</button>
 <div id="requestMessage" role="status"></div>
 <div id="quoteRequests">Loading requests...</div>
 </section>
@@ -301,6 +302,7 @@ body.ft-modal-open{overflow:hidden}
 <section class="card">
 <h2>Saved Supplier Quotations</h2>
 <p>Review supplier pricing and select or reject supplier quotations.</p>
+<button id="loadSupplierQuotesBtn" type="button">Load Supplier Quotations</button>
 <div id="quotationMessage" role="status"></div>
 <div id="supplierQuotes">Loading supplier quotations...</div>
 </section>
@@ -336,7 +338,9 @@ body.ft-modal-open{overflow:hidden}
 <section class="card">
 <h2>Supplier Account Maintenance</h2>
 <p>Confirm the existing supplier email using administrator access.</p>
-<button id="confirmSupplierEmailBtn" type="button">Confirm Supplier Email</button>
+<button id="confirmSupplierEmailBtn" type="button">
+    Confirm Supplier Email
+</button>
 <p id="confirmSupplierEmailResult" role="status" aria-live="polite"></p>
 </section>
 
@@ -425,7 +429,14 @@ function badge(status) {
 function showMessage(id, text, type = "info") {
     const target = el(id);
     if (!target) return;
-    target.className = "message " + type;
+
+    const messageType = type === "success"
+        ? "success-message"
+        : type === "warning"
+            ? "warning-message"
+            : type;
+
+    target.className = "message " + messageType;
     target.textContent = text;
 }
 
@@ -558,38 +569,30 @@ function requirementsText(request) {
 async function refreshAllDashboardSections() {
     if (!currentAdmin) return;
 
-    showMessage("message", "Refreshing dashboard...", "info");
+    showMessage("message", "Refreshing FrostTech administration data...", "info");
 
-    const results = await Promise.allSettled([
-                loadProducts(),
+    const jobs = [
+        loadDashboardCounts(),
+        loadProducts(),
         loadCustomerRequests(),
+        loadDirectQuotes(),
         loadSupplierQuotes(),
         loadSuppliers(),
-        loadDirectQuotes(),
-        loadDashboardCounts()
-    ]);
+        loadAdvertisers(),
+        loadPayments()
+    ];
 
-    const failed = results.filter(result =>
-        result.status === "rejected"
-    );
+    const results = await Promise.allSettled(jobs);
+    const failed = results.filter((result) => result.status === "rejected");
 
     showMessage(
         "message",
         failed.length
-            ? "Dashboard refreshed with some errors. Check each section."
-            : "Dashboard refresh completed.",
-        failed.length ? "warning-message" : "success-message"
+            ? "Refresh finished with one or more errors. Check the individual section messages."
+            : "Refresh requests completed. Check each section message for any data-loading warnings.",
+        failed.length ? "warning-message" : "info"
     );
 }
-
-if (el("refreshBtn")) {
-    el("refreshBtn").addEventListener(
-        "click",
-        refreshAllDashboardSections
-    );
-}
-
-
 
 
 /* =========================================================
@@ -878,71 +881,44 @@ async function loadDashboardCounts() {
         }
 
         const { count, error } = await query;
-
         if (error) throw error;
-
         return count || 0;
     };
 
     try {
-        const [
-            products,
-            requests,
-            suppliers,
-            quotations,
-            directQuotes,
-            pendingSuppliers
-        ] = await Promise.all([
-            countRows("products"),
-            countRows("quote_requests"),
-            countRows("suppliers"),
-            countRows("admin_quotations", [
-                { column: "status", value: "submitted" }
-            ]),
-            countRows("admin_quotations", [
-                { column: "status", value: "draft" }
-            ]),
-            countRows("suppliers")
-        ]);
+        const [products, requests, suppliers, directQuotes, supplierQuoteResult, supplierRowsResult] =
+            await Promise.all([
+                countRows("products"),
+                countRows("quote_requests"),
+                countRows("suppliers"),
+                countRows("admin_quotations"),
+                db.rpc("admin_list_supplier_quotes"),
+                db.from("suppliers").select("review_status")
+            ]);
+
+        if (supplierQuoteResult.error) throw supplierQuoteResult.error;
+        if (supplierRowsResult.error) throw supplierRowsResult.error;
+
+        const supplierQuoteCount = (supplierQuoteResult.data || []).length;
+        const pendingCount = (supplierRowsResult.data || []).filter((supplier) => {
+            const status = String(supplier.review_status || "pending").toLowerCase();
+            return !["approved", "rejected", "suspended"].includes(status);
+        }).length;
 
         if ($("productCount")) $("productCount").textContent = products;
         if ($("requestCount")) $("requestCount").textContent = requests;
         if ($("supplierCount")) $("supplierCount").textContent = suppliers;
-        if ($("quotationCount")) $("quotationCount").textContent = quotations;
+        if ($("pendingSupplierCount")) $("pendingSupplierCount").textContent = pendingCount;
+        if ($("quotationCount")) $("quotationCount").textContent = supplierQuoteCount;
         if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
 
-        /*
-         * The pending supplier count is calculated from the
-         * supplier records rather than assuming a database
-         * status-count RPC.
-         */
-        const { data: supplierRows, error: supplierError } = await db
-            .from("suppliers")
-            .select("review_status");
-
-        if (supplierError) throw supplierError;
-
-        const pendingCount = (supplierRows || []).filter((supplier) => {
-            const status = String(supplier.review_status || "pending").toLowerCase();
-
-            return ![
-                "approved",
-                "rejected",
-                "suspended"
-            ].includes(status);
-        }).length;
-
-        if ($("pendingSupplierCount")) {
-            $("pendingSupplierCount").textContent = pendingCount;
-        }
-
-        showMessage("message", "Dashboard updated.", "success");
     } catch (error) {
         showMessage(
             "message",
             error.message || "Unable to load dashboard counts.",
             "error"
         );
+        throw error;
     }
 }
 
@@ -1020,11 +996,11 @@ function renderAdvertisers() {
                 ${badge(advertiser.verification_status)}
             </p>
 
-            <button type="button"
-                class="view-advertiser-documents"
-                data-id="${escapeHtml(advertiser.id)}">
-                View Documents
+            <button type="button" disabled
+                title="Private advertiser document access is not connected in this admin file.">
+                Document Review Not Connected
             </button>
+            <small>Private CAC documents are not opened until the approved admin-only document retrieval workflow is connected.</small>
         </article>
     `).join("");
 }
@@ -1034,10 +1010,10 @@ if ($("loadAdvertisersBtn")) {
 }
 
 /*
- * Advertiser document review is intentionally not implemented
- * in this part. It will be connected in the next section only
- * after preserving the existing document-review workflow and
- * its exact database fields/RPCs.
+ * Advertiser CAC documents are stored in a private bucket.
+ * This page has no verified document-path field or admin-only
+ * signed-URL function, so it must not construct public URLs or
+ * guess storage paths. Document access remains intentionally disabled.
  */
 
 /* =========================================================
@@ -1189,7 +1165,7 @@ function editProduct(id) {
     $("productSellingPrice").value = product.selling_price ?? "";
     $("productStock").value = product.stock_quantity ?? 0;
     $("productMinStock").value = product.min_stock_level ?? 0;
-    $("productActive").checked = product.is_active === true;
+    $("productActive").value = product.is_active === true ? "true" : "false";
 
     showMessage(
         "productMessage",
@@ -1216,7 +1192,7 @@ function resetProductForm() {
     $("productStock").value = "0";
     $("productMinStock").value = "0";
     $("productImage").value = "";
-    $("productActive").checked = false;
+    $("productActive").value = "false";
 
     showMessage("productMessage", "Product form cleared.", "info");
 }
@@ -1321,7 +1297,7 @@ async function saveProduct(event) {
             values.selling_price = existing.selling_price;
             values.supplier_id = existing.supplier_id;
 
-            if ($("productActive").checked) {
+            if ($("productActive").value === "true") {
                 const hasPricing = await hasApprovedSelectedPricing(existing);
 
                 if (!hasPricing) {
@@ -1331,7 +1307,7 @@ async function saveProduct(event) {
                 }
             }
 
-            values.is_active = $("productActive").checked;
+            values.is_active = $("productActive").value === "true";
 
             const { error } = await db
                 .from("products")
@@ -1431,41 +1407,6 @@ async function toggleProduct(id) {
     }
 }
 
-/* -------------------------
-   INITIAL PAGE CHECK
-   ------------------------- */
-
-(async function initialiseAdminPortal() {
-    try {
-        const {
-            data: { session },
-            error
-        } = await db.auth.getSession();
-
-        if (error) throw error;
-
-        if (session?.user) {
-            await refreshAdminSession();
-        } else {
-            showAdminLogin();
-
-            showMessage(
-                "systemStatus",
-                "Please log in as a FrostTech administrator.",
-                "info"
-            );
-        }
-
-    } catch (error) {
-        showAdminLogin();
-
-        showMessage(
-            "systemStatus",
-            "Connection error: " + errorText(error),
-            "error"
-        );
-    }
-})();
 </script> 
 
 <script>
@@ -1631,7 +1572,17 @@ async function markRequestReviewing(id) {
  */
 
 function calculateQuotationAdminFee(quote) {
-    const subtotal = Number(quote.subtotal || 0);
+    /*
+     * admin_quotations records created by this form store the
+     * customer unit price and quantity, not a subtotal column.
+     * Derive the product subtotal without adding delivery.
+     */
+    const storedSubtotal = Number(quote.subtotal);
+    const unitPrice = Number(quote.unit_price || 0);
+    const quantity = Number(quote.quantity || 0);
+    const subtotal = Number.isFinite(storedSubtotal) && storedSubtotal > 0
+        ? storedSubtotal
+        : unitPrice * quantity;
     const additional = Number(quote.additional_charges || 0);
     const discount = Number(quote.discount || 0);
 
@@ -1708,10 +1659,34 @@ async function notifyCustomerFeeRequired(request, quote, fee) {
    DIRECT QUOTATION FORM
    ========================================================= */
 
+function setDirectQuotationDraftPriceMode(isDraftPriceMode) {
+    const labels = {
+        directUnitCost: isDraftPriceMode
+            ? "Product Customer Unit Price (₦) *"
+            : "Product Unit Cost (₦) *",
+        directBracketUnitCost: isDraftPriceMode
+            ? "Customer Price per Bracket Set (₦)"
+            : "Cost per Bracket Set (₦)",
+        directInstallationPerAc: isDraftPriceMode
+            ? "Customer Installation Price per AC (₦)"
+            : "Installation Cost per AC (₦)",
+        directAccessoryUnitCost: isDraftPriceMode
+            ? "Customer Accessory Price per Unit / Pack (₦)"
+            : "Accessory Cost per Unit / Pack (₦)"
+    };
+
+    for (const [fieldId, labelText] of Object.entries(labels)) {
+        const label = document.querySelector(`label[for="${fieldId}"]`);
+        if (label) label.textContent = labelText;
+    }
+}
+
 function resetDirectQuotationForm() {
     const form = $("directQuoteForm");
 
     if (form) form.reset();
+    $("directMarkup").disabled = false;
+    setDirectQuotationDraftPriceMode(false);
 
     $("directQuoteId").value = "";
     $("directRequestId").value = "";
@@ -1729,17 +1704,18 @@ function resetDirectQuotationForm() {
     );
 }
 
-function readRequestedItems(request) {
-    const description = String(request?.description || "");
+function readRequestedItems(quotation) {
+    /* The quotation marker is saved in admin_quotations.notes. */
+    const notes = String(quotation?.notes || quotation?.description || "");
 
     const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
-
-    const markerPosition = description.indexOf(marker);
+    const markerPosition = notes.indexOf(marker);
 
     if (markerPosition === -1) return null;
 
-    const jsonText = description
+    const jsonText = notes
         .slice(markerPosition + marker.length)
+        .split("\n")[0]
         .trim();
 
     try {
@@ -2065,22 +2041,32 @@ function getDirectQuotationRecord() {
         throw new Error("Discount cannot exceed the quotation subtotal.");
     }
 
+    /*
+     * Notes may be shown on the customer-facing quotation.
+     * Store only customer prices here, never supplier cost inputs.
+     * The edit screen restores these prices with zero markup.
+     */
+    const markupFactor = 1 + result.markup / 100;
     const requestedItems = {
         version: 1,
+        pricing_mode: "customer_prices_v1",
         items: {
+            product: {
+                customer_unit_price: result.customerUnitPrice
+            },
             installation: {
-                per_unit: result.installationPerAc,
+                customer_unit_price: result.installationPerAc * markupFactor,
                 quantity: result.quantity
             },
             outdoor_brackets: {
                 quantity: result.bracketQuantity,
-                unit_cost: result.bracketUnitCost
+                customer_unit_price: result.bracketUnitCost * markupFactor
             },
             accessories: result.accessoryQuantity > 0 ? [{
                 description: result.accessoryDescription,
                 unit: result.accessoryUnit || null,
                 quantity: result.accessoryQuantity,
-                unit_cost: result.accessoryUnitCost
+                customer_unit_price: result.accessoryUnitCost * markupFactor
             }] : [],
             other_items: []
         }
@@ -2118,13 +2104,16 @@ async function saveDirectDraftRecord() {
             .from("admin_quotations")
             .update(values)
             .eq("id", quotationId)
+            .eq("status", "draft")
             .select("id")
             .maybeSingle();
 
         if (error) throw error;
 
         if (!data) {
-            throw new Error("Draft was not found or could not be updated.");
+            throw new Error(
+                "This quotation is no longer an editable draft. It was not changed or resubmitted."
+            );
         }
 
         return data.id;
@@ -2195,6 +2184,12 @@ async function submitDirectQuotation() {
 
         if (quoteError) throw quoteError;
 
+        if (quote.status !== "draft") {
+            throw new Error(
+                "This quotation has already left draft status and cannot be submitted again."
+            );
+        }
+
         if (!quote.request_id) {
             throw new Error(
                 "This quotation is not linked to a customer request."
@@ -2256,20 +2251,31 @@ async function submitDirectQuotation() {
 
         if (quoteUpdateError) throw quoteUpdateError;
 
-        await notifyCustomerFeeRequired(
-            currentRequest,
-            quote,
-            fee.fee
-        );
+        let notificationFailed = false;
+        try {
+            await notifyCustomerFeeRequired(
+                currentRequest,
+                quote,
+                fee.fee
+            );
+        } catch (notificationError) {
+            notificationFailed = true;
+            console.error("Quotation submitted but notification failed:", notificationError);
+        }
 
-        await loadDirectQuotes();
-        await loadCustomerRequests();
-        await loadDashboard();
+        /* The quotation is already submitted; refreshes are non-critical. */
+        await Promise.allSettled([
+            loadDirectQuotes(),
+            loadCustomerRequests(),
+            loadDashboardCounts()
+        ]);
 
         showMessage(
             "directQuoteMessage",
-            `Quotation submitted. The separate 2% processing fee is ${money(fee.fee)}. Delivery is excluded from the fee calculation.`,
-            "success"
+            notificationFailed
+                ? `Quotation submitted and the separate processing fee of ${money(fee.fee)} was recorded. Customer notification failed; do not submit this quotation again. Delivery is excluded from the fee calculation.`
+                : `Quotation submitted. The separate processing fee is ${money(fee.fee)}. Delivery is excluded from the fee calculation.`,
+            notificationFailed ? "warning-message" : "success"
         );
     } catch (error) {
         showMessage(
@@ -2454,33 +2460,63 @@ async function editDirectQuotation(id) {
             : noteText;
 
         const items = requestedItems?.items || {};
+        const safeCustomerPriceDraft =
+            requestedItems?.pricing_mode === "customer_prices_v1";
 
-        $("directInstallationPerAc").value =
-            items.installation?.per_unit || 0;
+        if (safeCustomerPriceDraft) {
+            /* Restore customer-facing amounts without exposing supplier costs. */
+            $("directUnitCost").value =
+                items.product?.customer_unit_price ?? quote.unit_price ?? 0;
+            $("directMarkup").value = "0";
+            $("directMarkup").disabled = true;
 
-        $("directBracketQuantity").value =
-            items.outdoor_brackets?.quantity || 0;
+            $("directInstallationPerAc").value =
+                items.installation?.customer_unit_price ?? 0;
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity ?? 0;
+            $("directBracketUnitCost").value =
+                items.outdoor_brackets?.customer_unit_price ?? 0;
 
-        $("directBracketUnitCost").value =
-            items.outdoor_brackets?.unit_cost || 0;
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
 
-        const accessories = Array.isArray(items.accessories)
-            ? items.accessories
-            : [];
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value =
+                firstAccessory.customer_unit_price ?? 0;
 
-        const firstAccessory = accessories[0] || {};
+            setDirectQuotationDraftPriceMode(true);
+        } else {
+            /* Legacy markers may contain supplier costs. Never load them. */
+            $("directUnitCost").value = "";
+            $("directMarkup").value = "15";
+            $("directMarkup").disabled = false;
+            $("directInstallationPerAc").value = "0";
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity || 0;
+            $("directBracketUnitCost").value = "0";
 
-        $("directAccessoryDescription").value =
-            firstAccessory.description || "";
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
 
-        $("directAccessoryUnit").value =
-            firstAccessory.unit || "";
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value = "0";
 
-        $("directAccessoryQuantity").value =
-            firstAccessory.quantity || 0;
-
-        $("directAccessoryUnitCost").value =
-            firstAccessory.unit_cost || 0;
+            setDirectQuotationDraftPriceMode(false);
+        }
 
         const request = currentQuoteRequests.find(
             (item) => item.id === quote.request_id
@@ -2579,10 +2615,12 @@ function adminConfirm(options = {}) {
         yesButton.textContent = options.confirmText || "Yes, Continue";
         cancelButton.textContent = options.cancelText || "Cancel";
 
-        modal.hidden = false;
+        modal.classList.remove("hidden");
+        document.body.classList.add("ft-modal-open");
 
         const finish = (confirmed) => {
-            modal.hidden = true;
+            modal.classList.add("hidden");
+            document.body.classList.remove("ft-modal-open");
 
             const reason = reasonInput
                 ? reasonInput.value.trim()
@@ -2606,13 +2644,18 @@ function adminConfirm(options = {}) {
                 ? reasonInput.value.trim()
                 : "";
 
-            if (options.requireReason && !reason) {
-                reasonInput.focus();
-                reasonInput.setCustomValidity(
-                    "Please enter a reason before continuing."
-                );
-                reasonInput.reportValidity();
-                return;
+            if (options.requireReason && reasonInput) {
+                /* Clear any previous validation error before rechecking. */
+                reasonInput.setCustomValidity("");
+
+                if (!reason) {
+                    reasonInput.focus();
+                    reasonInput.setCustomValidity(
+                        "Please enter a reason before continuing."
+                    );
+                    reasonInput.reportValidity();
+                    return;
+                }
             }
 
             finish(true);
@@ -3031,14 +3074,17 @@ async function reviewSupplier(supplierId, newStatus) {
 
         if (error) throw error;
 
-        await loadSuppliers();
-        await loadDashboard();
-
         showMessage(
             "supplierManagementMessage",
             `Supplier review status updated to ${newStatus.replaceAll("_", " ")}.`,
             "success"
         );
+
+        /* Refreshing counts must not turn a successful review into a false failure. */
+        await Promise.allSettled([
+            loadSuppliers(),
+            loadDashboardCounts()
+        ]);
     } catch (error) {
         showMessage(
             "supplierManagementMessage",
@@ -3095,29 +3141,33 @@ function renderPayments(payments) {
         return;
     }
 
+    const visiblePaymentFields = [
+        "id",
+        "order_id",
+        "amount",
+        "currency",
+        "status",
+        "reference",
+        "payment_reference",
+        "provider",
+        "created_at",
+        "paid_at"
+    ];
+
     container.innerHTML = payments.map((payment) => {
-        const fields = Object.entries(payment)
-            .map(([key, value]) => {
-                let displayValue = value;
-
-                if (value && typeof value === "object") {
-                    displayValue = JSON.stringify(value);
-                }
-
-                return `
-                    <p>
-                        <strong>${escapeHtml(
-                            key.replaceAll("_", " ")
-                        )}:</strong>
-                        ${escapeHtml(displayValue ?? "")}
-                    </p>
-                `;
-            })
+        const fields = visiblePaymentFields
+            .filter((key) => Object.prototype.hasOwnProperty.call(payment, key))
+            .map((key) => `
+                <p>
+                    <strong>${escapeHtml(key.replaceAll("_", " "))}:</strong>
+                    ${escapeHtml(payment[key] ?? "")}
+                </p>
+            `)
             .join("");
 
         return `
             <article class="admin-card payment-record">
-                ${fields}
+                ${fields || "<p>No approved display fields are available.</p>"}
             </article>
         `;
     }).join("");
@@ -3222,45 +3272,40 @@ if ($("confirmSupplierEmailBtn")) {
  * or authentication listener.
  */
 
-async function refreshAllAdminSections() {
+/* Start only after every admin section and handler has been defined. */
+if ($("refreshBtn")) {
+    $("refreshBtn").addEventListener("click", refreshAllDashboardSections);
+}
+
+(async function initialiseAdminPortal() {
     try {
-        await requireAdmin();
+        const {
+            data: { session },
+            error
+        } = await db.auth.getSession();
 
-        await Promise.all([
-            loadDashboard(),
-            loadProducts(),
-            loadCustomerRequests(),
-            loadDirectQuotes(),
-            loadSupplierQuotes(),
-            loadSuppliers(),
-            loadAdvertisers(),
-            loadPayments()
-        ]);
+        if (error) throw error;
 
-        showMessage(
-            "message",
-            "Admin portal information refreshed.",
-            "success"
-        );
+        if (session?.user) {
+            await refreshAdminSession();
+        } else {
+            showAdminLogin();
+            showMessage(
+                "systemStatus",
+                "Please log in as a FrostTech administrator.",
+                "info"
+            );
+        }
     } catch (error) {
+        showAdminLogin();
         showMessage(
-            "message",
-            error.message || "Unable to refresh admin information.",
+            "systemStatus",
+            "Connection error: " + errorText(error),
             "error"
         );
     }
-}
+})();
 
-/*
- * Keep the existing Refresh button behaviour from Part 2.
- * This replaces its click handler with a complete refresh.
- */
-if ($("refreshBtn")) {
-    $("refreshBtn").onclick = refreshAllAdminSections;
-}
-
-</script>
-    
 </script>
 </body>
 </html>
