@@ -607,12 +607,12 @@ async function refreshAllDashboardSections() {
     showMessage("message", "Refreshing dashboard...", "info");
 
     const results = await Promise.allSettled([
-        loadProducts(),
+                loadProducts(),
         loadCustomerRequests(),
-        loadSupplierQuotations(),
-        loadSupplierManagement(),
-        loadDirectQuotations(),
-        loadDashboardCounts()
+        loadSupplierQuotes(),
+        loadSuppliers(),
+        loadDirectQuotes(),
+        loadDashboardCounts()()
     ]);
 
     const failed = results.filter(result =>
