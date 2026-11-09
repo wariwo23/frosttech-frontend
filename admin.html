@@ -546,52 +546,6 @@ function requirementsText(request) {
     ].join("\n");
 }
 
-/* AUTHENTICATION */
-
-async function checkAdminProfile(user) {
-    currentAdmin = null;
-    if (!user?.id) return false;
-
-    try {
-        const { data, error } = await db.from("profiles")
-            .select("id, full_name, role, is_active")
-            .eq("id", user.id)
-            .maybeSingle();
-
-        if (error || !data ||
-            data.role !== "admin" ||
-            data.is_active !== true) {
-            return false;
-        }
-
-        currentAdmin = {
-            id:user.id,
-            email:user.email,
-            full_name:data.full_name
-        };
-
-        return true;
-    } catch (error) {
-        console.error("Admin profile check failed:", error);
-        return false;
-    }
-}
-
-async function openDashboard(user) {
-    if (!await checkAdminProfile(user)) {
-        await db.auth.signOut();
-        el("dashboard").classList.add("hidden");
-        el("loginSection").classList.remove("hidden");
-        showMessage("loginMessage",
-            "Your account does not have active administrator access.",
-            "error");
-        return;
-    }
-
-    el("loginSection").classList.add("hidden");
-    el("dashboard").classList.remove("hidden");
-    el("loggedUser").textContent =
-        currentAdmin.full_name || currentAdmin.email;
 
 
 /* Authentication is handled once in the unified Part 2 section. */
