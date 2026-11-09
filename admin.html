@@ -642,7 +642,7 @@ async function requireAdmin() {
 
     const { data: profile, error: profileError } = await db
         .from("profiles")
-        .select("id, email, full_name, role, is_active")
+        .select("id, full_name, role, is_active")
         .eq("id", user.id)
         .maybeSingle();
 
@@ -698,7 +698,6 @@ async function refreshAdminSession() {
         if ($("loggedUser")) {
             $("loggedUser").textContent =
                 profile.full_name ||
-                profile.email ||
                 user.email ||
                 "Administrator";
         }
