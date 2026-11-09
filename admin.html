@@ -587,20 +587,7 @@ el("forgotAdminPassword").addEventListener("click", async function() {
     }
 });
 
-el("loginForm").addEventListener("submit", async function(event) {
-    event.preventDefault();
-
-    const button = el("loginBtn");
-    button.disabled = true;
-    showMessage("loginMessage", "Checking credentials...", "info");
-
-    try {
-        const { data, error } = await db.auth.signInWithPassword({
-            email:el("email").value.trim(),
-            password:el("password").value
-        });
-
-        if (error) throw error;
+  if (error) throw error;
 
         const authorized = await checkAdminProfile(data.user);
 
