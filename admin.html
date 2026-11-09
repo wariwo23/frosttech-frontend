@@ -548,66 +548,6 @@ function requirementsText(request) {
 
 /* AUTHENTICATION */
 
-el("forgotAdminPassword").addEventListener("click", async function() {
-    const email = el("email").value.trim();
-    const button = el("forgotAdminPassword");
-
-    if (!email) {
-        showMessage("loginMessage",
-            "Please enter your administrator email address first.",
-            "error");
-        el("email").focus();
-        return;
-    }
-
-    button.disabled = true;
-    showMessage("loginMessage", "Requesting password reset...", "info");
-
-    try {
-        const redirectTo = new URL(
-            "customer-login.html?reset=1",
-            window.location.href
-        ).toString();
-
-        const { error } = await db.auth.resetPasswordForEmail(email, {
-            redirectTo
-        });
-
-        if (error) throw error;
-
-        showMessage("loginMessage",
-            "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
-            "success-message");
-    } catch (error) {
-        showMessage("loginMessage",
-            "Password reset request failed: " + errorText(error),
-            "error");
-    } finally {
-        button.disabled = false;
-    }
-});
-
-  if (error) throw error;
-
-        const authorized = await checkAdminProfile(data.user);
-
-        if (!authorized) {
-            await db.auth.signOut();
-            showMessage("loginMessage",
-                "Access denied. This account is not an active administrator.",
-                "error");
-            return;
-        }
-
-        await openDashboard(data.user);
-    } catch (error) {
-        showMessage("loginMessage",
-            "Login failed: " + errorText(error), "error");
-    } finally {
-        button.disabled = false;
-    }
-});
-
 async function checkAdminProfile(user) {
     currentAdmin = null;
     if (!user?.id) return false;
