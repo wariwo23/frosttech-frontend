@@ -4707,74 +4707,137 @@ function ftFlattenSnapshot(value, prefix = "", rows = []) {
     return rows;
 }
 
-
-
 async function ftPrintApprovedSnapshot() {
     const review = currentPrintReview;
-    if (!review?.id || review.status !== "approved") return;
-
-    const printWindow = window.open("", "_blank");
-
-    if (!printWindow) {
-        ftSetPrintControls("approved", "Allow pop-ups for this page, then select Print Approved Copy again.");
+    if (!review?.id || review.status !== "approved") {
+        ftSetPrintControls("approved", "No approved review is available. Review and approve the record again before printing.");
         return;
     }
 
-    printWindow.document.open();
-    printWindow.document.write(`<!DOCTYPE html>
+    let printWindow = null;
+
+    try {
+        // Open synchronously from the administrator's tap so the browser does not block it.
+        printWindow = window.open("", "_blank");
+
+        if (!printWindow) {
+            ftSetPrintControls(
+                "approved",
+                "The print page was blocked. Allow pop-ups for FrostTech, then select Print Approved Copy again."
+            );
+            return;
+        }
+
+        // Populate the new tab immediately. It must never remain an unexplained blank page
+        // while the approval event is being verified by Supabase.
+        printWindow.document.open();
+        printWindow.document.write(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>FrostTech — Preparing print copy</title>
+<title>FrostTech — Verifying print approval</title>
 <style>
-body{font-family:Arial,sans-serif;color:#172b40;margin:30px;line-height:1.5}
-h1{color:#063b70}
-.toolbar{position:sticky;top:0;background:#fff;padding:12px 0;border-bottom:1px solid #ccd5df;margin-bottom:22px;display:flex;gap:12px}
-button{padding:11px 20px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
-.print-btn{background:#0879c9;color:white}
-.close-btn{background:#e8edf2;color:#172b40}
-@media print{.toolbar{display:none}body{margin:15mm}}
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #d5e5f3;border-radius:12px;background:#f5f9fd}
+h1{color:#063b70;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
 </style>
 </head>
 <body>
-<div class="toolbar">
-<button class="print-btn" onclick="window.print()">Print Record</button>
-<button class="close-btn" onclick="window.close()">Close and Return</button>
-</div>
+<div class="panel" role="status" aria-live="polite">
 <h1>FrostTech HVAC and Refrigeration</h1>
-<p>Verifying approval and preparing your controlled print copy. Please wait…</p>
+<p><strong>Verifying Super Admin approval…</strong></p>
+<p>Please keep this page open. The approved record will appear here after the database confirms the print authorization.</p>
+<p>If verification fails, this page will explain what happened. No print copy is available until verification succeeds.</p>
+</div>
 </body>
 </html>`);
-    printWindow.document.close();
+        printWindow.document.close();
 
-    ftSetPrintControls("none", "Verifying approval and recording the print event...");
+        ftSetPrintControls("none", "Verifying approval and recording this print event...");
 
-    try {
         const { data, error } = await db.rpc("admin_authorize_print", {
             p_review_id: review.id,
             p_record_snapshot: review.snapshot
         });
 
         if (error || !data) {
-            throw new Error(error?.message || "Approval or snapshot verification failed.");
-        }
-
-        if (currentPrintReview !== review) {
-            if (!printWindow.closed) printWindow.close();
+            const reason = error?.message || "Approval or snapshot verification failed.";
+            printWindow.document.open();
+            printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Print not authorized</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #f0caca;border-radius:12px;background:#fff7f7}
+h1{color:#9b1c1c;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="panel" role="alert">
+<h1>Print authorization was not completed</h1>
+<p>${escapeHtml(reason)}</p>
+<p>No approved print copy has been produced by this page.</p>
+<button type="button" id="closeFailedPrint">Close and Return</button>
+</div>
+<script>
+document.getElementById("closeFailedPrint").addEventListener("click", function () {
+    if (window.opener && !window.opener.closed) window.opener.focus();
+    window.close();
+});
+<\/script>
+</body>
+</html>`);
+            printWindow.document.close();
+            ftSetPrintControls("approved", `Printing was not authorized: ${reason}`);
             return;
         }
 
         const eventId = typeof data === "string"
             ? data
-            : (Array.isArray(data) ? data[0] : data?.event_id || data?.id || "Recorded");
+            : (Array.isArray(data)
+                ? data[0]
+                : data?.event_id || data?.id || "Recorded");
 
         const snapshot = review.snapshot;
         const rows = ftFlattenSnapshot(snapshot);
-
         const tableRows = rows.map(([key, value]) =>
             `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(value)}</td></tr>`
         ).join("");
+
+        const recordMarkup = `
+            <header>
+                <h1>FrostTech HVAC and Refrigeration</h1>
+                <div>Marketplace Administration — Controlled Print Copy</div>
+            </header>
+
+            <h2>${escapeHtml(snapshot.document_title || "Approved Record")}</h2>
+
+            <div class="meta">
+                Workspace: ${escapeHtml(snapshot.workspace_title || "—")}<br>
+                Record reference: ${escapeHtml(snapshot.record_id || "—")}<br>
+                Reviewed snapshot: ${escapeHtml(snapshot.viewed_snapshot_at || "—")}<br>
+                Scope: ${escapeHtml(snapshot.scope_note || "Single reviewed record snapshot")}<br>
+                Printed: ${escapeHtml(new Date().toLocaleString("en-NG", {timeZone:"Africa/Lagos"}))}<br>
+                Approval: Super Admin approval verified by Supabase<br>
+                Print event reference: ${escapeHtml(String(eventId))}<br>
+                Copies in this print job: {{TOTAL_COPIES}}<br>
+                {{COPY_LABEL}}
+            </div>
+
+            <table><tbody>${tableRows}</tbody></table>
+
+            <footer>
+                Confidential FrostTech administration record.
+                Generated after Super Admin approval.
+                All copies in this job belong to the same authorized print event.
+            </footer>
+        `;
 
         const html = `<!DOCTYPE html>
 <html lang="en">
@@ -4782,49 +4845,185 @@ button{padding:11px 20px;border:0;border-radius:5px;font-weight:bold;cursor:poin
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>${escapeHtml(snapshot.document_title || "FrostTech Record")}</title>
+
 <style>
-body{font-family:Arial,sans-serif;color:#172b40;margin:28px;line-height:1.5}
-.toolbar{position:sticky;top:0;background:#fff;padding:12px 0;border-bottom:1px solid #ccd5df;margin-bottom:22px;display:flex;gap:12px;z-index:10}
-button{padding:11px 20px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
-.print-btn{background:#0879c9;color:white}
-.close-btn{background:#e8edf2;color:#172b40}
-header{border-bottom:3px solid #0879c9;padding-bottom:14px;margin-bottom:18px}
-h1{font-size:22px;margin:0 0 5px;color:#063b70}
-h2{font-size:17px;margin:18px 0 8px}
-.meta{font-size:12px;line-height:1.8}
-table{width:100%;border-collapse:collapse;margin-top:18px}
-th,td{border:1px solid #cbd5df;padding:8px;text-align:left;vertical-align:top;font-size:12px}
-th{width:32%;background:#f1f5f9}
-footer{border-top:1px solid #cbd5df;margin-top:24px;padding-top:10px;font-size:11px;color:#526273}
-@media print{
-.toolbar{display:none!important}
-body{margin:15mm}
+body {
+    font-family: Arial, sans-serif;
+    color: #172b40;
+    margin: 28px;
+}
+header {
+    border-bottom: 3px solid #0879c9;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+}
+h1 {
+    font-size: 22px;
+    margin: 0 0 5px;
+    color: #063b70;
+}
+h2 {
+    font-size: 17px;
+    margin: 18px 0 8px;
+}
+.meta {
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 18px;
+}
+th, td {
+    border: 1px solid #cbd5df;
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+th {
+    width: 32%;
+    background: #f1f5f9;
+}
+footer {
+    border-top: 1px solid #cbd5df;
+    margin-top: 24px;
+    padding-top: 10px;
+    font-size: 11px;
+    color: #526273;
+}
+.print-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    background: #edf5fc;
+    border: 1px solid #d5e5f3;
+    border-radius: 9px;
+}
+.print-toolbar label {
+    font-weight: bold;
+}
+.print-toolbar select,
+.print-toolbar button {
+    font: inherit;
+    padding: 11px;
+    border-radius: 6px;
+}
+.print-toolbar select {
+    background: white;
+    border: 1px solid #bdc9d6;
+}
+.print-toolbar button {
+    border: 0;
+    background: #0879c9;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+.print-toolbar .close-btn {
+    background: #596579;
+}
+.print-toolbar button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+.copy-sheet {
+    page-break-after: always;
+    break-after: page;
+}
+.copy-sheet:last-child {
+    page-break-after: auto;
+    break-after: auto;
+}
+@media print {
+    body { margin: 15mm; }
+    .print-toolbar { display: none !important; }
+}
+@media(max-width:600px) {
+    body { margin: 12px; }
+    .print-toolbar { align-items: stretch; }
+    .print-toolbar select,
+    .print-toolbar button { width: 100%; }
 }
 </style>
 </head>
+
 <body>
-<div class="toolbar">
-<button class="print-btn" onclick="window.print()">Print Record</button>
-<button class="close-btn" onclick="window.close()">Close and Return</button>
+
+<div class="print-toolbar">
+    <label for="copyCount">Number of copies:</label>
+
+    <select id="copyCount">
+        <option value="1">1 Copy</option>
+        <option value="2">2 Copies</option>
+        <option value="3">3 Copies</option>
+        <option value="5">5 Copies</option>
+        <option value="10">10 Copies</option>
+    </select>
+
+    <button type="button" id="printBtn">Print Record</button>
+    <button type="button" class="close-btn" id="closeBtn">Close and Return</button>
 </div>
-<header>
-<h1>FrostTech HVAC and Refrigeration</h1>
-<div>Marketplace Administration — Controlled Print Copy</div>
-</header>
-<h2>${escapeHtml(snapshot.document_title || "Approved Record")}</h2>
-<div class="meta">
-Workspace: ${escapeHtml(snapshot.workspace_title || "—")}<br>
-Record reference: ${escapeHtml(snapshot.record_id || "—")}<br>
-Reviewed snapshot: ${escapeHtml(snapshot.viewed_snapshot_at || "—")}<br>
-Scope: ${escapeHtml(snapshot.scope_note || "Single reviewed record snapshot")}<br>
-Printed: ${escapeHtml(new Date().toLocaleString("en-NG", {timeZone:"Africa/Lagos"}))}<br>
-Approval: Super Admin approval verified by Supabase<br>
-Print event reference: ${escapeHtml(String(eventId))}
+
+<div id="printArea">
+    <section class="copy-sheet">
+        ${recordMarkup
+            .replaceAll("{{TOTAL_COPIES}}", "1")
+            .replaceAll("{{COPY_LABEL}}", "Preview")}
+    </section>
 </div>
-<table><tbody>${tableRows}</tbody></table>
-<footer>
-Confidential FrostTech administration record. This copy was generated only after Super Admin approval. Reprints are separately logged.
-</footer>
+
+<template id="copyTemplate">${recordMarkup}</template>
+
+<script>
+document.getElementById("printBtn").addEventListener("click", function() {
+    const button = this;
+    if (button.disabled) return;
+
+    const count = Math.max(
+        1,
+        Math.min(10, parseInt(document.getElementById("copyCount").value, 10) || 1)
+    );
+
+    const template = document.getElementById("copyTemplate").innerHTML;
+    let output = "";
+
+    for (let i = 1; i <= count; i++) {
+        const content = template
+            .replaceAll("{{TOTAL_COPIES}}", String(count))
+            .replaceAll("{{COPY_LABEL}}", "Copy " + i + " of " + count);
+
+        output += '<section class="copy-sheet">' + content + '</section>';
+    }
+
+    document.getElementById("printArea").innerHTML = output;
+    button.disabled = true;
+    button.textContent = "Print dialog opened";
+
+    window.focus();
+    window.print();
+
+    // One authorization event covers this selected multi-copy print job.
+    // A later reprint must be started again from the approved dashboard record
+    // so Supabase can record a separate print event.
+    const note = document.createElement("p");
+    note.textContent = "This print job has been submitted to the browser. To make another print job, return to the approved record and select Print Approved Copy again.";
+    note.setAttribute("role", "status");
+    document.querySelector(".print-toolbar").appendChild(note);
+});
+
+document.getElementById("closeBtn").addEventListener("click", function() {
+    if (window.opener && !window.opener.closed) window.opener.focus();
+    window.close();
+});
+<\/script>
+
 </body>
 </html>`;
 
@@ -4832,50 +5031,59 @@ Confidential FrostTech administration record. This copy was generated only after
         printWindow.document.write(html);
         printWindow.document.close();
 
-        ftSetPrintControls(
-            "approved",
-            `Print event ${String(eventId)} has been recorded. Any reprint will create another audit event.`
-        );
-
-    } catch (error) {
-        if (!printWindow.closed) {
-            const message = escapeHtml(
-                error?.message || "The print authorization could not be completed."
-            );
-
-            printWindow.document.open();
-            printWindow.document.write(`<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>FrostTech — Print not authorized</title>
-<style>
-body{font-family:Arial,sans-serif;color:#172b40;margin:40px;line-height:1.5}
-h1{color:#063b70}
-.error{color:#a12626}
-</style>
-</head>
-<body>
-<h1>FrostTech HVAC and Refrigeration</h1>
-<p class="error">Printing was not authorized.</p>
-<p>${message}</p>
-<p>Return to the FrostTech administration page and try again.</p>
-<button onclick="window.close()">Close and Return</button>
-</body>
-</html>`);
-            printWindow.document.close();
-        }
-
         if (currentPrintReview === review) {
             ftSetPrintControls(
                 "approved",
-                `Printing was not authorized: ${error?.message || "Approval or snapshot verification failed."}`
+                `Print event ${String(eventId)} has been recorded. Select the number of copies before printing. A separate print event will be recorded for each later reprint.`
             );
         }
+    } catch (err) {
+        const message = err?.message || String(err || "Unexpected print preparation error.");
+
+        if (printWindow && !printWindow.closed) {
+            try {
+                printWindow.document.open();
+                printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Print page error</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #f0caca;border-radius:12px;background:#fff7f7}
+h1{color:#9b1c1c;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="panel" role="alert">
+<h1>FrostTech print page could not be prepared</h1>
+<p>${escapeHtml(message)}</p>
+<p>No print copy is available from this page. Return to the approved record and check its status before trying again.</p>
+<button type="button" id="closeErrorPage">Close and Return</button>
+</div>
+<script>
+document.getElementById("closeErrorPage").addEventListener("click", function () {
+    if (window.opener && !window.opener.closed) window.opener.focus();
+    window.close();
+});
+<\/script>
+</body>
+</html>`);
+                printWindow.document.close();
+            } catch (_) {
+                // The dashboard status below remains the fallback if the browser
+                // no longer permits writing to the secondary window.
+            }
+        }
+
+        ftSetPrintControls(
+            "approved",
+            `The print page could not be prepared: ${message}`
+        );
     }
 }
-
-
 
 function ftCloseRecord() {
     $("ftRecordModal")?.classList.add("hidden");
