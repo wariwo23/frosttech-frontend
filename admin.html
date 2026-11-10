@@ -79,57 +79,727 @@ body.ft-modal-open{overflow:hidden}
     header h1{font-size:20px}
 }
 
-/* FROSTTECH READABLE ADMIN LAYOUT */
-header{padding:26px max(18px,calc((100% - 1180px)/2));box-shadow:0 3px 14px rgba(0,0,0,.12)}
-header p{margin:0;color:#dceeff;font-size:14px;letter-spacing:.2px}
-main{max-width:1240px;padding:22px 18px}
-.card{padding:22px;margin-bottom:22px;border-radius:14px;box-shadow:0 4px 16px rgba(20,45,75,.06)}
-.card>h2{font-size:20px;margin-bottom:8px;letter-spacing:.1px}
-.card>p{line-height:1.55;color:#526174}
-.stat{padding:18px;border:1px solid #dce8f4;background:#f4f8fd;border-radius:12px}
-.stat strong{font-size:28px}
-.table-wrap{width:100%;overflow-x:auto;margin:14px 0 4px;border:1px solid #e1e8f0;border-radius:10px;background:#fff;-webkit-overflow-scrolling:touch}
-table.admin-table{width:100%;min-width:720px;border-collapse:separate;border-spacing:0;font-size:14px}
-.admin-table th{position:sticky;top:0;background:#edf4fb;color:#173b60;font-weight:700;white-space:nowrap}
-.admin-table th,.admin-table td{padding:13px 12px;border-bottom:1px solid #e8edf3;vertical-align:middle}
-.admin-table tr:last-child td{border-bottom:0}
-.admin-table tbody tr:hover{background:#f8fbff}
-.admin-table td:first-child{font-weight:600;color:#213b55}
-.table-actions{display:flex;align-items:center;gap:7px;flex-wrap:wrap;min-width:180px}
-.table-actions button,.table-actions .record-view-link{width:auto;flex:0 0 auto;margin:0;padding:8px 10px;font-size:12px;border-radius:6px;white-space:nowrap}
-.record-view-link{display:inline-block;border:1px solid #b8d4ef;background:#eef6ff;color:#075a9b;font-weight:700;text-decoration:none;cursor:pointer}
-.record-view-link:hover{background:#dceeff}
-.table-action{width:auto;min-width:0;margin:0;padding:8px 10px;font-size:12px}
-.form-panel{border:1px solid #dce6f0;border-radius:10px;margin:14px 0;padding:0 14px 14px;background:#fbfdff}
-.form-panel summary{cursor:pointer;list-style:none;padding:15px 2px;font-weight:700;color:#064477;display:flex;justify-content:space-between;gap:10px;align-items:center}
-.form-panel summary::-webkit-details-marker{display:none}
-.form-panel summary:after{content:'＋';font-size:20px;color:#0879c9}
-.form-panel[open] summary:after{content:'−'}
-.form-panel form{padding-top:8px}
-input,select,textarea{padding:12px;border-radius:8px}
-button{padding:12px;border-radius:8px}
-#productForm{max-width:900px}
-#productForm label{margin-top:12px;font-size:13px;color:#34465a}
-#productForm small{display:block;line-height:1.5;margin:2px 0 8px}
-.ft-record-modal{position:fixed;inset:0;z-index:100000;background:rgba(10,24,40,.62);display:flex;align-items:center;justify-content:center;padding:14px}
-.ft-record-modal.hidden{display:none!important}
-.ft-record-panel{width:min(900px,100%);max-height:92vh;overflow:auto;background:#fff;border-radius:14px;box-shadow:0 18px 60px rgba(0,0,0,.28)}
-.ft-record-header{position:sticky;top:0;z-index:2;background:#063b70;color:#fff;padding:17px 20px;display:flex;align-items:center;justify-content:space-between;gap:12px}
-.ft-record-header h2{margin:0;color:#fff;font-size:19px}
-.ft-record-close{width:auto;margin:0;background:#fff;color:#063b70;padding:7px 12px;font-size:18px}
-.ft-record-content{padding:18px 20px 24px}
-.ft-record-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 18px}
-.ft-record-field{padding:12px 0;border-bottom:1px solid #e8edf3;min-width:0}
-.ft-record-field strong{display:block;color:#596b7e;font-size:12px;text-transform:uppercase;letter-spacing:.35px;margin-bottom:5px}
-.ft-record-field span{display:block;color:#1d2c3c;white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.5}
-.ft-record-field.wide{grid-column:1/-1}
-.ft-record-note{background:#f1f6fc;border-radius:8px;padding:12px;color:#42566c;line-height:1.5}
-@media(max-width:700px){
- main{padding:12px 10px}.card{padding:15px;margin-bottom:14px}.card>h2{font-size:18px}
- .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.stat{padding:12px}.stat strong{font-size:23px}
- .ft-record-modal{padding:7px}.ft-record-panel{max-height:96vh;border-radius:10px}.ft-record-grid{grid-template-columns:1fr}.ft-record-field.wide{grid-column:auto}
- .ft-record-header{padding:14px}.ft-record-content{padding:12px 15px 20px}
+
+/* FROSTTECH ADMIN DASHBOARD — VISUAL POLISH ONLY */
+
+:root {
+    --primary: #073b70;
+    --secondary: #0879c9;
+    --background: #f1f5f9;
+    --border: #d9e2ec;
 }
+
+body {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
+
+header {
+    background: linear-gradient(120deg, #052b50, #075a9c);
+    padding: 28px 18px;
+    border-bottom: 4px solid #19a4e8;
+}
+
+header h1 {
+    max-width: 1240px;
+    margin: 0 auto 6px;
+    font-size: clamp(21px, 4vw, 29px);
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+header p {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: #dceeff;
+    font-size: 14px;
+}
+
+main {
+    max-width: 1280px;
+    padding: 24px 18px;
+}
+
+.card {
+    background: #ffffff;
+    border: 1px solid #e0e7ef;
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 18px rgba(15, 40, 70, .055);
+}
+
+.card > h2 {
+    color: #073b70;
+    font-size: 20px;
+    font-weight: 800;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e8eef5;
+}
+
+.card > p {
+    color: #526174;
+    line-height: 1.65;
+}
+
+h3 {
+    color: #17466f;
+}
+
+.stat {
+    background: linear-gradient(145deg, #f7fbff, #eaf3fc);
+    border: 1px solid #d8e7f5;
+    border-radius: 12px;
+    padding: 18px;
+    min-width: 0;
+    color: #40556b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.stat strong {
+    color: #073b70;
+    font-size: 27px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+input, select, textarea {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 44px;
+    outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #0879c9;
+    box-shadow: 0 0 0 3px rgba(8, 121, 201, .12);
+}
+
+label {
+    color: #334b63;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 13px;
+}
+
+button {
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-weight: 700;
+    transition: filter .15s ease, box-shadow .15s ease;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(.94);
+    box-shadow: 0 3px 9px rgba(0, 40, 80, .12);
+}
+
+button:focus-visible {
+    outline: 3px solid rgba(8, 121, 201, .3);
+    outline-offset: 2px;
+}
+
+button.neutral {
+    background: #526174;
+}
+
+.action-row {
+    gap: 9px;
+}
+
+.action-row button {
+    flex: 1 1 150px;
+}
+
+.message {
+    border-radius: 9px;
+    padding: 12px 14px;
+    line-height: 1.5;
+}
+
+.form-panel {
+    background: #f8fbfe;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+}
+
+.form-panel summary {
+    color: #073b70;
+}
+
+.requirements,
+.quote-breakdown {
+    border-radius: 10px;
+}
+
+.table-wrap {
+    border-radius: 11px;
+    border-color: #dce5ee;
+}
+
+.admin-table th {
+    background: #eaf2fa;
+    color: #173b60;
+}
+
+.admin-table td {
+    color: #34465a;
+}
+
+.admin-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.badge {
+    border-radius: 20px;
+    padding: 5px 10px;
+}
+
+.product-image {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+}
+
+hr {
+    border-top-color: #e2e8f0;
+}
+
+footer {
+    background: #eaf0f6;
+    color: #526174;
+    border-top: 1px solid #dce5ee;
+}
+
+/* MOBILE PRESENTATION */
+@media (max-width: 700px) {
+    header {
+        padding: 22px 15px;
+    }
+
+    main {
+        padding: 14px 10px;
+    }
+
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 11px;
+    }
+
+    .card > h2 {
+        font-size: 18px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .stat {
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .stat strong {
+        font-size: 23px;
+    }
+
+    .action-row button {
+        flex: 1 1 100%;
+    }
+
+    input, select, textarea {
+        font-size: 16px;
+    }
+
+    .table-wrap {
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* FROSTTECH ADMIN LOGIN AND STATUS PRESENTATION */
+
+#systemStatus {
+    max-width: 1240px;
+    margin: 18px auto;
+    border-radius: 10px;
+    padding: 14px 17px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(20, 45, 75, .04);
+}
+
+#loginSection {
+    max-width: 480px;
+    margin: 35px auto 50px;
+    padding: 28px;
+    border-top: 4px solid #0879c9;
+    box-shadow: 0 8px 28px rgba(15, 45, 75, .09);
+}
+
+#loginSection h2 {
+    text-align: center;
+    font-size: 23px;
+    margin-bottom: 22px;
+}
+
+#loginForm label {
+    display: block;
+    margin: 15px 0 6px;
+    color: #344b62;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#loginForm input {
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 8px;
+    border-radius: 8px;
+}
+
+#loginForm button {
+    min-height: 46px;
+    margin-top: 12px;
+}
+
+#loginForm #loginBtn {
+    background: linear-gradient(110deg, #063b70, #0879c9);
+}
+
+#loginMessage {
+    margin-top: 12px;
+    line-height: 1.5;
+}
+
+#loggedUser {
+    color: #0879c9;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    #systemStatus {
+        margin: 12px 0;
+        padding: 12px;
+    }
+
+    #loginSection {
+        margin: 18px auto 28px;
+        padding: 20px 16px;
+    }
+
+    #loginSection h2 {
+        font-size: 20px;
+    }
+}
+
+
+/* FROSTTECH MARKETPLACE SUMMARY CARDS */
+
+#dashboard > .card:nth-child(2) .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 18px;
+}
+
+#dashboard > .card:nth-child(2) .stat {
+    position: relative;
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #dce7f1;
+    border-left: 4px solid #0879c9;
+    border-radius: 11px;
+    padding: 16px;
+    margin: 0;
+    box-shadow: 0 3px 10px rgba(20, 45, 75, .045);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#dashboard > .card:nth-child(2) .stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 45, 75, .09);
+}
+
+#dashboard > .card:nth-child(2) .stat strong {
+    display: block;
+    margin-top: 12px;
+    color: #073b70;
+    font-size: 29px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    #dashboard > .card:nth-child(2) .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #dashboard > .card:nth-child(2) .stat {
+        min-height: 100px;
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    #dashboard > .card:nth-child(2) .stat strong {
+        font-size: 25px;
+    }
+}
+
+@media (max-width: 350px) {
+    #dashboard > .card:nth-child(2) .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* FROSTTECH ADMIN TABLE READABILITY */
+
+.table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #ffffff;
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 650px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 13px 12px;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e8eef4;
+    vertical-align: middle;
+    line-height: 1.5;
+    font-size: 13px;
+}
+
+.admin-table tbody tr:hover {
+    background: #f1f7fd;
+}
+
+.admin-table td button {
+    margin: 3px;
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .table-wrap {
+        border-radius: 9px;
+    }
+
+    .admin-table {
+        min-width: 600px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .admin-table td button {
+        padding: 9px 11px;
+    }
+}
+
+/* FROSTTECH ADMIN SECTION PRESENTATION */
+
+#dashboard > .card {
+    position: relative;
+    overflow: hidden;
+}
+
+#dashboard > .card > h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 17px;
+    padding-bottom: 13px;
+    border-bottom: 2px solid #e8eef5;
+    line-height: 1.35;
+}
+
+#dashboard > .card > h2::before {
+    content: "";
+    display: inline-block;
+    flex: 0 0 5px;
+    height: 25px;
+    border-radius: 5px;
+    background: #0879c9;
+}
+
+#dashboard > .card h3 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #edf1f5;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+#dashboard > .card p {
+    line-height: 1.65;
+}
+
+#dashboard > .card .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+    #dashboard > .card > h2 {
+        font-size: 17px;
+    }
+
+    #dashboard > .card h3 {
+        font-size: 15px;
+    }
+}
+
+/* FROSTTECH STATUS BADGES AND ACTION BUTTONS */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 25px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+button {
+    min-height: 40px;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+    box-shadow: none;
+}
+
+.admin-table td button {
+    min-height: 34px;
+    padding: 8px 11px;
+    font-size: 12px;
+}
+
+.action-row button {
+    min-height: 42px;
+}
+
+@media (max-width: 600px) {
+    button {
+        min-height: 42px;
+    }
+
+    .badge {
+        font-size: 10px;
+        padding: 5px 9px;
+    }
+}
+
+/* FROSTTECH ADMIN FORM LAYOUT */
+
+#dashboard .form-panel {
+    padding: 18px;
+    margin: 16px 0;
+    background: #f8fbfe;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+}
+
+#dashboard .form-panel summary {
+    padding: 5px 0;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#dashboard form {
+    width: 100%;
+}
+
+#dashboard form input,
+#dashboard form select,
+#dashboard form textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#dashboard form label {
+    display: block;
+    margin: 13px 0 6px;
+}
+
+#dashboard form button {
+    margin-top: 12px;
+}
+
+#dashboard input[type="checkbox"],
+#dashboard input[type="radio"] {
+    width: auto;
+    min-height: auto;
+    margin-right: 7px;
+}
+
+#dashboard textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+@media (max-width: 600px) {
+    #dashboard .form-panel {
+        padding: 13px;
+    }
+
+    #dashboard form button {
+        max-width: 100%;
+    }
+}
+
+/* FROSTTECH FINAL MOBILE LAYOUT POLISH */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+main,
+#dashboard,
+#loginSection {
+    width: 100%;
+    min-width: 0;
+}
+
+#dashboard > .card {
+    min-width: 0;
+}
+
+#dashboard .grid {
+    width: 100%;
+    min-width: 0;
+}
+
+#dashboard img {
+    max-width: 100%;
+    height: auto;
+}
+
+#dashboard pre,
+#dashboard code {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        line-height: 1.3;
+    }
+
+    main {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    #dashboard > .card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    #dashboard .action-row {
+        align-items: stretch;
+    }
+
+    #dashboard .action-row button {
+        width: 100%;
+    }
+}
+
+
+
+
+/* COMPACT RECORD TABLES AND RECORD DETAIL VIEW */
+.admin-record-table{width:100%;min-width:760px;border-collapse:collapse}
+.admin-record-table th,.admin-record-table td{padding:10px 12px;border-bottom:1px solid #dce5ee;text-align:left;vertical-align:middle}
+.admin-record-table th{background:#eaf2fa;color:#173b60;white-space:nowrap}
+.admin-record-table tbody tr:nth-child(even){background:#fbfdff}
+.admin-record-table .record-actions{display:flex;gap:6px;flex-wrap:wrap;min-width:190px}
+.admin-record-table .record-actions button{width:auto;flex:0 0 auto;margin:2px;padding:8px 10px;font-size:12px}
+.record-detail-box{max-width:760px;max-height:88vh;overflow:auto}
+.record-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.record-detail-item{padding:10px;background:#f7faff;border:1px solid #e1eaf3;border-radius:8px;overflow-wrap:anywhere}
+.record-detail-item strong{display:block;color:#17466f;font-size:12px;text-transform:capitalize;margin-bottom:4px}
+@media(max-width:600px){.admin-record-table .record-actions{min-width:160px}.admin-record-table .record-actions button{flex:1 1 100%}}
+
+
+/* FROSTTECH ADMIN WORKSPACE NAVIGATION */
+.admin-home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+.admin-nav-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;justify-content:flex-start;min-height:112px;padding:17px;background:#fff;color:#123c63;border:1px solid #d7e3ef;border-left:4px solid #0879c9;border-radius:12px;box-shadow:0 3px 12px rgba(15,40,70,.045);margin:0;white-space:normal}
+.admin-nav-card strong{font-size:15px;margin-bottom:6px}
+.admin-nav-card span{font-size:12px;line-height:1.45;font-weight:400;color:#53677c}
+.admin-nav-card:active{transform:translateY(1px)}
+.admin-page-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:#eaf3fb;border:1px solid #d5e5f3;border-radius:12px}
+.admin-page-toolbar button{width:auto;min-width:160px;margin:0}
+.admin-page-toolbar strong{color:#073b70;font-size:16px}
+.admin-page-section{scroll-margin-top:12px}
+.admin-page-section>h2{font-size:21px}
+.admin-home-intro{margin-bottom:12px}
+@media(max-width:600px){.admin-home-grid{grid-template-columns:1fr 1fr;gap:9px}.admin-nav-card{min-height:118px;padding:13px}.admin-page-toolbar{align-items:stretch}.admin-page-toolbar button{width:100%}.admin-page-toolbar strong{width:100%}}
+@media(max-width:380px){.admin-home-grid{grid-template-columns:1fr}}
 
 </style>
 </head>
@@ -158,7 +828,8 @@ button{padding:12px;border-radius:8px}
 
 <section id="dashboard" class="hidden">
 
-<section class="card">
+<div id="adminHomeOverview">
+<section class="card admin-home-intro">
     <h2>Administration Overview</h2>
     <p>Signed in as: <strong id="loggedUser"></strong></p>
     <div class="action-row">
@@ -168,8 +839,33 @@ button{padding:12px;border-radius:8px}
     <div id="message" role="status"></div>
 </section>
 
-<section class="card">
+<section class="card" id="adminNavigationCard">
+    <h2>Administration Workspaces</h2>
+    <p>Choose one area to work on. Each workspace opens separately to give records and controls more room, especially on mobile.</p>
+    <div class="admin-home-grid">
+        <button type="button" class="admin-nav-card" data-admin-open="marketplaceSummaryPage"><strong>Marketplace Summary</strong><span>At-a-glance totals for products, requests, suppliers and quotations</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="financialDashboard"><strong>Financial Dashboard</strong><span>Income, fees, receipts and reconciliation reports</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="productManagement"><strong>Product Management</strong><span>Add, review and manage marketplace products</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="directQuotationSection"><strong>Admin-Direct Quotations</strong><span>Prepare, calculate and review direct quotations</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="customerRequestsPage"><strong>Customer Quote Requests</strong><span>Review customer requirements and prepare quotations</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="supplierQuotationsPage"><strong>Saved Supplier Quotations</strong><span>Review supplier pricing and quotation decisions</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="supplierManagement"><strong>Supplier Management</strong><span>Review supplier applications and account status</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="advertiserVerification"><strong>Advertiser Verification</strong><span>Review advertiser applications and CAC status</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="paymentRecordsPage"><strong>Payment Records</strong><span>Read-only payment history and references</span></button>
+        <button type="button" class="admin-nav-card" data-admin-open="supplierMaintenancePage"><strong>Supplier Account Maintenance</strong><span>Administrative supplier account actions</span></button>
+    </div>
+</section>
+</div>
+
+<div id="adminPageToolbar" class="admin-page-toolbar hidden">
+    <button type="button" id="backToAdminDashboard" class="neutral">← Back to Previous Page</button>
+    <strong id="adminCurrentPageTitle">Workspace</strong>
+</div>
+
+<!-- MARKETPLACE SUMMARY WORKSPACE — EXISTING LIVE DASHBOARD COUNTS -->
+<section class="card admin-page-section hidden" id="marketplaceSummaryPage" data-admin-title="Marketplace Summary">
     <h2>Marketplace Summary</h2>
+    <p>Live overview counts for the main marketplace activities. Use Refresh Dashboard on the main admin page to request updated counts.</p>
     <div class="grid">
         <div class="stat">Products<strong id="productCount">0</strong></div>
         <div class="stat">Customer Requests<strong id="requestCount">0</strong></div>
@@ -180,13 +876,116 @@ button{padding:12px;border-radius:8px}
     </div>
 </section>
 
+<!-- FINANCIAL DASHBOARD — READ ONLY; SUPER ADMINISTRATOR RPC AUTHORIZATION -->
+<section class="card admin-page-section hidden" id="financialDashboard" data-admin-title="Financial Dashboard">
+    <h2>Financial Dashboard</h2>
+    <p>Read-only financial reporting. Access to the report is enforced by the secured database function.</p>
+    <div class="stat" style="border-left:4px solid #b7791f;">
+        <strong>TEST / DEVELOPMENT TRANSACTIONS</strong>
+        All transactions made before the live launch are test activity. They are displayed separately and are excluded from production revenue, verified income, realised profit and operating results.
+    </div>
+    <div class="grid">
+        <div>
+            <label for="financialStartDate">Start date</label>
+            <input id="financialStartDate" type="date" required>
+        </div>
+        <div>
+            <label for="financialEndDate">End date</label>
+            <input id="financialEndDate" type="date" required>
+        </div>
+    </div>
+    <button id="loadFinancialReportBtn" type="button">Load Financial Report</button>
+    <div id="financialReportMessage" role="status" aria-live="polite"></div>
+    <div id="financialReportResults" class="hidden" aria-live="polite">
+        <p><strong>Reporting period:</strong> <span id="finReportPeriod">—</span></p>
+
+        <h3>Production Payments and Income</h3>
+        <p><small>Only verified production transactions matched to valid production receipts are included. Development/test transactions are excluded.</small></p>
+        <div class="grid">
+            <div class="stat">Verified production payments<strong id="finVerifiedPayments">—</strong></div>
+            <div class="stat">Verified cash received<strong id="finVerifiedCash">—</strong></div>
+            <div class="stat">Recorded paid admin fees<strong id="finAdminFeesPaid">—</strong></div>
+            <div class="stat">Receipt-verified admin fees<strong id="finAdminFeesVerified">—</strong></div>
+            <div class="stat">Unverified admin fee records<strong id="finAdminFeesUnverified">—</strong></div>
+            <div class="stat">Verified admin-fee receipts<strong id="finAdminFeeReceiptCount">—</strong></div>
+            <div class="stat">Verified admin-fee receipt amount<strong id="finAdminFeeReceiptAmount">—</strong></div>
+            <div class="stat">Recognised delivery income<strong id="finDeliveryIncome">—</strong></div>
+            <div class="stat">Refund amounts<strong id="finRefunds">Not available</strong></div>
+        </div>
+
+        <h3>Recognised Orders — Actual Production Performance</h3>
+        <p><small>These figures relate only to fully paid, production orders that pass the report's reconciliation checks. Quotation estimates and stock valuation are not included here.</small></p>
+        <p class="stat"><strong>Cost-data validation caution</strong><small>The installed V2 SQL checks do not explicitly classify NULL supplier unit costs or NULL item sales values as invalid. Until that SQL validation is separately reviewed and corrected, treat any returned realised gross profit and operating result as provisional if production order items may contain missing values. This dashboard update does not change the installed SQL function.</small></p>
+        <div class="grid">
+            <div class="stat">Fully paid production orders<strong id="finFullyPaidOrders">—</strong></div>
+            <div class="stat">Reconciled orders<strong id="finReconciledOrders">—</strong></div>
+            <div class="stat">Recognised product sales<strong id="finRecognisedSales">—</strong></div>
+            <div class="stat">Recognised delivery income<strong id="finRecognisedDelivery">—</strong></div>
+            <div class="stat">Reconciled order value<strong id="finReconciledOrderValue">—</strong></div>
+            <div class="stat">Realised product gross profit<strong id="finRealisedGrossProfit">—</strong></div>
+            <div class="stat">Order reconciliation exceptions<strong id="finOrderExceptions">—</strong></div>
+            <div class="stat">Orders with missing/invalid cost data<strong id="finMissingOrderCosts">—</strong></div>
+        </div>
+        <div class="stat"><strong>Production Operating Result</strong><strong id="finOperatingResult">—</strong><small>Realised product gross profit + recognised delivery income − production expenses. If realised gross profit is unavailable, the operating result is also unavailable.</small></div>
+
+        <h3>Accepted Quotations — Estimates Only</h3>
+        <p><small>Accepted quotations are not proof of completed sales or received payments. These figures are estimates based on the latest eligible cost snapshot at acceptance.</small></p>
+        <div class="grid">
+            <div class="stat">Accepted quotations<strong id="finAcceptedQuoteCount">—</strong></div>
+            <div class="stat">Accepted quotation value<strong id="finQuotationValue">—</strong></div>
+            <div class="stat">Estimated product cost<strong id="finQuoteProductCost">—</strong></div>
+            <div class="stat">Estimated delivery cost<strong id="finQuoteDeliveryCost">—</strong></div>
+            <div class="stat">Quotation markup<strong id="finMarkup">—</strong></div>
+            <div class="stat">Quotation discounts<strong id="finDiscounts">—</strong></div>
+            <div class="stat">Estimated quotation profit<strong id="finProfit">—</strong></div>
+            <div class="stat">Accepted quotes without cost snapshot<strong id="finQuotesWithoutSnapshot">—</strong></div>
+            <div class="stat">Snapshots missing delivery cost<strong id="finSnapshotsMissingDelivery">—</strong></div>
+        </div>
+
+        <h3>Production Expenses</h3>
+        <div class="stat">Total production expenses<strong id="finTotalExpenses">—</strong></div>
+        <div id="finExpenseBreakdown">No expense breakdown loaded.</div>
+
+        <h3>Current Inventory — Valuation Estimates Only</h3>
+        <p><small>Current stock values are not sales, cash received or realised profit.</small></p>
+        <div class="grid">
+            <div class="stat">Products<strong id="finInventoryProducts">—</strong></div>
+            <div class="stat">Active products<strong id="finInventoryActiveProducts">—</strong></div>
+            <div class="stat">Inventory retail value<strong id="finInventoryRetailValue">—</strong></div>
+            <div class="stat">Inventory supplier-cost value<strong id="finInventoryCostValue">—</strong></div>
+            <div class="stat">Potential inventory gross profit<strong id="finInventoryPotentialProfit">—</strong></div>
+            <div class="stat">Inventory cost exceptions<strong id="finInventoryCostExceptions">—</strong></div>
+        </div>
+        <p id="finInventoryNote"><small>Inventory valuation note will appear here.</small></p>
+
+        <h3>Test / Development Activity — Excluded from Production Totals</h3>
+        <div class="grid">
+            <div class="stat">Development payment attempts<strong id="finDevelopmentAttempts">—</strong></div>
+            <div class="stat">Successful development payment rows<strong id="finDevelopmentSuccesses">—</strong></div>
+            <div class="stat">Development attempt amount total<strong id="finDevelopmentAttemptAmount">—</strong></div>
+        </div>
+        <p><small>The development attempt amount is a test-activity measure only. It is not revenue, verified cash received or profit.</small></p>
+
+        <h3>Reconciliation and Report Integrity</h3>
+        <p><strong>Report status:</strong> <span id="finSummaryStatus" class="badge">Not loaded</span></p>
+        <div class="grid">
+            <div class="stat">Unmatched successful production payments<strong id="finUnmatchedPayments">—</strong></div>
+            <div class="stat">Orphaned final-order receipts<strong id="finOrphanedReceipts">—</strong></div>
+            <div class="stat">Order reconciliation exceptions<strong id="finIntegrityOrderExceptions">—</strong></div>
+            <div class="stat">Missing order costs<strong id="finIntegrityMissingCosts">—</strong></div>
+            <div class="stat">Unverified admin fees<strong id="finIntegrityUnverifiedFees">—</strong></div>
+        </div>
+        <p><small>Refund amounts remain unavailable until a reliable verified refund ledger is established. Unavailable values must not be interpreted as zero.</small></p>
+    </div>
+</section>
+
 <!-- PRODUCT MANAGEMENT -->
-<section class="card" id="productManagement">
+<section class="card admin-page-section hidden" id="productManagement" data-admin-title="Product Management">
 <h2>Product Management</h2>
 <p>Manage catalogue descriptions, pictures, stock and customer visibility. Supplier costs are maintained separately through the protected supplier-cost process.</p>
 <div id="productMessage" role="status"></div>
-<details id="productFormPanel" class="form-panel">
-<summary><span id="productFormTitle">Add Product</span><small>Open to add or edit a catalogue product</small></summary>
+<h3 id="productFormTitle">Add Product</h3>
+
 <form id="productForm">
     <input type="hidden" id="productId">
 
@@ -245,7 +1044,6 @@ button{padding:12px;border-radius:8px}
     <button id="saveProductBtn" type="submit">Save Product</button>
     <button id="cancelProductEditBtn" type="button" class="neutral hidden">Cancel Editing</button>
 </form>
-</details>
 
 <hr>
 <h3>Existing Products</h3>
@@ -254,7 +1052,7 @@ button{padding:12px;border-radius:8px}
 </section>
 
 <!-- DIRECT QUOTATIONS -->
-<section class="card" id="directQuotationSection">
+<section class="card admin-page-section hidden" id="directQuotationSection" data-admin-title="Admin-Direct Quotations">
 <h2>Admin-Direct Quotations</h2>
 <p>Prepare quotations directly for customers without requiring supplier participation.</p>
 <div class="message info">
@@ -345,22 +1143,24 @@ button{padding:12px;border-radius:8px}
 </section>
 
 <!-- CUSTOMER REQUESTS -->
-<section class="card">
+<section class="card admin-page-section hidden" id="customerRequestsPage" data-admin-title="Customer Quote Requests">
 <h2>Customer Quote Requests</h2>
+<button id="loadRequestsBtn" type="button">Load Customer Requests</button>
 <div id="requestMessage" role="status"></div>
 <div id="quoteRequests">Loading requests...</div>
 </section>
 
 <!-- SUPPLIER QUOTATIONS -->
-<section class="card">
+<section class="card admin-page-section hidden" id="supplierQuotationsPage" data-admin-title="Saved Supplier Quotations">
 <h2>Saved Supplier Quotations</h2>
 <p>Review supplier pricing and select or reject supplier quotations.</p>
+<button id="loadSupplierQuotesBtn" type="button">Load Supplier Quotations</button>
 <div id="quotationMessage" role="status"></div>
 <div id="supplierQuotes">Loading supplier quotations...</div>
 </section>
 
 <!-- SUPPLIER MANAGEMENT -->
-<section class="card" id="supplierManagement">
+<section class="card admin-page-section hidden" id="supplierManagement" data-admin-title="Supplier Management">
 <h2>Supplier Management</h2>
 <p>Review supplier applications and make approval decisions.</p>
 <button id="loadSuppliersBtn" type="button">Load Supplier Applications</button>
@@ -369,7 +1169,7 @@ button{padding:12px;border-radius:8px}
 </section>
 
 <!-- ADVERTISER VERIFICATION -->
-<section class="card" id="advertiserVerification">
+<section class="card admin-page-section hidden" id="advertiserVerification" data-admin-title="Advertiser Verification">
 <h2>Advertiser Verification</h2>
 <p>Review advertiser applications, CAC certificates and supporting documents.</p>
 <button id="loadAdvertisersBtn" type="button">Load Advertiser Applications</button>
@@ -378,7 +1178,7 @@ button{padding:12px;border-radius:8px}
 </section>
 
 <!-- PAYMENTS -->
-<section class="card">
+<section class="card admin-page-section hidden" id="paymentRecordsPage" data-admin-title="Payment Records">
 <h2>Payment Records</h2>
 <p>This section displays payment records only. It does not initiate payments or change payment statuses.</p>
 <button id="loadPaymentsBtn" type="button">Load Payment Records</button>
@@ -387,10 +1187,12 @@ button{padding:12px;border-radius:8px}
 </section>
 
 <!-- SUPPLIER ACCOUNT MAINTENANCE -->
-<section class="card">
+<section class="card admin-page-section hidden" id="supplierMaintenancePage" data-admin-title="Supplier Account Maintenance">
 <h2>Supplier Account Maintenance</h2>
 <p>Confirm the existing supplier email using administrator access.</p>
-<button id="confirmSupplierEmailBtn" type="button">Confirm Supplier Email</button>
+<button id="confirmSupplierEmailBtn" type="button">
+    Confirm Supplier Email
+</button>
 <p id="confirmSupplierEmailResult" role="status" aria-live="polite"></p>
 </section>
 
@@ -417,11 +1219,12 @@ button{padding:12px;border-radius:8px}
 </div>
 
 
-<div id="ftRecordModal" class="ft-record-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecordTitle">
-  <div class="ft-record-panel">
-    <div class="ft-record-header"><h2 id="ftRecordTitle">FrostTech Record Review</h2><button type="button" id="ftRecordClose" class="ft-record-close" aria-label="Close record">×</button></div>
-    <div id="ftRecordContent" class="ft-record-content"></div>
-  </div>
+<div id="ftRecordModal" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecordTitle">
+    <div class="ft-modal-box record-detail-box">
+        <div class="ft-modal-header"><h2 id="ftRecordTitle">Record Details</h2></div>
+        <div class="ft-modal-body"><div id="ftRecordContent" class="record-detail-grid"></div></div>
+        <div class="ft-modal-actions"><button id="ftRecordClose" type="button" class="ft-cancel">Close</button></div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -444,7 +1247,6 @@ let currentSuppliers = [];
 let currentSupplierQuotes = [];
 let currentProducts = [];
 let currentDirectQuotes = [];
-let currentPayments = [];
 
 function el(id) {
     return document.getElementById(id);
@@ -485,78 +1287,17 @@ function badge(status) {
         escapeHtml(status || "unknown") + '</span>';
 }
 
-function adminTable(headers, rows) {
-    return `<div class="table-wrap"><table class="admin-table"><thead><tr>${headers.map(h => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
-}
-
-function viewRecordButton(type, id) {
-    return `<button type="button" class="record-view-link" data-record-type="${escapeHtml(type)}" data-record-id="${escapeHtml(id)}">View Record</button>`;
-}
-
-function displayRecordValue(value) {
-    if (value === null || value === undefined || value === "") return "Not recorded";
-    if (typeof value === "boolean") return value ? "Yes" : "No";
-    if (typeof value === "object") return JSON.stringify(value, null, 2);
-    return String(value);
-}
-
-function openAdminRecord(type, id) {
-    const collections = {
-        product: currentProducts,
-        request: currentQuoteRequests,
-        direct_quote: currentDirectQuotes,
-        supplier_quote: currentSupplierQuotes,
-        supplier: currentSuppliers,
-        advertiser: currentAdvertisers,
-        payment: currentPayments
-    };
-    const record = (collections[type] || []).find(item => String(item.id) === String(id));
-    if (!record) return;
-
-    const titles = {
-        product: record.name || "Product Record",
-        request: "Customer Request — " + (record.request_number || record.id),
-        direct_quote: record.product_description || "Direct Quotation",
-        supplier_quote: record.product_name || record.product_description || "Supplier Quotation",
-        supplier: record.business_name || "Supplier Record",
-        advertiser: record.company_name || "Advertiser Record",
-        payment: "Payment Record"
-    };
-    const hiddenKeys = type === "product" ? new Set(["supplier_cost"]) : new Set();
-    const entries = Object.entries(record).filter(([key]) => !hiddenKeys.has(key));
-    const content = el("ftRecordContent");
-    el("ftRecordTitle").textContent = titles[type] || "FrostTech Record Review";
-    content.innerHTML = `<div class="ft-record-grid">${entries.map(([key,value]) => {
-        const wide = value && typeof value === "object" || String(value ?? "").length > 100;
-        return `<div class="ft-record-field${wide ? " wide" : ""}"><strong>${escapeHtml(key.replaceAll("_"," "))}</strong><span>${escapeHtml(displayRecordValue(value))}</span></div>`;
-    }).join("")}</div>`;
-    el("ftRecordModal").classList.remove("hidden");
-    document.body.classList.add("ft-modal-open");
-}
-
-function closeAdminRecord() {
-    el("ftRecordModal")?.classList.add("hidden");
-    document.body.classList.remove("ft-modal-open");
-}
-
-if (el("ftRecordClose")) el("ftRecordClose").addEventListener("click", closeAdminRecord);
-if (el("ftRecordModal")) {
-    el("ftRecordModal").addEventListener("click", event => {
-        if (event.target === el("ftRecordModal")) closeAdminRecord();
-    });
-}
-document.addEventListener("keydown", event => {
-    if (event.key === "Escape" && el("ftRecordModal") && !el("ftRecordModal").classList.contains("hidden")) closeAdminRecord();
-});
-document.addEventListener("click", event => {
-    const button = event.target.closest(".record-view-link");
-    if (button) openAdminRecord(button.dataset.recordType, button.dataset.recordId);
-});
-
 function showMessage(id, text, type = "info") {
     const target = el(id);
     if (!target) return;
-    target.className = "message " + type;
+
+    const messageType = type === "success"
+        ? "success-message"
+        : type === "warning"
+            ? "warning-message"
+            : type;
+
+    target.className = "message " + messageType;
     target.textContent = text;
 }
 
@@ -689,38 +1430,30 @@ function requirementsText(request) {
 async function refreshAllDashboardSections() {
     if (!currentAdmin) return;
 
-    showMessage("message", "Refreshing dashboard...", "info");
+    showMessage("message", "Refreshing FrostTech administration data...", "info");
 
-    const results = await Promise.allSettled([
-                loadProducts(),
+    const jobs = [
+        loadDashboardCounts(),
+        loadProducts(),
         loadCustomerRequests(),
+        loadDirectQuotes(),
         loadSupplierQuotes(),
         loadSuppliers(),
-        loadDirectQuotes(),
-        loadDashboardCounts()
-    ]);
+        loadAdvertisers(),
+        loadPayments()
+    ];
 
-    const failed = results.filter(result =>
-        result.status === "rejected"
-    );
+    const results = await Promise.allSettled(jobs);
+    const failed = results.filter((result) => result.status === "rejected");
 
     showMessage(
         "message",
         failed.length
-            ? "Dashboard refreshed with some errors. Check each section."
-            : "Dashboard refresh completed.",
-        failed.length ? "warning-message" : "success-message"
+            ? "Refresh finished with one or more errors. Check the individual section messages."
+            : "Refresh requests completed. Check each section message for any data-loading warnings.",
+        failed.length ? "warning-message" : "info"
     );
 }
-
-if (el("refreshBtn")) {
-    el("refreshBtn").addEventListener(
-        "click",
-        refreshAllDashboardSections
-    );
-}
-
-
 
 
 /* =========================================================
@@ -756,6 +1489,7 @@ const setButtonLoading = (
         }
     }
 };
+
 
 /* Verify administrator access against the profiles table. */
 async function requireAdmin() {
@@ -794,6 +1528,7 @@ async function requireAdmin() {
     return { user, profile };
 }
 
+
 /* Show the login screen and hide the dashboard. */
 function showAdminLogin() {
     currentAdmin = null;
@@ -826,6 +1561,7 @@ async function refreshAdminSession() {
         if ($("loggedUser")) {
             $("loggedUser").textContent =
                 profile.full_name ||
+                profile.email ||
                 user.email ||
                 "Administrator";
         }
@@ -1008,71 +1744,44 @@ async function loadDashboardCounts() {
         }
 
         const { count, error } = await query;
-
         if (error) throw error;
-
         return count || 0;
     };
 
     try {
-        const [
-            products,
-            requests,
-            suppliers,
-            quotations,
-            directQuotes,
-            pendingSuppliers
-        ] = await Promise.all([
-            countRows("products"),
-            countRows("quote_requests"),
-            countRows("suppliers"),
-            countRows("admin_quotations", [
-                { column: "status", value: "submitted" }
-            ]),
-            countRows("admin_quotations", [
-                { column: "status", value: "draft" }
-            ]),
-            countRows("suppliers")
-        ]);
+        const [products, requests, suppliers, directQuotes, supplierQuoteResult, supplierRowsResult] =
+            await Promise.all([
+                countRows("products"),
+                countRows("quote_requests"),
+                countRows("suppliers"),
+                countRows("admin_quotations"),
+                db.rpc("admin_list_supplier_quotes"),
+                db.from("suppliers").select("review_status")
+            ]);
+
+        if (supplierQuoteResult.error) throw supplierQuoteResult.error;
+        if (supplierRowsResult.error) throw supplierRowsResult.error;
+
+        const supplierQuoteCount = (supplierQuoteResult.data || []).length;
+        const pendingCount = (supplierRowsResult.data || []).filter((supplier) => {
+            const status = String(supplier.review_status || "pending").toLowerCase();
+            return !["approved", "rejected", "suspended"].includes(status);
+        }).length;
 
         if ($("productCount")) $("productCount").textContent = products;
         if ($("requestCount")) $("requestCount").textContent = requests;
         if ($("supplierCount")) $("supplierCount").textContent = suppliers;
-        if ($("quotationCount")) $("quotationCount").textContent = quotations;
+        if ($("pendingSupplierCount")) $("pendingSupplierCount").textContent = pendingCount;
+        if ($("quotationCount")) $("quotationCount").textContent = supplierQuoteCount;
         if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
 
-        /*
-         * The pending supplier count is calculated from the
-         * supplier records rather than assuming a database
-         * status-count RPC.
-         */
-        const { data: supplierRows, error: supplierError } = await db
-            .from("suppliers")
-            .select("review_status");
-
-        if (supplierError) throw supplierError;
-
-        const pendingCount = (supplierRows || []).filter((supplier) => {
-            const status = String(supplier.review_status || "pending").toLowerCase();
-
-            return ![
-                "approved",
-                "rejected",
-                "suspended"
-            ].includes(status);
-        }).length;
-
-        if ($("pendingSupplierCount")) {
-            $("pendingSupplierCount").textContent = pendingCount;
-        }
-
-        showMessage("message", "Dashboard updated.", "success");
     } catch (error) {
         showMessage(
             "message",
             error.message || "Unable to load dashboard counts.",
             "error"
         );
+        throw error;
     }
 }
 
@@ -1114,16 +1823,49 @@ async function loadAdvertisers() {
 
 function renderAdvertisers() {
     const container = $("advertiserRows");
+
     if (!container) return;
-    if (!currentAdvertisers.length) { container.innerHTML = "<p>No advertiser applications found.</p>"; return; }
-    const rows = currentAdvertisers.map(a => `<tr>
-      <td>${escapeHtml(a.company_name || "Unnamed company")}</td>
-      <td>${escapeHtml(a.contact_person || "Not supplied")}</td>
-      <td>${escapeHtml(a.email || "Not supplied")}</td>
-      <td>${badge(a.verification_status)}</td>
-      <td><div class="table-actions">${viewRecordButton("advertiser",a.id)}<span class="badge">Documents not connected</span></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Business","Contact","Email","Verification","Review"], rows);
+
+    if (!currentAdvertisers.length) {
+        container.innerHTML = "<p>No advertiser applications found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentAdvertisers.map((advertiser) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(advertiser.company_name || "Unnamed company")}</h3>
+
+            <p><strong>Contact:</strong>
+                ${escapeHtml(advertiser.contact_person || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(advertiser.email || "")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(advertiser.phone || "")}
+            </p>
+
+            <p><strong>Business address:</strong>
+                ${escapeHtml(advertiser.business_address || "Not supplied")}
+            </p>
+
+            <p><strong>CAC registration number:</strong>
+                ${escapeHtml(advertiser.registration_number || "Not supplied")}
+            </p>
+
+            <p><strong>Verification status:</strong>
+                ${badge(advertiser.verification_status)}
+            </p>
+
+            <button type="button" disabled
+                title="Private advertiser document access is not connected in this admin file.">
+                Document Review Not Connected
+            </button>
+            <small>Private CAC documents are not opened until the approved admin-only document retrieval workflow is connected.</small>
+        </article>
+    `).join("");
 }
 
 if ($("loadAdvertisersBtn")) {
@@ -1131,10 +1873,10 @@ if ($("loadAdvertisersBtn")) {
 }
 
 /*
- * Advertiser document review is intentionally not implemented
- * in this part. It will be connected in the next section only
- * after preserving the existing document-review workflow and
- * its exact database fields/RPCs.
+ * Advertiser CAC documents are stored in a private bucket.
+ * This page has no verified document-path field or admin-only
+ * signed-URL function, so it must not construct public URLs or
+ * guess storage paths. Document access remains intentionally disabled.
  */
 
 /* =========================================================
@@ -1174,17 +1916,62 @@ async function loadProducts() {
 
 function renderProducts() {
     const container = $("productList");
+
     if (!container) return;
-    if (!currentProducts.length) { container.innerHTML = "<p>No products found.</p>"; return; }
-    const rows = currentProducts.map(p => `<tr>
-      <td>${escapeHtml(p.name || "Unnamed product")}</td>
-      <td>${escapeHtml(p.category || "—")}</td>
-      <td>${Number(p.selling_price) > 0 ? money(p.selling_price) : "Not yet priced"}</td>
-      <td>${escapeHtml(p.stock_quantity ?? 0)}</td>
-      <td>${p.is_active ? badge("active") : badge("inactive")}</td>
-      <td><div class="table-actions">${viewRecordButton("product",p.id)}<button type="button" class="table-action edit-product" data-id="${escapeHtml(p.id)}">Edit</button><button type="button" class="table-action toggle-product ${p.is_active ? "danger" : "success"}" data-id="${escapeHtml(p.id)}" data-active="${p.is_active ? "true" : "false"}">${p.is_active ? "Deactivate" : "Activate"}</button></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Product","Category","Catalogue Price","Stock","Visibility","Actions"], rows);
+
+    if (!currentProducts.length) {
+        container.innerHTML = "<p>No products found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentProducts.map((product) => `
+        <article class="admin-card product-card">
+            ${product.image_url ? `
+                <img
+                    src="${escapeHtml(product.image_url)}"
+                    alt="${escapeHtml(product.name)}"
+                    class="product-admin-image"
+                >
+            ` : ""}
+
+            <h3>${escapeHtml(product.name)}</h3>
+
+            <p><strong>Category:</strong>
+                ${escapeHtml(product.category || "")}
+            </p>
+
+            <p><strong>Brand:</strong>
+                ${escapeHtml(product.brand || "Not specified")}
+            </p>
+
+            <p><strong>Catalogue Selling Price:</strong>
+                ${Number(product.selling_price) > 0
+                    ? money(product.selling_price)
+                    : "Not yet priced"}
+            </p>
+
+            <p><strong>Stock:</strong>
+                ${escapeHtml(product.stock_quantity)}
+            </p>
+
+            <p><strong>Visibility:</strong>
+                ${product.is_active ? badge("active") : badge("inactive")}
+            </p>
+
+            <button type="button"
+                class="edit-product"
+                data-id="${escapeHtml(product.id)}">
+                Edit Product
+            </button>
+
+            <button type="button"
+                class="toggle-product"
+                data-id="${escapeHtml(product.id)}"
+                data-active="${product.is_active ? "true" : "false"}">
+                ${product.is_active ? "Deactivate" : "Activate"}
+            </button>
+        </article>
+    `).join("");
 }
 
 if ($("loadProductsBtn")) {
@@ -1242,7 +2029,6 @@ function editProduct(id) {
     $("productStock").value = product.stock_quantity ?? 0;
     $("productMinStock").value = product.min_stock_level ?? 0;
     $("productActive").value = product.is_active === true ? "true" : "false";
-    if ($("productFormPanel")) $("productFormPanel").open = true;
 
     showMessage(
         "productMessage",
@@ -1370,10 +2156,6 @@ async function saveProduct(event) {
              * Preserve existing supplier pricing and supplier link.
              * This form must not directly edit supplier cost.
              */
-            values.supplier_cost = existing.supplier_cost;
-            values.selling_price = existing.selling_price;
-            values.supplier_id = existing.supplier_id;
-
             if ($("productActive").value === "true") {
                 const hasPricing = await hasApprovedSelectedPricing(existing);
 
@@ -1484,41 +2266,6 @@ async function toggleProduct(id) {
     }
 }
 
-/* -------------------------
-   INITIAL PAGE CHECK
-   ------------------------- */
-
-(async function initialiseAdminPortal() {
-    try {
-        const {
-            data: { session },
-            error
-        } = await db.auth.getSession();
-
-        if (error) throw error;
-
-        if (session?.user) {
-            await refreshAdminSession();
-        } else {
-            showAdminLogin();
-
-            showMessage(
-                "systemStatus",
-                "Please log in as a FrostTech administrator.",
-                "info"
-            );
-        }
-
-    } catch (error) {
-        showAdminLogin();
-
-        showMessage(
-            "systemStatus",
-            "Connection error: " + errorText(error),
-            "error"
-        );
-    }
-})();
 </script> 
 
 <script>
@@ -1564,17 +2311,57 @@ async function loadCustomerRequests() {
 
 function renderCustomerRequests() {
     const container = $("quoteRequests");
+
     if (!container) return;
-    if (!currentQuoteRequests.length) { container.innerHTML = "<p>No customer requests found.</p>"; return; }
-    const rows = currentQuoteRequests.map(r => `<tr>
-      <td>${escapeHtml(r.request_number || r.id)}</td>
-      <td>${escapeHtml(r.customer_name || "Not supplied")}</td>
-      <td>${escapeHtml(r.title || r.product_id || "Not specified")}</td>
-      <td>${badge(r.status)}</td>
-      <td>${escapeHtml(dateText(r.created_at))}</td>
-      <td><div class="table-actions">${viewRecordButton("request",r.id)}<button type="button" class="table-action mark-request-reviewing" data-id="${escapeHtml(r.id)}">Mark Reviewing</button><button type="button" class="table-action create-direct-quotation" data-id="${escapeHtml(r.id)}">Prepare Quote</button></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Request Reference","Customer","Product / Requirement","Status","Submitted","Actions"], rows);
+
+    if (!currentQuoteRequests.length) {
+        container.innerHTML = "<p>No customer requests found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentQuoteRequests.map((request) => `
+        <article class="admin-card">
+            <h3>
+                Request ${escapeHtml(request.request_number || request.id)}
+            </h3>
+
+            <p><strong>Customer:</strong>
+                ${escapeHtml(request.customer_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(request.customer_email || "Not supplied")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(request.customer_phone || "Not supplied")}
+            </p>
+
+            <p><strong>Requirement:</strong><br>
+                ${escapeHtml(request.description || "No description supplied")}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(request.status)}
+            </p>
+
+            <p><strong>Submitted:</strong>
+                ${escapeHtml(request.created_at || "")}
+            </p>
+
+            <button type="button"
+                class="mark-request-reviewing"
+                data-id="${escapeHtml(request.id)}">
+                Mark Reviewing
+            </button>
+
+            <button type="button"
+                class="create-direct-quotation"
+                data-id="${escapeHtml(request.id)}">
+                Prepare Direct Quotation
+            </button>
+        </article>
+    `).join("");
 }
 
 if ($("loadRequestsBtn")) {
@@ -1644,7 +2431,17 @@ async function markRequestReviewing(id) {
  */
 
 function calculateQuotationAdminFee(quote) {
-    const subtotal = Number(quote.subtotal || 0);
+    /*
+     * admin_quotations records created by this form store the
+     * customer unit price and quantity, not a subtotal column.
+     * Derive the product subtotal without adding delivery.
+     */
+    const storedSubtotal = Number(quote.subtotal);
+    const unitPrice = Number(quote.unit_price || 0);
+    const quantity = Number(quote.quantity || 0);
+    const subtotal = Number.isFinite(storedSubtotal) && storedSubtotal > 0
+        ? storedSubtotal
+        : unitPrice * quantity;
     const additional = Number(quote.additional_charges || 0);
     const discount = Number(quote.discount || 0);
 
@@ -1674,7 +2471,8 @@ async function notifyCustomerFeeRequired(request, quote, fee) {
     const { data: customer, error: customerError } = await db
         .from("customers")
         .select("user_id")
-        .eq("id", request.customer_id)
+        /* quote_requests.customer_id references profiles.id (auth user id). */
+        .eq("user_id", request.customer_id)
         .maybeSingle();
 
     if (customerError) throw customerError;
@@ -1721,10 +2519,37 @@ async function notifyCustomerFeeRequired(request, quote, fee) {
    DIRECT QUOTATION FORM
    ========================================================= */
 
+function setDirectQuotationDraftPriceMode(isDraftPriceMode) {
+    const labels = {
+        directUnitCost: isDraftPriceMode
+            ? "Product Customer Unit Price (₦) *"
+            : "Product Unit Cost (₦) *",
+        directBracketUnitCost: isDraftPriceMode
+            ? "Customer Price per Bracket Set (₦)"
+            : "Cost per Bracket Set (₦)",
+        directInstallationPerAc: isDraftPriceMode
+            ? "Customer Installation Price per AC (₦)"
+            : "Installation Cost per AC (₦)",
+        directAccessoryUnitCost: isDraftPriceMode
+            ? "Customer Accessory Price per Unit / Pack (₦)"
+            : "Accessory Cost per Unit / Pack (₦)"
+    };
+
+    for (const [fieldId, labelText] of Object.entries(labels)) {
+        const label = document.querySelector(`label[for="${fieldId}"]`);
+        if (label) label.textContent = labelText;
+    }
+}
+
 function resetDirectQuotationForm() {
     const form = $("directQuoteForm");
 
-    if (form) form.reset();
+    if (form) {
+        form.reset();
+        form.classList.add("hidden");
+    }
+    $("directMarkup").disabled = false;
+    setDirectQuotationDraftPriceMode(false);
 
     $("directQuoteId").value = "";
     $("directRequestId").value = "";
@@ -1742,17 +2567,18 @@ function resetDirectQuotationForm() {
     );
 }
 
-function readRequestedItems(request) {
-    const description = String(request?.description || "");
+function readRequestedItems(quotation) {
+    /* The quotation marker is saved in admin_quotations.notes. */
+    const notes = String(quotation?.notes || quotation?.description || "");
 
     const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
-
-    const markerPosition = description.indexOf(marker);
+    const markerPosition = notes.indexOf(marker);
 
     if (markerPosition === -1) return null;
 
-    const jsonText = description
+    const jsonText = notes
         .slice(markerPosition + marker.length)
+        .split("\n")[0]
         .trim();
 
     try {
@@ -1801,7 +2627,9 @@ async function openDirectQuotationForRequest(requestId) {
     $("directRequestRequirements").textContent =
         request.description || "No description supplied.";
 
+    $("directQuoteForm").classList.remove("hidden");
     $("directQuotationSection").hidden = false;
+    window.frostTechOpenAdminPage?.("directQuotationSection");
 
     $("directQuotationSection").scrollIntoView({
         behavior: "smooth",
@@ -2078,22 +2906,32 @@ function getDirectQuotationRecord() {
         throw new Error("Discount cannot exceed the quotation subtotal.");
     }
 
+    /*
+     * Notes may be shown on the customer-facing quotation.
+     * Store only customer prices here, never supplier cost inputs.
+     * The edit screen restores these prices with zero markup.
+     */
+    const markupFactor = 1 + result.markup / 100;
     const requestedItems = {
         version: 1,
+        pricing_mode: "customer_prices_v1",
         items: {
+            product: {
+                customer_unit_price: result.customerUnitPrice
+            },
             installation: {
-                per_unit: result.installationPerAc,
+                customer_unit_price: result.installationPerAc * markupFactor,
                 quantity: result.quantity
             },
             outdoor_brackets: {
                 quantity: result.bracketQuantity,
-                unit_cost: result.bracketUnitCost
+                customer_unit_price: result.bracketUnitCost * markupFactor
             },
             accessories: result.accessoryQuantity > 0 ? [{
                 description: result.accessoryDescription,
                 unit: result.accessoryUnit || null,
                 quantity: result.accessoryQuantity,
-                unit_cost: result.accessoryUnitCost
+                customer_unit_price: result.accessoryUnitCost * markupFactor
             }] : [],
             other_items: []
         }
@@ -2131,13 +2969,16 @@ async function saveDirectDraftRecord() {
             .from("admin_quotations")
             .update(values)
             .eq("id", quotationId)
+            .eq("status", "draft")
             .select("id")
             .maybeSingle();
 
         if (error) throw error;
 
         if (!data) {
-            throw new Error("Draft was not found or could not be updated.");
+            throw new Error(
+                "This quotation is no longer an editable draft. It was not changed or resubmitted."
+            );
         }
 
         return data.id;
@@ -2190,14 +3031,21 @@ if ($("saveDraftBtn")) {
    DIRECT QUOTATION SUBMISSION
    ========================================================= */
 
+let directQuotationSubmissionInProgress = false;
+
 async function submitDirectQuotation() {
-    await requireAdmin();
+    if (directQuotationSubmissionInProgress) {
+        showMessage("directQuoteMessage", "This quotation submission is already being processed. Please wait.", "warning-message");
+        return;
+    }
+    directQuotationSubmissionInProgress = true;
 
     const button = $("submitDirectQuoteBtn");
 
     setButtonLoading(button, true, "Submitting quotation...");
 
     try {
+        await requireAdmin();
         const quotationId = await saveDirectDraftRecord();
 
         const { data: quote, error: quoteError } = await db
@@ -2207,6 +3055,12 @@ async function submitDirectQuotation() {
             .single();
 
         if (quoteError) throw quoteError;
+
+        if (quote.status !== "draft") {
+            throw new Error(
+                "This quotation has already left draft status and cannot be submitted again."
+            );
+        }
 
         if (!quote.request_id) {
             throw new Error(
@@ -2243,46 +3097,61 @@ async function submitDirectQuotation() {
         }
 
         /*
-         * The quotation is saved first as a draft.
-         * The fee and request status are then recorded.
-         * These operations are sequential, not one atomic
-         * database transaction. If a later operation fails,
-         * inspect the saved records before retrying.
+         * One server-side transaction locks the draft and request,
+         * calculates the 2% processing fee, and changes both records.
+         * The matching SQL migration must be applied before this
+         * dashboard version is deployed.
          */
-
-        const { error: requestUpdateError } = await db
-            .from("quote_requests")
-            .update({
-                admin_fee: fee.fee,
-                admin_fee_status: "pending"
-            })
-            .eq("id", currentRequest.id);
-
-        if (requestUpdateError) throw requestUpdateError;
-
-        const { error: quoteUpdateError } = await db
-            .from("admin_quotations")
-            .update({
-                status: "submitted"
-            })
-            .eq("id", quotationId);
-
-        if (quoteUpdateError) throw quoteUpdateError;
-
-        await notifyCustomerFeeRequired(
-            currentRequest,
-            quote,
-            fee.fee
+        const { data: submissionResult, error: submissionError } = await db.rpc(
+            "admin_submit_direct_quotation",
+            { p_quotation_id: quotationId }
         );
 
-        await loadDirectQuotes();
-        await loadCustomerRequests();
-        await loadDashboard();
+        if (submissionError) throw submissionError;
+
+        const submitted = Array.isArray(submissionResult)
+            ? submissionResult[0]
+            : submissionResult;
+
+        if (
+            !submitted ||
+            submitted.quotation_id !== quotationId ||
+            submitted.request_id !== currentRequest.id ||
+            Number(submitted.fee) <= 0
+        ) {
+            throw new Error("The server did not confirm a complete quotation submission. Check the quotation status before retrying.");
+        }
+
+        const confirmedFee = Number(submitted.fee);
+        if (Math.abs(confirmedFee - fee.fee) > 0.01) {
+            throw new Error("The server-calculated processing fee differs from the displayed amount. Please review the quotation before continuing.");
+        }
+
+        let notificationFailed = false;
+        try {
+            await notifyCustomerFeeRequired(
+                currentRequest,
+                quote,
+                confirmedFee
+            );
+        } catch (notificationError) {
+            notificationFailed = true;
+            console.error("Quotation submitted but notification failed:", notificationError);
+        }
+
+        /* The quotation is already submitted; refreshes are non-critical. */
+        await Promise.allSettled([
+            loadDirectQuotes(),
+            loadCustomerRequests(),
+            loadDashboardCounts()
+        ]);
 
         showMessage(
             "directQuoteMessage",
-            `Quotation submitted. The separate 2% processing fee is ${money(fee.fee)}. Delivery is excluded from the fee calculation.`,
-            "success"
+            notificationFailed
+                ? `Quotation submitted and the separate processing fee of ${money(confirmedFee)} was recorded. Customer notification failed; do not submit this quotation again. Delivery is excluded from the fee calculation.`
+                : `Quotation submitted. The separate processing fee is ${money(confirmedFee)}. Delivery is excluded from the fee calculation.`,
+            notificationFailed ? "warning-message" : "success"
         );
     } catch (error) {
         showMessage(
@@ -2292,6 +3161,7 @@ async function submitDirectQuotation() {
         );
     } finally {
         setButtonLoading(button, false);
+        directQuotationSubmissionInProgress = false;
     }
 }
 
@@ -2314,15 +3184,14 @@ if ($("cancelDirectQuoteBtn")) {
    ========================================================= */
 
 async function loadDirectQuotes() {
-    await requireAdmin();
-
     showMessage(
         "directQuoteMessage",
-        "Loading direct quotations...",
+        "Loading saved direct quotations...",
         "info"
     );
 
     try {
+        await requireAdmin();
         const { data, error } = await db
             .from("admin_quotations")
             .select("*")
@@ -2334,9 +3203,70 @@ async function loadDirectQuotes() {
 
         if (!container) return;
 
-        const drafts = (data || []).filter(quote => quote.status === "draft");
+        const drafts = (data || []).filter(
+            (quote) => quote.status === "draft"
+        );
         currentDirectQuotes = drafts;
-        renderDirectQuotes();
+
+        if (!drafts.length) {
+            container.innerHTML = "<p>No quotation drafts found.</p>";
+            showMessage(
+                "directQuoteMessage",
+                "No saved quotation drafts were found.",
+                "info"
+            );
+            return;
+        }
+
+        container.innerHTML = drafts.map((quote) => `
+            <article class="admin-card">
+                <h3>${escapeHtml(quote.product_description || "Quotation draft")}</h3>
+
+                <p><strong>Quantity:</strong>
+                    ${escapeHtml(quote.quantity)}
+                </p>
+
+                <p><strong>Unit price:</strong>
+                    ${money(quote.unit_price)}
+                </p>
+
+                <p><strong>Delivery:</strong>
+                    ${money(quote.delivery_cost)}
+                </p>
+
+                <p><strong>Additional charges:</strong>
+                    ${money(quote.additional_charges)}
+                </p>
+
+                <p><strong>Status:</strong>
+                    ${badge(quote.status)}
+                </p>
+
+                <button type="button"
+                    class="edit-direct-quotation"
+                    data-id="${escapeHtml(quote.id)}">
+                    Edit Draft
+                </button>
+            </article>
+        `).join("");
+
+        /* Compact table replaces the card display while retaining all draft actions. */
+        const directQuoteRows = drafts.map((quote) => `<tr>
+            <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation draft")}</td>
+            <td>${escapeHtml(quote.quantity)}</td>
+            <td>${money(quote.unit_price)}</td>
+            <td>${money(quote.delivery_cost)}</td>
+            <td>${money(quote.additional_charges)}</td>
+            <td>${badge(quote.status)}</td>
+            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Edit Draft</button></div></td>
+        </tr>`);
+        container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
+
+        showMessage(
+            "directQuoteMessage",
+            `${drafts.length} saved quotation draft(s) loaded successfully.`,
+            "success"
+        );
 
     } catch (error) {
         showMessage(
@@ -2345,21 +3275,6 @@ async function loadDirectQuotes() {
             "error"
         );
     }
-}
-
-function renderDirectQuotes() {
-    const container = $("directQuoteList");
-    if (!container) return;
-    if (!currentDirectQuotes.length) { container.innerHTML = "<p>No quotation drafts found.</p>"; return; }
-    const rows = currentDirectQuotes.map(q => `<tr>
-      <td>${escapeHtml(q.product_description || "Quotation draft")}</td>
-      <td>${escapeHtml(q.quantity ?? "—")}</td>
-      <td>${money(q.unit_price)}</td>
-      <td>${money(q.delivery_cost)}</td>
-      <td>${badge(q.status)}</td>
-      <td><div class="table-actions">${viewRecordButton("direct_quote",q.id)}<button type="button" class="table-action edit-direct-quotation" data-id="${escapeHtml(q.id)}">Edit Draft</button></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Quotation","Quantity","Unit Price","Delivery","Status","Actions"], rows);
 }
 
 if ($("loadDirectQuotesBtn")) {
@@ -2445,33 +3360,63 @@ async function editDirectQuotation(id) {
             : noteText;
 
         const items = requestedItems?.items || {};
+        const safeCustomerPriceDraft =
+            requestedItems?.pricing_mode === "customer_prices_v1";
 
-        $("directInstallationPerAc").value =
-            items.installation?.per_unit || 0;
+        if (safeCustomerPriceDraft) {
+            /* Restore customer-facing amounts without exposing supplier costs. */
+            $("directUnitCost").value =
+                items.product?.customer_unit_price ?? quote.unit_price ?? 0;
+            $("directMarkup").value = "0";
+            $("directMarkup").disabled = true;
 
-        $("directBracketQuantity").value =
-            items.outdoor_brackets?.quantity || 0;
+            $("directInstallationPerAc").value =
+                items.installation?.customer_unit_price ?? 0;
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity ?? 0;
+            $("directBracketUnitCost").value =
+                items.outdoor_brackets?.customer_unit_price ?? 0;
 
-        $("directBracketUnitCost").value =
-            items.outdoor_brackets?.unit_cost || 0;
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
 
-        const accessories = Array.isArray(items.accessories)
-            ? items.accessories
-            : [];
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value =
+                firstAccessory.customer_unit_price ?? 0;
 
-        const firstAccessory = accessories[0] || {};
+            setDirectQuotationDraftPriceMode(true);
+        } else {
+            /* Legacy markers may contain supplier costs. Never load them. */
+            $("directUnitCost").value = "";
+            $("directMarkup").value = "15";
+            $("directMarkup").disabled = false;
+            $("directInstallationPerAc").value = "0";
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity || 0;
+            $("directBracketUnitCost").value = "0";
 
-        $("directAccessoryDescription").value =
-            firstAccessory.description || "";
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
 
-        $("directAccessoryUnit").value =
-            firstAccessory.unit || "";
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value = "0";
 
-        $("directAccessoryQuantity").value =
-            firstAccessory.quantity || 0;
-
-        $("directAccessoryUnitCost").value =
-            firstAccessory.unit_cost || 0;
+            setDirectQuotationDraftPriceMode(false);
+        }
 
         const request = currentQuoteRequests.find(
             (item) => item.id === quote.request_id
@@ -2485,7 +3430,9 @@ async function editDirectQuotation(id) {
         $("directRequestRequirements").textContent =
             request?.description || "";
 
+        $("directQuoteForm").classList.remove("hidden");
         $("directQuotationSection").hidden = false;
+        window.frostTechOpenAdminPage?.("directQuotationSection");
 
         updateDirectQuotationPreview();
 
@@ -2570,10 +3517,12 @@ function adminConfirm(options = {}) {
         yesButton.textContent = options.confirmText || "Yes, Continue";
         cancelButton.textContent = options.cancelText || "Cancel";
 
-        modal.hidden = false;
+        modal.classList.remove("hidden");
+        document.body.classList.add("ft-modal-open");
 
         const finish = (confirmed) => {
-            modal.hidden = true;
+            modal.classList.add("hidden");
+            document.body.classList.remove("ft-modal-open");
 
             const reason = reasonInput
                 ? reasonInput.value.trim()
@@ -2597,13 +3546,18 @@ function adminConfirm(options = {}) {
                 ? reasonInput.value.trim()
                 : "";
 
-            if (options.requireReason && !reason) {
-                reasonInput.focus();
-                reasonInput.setCustomValidity(
-                    "Please enter a reason before continuing."
-                );
-                reasonInput.reportValidity();
-                return;
+            if (options.requireReason && reasonInput) {
+                /* Clear any previous validation error before rechecking. */
+                reasonInput.setCustomValidity("");
+
+                if (!reason) {
+                    reasonInput.focus();
+                    reasonInput.setCustomValidity(
+                        "Please enter a reason before continuing."
+                    );
+                    reasonInput.reportValidity();
+                    return;
+                }
             }
 
             finish(true);
@@ -2654,17 +3608,67 @@ async function loadSupplierQuotes() {
 
 function renderSupplierQuotes() {
     const container = $("supplierQuotes");
+
     if (!container) return;
-    if (!currentSupplierQuotes.length) { container.innerHTML = "<p>No supplier quotations found.</p>"; return; }
-    const rows = currentSupplierQuotes.map(q => `<tr>
-      <td>${escapeHtml(q.product_name || q.product_description || "Supplier quotation")}</td>
-      <td>${escapeHtml(q.supplier_name || q.business_name || "Supplier")}</td>
-      <td>${money(q.supplier_price ?? q.unit_price)}</td>
-      <td>${money(q.customer_total)}</td>
-      <td>${badge(q.status)}</td>
-      <td><div class="table-actions">${viewRecordButton("supplier_quote",q.id)}<button type="button" class="table-action success select-supplier-quote" data-id="${escapeHtml(q.id)}">Select</button><button type="button" class="table-action danger reject-supplier-quote" data-id="${escapeHtml(q.id)}">Reject</button></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Product","Supplier","Supplier Price","Customer Total","Status","Actions"], rows);
+
+    if (!currentSupplierQuotes.length) {
+        container.innerHTML = "<p>No supplier quotations found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentSupplierQuotes.map((quote) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                quote.product_name ||
+                quote.product_description ||
+                "Supplier quotation"
+            )}</h3>
+
+            <p><strong>Supplier:</strong>
+                ${escapeHtml(
+                    quote.supplier_name ||
+                    quote.business_name ||
+                    "Supplier"
+                )}
+            </p>
+
+            <p><strong>Supplier price:</strong>
+                ${money(quote.supplier_price ?? quote.unit_price)}
+            </p>
+
+            <p><strong>Total supplier cost:</strong>
+                ${money(quote.total_cost ?? quote.total_amount)}
+            </p>
+
+            <p><strong>Delivery:</strong>
+                ${money(quote.delivery_cost)}
+            </p>
+
+            <p><strong>FrostTech margin:</strong>
+                ${money(quote.frosttech_margin ?? quote.margin)}
+            </p>
+
+            <p><strong>Customer total:</strong>
+                ${money(quote.customer_total)}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(quote.status)}
+            </p>
+
+            <button type="button"
+                class="select-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Select Supplier Quotation
+            </button>
+
+            <button type="button"
+                class="reject-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Reject Supplier Quotation
+            </button>
+        </article>
+    `).join("");
 }
 
 if ($("loadSupplierQuotesBtn")) {
@@ -2820,17 +3824,79 @@ async function loadSuppliers() {
 
 function renderSuppliers() {
     const container = $("supplierManagementRows");
+
     if (!container) return;
-    if (!currentSuppliers.length) { container.innerHTML = "<p>No supplier records found.</p>"; return; }
-    const rows = currentSuppliers.map(s => `<tr>
-      <td>${escapeHtml(s.business_name || "Unnamed supplier")}</td>
-      <td>${escapeHtml(s.contact_name || "Not supplied")}</td>
-      <td>${escapeHtml(s.email || "Not supplied")}</td>
-      <td>${badge(s.review_status)}</td>
-      <td>${s.is_active ? badge("active") : badge("inactive")}</td>
-      <td><div class="table-actions">${viewRecordButton("supplier",s.id)}<button type="button" class="table-action success review-supplier" data-id="${escapeHtml(s.id)}" data-status="approved">Approve</button><button type="button" class="table-action review-supplier" data-id="${escapeHtml(s.id)}" data-status="more_info">More Info</button><button type="button" class="table-action danger review-supplier" data-id="${escapeHtml(s.id)}" data-status="rejected">Reject</button><button type="button" class="table-action warning review-supplier" data-id="${escapeHtml(s.id)}" data-status="suspended">Suspend</button></div></td>
-    </tr>`);
-    container.innerHTML = adminTable(["Business","Contact","Email","Review Status","Account","Actions"], rows);
+
+    if (!currentSuppliers.length) {
+        container.innerHTML = "<p>No supplier records found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentSuppliers.map((supplier) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                supplier.business_name || "Unnamed supplier"
+            )}</h3>
+
+            <p><strong>Contact person:</strong>
+                ${escapeHtml(supplier.contact_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(supplier.email || "")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(supplier.phone || "")}
+            </p>
+
+            <p><strong>Address:</strong>
+                ${escapeHtml(supplier.address || "Not supplied")}
+            </p>
+
+            <p><strong>Review status:</strong>
+                ${badge(supplier.review_status)}
+            </p>
+
+            <p><strong>Verified:</strong>
+                ${supplier.is_verified ? "Yes" : "No"}
+            </p>
+
+            <p><strong>Account active:</strong>
+                ${supplier.is_active ? "Yes" : "No"}
+            </p>
+
+            <div class="supplier-review-actions">
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="approved">
+                    Approve
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="more_info">
+                    Request More Information
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="rejected">
+                    Reject
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="suspended">
+                    Suspend
+                </button>
+            </div>
+        </article>
+    `).join("");
 }
 
 if ($("loadSuppliersBtn")) {
@@ -2910,14 +3976,17 @@ async function reviewSupplier(supplierId, newStatus) {
 
         if (error) throw error;
 
-        await loadSuppliers();
-        await loadDashboard();
-
         showMessage(
             "supplierManagementMessage",
             `Supplier review status updated to ${newStatus.replaceAll("_", " ")}.`,
             "success"
         );
+
+        /* Refreshing counts must not turn a successful review into a false failure. */
+        await Promise.allSettled([
+            loadSuppliers(),
+            loadDashboardCounts()
+        ]);
     } catch (error) {
         showMessage(
             "supplierManagementMessage",
@@ -2948,8 +4017,7 @@ async function loadPayments() {
 
         if (error) throw error;
 
-        currentPayments = data || [];
-        renderPayments(currentPayments);
+        renderPayments(data || []);
 
         showMessage(
             "paymentMessage",
@@ -2967,18 +4035,44 @@ async function loadPayments() {
 
 function renderPayments(payments) {
     const container = $("paymentRecords");
+
     if (!container) return;
-    if (!payments.length) { container.innerHTML = "<p>No payment records found.</p>"; return; }
-    const rows = payments.map(p => `<tr>
-      <td>${escapeHtml(String(p.id || "").slice(0,12))}…</td>
-      <td>${escapeHtml(String(p.order_id || "").slice(0,12))}${p.order_id ? "…" : ""}</td>
-      <td>${escapeHtml(p.amount ?? "—")}</td>
-      <td>${escapeHtml(p.currency || "NGN")}</td>
-      <td>${badge(p.status)}</td>
-      <td>${escapeHtml(dateText(p.created_at))}</td>
-      <td>${viewRecordButton("payment",p.id)}</td>
-    </tr>`);
-    container.innerHTML = adminTable(["Payment ID","Order ID","Amount","Currency","Status","Created","Review"], rows);
+
+    if (!payments.length) {
+        container.innerHTML = "<p>No payment records found.</p>";
+        return;
+    }
+
+    const visiblePaymentFields = [
+        "id",
+        "order_id",
+        "amount",
+        "currency",
+        "status",
+        "reference",
+        "payment_reference",
+        "provider",
+        "created_at",
+        "paid_at"
+    ];
+
+    container.innerHTML = payments.map((payment) => {
+        const fields = visiblePaymentFields
+            .filter((key) => Object.prototype.hasOwnProperty.call(payment, key))
+            .map((key) => `
+                <p>
+                    <strong>${escapeHtml(key.replaceAll("_", " "))}:</strong>
+                    ${escapeHtml(payment[key] ?? "")}
+                </p>
+            `)
+            .join("");
+
+        return `
+            <article class="admin-card payment-record">
+                ${fields || "<p>No approved display fields are available.</p>"}
+            </article>
+        `;
+    }).join("");
 }
 
 if ($("loadPaymentsBtn")) {
@@ -3036,10 +4130,10 @@ if ($("confirmSupplierEmailBtn")) {
                 }
 
                 /*
-                 * Preserve the existing Edge Function call.
-                 * The exact payload expected by the deployed
-                 * function still needs to be checked before
-                 * production use.
+                 * The deployed function identifies the intended
+                 * supplier account on the server and accepts an
+                 * empty request body. It verifies administrator
+                 * access and the target account before confirmation.
                  */
                 const { data, error } = await db.functions.invoke(
                     "confirm-existing-supplier",
@@ -3070,6 +4164,228 @@ if ($("confirmSupplierEmailBtn")) {
     );
 }
 
+
+/* =========================================================
+   FINANCIAL DASHBOARD — READ ONLY
+   Uses the authenticated session and the secured RPC.
+   Does not read or modify financial tables directly.
+   ========================================================= */
+
+function financialMoney(value) {
+    if (value === null || value === undefined || value === "") return "Not available";
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return "Not available";
+    return money(amount);
+}
+
+function financialDateInputValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function financialCount(value) {
+    if (value === null || value === undefined || value === "") return "Not available";
+    const count = Number(value);
+    if (!Number.isFinite(count)) return "Not available";
+    return new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(count);
+}
+
+function financialSetText(id, value, formatter = financialMoney) {
+    const target = $(id);
+    if (target) target.textContent = formatter(value);
+}
+
+function financialObject(value) {
+    if (value && typeof value === "object" && !Array.isArray(value)) return value;
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch (_) { return {}; }
+    }
+    return {};
+}
+
+function renderFinancialExpenseBreakdown(byCategory) {
+    const target = $("finExpenseBreakdown");
+    if (!target) return;
+    const entries = Object.entries(financialObject(byCategory));
+    if (!entries.length) {
+        target.textContent = "No production expenses recorded for this period.";
+        return;
+    }
+    const table = document.createElement("table");
+    table.className = "data-table";
+    const thead = document.createElement("thead");
+    const header = document.createElement("tr");
+    for (const label of ["Expense category", "Production expense total"]) {
+        const th = document.createElement("th");
+        th.textContent = label;
+        header.appendChild(th);
+    }
+    thead.appendChild(header);
+    table.appendChild(thead);
+    const tbody = document.createElement("tbody");
+    for (const [category, amount] of entries) {
+        const tr = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        const amountCell = document.createElement("td");
+        nameCell.textContent = category || "Uncategorised";
+        amountCell.textContent = financialMoney(amount);
+        tr.append(nameCell, amountCell);
+        tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    target.replaceChildren(table);
+}
+
+function renderFinancialReport(report) {
+    if (!report || typeof report !== "object" || Array.isArray(report)) {
+        throw new Error("The V2 financial report returned an invalid response.");
+    }
+
+    const period = financialObject(report.report_period);
+    const payments = financialObject(report.production_payments);
+    const orders = financialObject(report.recognised_orders);
+    const fees = financialObject(report.admin_fees);
+    const quotations = financialObject(report.accepted_quotations_estimates);
+    const expenses = financialObject(report.production_expenses);
+    const inventory = financialObject(report.inventory);
+    const development = financialObject(report.development_activity);
+    const integrity = financialObject(report.report_integrity);
+    const refunds = financialObject(report.refunds);
+
+    const periodText = `${period.start_date || "Not available"} to ${period.end_date || "Not available"} (${period.timezone || "timezone not supplied"})`;
+    financialSetText("finReportPeriod", periodText, value => value);
+
+    financialSetText("finVerifiedPayments", payments.verified_payment_count, financialCount);
+    financialSetText("finVerifiedCash", payments.verified_cash_received);
+    financialSetText("finAdminFeesPaid", fees.recorded_paid_admin_fees);
+    financialSetText("finAdminFeesVerified", fees.verified_admin_fees);
+    financialSetText("finAdminFeesUnverified", fees.unverified_admin_fee_count, financialCount);
+    financialSetText("finAdminFeeReceiptCount", fees.production_admin_fee_receipt_count, financialCount);
+    financialSetText("finAdminFeeReceiptAmount", fees.production_admin_fee_receipt_amount);
+    financialSetText("finDeliveryIncome", orders.recognised_delivery_income);
+    financialSetText("finRefunds", refunds.amount);
+
+    financialSetText("finFullyPaidOrders", orders.fully_paid_order_count, financialCount);
+    financialSetText("finReconciledOrders", orders.reconciled_order_count, financialCount);
+    financialSetText("finRecognisedSales", orders.recognised_product_sales);
+    financialSetText("finRecognisedDelivery", orders.recognised_delivery_income);
+    financialSetText("finReconciledOrderValue", orders.reconciled_order_value);
+    financialSetText("finRealisedGrossProfit", orders.realised_product_gross_profit);
+    financialSetText("finOrderExceptions", orders.order_reconciliation_exception_count, financialCount);
+    financialSetText("finMissingOrderCosts", orders.missing_order_cost_count, financialCount);
+    financialSetText("finOperatingResult", report.operating_result);
+
+    financialSetText("finAcceptedQuoteCount", quotations.accepted_quotation_count, financialCount);
+    financialSetText("finQuotationValue", quotations.accepted_quotation_value);
+    financialSetText("finQuoteProductCost", quotations.accepted_quotation_product_cost);
+    financialSetText("finQuoteDeliveryCost", quotations.accepted_quotation_delivery_cost);
+    financialSetText("finMarkup", quotations.accepted_quotation_markup);
+    financialSetText("finDiscounts", quotations.accepted_quotation_discount);
+    financialSetText("finProfit", quotations.estimated_quotation_profit);
+    financialSetText("finQuotesWithoutSnapshot", quotations.accepted_quotes_without_snapshot, financialCount);
+    financialSetText("finSnapshotsMissingDelivery", quotations.snapshots_without_delivery_cost, financialCount);
+
+    financialSetText("finTotalExpenses", expenses.total);
+    renderFinancialExpenseBreakdown(expenses.by_category);
+
+    financialSetText("finInventoryProducts", inventory.product_count, financialCount);
+    financialSetText("finInventoryActiveProducts", inventory.active_product_count, financialCount);
+    financialSetText("finInventoryRetailValue", inventory.inventory_retail_value);
+    financialSetText("finInventoryCostValue", inventory.inventory_supplier_cost_value);
+    financialSetText("finInventoryPotentialProfit", inventory.potential_inventory_gross_profit);
+    financialSetText("finInventoryCostExceptions", inventory.inventory_cost_exceptions, financialCount);
+    financialSetText("finInventoryNote", inventory.valuation_note || "Current stock valuation only; not realised revenue or profit.", value => value);
+
+    financialSetText("finDevelopmentAttempts", development.payment_attempts, financialCount);
+    financialSetText("finDevelopmentSuccesses", development.successful_payment_rows, financialCount);
+    financialSetText("finDevelopmentAttemptAmount", development.attempt_amount_total);
+
+    financialSetText("finUnmatchedPayments", integrity.unmatched_successful_payments, financialCount);
+    financialSetText("finOrphanedReceipts", integrity.orphaned_final_order_receipts, financialCount);
+    financialSetText("finIntegrityOrderExceptions", integrity.order_reconciliation_exceptions, financialCount);
+    financialSetText("finIntegrityMissingCosts", integrity.missing_order_costs, financialCount);
+    financialSetText("finIntegrityUnverifiedFees", integrity.unverified_admin_fees, financialCount);
+
+    const status = $("finSummaryStatus");
+    if (status) {
+        const value = String(integrity.status || "status_unavailable");
+        status.textContent = value.replaceAll("_", " ");
+        status.className = "badge " + value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    }
+
+    const results = $("financialReportResults");
+    if (results) results.classList.remove("hidden");
+}
+
+async function loadFinancialReport() {
+    const button = $("loadFinancialReportBtn");
+    const startDate = $("financialStartDate")?.value;
+    const endDate = $("financialEndDate")?.value;
+
+    if (!startDate || !endDate) {
+        showMessage("financialReportMessage", "Select both the start date and end date.", "error");
+        return;
+    }
+    if (endDate < startDate) {
+        showMessage("financialReportMessage", "The end date cannot be earlier than the start date.", "error");
+        return;
+    }
+
+    setButtonLoading(button, true, "Loading financial report...");
+    showMessage("financialReportMessage", "Verifying Super Administrator access and loading report...", "info");
+
+    try {
+        await requireAdmin();
+        const { data, error } = await db.rpc("get_financial_dashboard_v2", {
+            p_start_date: startDate,
+            p_end_date: endDate
+        });
+        if (error) throw error;
+
+        let report = data;
+        if (typeof report === "string") {
+            try { report = JSON.parse(report); }
+            catch (_) { throw new Error("The V2 financial report returned unreadable JSON."); }
+        }
+        if (!report || typeof report !== "object" || Array.isArray(report)) {
+            throw new Error("The V2 financial report returned no valid report for the selected period.");
+        }
+
+        renderFinancialReport(report);
+        const period = financialObject(report.report_period);
+        showMessage(
+            "financialReportMessage",
+            `V2 financial report loaded for ${period.start_date || startDate} to ${period.end_date || endDate}. Test/development activity remains excluded from production totals.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "financialReportMessage",
+            error.message || "Unable to load the financial report.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+if ($("financialStartDate") && $("financialEndDate")) {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 29);
+    $("financialStartDate").value = financialDateInputValue(start);
+    $("financialEndDate").value = financialDateInputValue(today);
+}
+
+if ($("loadFinancialReportBtn")) {
+    $("loadFinancialReportBtn").addEventListener("click", loadFinancialReport);
+}
+
 /* =========================================================
    STARTUP AND EVENT WIRING
    ========================================================= */
@@ -3080,45 +4396,252 @@ if ($("confirmSupplierEmailBtn")) {
  * or authentication listener.
  */
 
-async function refreshAllAdminSections() {
+/* Start only after every admin section and handler has been defined. */
+if ($("refreshBtn")) {
+    $("refreshBtn").addEventListener("click", refreshAllDashboardSections);
+}
+
+(async function initialiseAdminPortal() {
     try {
-        await requireAdmin();
+        const {
+            data: { session },
+            error
+        } = await db.auth.getSession();
 
-        await Promise.all([
-            loadDashboard(),
-            loadProducts(),
-            loadCustomerRequests(),
-            loadDirectQuotes(),
-            loadSupplierQuotes(),
-            loadSuppliers(),
-            loadAdvertisers(),
-            loadPayments()
-        ]);
+        if (error) throw error;
 
-        showMessage(
-            "message",
-            "Admin portal information refreshed.",
-            "success"
-        );
+        if (session?.user) {
+            await refreshAdminSession();
+        } else {
+            showAdminLogin();
+            showMessage(
+                "systemStatus",
+                "Please log in as a FrostTech administrator.",
+                "info"
+            );
+        }
     } catch (error) {
+        showAdminLogin();
         showMessage(
-            "message",
-            error.message || "Unable to refresh admin information.",
+            "systemStatus",
+            "Connection error: " + errorText(error),
             "error"
         );
     }
-}
+})();
 
-/*
- * Keep the existing Refresh button behaviour from Part 2.
- * This replaces its click handler with a complete refresh.
- */
-if ($("refreshBtn")) {
-    $("refreshBtn").onclick = refreshAllAdminSections;
-}
+   
 
 </script>
-    
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN DISPLAY CORRECTIONS — ADDITIVE OVERRIDES
+   Original dashboard functions are retained above unchanged.
+   ========================================================= */
+
+let currentPayments = [];
+
+function ftAdminTable(headers, rows) {
+    return `<div class="table-wrap"><table class="admin-record-table"><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+}
+
+function ftViewRecord(type, id) {
+    return `<button type="button" class="view-admin-record neutral" data-record-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}">View Record</button>`;
+}
+
+function ftRecordList(type) {
+    const lists = {
+        advertiser: currentAdvertisers,
+        product: currentProducts,
+        request: currentQuoteRequests,
+        direct_quote: currentDirectQuotes,
+        supplier_quote: currentSupplierQuotes,
+        supplier: currentSuppliers,
+        payment: currentPayments
+    };
+    return lists[type] || [];
+}
+
+function ftShowRecord(type, id) {
+    const record = ftRecordList(type).find((item) => String(item.id) === String(id));
+    if (!record) {
+        showMessage("message", "This record is no longer in the loaded list. Reload the section and try again.", "error");
+        return;
+    }
+    const titleMap = {
+        advertiser: record.company_name || "Advertiser Record",
+        product: record.name || "Product Record",
+        request: record.request_number || "Customer Request",
+        direct_quote: record.quotation_number || record.product_description || "Quotation Draft",
+        supplier_quote: record.product_name || record.product_description || "Supplier Quotation",
+        supplier: record.business_name || "Supplier Record",
+        payment: "Payment Record"
+    };
+    const protectedFields = new Set(["supplier_cost", "supplier_id", "document_path", "cac_document_path", "storage_path"]);
+    const paymentFields = new Set(["id", "order_id", "amount", "currency", "status", "reference", "transaction_reference", "payment_reference", "provider", "payment_method", "created_at", "paid_at"]);
+    const fields = Object.entries(record).filter(([key, value]) => {
+        if (protectedFields.has(key) || value === null || value === undefined || typeof value === "object") return false;
+        if (type === "payment") return paymentFields.has(key);
+        return true;
+    });
+    $("ftRecordTitle").textContent = titleMap[type] || "Record Details";
+    $("ftRecordContent").innerHTML = fields.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key.replaceAll("_", " "))}</strong><span>${escapeHtml(String(value))}</span></div>`).join("") || "<p>No approved detail fields are available.</p>";
+    $("ftRecordModal").classList.remove("hidden");
+    document.body.classList.add("ft-modal-open");
+}
+
+function ftCloseRecord() {
+    $("ftRecordModal")?.classList.add("hidden");
+    document.body.classList.remove("ft-modal-open");
+}
+
+$("ftRecordClose")?.addEventListener("click", ftCloseRecord);
+$("ftRecordModal")?.addEventListener("click", (event) => {
+    if (event.target === $("ftRecordModal")) ftCloseRecord();
+});
+document.addEventListener("click", (event) => {
+    const button = event.target.closest(".view-admin-record");
+    if (button) ftShowRecord(button.dataset.recordType, button.dataset.id);
+});
+
+window.renderAdvertisers = function renderAdvertisers() {
+    const container = $("advertiserRows");
+    if (!container) return;
+    if (!currentAdvertisers.length) { container.innerHTML = "<p>No advertiser applications found.</p>"; return; }
+    const rows = currentAdvertisers.map((a) => `<tr><td>${escapeHtml(a.company_name || "Unnamed company")}</td><td>${escapeHtml(a.contact_person || "Not supplied")}</td><td>${escapeHtml(a.email || "")}</td><td>${badge(a.verification_status)}</td><td><div class="record-actions">${ftViewRecord("advertiser", a.id)}<button type="button" disabled title="Private CAC document retrieval is not connected.">CAC Review Unavailable</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Company", "Contact", "Email", "Verification", "Actions"], rows) + `<p><small>Private CAC documents remain protected. Document review stays unavailable until verified administrator-only retrieval is connected.</small></p>`;
+};
+
+window.renderProducts = function renderProducts() {
+    const container = $("productList");
+    if (!container) return;
+    if (!currentProducts.length) { container.innerHTML = "<p>No products found.</p>"; return; }
+    const rows = currentProducts.map((p) => `<tr><td>${escapeHtml(p.name || "")}</td><td>${escapeHtml(p.category || "")}</td><td>${escapeHtml(p.brand || "Not specified")}</td><td>${Number(p.selling_price) > 0 ? money(p.selling_price) : "Not yet priced"}</td><td>${escapeHtml(p.stock_quantity ?? 0)}</td><td>${p.is_active ? badge("active") : badge("inactive")}</td><td><div class="record-actions">${ftViewRecord("product", p.id)}<button type="button" class="edit-product" data-id="${escapeHtml(p.id)}">Edit Product</button><button type="button" class="toggle-product" data-id="${escapeHtml(p.id)}" data-active="${p.is_active ? "true" : "false"}">${p.is_active ? "Deactivate" : "Activate"}</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Product", "Category", "Brand", "Selling Price", "Stock", "Visibility", "Actions"], rows);
+};
+
+window.renderCustomerRequests = function renderCustomerRequests() {
+    const container = $("quoteRequests");
+    if (!container) return;
+    if (!currentQuoteRequests.length) { container.innerHTML = "<p>No customer requests found.</p>"; return; }
+    const rows = currentQuoteRequests.map((r) => `<tr><td>${escapeHtml(r.request_number || r.id)}</td><td>${escapeHtml(r.customer_name || "Not supplied")}</td><td>${escapeHtml(r.customer_email || "Not supplied")}</td><td>${escapeHtml(r.title || r.description || "")}</td><td>${badge(r.status)}</td><td>${escapeHtml(r.created_at || "")}</td><td><div class="record-actions">${ftViewRecord("request", r.id)}<button type="button" class="mark-request-reviewing" data-id="${escapeHtml(r.id)}">Mark Reviewing</button><button type="button" class="create-direct-quotation" data-id="${escapeHtml(r.id)}">Prepare Direct Quotation</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Request", "Customer", "Email", "Requirement", "Status", "Submitted", "Actions"], rows);
+};
+
+window.renderSupplierQuotes = function renderSupplierQuotes() {
+    const container = $("supplierQuotes");
+    if (!container) return;
+    if (!currentSupplierQuotes.length) { container.innerHTML = "<p>No supplier quotations found.</p>"; return; }
+    const rows = currentSupplierQuotes.map((q) => `<tr><td>${escapeHtml(q.product_id || "Not linked")}</td><td>${escapeHtml(q.supplier_id || "Not linked")}</td><td>${escapeHtml(q.request_id || "Not linked")}</td><td>${escapeHtml(q.quantity ?? 1)}</td><td>${money(q.supplier_unit_price)}</td><td>${money(q.supplier_total)}</td><td>${money(q.delivery_cost)}</td><td>${escapeHtml(q.frosttech_margin_percent ?? 15)}%</td><td>${money(q.frosttech_margin_amount)}</td><td>${money(q.customer_total)}</td><td>${badge(q.status)}</td><td>${escapeHtml(q.valid_until || "Not specified")}</td><td><div class="record-actions">${ftViewRecord("supplier_quote", q.id)}<button type="button" class="select-supplier-quote" data-id="${escapeHtml(q.id)}">Select</button><button type="button" class="reject-supplier-quote" data-id="${escapeHtml(q.id)}">Reject</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Product ID", "Supplier ID", "Request ID", "Quantity", "Supplier Unit Cost", "Supplier Total", "Delivery", "Margin %", "Margin Amount", "Customer Total", "Status", "Valid Until", "Actions"], rows);
+};
+
+window.renderSuppliers = function renderSuppliers() {
+    const container = $("supplierManagementRows");
+    if (!container) return;
+    if (!currentSuppliers.length) { container.innerHTML = "<p>No supplier records found.</p>"; return; }
+    const rows = currentSuppliers.map((s) => `<tr><td>${escapeHtml(s.business_name || "Unnamed supplier")}</td><td>${escapeHtml(s.contact_name || "Not supplied")}</td><td>${escapeHtml(s.email || "")}</td><td>${escapeHtml(s.phone || "")}</td><td>${badge(s.review_status)}</td><td>${s.is_verified ? "Yes" : "No"}</td><td>${s.is_active ? "Yes" : "No"}</td><td><div class="record-actions">${ftViewRecord("supplier", s.id)}<button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="approved">Approve</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="more_info">Request More Information</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="rejected">Reject</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="suspended">Suspend</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Supplier", "Contact", "Email", "Phone", "Review Status", "Verified", "Active", "Actions"], rows);
+};
+
+window.renderPayments = function renderPayments(payments) {
+    const container = $("paymentRecords");
+    if (!container) return;
+    currentPayments = payments || [];
+    if (!currentPayments.length) { container.innerHTML = "<p>No payment records found.</p>"; return; }
+    const rows = currentPayments.map((p) => `<tr><td>${escapeHtml(p.id)}</td><td>${escapeHtml(p.order_id)}</td><td>${money(p.amount)} ${escapeHtml(p.currency || "NGN")}</td><td>${badge(p.status)}</td><td>${escapeHtml(p.reference || p.transaction_reference || p.payment_reference || "Not supplied")}</td><td>${escapeHtml(p.payment_method || p.provider || "Not specified")}</td><td>${escapeHtml(p.created_at || "")}</td><td>${escapeHtml(p.paid_at || "Not paid")}</td><td>${ftViewRecord("payment", p.id)}</td></tr>`);
+    container.innerHTML = ftAdminTable(["Payment ID", "Order ID", "Amount", "Status", "Reference", "Payment Method", "Created", "Paid At", "Actions"], rows) + `<p><small>Payment records are read-only. This dashboard does not edit or delete payment history.</small></p>`;
+};
+
 </script>
+
+
+<script>
+/* Independent admin workspaces: presentation-only navigation; no database workflow changes. */
+(function () {
+  const home = document.getElementById("adminHomeOverview");
+  const toolbar = document.getElementById("adminPageToolbar");
+  const title = document.getElementById("adminCurrentPageTitle");
+  const back = document.getElementById("backToAdminDashboard");
+  const pages = Array.from(document.querySelectorAll(".admin-page-section[data-admin-title]"));
+  const nav = document.getElementById("adminNavigationCard");
+  if (!home || !toolbar || !back || !pages.length || !nav) return;
+
+  const pageStack = ["admin-home"];
+
+  function currentPageId() {
+    return pages.find((page) => !page.classList.contains("hidden"))?.id ||
+      (home.classList.contains("hidden") ? "admin-home" : "admin-home");
+  }
+
+  function renderPage(id) {
+    const page = pages.find((item) => item.id === id);
+    pages.forEach((item) => item.classList.toggle("hidden", item !== page));
+    home.classList.toggle("hidden", Boolean(page));
+    toolbar.classList.toggle("hidden", !page);
+    if (page) {
+      title.textContent = page.dataset.adminTitle || "Administration Workspace";
+      document.title = title.textContent + " | FrostTech Admin";
+    } else {
+      document.title = "FrostTech Administration";
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showHome(updateHistory) {
+    const previous = pageStack[pageStack.length - 1];
+    if (updateHistory && previous !== "admin-home") {
+      pageStack.push("admin-home");
+      history.pushState({ adminPage: "home" }, "", "#admin-home");
+    }
+    renderPage("admin-home");
+  }
+
+  function openPage(id, updateHistory) {
+    const page = pages.find((item) => item.id === id);
+    if (!page) return;
+    const current = pageStack[pageStack.length - 1] || "admin-home";
+    if (updateHistory && current !== id) {
+      pageStack.push(id);
+      history.pushState({ adminPage: id }, "", "#" + id);
+    }
+    renderPage(id);
+  }
+
+  function goBack() {
+    if (pageStack.length > 1) {
+      history.back();
+      return;
+    }
+    renderPage("admin-home");
+    if (location.hash !== "#admin-home") {
+      history.replaceState({ adminPage: "home" }, "", "#admin-home");
+    }
+  }
+
+  nav.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-admin-open]");
+    if (button) openPage(button.dataset.adminOpen, true);
+  });
+  back.addEventListener("click", goBack);
+
+  window.addEventListener("popstate", () => {
+    const id = location.hash.replace(/^#/, "") || "admin-home";
+    const validId = id === "admin-home" || pages.some((page) => page.id === id);
+    const target = validId ? id : "admin-home";
+    const existingIndex = pageStack.lastIndexOf(target);
+    if (existingIndex >= 0) pageStack.splice(existingIndex + 1);
+    else pageStack.push(target);
+    renderPage(target);
+  });
+
+  window.frostTechOpenAdminPage = (id) => openPage(id, true);
+
+  /* The dashboard always opens on its home screen after login/refresh. */
+  renderPage("admin-home");
+})();
+</script>
+
 </body>
 </html>
