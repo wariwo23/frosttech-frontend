@@ -801,6 +801,25 @@ main,
 @media(max-width:600px){.admin-home-grid{grid-template-columns:1fr 1fr;gap:9px}.admin-nav-card{min-height:118px;padding:13px}.admin-page-toolbar{align-items:stretch}.admin-page-toolbar button{width:100%}.admin-page-toolbar strong{width:100%}}
 @media(max-width:380px){.admin-home-grid{grid-template-columns:1fr}}
 
+
+.ft-print-approval-status {
+    margin: 16px 0 0;
+    padding: 11px 13px;
+    border: 1px solid #dce6f0;
+    border-radius: 9px;
+    background: #f5f8fc;
+    color: #17324d;
+    font-size: 13px;
+}
+.ft-print-actions { flex-wrap: wrap; }
+.ft-workspace-print-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 14px;
+}
+@media print {
+    .ft-workspace-print-toolbar, .ft-modal, button { display: none !important; }
+}
 </style>
 </head>
 
@@ -1222,8 +1241,16 @@ main,
 <div id="ftRecordModal" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecordTitle">
     <div class="ft-modal-box record-detail-box">
         <div class="ft-modal-header"><h2 id="ftRecordTitle">Record Details</h2></div>
-        <div class="ft-modal-body"><div id="ftRecordContent" class="record-detail-grid"></div></div>
-        <div class="ft-modal-actions"><button id="ftRecordClose" type="button" class="ft-cancel">Close</button></div>
+        <div class="ft-modal-body">
+            <div id="ftRecordContent" class="record-detail-grid"></div>
+            <p id="ftPrintApprovalStatus" class="ft-print-approval-status" role="status" aria-live="polite">Print approval has not been requested.</p>
+        </div>
+        <div class="ft-modal-actions ft-print-actions">
+            <button id="ftApprovePrintBtn" type="button" class="success" disabled>Approve for Printing</button>
+            <button id="ftRejectPrintBtn" type="button" class="danger" disabled>Reject Print Request</button>
+            <button id="ftPrintApprovedBtn" type="button" disabled>Print Approved Copy</button>
+            <button id="ftRecordClose" type="button" class="ft-cancel">Close</button>
+        </div>
     </div>
 </div>
 
@@ -4357,6 +4384,7 @@ async function loadFinancialReport() {
         }
 
         renderFinancialReport(report);
+        currentFinancialReport = report;
         const period = financialObject(report.report_period);
         showMessage(
             "financialReportMessage",
@@ -4441,6 +4469,8 @@ if ($("refreshBtn")) {
    ========================================================= */
 
 let currentPayments = [];
+let currentFinancialReport = null;
+let currentPrintReview = null;
 
 function ftAdminTable(headers, rows) {
     return `<div class="table-wrap"><table class="admin-record-table"><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
@@ -4463,6 +4493,60 @@ function ftRecordList(type) {
     return lists[type] || [];
 }
 
+function ftPrintSafeFields(type, record) {
+    const protectedFields = new Set([
+        "supplier_cost", "supplier_unit_cost", "supplier_cost_price", "cost_price",
+        "supplier_id", "document_path", "cac_document_path", "storage_path",
+        "password", "access_token", "refresh_token", "secret", "service_role_key", "private_key"
+    ]);
+    const paymentFields = new Set([
+        "id", "order_id", "amount", "currency", "status", "reference",
+        "transaction_reference", "payment_reference", "provider", "payment_method",
+        "created_at", "paid_at", "environment"
+    ]);
+    return Object.entries(record || {}).filter(([key, value]) => {
+        if (protectedFields.has(String(key).toLowerCase()) || value === null || value === undefined || typeof value === "object") return false;
+        if (type === "payment") return paymentFields.has(key);
+        return true;
+    }).map(([key, value]) => [key, String(value)]);
+}
+
+function ftSetPrintControls(state, message) {
+    const approve = $("ftApprovePrintBtn");
+    const reject = $("ftRejectPrintBtn");
+    const print = $("ftPrintApprovedBtn");
+    if (approve) approve.disabled = state !== "pending";
+    if (reject) reject.disabled = state !== "pending";
+    if (print) print.disabled = state !== "approved";
+    const status = $("ftPrintApprovalStatus");
+    if (status) status.textContent = message;
+}
+
+async function ftRegisterPrintView(workspaceKey, recordType, recordId, snapshot) {
+    const review = { id: null, workspaceKey, recordType, recordId, snapshot, status: "registering" };
+    currentPrintReview = review;
+    ftSetPrintControls("none", "Recording the Super Admin's review in Supabase...");
+    try {
+        const { data, error } = await db.rpc("admin_register_print_view", {
+            p_workspace_key: workspaceKey,
+            p_record_type: recordType,
+            p_record_id: String(recordId),
+            p_record_snapshot: snapshot
+        });
+        if (error) throw error;
+        const reviewId = typeof data === "string" ? data : (Array.isArray(data) ? data[0] : data?.review_id || data?.id);
+        if (!reviewId) throw new Error("Supabase did not return a print-review reference.");
+        if (currentPrintReview !== review) return;
+        review.id = reviewId;
+        review.status = "pending_review";
+        ftSetPrintControls("pending", "Record view logged. The Super Admin may now approve or reject this exact snapshot.");
+    } catch (error) {
+        if (currentPrintReview !== review) return;
+        review.status = "error";
+        ftSetPrintControls("none", `Print approval unavailable: ${error.message || "Super Admin authorization or database setup is required."}`);
+    }
+}
+
 function ftShowRecord(type, id) {
     const record = ftRecordList(type).find((item) => String(item.id) === String(id));
     if (!record) {
@@ -4478,24 +4562,330 @@ function ftShowRecord(type, id) {
         supplier: record.business_name || "Supplier Record",
         payment: "Payment Record"
     };
-    const protectedFields = new Set(["supplier_cost", "supplier_id", "document_path", "cac_document_path", "storage_path"]);
-    const paymentFields = new Set(["id", "order_id", "amount", "currency", "status", "reference", "transaction_reference", "payment_reference", "provider", "payment_method", "created_at", "paid_at"]);
-    const fields = Object.entries(record).filter(([key, value]) => {
-        if (protectedFields.has(key) || value === null || value === undefined || typeof value === "object") return false;
-        if (type === "payment") return paymentFields.has(key);
-        return true;
-    });
-    $("ftRecordTitle").textContent = titleMap[type] || "Record Details";
-    $("ftRecordContent").innerHTML = fields.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key.replaceAll("_", " "))}</strong><span>${escapeHtml(String(value))}</span></div>`).join("") || "<p>No approved detail fields are available.</p>";
+    const fields = ftPrintSafeFields(type, record);
+    const title = titleMap[type] || "Record Details";
+    const workspaceMap = {
+        advertiser: "advertiserVerification", product: "productManagement",
+        request: "customerRequestsPage", direct_quote: "directQuotationSection",
+        supplier_quote: "supplierQuotationsPage", supplier: "supplierManagement",
+        payment: "paymentRecordsPage"
+    };
+    const snapshot = {
+        document_title: title,
+        workspace_title: document.querySelector(`#${workspaceMap[type]}`)?.dataset.adminTitle || "Administration Workspace",
+        record_type: type,
+        record_id: String(id),
+        viewed_snapshot_at: new Date().toISOString(),
+        fields: Object.fromEntries(fields)
+    };
+    $("ftRecordTitle").textContent = title;
+    $("ftRecordContent").innerHTML = fields.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key.replaceAll("_", " "))}</strong><span>${escapeHtml(value)}</span></div>`).join("") || "<p>No approved detail fields are available.</p>";
     $("ftRecordModal").classList.remove("hidden");
     document.body.classList.add("ft-modal-open");
+    void ftRegisterPrintView(workspaceMap[type] || "unknown_workspace", type, id, snapshot);
 }
+
+function ftWorkspacePrintSnapshot(workspaceKey) {
+    const workspace = document.getElementById(workspaceKey);
+    if (!workspace) return null;
+    const title = workspace.dataset.adminTitle || "Administration Workspace";
+    const map = {
+        productManagement: ["product", currentProducts],
+        directQuotationSection: ["direct_quote", currentDirectQuotes],
+        customerRequestsPage: ["request", currentQuoteRequests],
+        supplierQuotationsPage: ["supplier_quote", currentSupplierQuotes],
+        supplierManagement: ["supplier", currentSuppliers],
+        advertiserVerification: ["advertiser", currentAdvertisers],
+        paymentRecordsPage: ["payment", currentPayments]
+    };
+    if (workspaceKey === "financialDashboard") {
+        if (!currentFinancialReport) return null;
+        const period = financialObject(currentFinancialReport.report_period);
+        return {
+            document_title: title,
+            workspace_title: title,
+            record_type: "financial_report",
+            record_id: `financial:${period.start_date || "unknown"}:${period.end_date || "unknown"}`,
+            viewed_snapshot_at: new Date().toISOString(),
+            scope_note: "This is the complete financial report returned by the secured V2 report function for the selected period.",
+            report: currentFinancialReport
+        };
+    }
+    if (workspaceKey === "marketplaceSummaryPage") {
+        const ids = ["productCount", "requestCount", "supplierCount", "pendingSupplierCount", "quotationCount", "directQuoteCount"];
+        const labels = ["Products", "Customer requests", "Supplier applications", "Pending supplier reviews", "Supplier quotations", "Direct quotations"];
+        return {
+            document_title: title,
+            workspace_title: title,
+            record_type: "marketplace_summary",
+            record_id: `marketplace-summary:${new Date().toISOString()}`,
+            viewed_snapshot_at: new Date().toISOString(),
+            scope_note: "This is the Marketplace Summary snapshot displayed at review time.",
+            summary: labels.map((label, index) => [label, document.getElementById(ids[index])?.textContent?.trim() || "Not loaded"])
+        };
+    }
+    if (workspaceKey === "supplierMaintenancePage") return null;
+    const entry = map[workspaceKey];
+    if (!entry || !entry[1]?.length) return null;
+    const [type, records] = entry;
+    const printableRecords = records.map((record) => ({
+        record_id: String(record.id ?? ""),
+        fields: Object.fromEntries(ftPrintSafeFields(type, record))
+    }));
+    return {
+        document_title: `${title} — Workspace Register`,
+        workspace_title: title,
+        record_type: "workspace_report",
+        record_id: `${workspaceKey}:${new Date().toISOString()}`,
+        viewed_snapshot_at: new Date().toISOString(),
+        scope_note: "This register contains the records currently loaded in this workspace at review time. Reload the workspace before review if a fresh list is required.",
+        source_record_type: type,
+        record_count: printableRecords.length,
+        records: printableRecords
+    };
+}
+
+function ftShowWorkspacePrintReview(workspaceKey) {
+    const snapshot = ftWorkspacePrintSnapshot(workspaceKey);
+    const workspace = document.getElementById(workspaceKey);
+    if (!snapshot) {
+        const message = workspace?.querySelector('[role="status"]');
+        if (message) message.textContent = workspaceKey === "supplierMaintenancePage"
+            ? "This workspace is an account-maintenance action and has no printable record loaded."
+            : "Load the workspace records or report before requesting print approval.";
+        return;
+    }
+    $("ftRecordTitle").textContent = snapshot.document_title;
+    let preview = [];
+    if (snapshot.fields) {
+        preview = Object.entries(snapshot.fields);
+    } else if (snapshot.summary) {
+        preview = snapshot.summary;
+    } else if (snapshot.records) {
+        snapshot.records.forEach((record, index) => {
+            preview.push([`Record ${index + 1} reference`, record.record_id || "Not supplied"]);
+            Object.entries(record.fields || {}).forEach(([key, value]) => preview.push([`Record ${index + 1} — ${key.replaceAll("_", " ")}`, value]));
+        });
+    } else if (snapshot.report) {
+        preview = ftFlattenSnapshot(snapshot.report);
+    }
+    $("ftRecordContent").innerHTML = `<p><strong>${escapeHtml(snapshot.workspace_title)}</strong></p><p>${escapeHtml(snapshot.scope_note || "Review the complete snapshot below before approving.")}</p><p>This print request contains ${escapeHtml(String(snapshot.record_count ?? preview.length))} record(s) or report details.</p>` + preview.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key)}</strong><span>${escapeHtml(value)}</span></div>`).join("");
+    $("ftRecordModal").classList.remove("hidden");
+    document.body.classList.add("ft-modal-open");
+    void ftRegisterPrintView(workspaceKey, snapshot.record_type, snapshot.record_id, snapshot);
+}
+
+async function ftDecidePrintApproval(decision) {
+    const review = currentPrintReview;
+    if (!review?.id || review.status !== "pending_review") return;
+    ftSetPrintControls("none", "Saving the Super Admin's print decision in Supabase...");
+    const { error } = await db.rpc("admin_decide_print_approval", {
+        p_review_id: review.id,
+        p_decision: decision
+    });
+    if (currentPrintReview !== review) return;
+    if (error) {
+        ftSetPrintControls("pending", `Unable to record the decision: ${error.message}`);
+        return;
+    }
+    review.status = decision;
+    if (decision === "approved") {
+        ftSetPrintControls("approved", "Approved by the Super Admin. Only this reviewed snapshot is authorized for printing.");
+    } else {
+        ftSetPrintControls("rejected", "Print request rejected. No print copy is authorized.");
+    }
+}
+
+function ftFlattenSnapshot(value, prefix = "", rows = []) {
+    if (Array.isArray(value)) {
+        value.forEach((item, index) => ftFlattenSnapshot(item, prefix ? `${prefix} ${index + 1}` : String(index + 1), rows));
+    } else if (value && typeof value === "object") {
+        Object.entries(value).forEach(([key, item]) => ftFlattenSnapshot(item, prefix ? `${prefix} / ${key.replaceAll("_", " ")}` : key.replaceAll("_", " "), rows));
+    } else {
+        rows.push([prefix || "Detail", value === null || value === undefined ? "Not available" : String(value)]);
+    }
+    return rows;
+}
+
+
+
+async function ftPrintApprovedSnapshot() {
+    const review = currentPrintReview;
+    if (!review?.id || review.status !== "approved") return;
+
+    const printWindow = window.open("", "_blank");
+
+    if (!printWindow) {
+        ftSetPrintControls("approved", "Allow pop-ups for this page, then select Print Approved Copy again.");
+        return;
+    }
+
+    printWindow.document.open();
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Preparing print copy</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:30px;line-height:1.5}
+h1{color:#063b70}
+.toolbar{position:sticky;top:0;background:#fff;padding:12px 0;border-bottom:1px solid #ccd5df;margin-bottom:22px;display:flex;gap:12px}
+button{padding:11px 20px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
+.print-btn{background:#0879c9;color:white}
+.close-btn{background:#e8edf2;color:#172b40}
+@media print{.toolbar{display:none}body{margin:15mm}}
+</style>
+</head>
+<body>
+<div class="toolbar">
+<button class="print-btn" onclick="window.print()">Print Record</button>
+<button class="close-btn" onclick="window.close()">Close and Return</button>
+</div>
+<h1>FrostTech HVAC and Refrigeration</h1>
+<p>Verifying approval and preparing your controlled print copy. Please wait…</p>
+</body>
+</html>`);
+    printWindow.document.close();
+
+    ftSetPrintControls("none", "Verifying approval and recording the print event...");
+
+    try {
+        const { data, error } = await db.rpc("admin_authorize_print", {
+            p_review_id: review.id,
+            p_record_snapshot: review.snapshot
+        });
+
+        if (error || !data) {
+            throw new Error(error?.message || "Approval or snapshot verification failed.");
+        }
+
+        if (currentPrintReview !== review) {
+            if (!printWindow.closed) printWindow.close();
+            return;
+        }
+
+        const eventId = typeof data === "string"
+            ? data
+            : (Array.isArray(data) ? data[0] : data?.event_id || data?.id || "Recorded");
+
+        const snapshot = review.snapshot;
+        const rows = ftFlattenSnapshot(snapshot);
+
+        const tableRows = rows.map(([key, value]) =>
+            `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(value)}</td></tr>`
+        ).join("");
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(snapshot.document_title || "FrostTech Record")}</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:28px;line-height:1.5}
+.toolbar{position:sticky;top:0;background:#fff;padding:12px 0;border-bottom:1px solid #ccd5df;margin-bottom:22px;display:flex;gap:12px;z-index:10}
+button{padding:11px 20px;border:0;border-radius:5px;font-weight:bold;cursor:pointer}
+.print-btn{background:#0879c9;color:white}
+.close-btn{background:#e8edf2;color:#172b40}
+header{border-bottom:3px solid #0879c9;padding-bottom:14px;margin-bottom:18px}
+h1{font-size:22px;margin:0 0 5px;color:#063b70}
+h2{font-size:17px;margin:18px 0 8px}
+.meta{font-size:12px;line-height:1.8}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{border:1px solid #cbd5df;padding:8px;text-align:left;vertical-align:top;font-size:12px}
+th{width:32%;background:#f1f5f9}
+footer{border-top:1px solid #cbd5df;margin-top:24px;padding-top:10px;font-size:11px;color:#526273}
+@media print{
+.toolbar{display:none!important}
+body{margin:15mm}
+}
+</style>
+</head>
+<body>
+<div class="toolbar">
+<button class="print-btn" onclick="window.print()">Print Record</button>
+<button class="close-btn" onclick="window.close()">Close and Return</button>
+</div>
+<header>
+<h1>FrostTech HVAC and Refrigeration</h1>
+<div>Marketplace Administration — Controlled Print Copy</div>
+</header>
+<h2>${escapeHtml(snapshot.document_title || "Approved Record")}</h2>
+<div class="meta">
+Workspace: ${escapeHtml(snapshot.workspace_title || "—")}<br>
+Record reference: ${escapeHtml(snapshot.record_id || "—")}<br>
+Reviewed snapshot: ${escapeHtml(snapshot.viewed_snapshot_at || "—")}<br>
+Scope: ${escapeHtml(snapshot.scope_note || "Single reviewed record snapshot")}<br>
+Printed: ${escapeHtml(new Date().toLocaleString("en-NG", {timeZone:"Africa/Lagos"}))}<br>
+Approval: Super Admin approval verified by Supabase<br>
+Print event reference: ${escapeHtml(String(eventId))}
+</div>
+<table><tbody>${tableRows}</tbody></table>
+<footer>
+Confidential FrostTech administration record. This copy was generated only after Super Admin approval. Reprints are separately logged.
+</footer>
+</body>
+</html>`;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        ftSetPrintControls(
+            "approved",
+            `Print event ${String(eventId)} has been recorded. Any reprint will create another audit event.`
+        );
+
+    } catch (error) {
+        if (!printWindow.closed) {
+            const message = escapeHtml(
+                error?.message || "The print authorization could not be completed."
+            );
+
+            printWindow.document.open();
+            printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>FrostTech — Print not authorized</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:40px;line-height:1.5}
+h1{color:#063b70}
+.error{color:#a12626}
+</style>
+</head>
+<body>
+<h1>FrostTech HVAC and Refrigeration</h1>
+<p class="error">Printing was not authorized.</p>
+<p>${message}</p>
+<p>Return to the FrostTech administration page and try again.</p>
+<button onclick="window.close()">Close and Return</button>
+</body>
+</html>`);
+            printWindow.document.close();
+        }
+
+        if (currentPrintReview === review) {
+            ftSetPrintControls(
+                "approved",
+                `Printing was not authorized: ${error?.message || "Approval or snapshot verification failed."}`
+            );
+        }
+    }
+}
+
+
 
 function ftCloseRecord() {
     $("ftRecordModal")?.classList.add("hidden");
     document.body.classList.remove("ft-modal-open");
+    currentPrintReview = null;
 }
 
+$("ftApprovePrintBtn")?.addEventListener("click", () => void ftDecidePrintApproval("approved"));
+$("ftRejectPrintBtn")?.addEventListener("click", () => void ftDecidePrintApproval("rejected"));
+$("ftPrintApprovedBtn")?.addEventListener("click", () => void ftPrintApprovedSnapshot());
 $("ftRecordClose")?.addEventListener("click", ftCloseRecord);
 $("ftRecordModal")?.addEventListener("click", (event) => {
     if (event.target === $("ftRecordModal")) ftCloseRecord();
@@ -4504,6 +4894,24 @@ document.addEventListener("click", (event) => {
     const button = event.target.closest(".view-admin-record");
     if (button) ftShowRecord(button.dataset.recordType, button.dataset.id);
 });
+
+function ftInstallWorkspacePrintActions() {
+    document.querySelectorAll(".admin-page-section[data-admin-title]").forEach((section) => {
+        if (section.querySelector(".ft-workspace-print-toolbar")) return;
+        const toolbar = document.createElement("div");
+        toolbar.className = "ft-workspace-print-toolbar";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "neutral";
+        button.textContent = "Review & Approve Workspace Print";
+        button.addEventListener("click", () => ftShowWorkspacePrintReview(section.id));
+        toolbar.appendChild(button);
+        const heading = section.querySelector("h2");
+        if (heading?.nextSibling) section.insertBefore(toolbar, heading.nextSibling);
+        else section.insertBefore(toolbar, section.firstChild);
+    });
+}
+ftInstallWorkspacePrintActions();
 
 window.renderAdvertisers = function renderAdvertisers() {
     const container = $("advertiserRows");
