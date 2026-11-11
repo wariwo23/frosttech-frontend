@@ -5,184 +5,354 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Advertiser Sign In | FrostTech</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;padding:18px;font-family:Arial,sans-serif;background:#f1f5f9;color:#183153}
-.card{max-width:460px;margin:30px auto;padding:26px;background:#fff;border-radius:12px;box-shadow:0 4px 18px #0001}
-.brand{text-align:center;margin-bottom:24px}
-.brand h1{margin:0;color:#087f8c}
-.brand p{color:#64748b;font-size:14px}
-h2{font-size:22px;text-align:center}
-label{display:block;margin:16px 0 6px;font-weight:600;font-size:14px}
-input{width:100%;min-height:46px;padding:11px 12px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
-.password-toggle{display:flex;align-items:center;gap:9px;margin-top:10px;font-size:14px;color:#475569;font-weight:normal}
-.password-toggle input{width:18px;min-height:18px;margin:0;accent-color:#087f8c}
-button{width:100%;min-height:46px;margin-top:20px;padding:12px;border:0;border-radius:7px;background:#087f8c;color:white;font-size:15px;font-weight:600}
-button:disabled{opacity:.6}
-.message{display:none;margin:14px 0;padding:12px;border-radius:7px;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
-.message.success{display:block;background:#dcfce7;color:#166534}
-.message.error{display:block;background:#fee2e2;color:#991b1b}
-.muted{text-align:center;color:#64748b;font-size:14px;line-height:1.6}a{color:#087f8c}
 
-.forgot-password-link{
-    display:block;
-    text-align:center;
-    margin-top:14px;
-    font-size:14px;
-    font-weight:600;
-    text-decoration:none;
-    color:#087f8c;
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    padding: 18px;
+    font-family: Arial, sans-serif;
+    background: #f1f5f9;
+    color: #183153;
+}
+
+.card {
+    max-width: 460px;
+    margin: 30px auto;
+    padding: 26px;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px #0001;
+}
+
+.brand {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.brand h1 {
+    margin: 0;
+    color: #087f8c;
+}
+
+.brand p {
+    color: #64748b;
+    font-size: 14px;
+}
+
+h2 {
+    font-size: 22px;
+    text-align: center;
+}
+
+label {
+    display: block;
+    margin: 16px 0 6px;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+input {
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+.password-toggle {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    margin-top: 10px;
+    font-size: 14px;
+    color: #475569;
+    font-weight: normal;
+}
+
+.password-toggle input {
+    width: 18px;
+    min-height: 18px;
+    margin: 0;
+    accent-color: #087f8c;
+}
+
+button {
+    width: 100%;
+    min-height: 46px;
+    margin-top: 20px;
+    padding: 12px;
+    border: 0;
+    border-radius: 7px;
+    background: #087f8c;
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+
+.forgot-password-link {
+    display: block;
+    text-align: center;
+    margin-top: 14px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    color: #087f8c;
+}
+
+.forgot-password-link:hover {
+    text-decoration: underline;
+}
+
+.message {
+    display: none;
+    margin: 14px 0;
+    padding: 12px;
+    border-radius: 7px;
+    font-size: 14px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.message.success {
+    display: block;
+    background: #dcfce7;
+    color: #166534;
+}
+
+.message.error {
+    display: block;
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.muted {
+    text-align: center;
+    color: #64748b;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+a {
+    color: #087f8c;
 }
 </style>
 </head>
+
 <body>
+
 <main class="card">
+
 <header class="brand">
-<h1>FrostTech</h1>
-<p>HVAC and Refrigeration Advertising Marketplace</p>
+    <h1>FrostTech</h1>
+    <p>HVAC and Refrigeration Advertising Marketplace</p>
 </header>
 
 <h2>Advertiser Sign In</h2>
 
-<div id="message" class="message" role="status" aria-live="polite"></div>
+<div
+    id="message"
+    class="message"
+    role="status"
+    aria-live="polite"
+></div>
 
 <form id="loginForm">
-<label for="email">Email address</label>
-<input id="email" type="email" autocomplete="username" required>
 
-<label for="password">Password</label>
-<input id="password" type="password" autocomplete="current-password" required>
+    <label for="email">Email address</label>
+    <input
+        id="email"
+        type="email"
+        autocomplete="username"
+        required
+    >
 
-<label class="password-toggle" for="showPassword">
-<input id="showPassword" type="checkbox">
-Show password
-</label>
+    <label for="password">Password</label>
+    <input
+        id="password"
+        type="password"
+        autocomplete="current-password"
+        required
+    >
 
-<button
-    id="forgotPasswordButton"
-    type="button"
-    style="background:#e2e8f0;color:#183153;margin-top:12px"
->
-    Forgot Password?
-</button>
+    <label class="password-toggle" for="showPassword">
+        <input id="showPassword" type="checkbox">
+        Show password
+    </label>
 
-<button id="loginButton" type="submit">Sign In</button>
+    <button id="loginButton" type="submit">
+        Sign In
+    </button>
 
-<a href="#" id="forgotPasswordLink" class="forgot-password-link">
-    Forgot Password?
-</a>
+    <a
+        href="#"
+        id="forgotPasswordLink"
+        class="forgot-password-link"
+    >
+        Forgot Password?
+    </a>
+
 </form>
 
 <p class="muted">
-New to FrostTech advertising?
-<a href="advertiser-register.html">Create an advertiser account</a>.
+    New to FrostTech advertising?
+    <a href="advertiser-register.html">
+        Create an advertiser account
+    </a>.
 </p>
 
 <p class="muted">
-<a href="index.html">Return to FrostTech homepage</a>
+    <a href="index.html">Return to FrostTech homepage</a>
 </p>
+
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 
 <script>
-(function(){
+(function() {
 "use strict";
 
-const form=document.getElementById("loginForm");
-const message=document.getElementById("message");
-const button=document.getElementById("loginButton");
-const passwordInput=document.getElementById("password");
+const form = document.getElementById("loginForm");
+const message = document.getElementById("message");
+const button = document.getElementById("loginButton");
+const passwordInput = document.getElementById("password");
+const emailInput = document.getElementById("email");
+const forgotPasswordLink = document.getElementById("forgotPasswordLink");
 
-  document.getElementById("forgotPasswordButton").addEventListener("click",async function(){
-    const email=document.getElementById("email").value.trim().toLowerCase();
-    const resetButton=document.getElementById("forgotPasswordButton");
 
-    if(!email){
-        show("Please enter your advertiser email address first.","error");
-        document.getElementById("email").focus();
+function show(text, type) {
+    message.textContent = text;
+    message.className = "message " + type;
+}
+
+
+// SHOW OR HIDE PASSWORD
+
+document.getElementById("showPassword").addEventListener("change", function() {
+    passwordInput.type = this.checked ? "text" : "password";
+});
+
+
+// FORGOT PASSWORD
+
+forgotPasswordLink.addEventListener("click", async function(event) {
+    event.preventDefault();
+
+    const email = emailInput.value.trim().toLowerCase();
+
+    if (!email) {
+        show("Please enter your advertiser email address first.", "error");
+        emailInput.focus();
         return;
     }
 
-    const db=window.supabaseClient;
+    const db = window.supabaseClient;
 
-    if(!db||!db.auth){
-        show("FrostTech could not connect to the account service. Refresh and try again.","error");
+    if (!db || !db.auth) {
+        show(
+            "FrostTech could not connect to the account service. Refresh and try again.",
+            "error"
+        );
         return;
     }
 
-    resetButton.disabled=true;
-    show("Requesting password reset...","success");
+    show("Requesting password reset...", "success");
 
-    try{
-        const redirectTo=new URL(
+    try {
+        const redirectTo = new URL(
             "advertiser-reset-password.html?reset=1",
             window.location.href
         ).toString();
 
-        const {error}=await db.auth.resetPasswordForEmail(email,{
-            redirectTo:redirectTo
+        const { error } = await db.auth.resetPasswordForEmail(email, {
+            redirectTo: redirectTo
         });
 
-        if(error)throw error;
+        if (error) {
+            throw error;
+        }
 
-        show("If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.","success");
+        show(
+            "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
+            "success"
+        );
 
-    }catch(error){
-        show("Password reset request failed: "+error.message,"error");
-
-    }finally{
-        resetButton.disabled=false;
+    } catch (error) {
+        show(
+            "Password reset request failed: " + error.message,
+            "error"
+        );
     }
 });
-  
-document.getElementById("showPassword").addEventListener("change",function(){
-passwordInput.type=this.checked?"text":"password";
+
+
+// ADVERTISER SIGN IN
+
+form.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const db = window.supabaseClient;
+
+    if (!db || !db.auth) {
+        show(
+            "FrostTech could not connect to the account service. Refresh and try again.",
+            "error"
+        );
+        return;
+    }
+
+    button.disabled = true;
+    button.textContent = "Signing in...";
+
+    try {
+        const { data, error } = await db.auth.signInWithPassword({
+            email: emailInput.value.trim().toLowerCase(),
+            password: passwordInput.value
+        });
+
+        if (error) {
+            throw error;
+        }
+
+        if (!data.session) {
+            throw new Error(
+                "Sign-in could not be completed. Please try again."
+            );
+        }
+
+        show(
+            "Sign-in successful. Your advertiser workspace is being prepared.",
+            "success"
+        );
+
+        window.location.href = "advertiser-portal.html";
+
+    } catch (error) {
+        show(
+            error.message || "Sign-in failed. Check your email and password.",
+            "error"
+        );
+
+    } finally {
+        button.disabled = false;
+        button.textContent = "Sign In";
+    }
 });
 
-function show(text,type){
-message.textContent=text;
-message.className="message "+type;
-}
-
-form.addEventListener("submit",async function(event){
-event.preventDefault();
-
-const db=window.supabaseClient;
-
-if(!db||!db.auth){
-show("FrostTech could not connect to the account service. Refresh and try again.","error");
-return;
-}
-
-button.disabled=true;
-button.textContent="Signing in...";
-
-try{
-const {data,error}=await db.auth.signInWithPassword({
-email:document.getElementById("email").value.trim().toLowerCase(),
-password:passwordInput.value
-});
-
-if(error)throw error;
-
-if(!data.session){
-throw new Error("Sign-in could not be completed. Please try again.");
-}
-
-show("Sign-in successful. Your advertiser workspace is being prepared.","success");
-
-window.location.href="advertiser-portal.html";
-
-}catch(error){
-show(error.message||"Sign-in failed. Check your email and password.","error");
-}finally{
-button.disabled=false;
-button.textContent="Sign In";
-}
-});
 })();
 </script>
+
 </body>
 </html>
