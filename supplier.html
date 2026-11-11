@@ -489,13 +489,13 @@ async function initializePortal() {
 
   try {
     const redirectTo = new URL(
-      "customer-login.html?reset=1",
-      window.location.href
-    ).toString();
+    "supplier-reset-password.html?reset=1",
+    window.location.href
+).toString();
 
-    const { error } = await db.auth.resetPasswordForEmail(email, {
-      redirectTo
-    });
+await db.auth.resetPasswordForEmail(email, {
+    redirectTo
+});
 
     if (error) throw error;
 
