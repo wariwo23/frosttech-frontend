@@ -473,7 +473,8 @@ async function initializePortal() {
     showing ? "Hide" : "Show";
 });
 
-  $("forgotSupplierPassword").addEventListener("click", async () => {
+  $("forgotSupplierPassword").addEventListener("click", async (event) => {
+  event.preventDefault();
   const email = $("email").value.trim();
   const button = $("forgotSupplierPassword");
 
