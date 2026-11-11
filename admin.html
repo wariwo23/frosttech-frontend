@@ -4982,15 +4982,20 @@ footer {
 <template id="copyTemplate">${recordMarkup}</template>
 
 <script>
-document.getElementById("printBtn").addEventListener("click", function() {
-    const button = this;
-    if (button.disabled) return;
+const copySelector = document.getElementById("copyCount");
+const printButton = document.getElementById("printBtn");
+const closeButton = document.getElementById("closeBtn");
 
-    const count = Math.max(
-        1,
-        Math.min(10, parseInt(document.getElementById("copyCount").value, 10) || 1)
-    );
+// Android browsers can leave the native select control focused after a choice.
+// Release that focus immediately so the toolbar buttons remain tappable.
+copySelector.addEventListener("change", function() {
+    this.blur();
+});
 
+printButton.addEventListener("click", function() {
+    if (this.disabled) return;
+
+    const count = Math.max(1, Math.min(10, parseInt(copySelector.value, 10) || 1));
     const template = document.getElementById("copyTemplate").innerHTML;
     let output = "";
 
@@ -4998,13 +5003,12 @@ document.getElementById("printBtn").addEventListener("click", function() {
         const content = template
             .replaceAll("{{TOTAL_COPIES}}", String(count))
             .replaceAll("{{COPY_LABEL}}", "Copy " + i + " of " + count);
-
         output += '<section class="copy-sheet">' + content + '</section>';
     }
 
     document.getElementById("printArea").innerHTML = output;
-    button.disabled = true;
-    button.textContent = "Print dialog opened";
+    this.disabled = true;
+    this.textContent = "Print dialog opened";
 
     window.focus();
     window.print();
@@ -5018,8 +5022,12 @@ document.getElementById("printBtn").addEventListener("click", function() {
     document.querySelector(".print-toolbar").appendChild(note);
 });
 
-document.getElementById("closeBtn").addEventListener("click", function() {
-    if (window.opener && !window.opener.closed) window.opener.focus();
+closeButton.addEventListener("click", function() {
+    try {
+        if (window.opener && !window.opener.closed) window.opener.focus();
+    } catch (error) {
+        // Continue to the close attempt even if focusing the opener is blocked.
+    }
     window.close();
 });
 <\/script>
