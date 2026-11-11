@@ -838,7 +838,7 @@ main,
         <label for="email">Administrator Email</label>
         <input id="email" type="email" autocomplete="off" required>
         <label for="password">Password</label>
-        <input id="password" type="password" autocomplete="off" required>
+        <input id="password" type="password" autocomplete="new-password" required>
         <button type="button" id="forgotAdminPassword" class="neutral">Forgot Password?</button>
         <button id="loginBtn" type="submit">Login</button>
     </form>
@@ -1559,6 +1559,18 @@ async function requireAdmin() {
 /* Show the login screen and hide the dashboard. */
 function showAdminLogin() {
     currentAdmin = null;
+
+    // Clear administrator credentials whenever the login screen is shown.
+    // This prevents the previous session's email/password remaining in the form.
+    if ($("loginForm")) {
+        $("loginForm").reset();
+    }
+    if ($("email")) {
+        $("email").value = "";
+    }
+    if ($("password")) {
+        $("password").value = "";
+    }
 
     if ($("dashboard")) {
         $("dashboard").classList.add("hidden");
