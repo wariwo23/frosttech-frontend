@@ -4826,8 +4826,6 @@ document.getElementById("closeFailedPrint").addEventListener("click", function (
                 Printed: ${escapeHtml(new Date().toLocaleString("en-NG", {timeZone:"Africa/Lagos"}))}<br>
                 Approval: Super Admin approval verified by Supabase<br>
                 Print event reference: ${escapeHtml(String(eventId))}<br>
-                Copies in this print job: {{TOTAL_COPIES}}<br>
-                {{COPY_LABEL}}
             </div>
 
             <table><tbody>${tableRows}</tbody></table>
@@ -4933,24 +4931,9 @@ footer {
     opacity: .6;
     cursor: not-allowed;
 }
-/* Each copy is a complete document section. Let its content flow across
-   as many printed pages as required; do not force a break after the section. */
-.copy-sheet {
-    page-break-after: auto;
-    break-after: auto;
-    page-break-inside: auto;
-    break-inside: auto;
-}
 @media print {
     body { margin: 15mm; }
     .print-toolbar { display: none !important; }
-
-    /* Start each additional copy on a new page. A copy may itself span
-       multiple pages, so the next copy begins only after that flow ends. */
-    #printArea > .copy-sheet + .copy-sheet {
-        page-break-before: always !important;
-        break-before: page !important;
-    }
 }
 @media(max-width:600px) {
     body { margin: 12px; }
@@ -4964,67 +4947,31 @@ footer {
 <body>
 
 <div class="print-toolbar">
-    <label for="copyCount">Number of copies:</label>
-
-    <select id="copyCount">
-        <option value="1">1 Copy</option>
-        <option value="2">2 Copies</option>
-        <option value="3">3 Copies</option>
-        <option value="5">5 Copies</option>
-        <option value="10">10 Copies</option>
-    </select>
-
-    <button type="button" id="printBtn">Print Record</button>
+    <button type="button" id="printBtn">Print Approved Document</button>
     <button type="button" class="close-btn" id="closeBtn">Close and Return</button>
 </div>
 
 <div id="printArea">
-    <section class="copy-sheet">
-        ${recordMarkup
-            .replaceAll("{{TOTAL_COPIES}}", "1")
-            .replaceAll("{{COPY_LABEL}}", "Preview")}
-    </section>
+    ${recordMarkup}
 </div>
 
-<template id="copyTemplate">${recordMarkup}</template>
-
 <script>
-const copySelector = document.getElementById("copyCount");
 const printButton = document.getElementById("printBtn");
 const closeButton = document.getElementById("closeBtn");
-
-// Android browsers can leave the native select control focused after a choice.
-// Release that focus immediately so the toolbar buttons remain tappable.
-copySelector.addEventListener("change", function() {
-    this.blur();
-});
 
 printButton.addEventListener("click", function() {
     if (this.disabled) return;
 
-    const count = Math.max(1, Math.min(10, parseInt(copySelector.value, 10) || 1));
-    const template = document.getElementById("copyTemplate").innerHTML;
-    let output = "";
-
-    for (let i = 1; i <= count; i++) {
-        const content = template
-            .replaceAll("{{TOTAL_COPIES}}", String(count))
-            .replaceAll("{{COPY_LABEL}}", "Copy " + i + " of " + count);
-        output += '<section class="copy-sheet">' + content + '</section>';
-    }
-
-    document.getElementById("printArea").innerHTML = output;
     this.disabled = true;
     this.textContent = "Print dialog opened";
 
+    // Submit one complete approved document. Select the number of copies
+    // in Android's native print settings; no copies are generated in HTML.
     window.focus();
     window.print();
 
-    // One authorization event covers this selected multi-copy print job.
-    // A later reprint must be started again from the approved dashboard record
-    // so Supabase can record a separate print event.
     const note = document.createElement("p");
-    note.textContent = "This print job has been submitted to the browser. To make another print job, return to the approved record and select Print Approved Copy again.";
+    note.textContent = "The approved document has been submitted to Android printing. Set the required number of copies in the Android print settings. To start a new authorized print job, return to the approved record and select Print Approved Copy again.";
     note.setAttribute("role", "status");
     document.querySelector(".print-toolbar").appendChild(note);
 });
@@ -5049,7 +4996,7 @@ closeButton.addEventListener("click", function() {
         if (currentPrintReview === review) {
             ftSetPrintControls(
                 "approved",
-                `Print event ${String(eventId)} has been recorded. Select the number of copies before printing. A separate print event will be recorded for each later reprint.`
+                `Print event ${String(eventId)} has been recorded. Set the number of copies in Android's print settings. A separate print event will be recorded for each later reprint.`
             );
         }
     } catch (err) {
