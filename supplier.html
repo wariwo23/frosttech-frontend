@@ -493,7 +493,7 @@ async function initializePortal() {
     window.location.href
 ).toString();
 
-await db.auth.resetPasswordForEmail(email, {
+const { error } = await db.auth.resetPasswordForEmail(email, {
     redirectTo
 });
 
