@@ -4933,17 +4933,24 @@ footer {
     opacity: .6;
     cursor: not-allowed;
 }
+/* Each copy is a complete document section. Let its content flow across
+   as many printed pages as required; do not force a break after the section. */
 .copy-sheet {
-    page-break-after: always;
-    break-after: page;
-}
-.copy-sheet:last-child {
     page-break-after: auto;
     break-after: auto;
+    page-break-inside: auto;
+    break-inside: auto;
 }
 @media print {
     body { margin: 15mm; }
     .print-toolbar { display: none !important; }
+
+    /* Start each additional copy on a new page. A copy may itself span
+       multiple pages, so the next copy begins only after that flow ends. */
+    #printArea > .copy-sheet + .copy-sheet {
+        page-break-before: always !important;
+        break-before: page !important;
+    }
 }
 @media(max-width:600px) {
     body { margin: 12px; }
