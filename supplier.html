@@ -177,6 +177,18 @@ button:disabled {
   margin: 7px 0;
 }
 
+
+.forgot-password-link {
+  display: block;
+  width: fit-content;
+  margin: 10px auto 0;
+  color: #0879c9;
+  text-decoration: underline;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+  
 footer {
   text-align: center;
   padding: 20px;
@@ -213,11 +225,13 @@ footer {
   Starting supplier portal...
 </div>
 
+
 <section id="loginSection" class="card hidden">
   <h2>Supplier Login</h2>
   <p class="muted">Log in with your registered supplier account.</p>
 
   <form id="loginForm" autocomplete="off">
+
     <label for="email">Email address</label>
     <input
       id="email"
@@ -225,33 +239,35 @@ footer {
       autocomplete="off"
       required
     >
-<label for="password">Password</label>
 
-<div class="password-wrapper">
-  <input
-    id="password"
-    type="password"
-    autocomplete="off"
-    required
-  >
+    <label for="password">Password</label>
 
-  <button
-    type="button"
-    id="toggleSupplierPassword"
-    class="secondary"
-  >Show</button>
-</div>
+    <div class="password-wrapper">
+      <input
+        id="password"
+        type="password"
+        autocomplete="off"
+        required
+      >
 
-<button
-  type="button"
-  id="forgotSupplierPassword"
-  class="secondary"
->
-  Forgot Password?
-</button>
+      <button
+        type="button"
+        id="toggleSupplierPassword"
+        class="secondary"
+      >Show</button>
+    </div>
+
     <button id="loginButton" type="submit">Log In</button>
+
+    <a
+      href="#"
+      id="forgotSupplierPassword"
+      class="forgot-password-link"
+    >Forgot Password?</a>
+
   </form>
 </section>
+
 
 <section id="diagnosticSection" class="card hidden">
   <h2>Supplier Account Check</h2>
