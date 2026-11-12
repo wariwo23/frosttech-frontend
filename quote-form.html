@@ -2,456 +2,300 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+<meta name="description" content="Request quotations for HVAC products, refrigeration equipment, accessories and services from FrostTech.">
 
-  <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
+<style>
+:root {
+  --primary:#063b70;
+  --secondary:#0879c9;
+  --background:#f3f6fa;
+  --border:#dce3eb;
+}
+* { box-sizing:border-box; }
+html,body {
+  width:100%;
+  max-width:100%;
+  margin:0;
+  padding:0;
+}
+body {
+  background:var(--background);
+  color:#1e293b;
+  font-family:Arial,Helvetica,sans-serif;
+  line-height:1.5;
+}
+.topbar {
+  width:100%;
+  padding:16px 14px;
+  background:var(--primary);
+  color:#fff;
+}
+.topbar-inner {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center;
+  gap:16px;
+  width:100%;
+  max-width:1100px;
+  margin:auto;
+}
+.logo {
+  color:#fff;
+  font-size:23px;
+  font-weight:800;
+  text-decoration:none;
+  overflow-wrap:anywhere;
+}
+.topbar nav {
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+}
+.topbar nav a {
+  display:inline-flex;
+  justify-content:center;
+  padding:11px 14px;
+  border:1px solid rgba(255,255,255,.4);
+  border-radius:7px;
+  color:#fff;
+  font-size:15px;
+  font-weight:800;
+  text-decoration:none;
+}
+.topbar nav a:hover { background:rgba(255,255,255,.12); }
 
-  <meta name="description"
-        content="Request a quotation for HVAC products, refrigeration equipment, accessories and services from FrostTech.">
+.quote-container {
+  width:calc(100% - 28px);
+  max-width:760px;
+  margin:30px auto;
+  padding:28px;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 4px 18px rgba(6,59,112,.08);
+}
+h1,h2,h3 { color:var(--primary); }
+h1 { text-align:center; font-size:30px; }
+.welcome {
+  color:var(--primary);
+  font-weight:700;
+  text-align:center;
+}
+.intro { text-align:center; line-height:1.7; }
+.quote-form { width:100%; min-width:0; }
+.quote-form label {
+  display:block;
+  margin-top:17px;
+  font-weight:700;
+}
+.quote-form input:not([type="checkbox"]),
+.quote-form select,
+.quote-form textarea {
+  display:block;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin-top:7px;
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:7px;
+  background:#fff;
+  font:inherit;
+  font-size:16px;
+}
+.quote-form textarea { resize:vertical; }
+.quote-form input:focus,
+.quote-form select:focus,
+.quote-form textarea:focus {
+  outline:2px solid #93c5fd;
+  border-color:var(--secondary);
+}
+.field-help {
+  margin:6px 0 12px;
+  color:#64748b;
+  font-size:13px;
+  line-height:1.6;
+}
+.section-heading {
+  margin-top:30px;
+  padding-top:20px;
+  border-top:1px solid var(--border);
+}
+.category {
+  margin:13px 0;
+  border:1px solid var(--border);
+  border-radius:9px;
+  background:#fff;
+  overflow:hidden;
+}
+.category summary {
+  padding:15px;
+  background:#f1f6fb;
+  color:var(--primary);
+  font-weight:800;
+  cursor:pointer;
+}
+.category summary:hover { background:#e7f1fb; }
+.category-content { padding:14px; }
+.category-content > p { margin-top:0; }
+.item-list { display:grid; gap:13px; }
+.item-row {
+  padding:13px;
+  border:1px solid var(--border);
+  border-radius:8px;
+  background:#fafcff;
+}
+.item-row label { margin-top:10px; }
+.item-row label:first-child { margin-top:0; }
+.item-row .remove-item {
+  margin-top:12px;
+  padding:8px 12px;
+  border:1px solid #c62828;
+  border-radius:6px;
+  background:#fff;
+  color:#b91c1c;
+  font-weight:700;
+  cursor:pointer;
+}
+.add-item {
+  margin-top:12px;
+  padding:11px 14px;
+  border:1px solid var(--primary);
+  border-radius:7px;
+  background:#fff;
+  color:var(--primary);
+  font-weight:800;
+  cursor:pointer;
+}
+.add-item:hover { background:#edf5fc; }
+.legacy-check {
+  display:flex !important;
+  align-items:center;
+  gap:10px;
+  margin-top:14px !important;
+  font-weight:500 !important;
+}
+.legacy-check input {
+  width:18px;
+  height:18px;
+  accent-color:var(--primary);
+}
+.quote-form button[type="submit"] {
+  display:block;
+  width:100%;
+  margin-top:26px;
+  padding:15px;
+  border:0;
+  border-radius:8px;
+  background:var(--primary);
+  color:#fff;
+  font-size:17px;
+  font-weight:800;
+  cursor:pointer;
+}
+.quote-form button[type="submit"]:hover { background:var(--secondary); }
+.quote-form button:disabled { opacity:.6; cursor:not-allowed; }
+#formMessage {
+  display:none;
+  margin-top:18px;
+  padding:12px;
+  border-radius:6px;
+  overflow-wrap:anywhere;
+}
+#formMessage.success { display:block; background:#dcfce7; color:#166534; }
+#formMessage.error { display:block; background:#fee2e2; color:#991b1b; }
+#formMessage.info { display:block; background:#eff6ff; color:#1e40af; }
+[hidden] { display:none !important; }
 
-  <style>
-    :root {
-      --frosttech-primary: #063b70;
-      --frosttech-secondary: #0879c9;
-      --frosttech-background: #f3f6fa;
-      --frosttech-border: #dce3eb;
-    }
-
-    * {
-      box-sizing: border-box;
-    }
-
-    html,
-    body {
-      width: 100%;
-      max-width: 100%;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: var(--frosttech-background);
-      color: #1e293b;
-      font-family: Arial, Helvetica, sans-serif;
-      line-height: 1.5;
-    }
-
-    /* HEADER */
-
-    .topbar {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      padding: 16px 14px;
-      background: var(--frosttech-primary);
-      color: #ffffff;
-    }
-
-    .topbar > .container.nav {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
-      align-items: center;
-      gap: 16px;
-      width: 100%;
-      max-width: 1100px;
-      min-width: 0;
-      margin: 0 auto;
-      padding: 0;
-    }
-
-    .topbar .logo {
-      display: block;
-      min-width: 0;
-      max-width: 100%;
-      color: #ffffff !important;
-      font-size: 23px;
-      font-weight: 800;
-      line-height: 1.4;
-      text-decoration: none;
-      overflow-wrap: anywhere;
-    }
-
-    .topbar nav {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 10px;
-      min-width: 0;
-      max-width: 100%;
-      margin: 0;
-      padding: 0;
-    }
-
-    .topbar nav a {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-width: 0;
-      padding: 11px 14px;
-      border: 1px solid rgba(255,255,255,0.4);
-      border-radius: 7px;
-      color: #ffffff;
-      font-size: 15px;
-      font-weight: 800;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    .topbar nav a:hover {
-      background: rgba(255,255,255,0.12);
-      color: #bfdbfe;
-    }
-
-    /* QUOTE FORM CONTAINER */
-
-    .quote-container {
-      width: calc(100% - 28px);
-      max-width: 700px;
-      min-width: 0;
-      margin: 30px auto;
-      padding: 28px;
-      background: #ffffff;
-      border: 1px solid var(--frosttech-border);
-      border-radius: 12px;
-      box-shadow: 0 4px 18px rgba(6,59,112,0.08);
-    }
-
-    .quote-container h1,
-    .quote-container h2,
-    .quote-container h3,
-    .quote-container > p {
-      text-align: center;
-    }
-
-    .quote-container h1,
-    .quote-container h2,
-    .quote-container h3 {
-      color: var(--frosttech-primary);
-      font-weight: 800;
-    }
-
-    .quote-container h1 {
-      margin-top: 0;
-      margin-bottom: 20px;
-      font-size: 30px;
-      line-height: 1.25;
-    }
-
-    .quote-container h3 {
-      margin-top: 28px;
-      margin-bottom: 10px;
-      font-size: 20px;
-      text-align: left;
-    }
-
-    .quote-container > p {
-      line-height: 1.7;
-    }
-
-    /* FORM FIELDS */
-
-    .quote-form {
-      width: 100%;
-      min-width: 0;
-    }
-
-    .quote-form label {
-      display: block;
-      margin-top: 17px;
-      font-weight: 700;
-      line-height: 1.5;
-    }
-
-    .quote-form input:not([type="checkbox"]),
-    .quote-form select,
-    .quote-form textarea {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      padding: 13px;
-      margin-top: 7px;
-      border: 1px solid var(--frosttech-border);
-      border-radius: 7px;
-      font-family: inherit;
-      font-size: 16px;
-      background: #ffffff;
-    }
-
-    .quote-form textarea {
-      resize: vertical;
-      line-height: 1.5;
-    }
-
-    .quote-form input:focus,
-    .quote-form select:focus,
-    .quote-form textarea:focus {
-      outline: 2px solid #93c5fd;
-      border-color: var(--frosttech-secondary);
-    }
-
-    .quote-form input[type="checkbox"] {
-      width: auto;
-      min-width: 18px;
-      height: 18px;
-      accent-color: var(--frosttech-primary);
-    }
-
-    .quote-form label:has(input[type="checkbox"]) {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 0;
-      line-height: 1.5;
-    }
-
-    .quote-form button {
-      display: block;
-      width: 100%;
-      max-width: 100%;
-      min-width: 0;
-      margin-top: 26px;
-      padding: 15px;
-      border: 0;
-      border-radius: 8px;
-      background: var(--frosttech-primary);
-      color: #ffffff;
-      font-size: 17px;
-      font-weight: 800;
-      cursor: pointer;
-    }
-
-    .quote-form button:hover {
-      background: var(--frosttech-secondary);
-    }
-
-    .quote-form button:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-    }
-
-    .field-help {
-      margin: 7px 0 0;
-      color: #64748b;
-      font-size: 13px;
-      line-height: 1.6;
-    }
-
-    #formMessage {
-      display: none;
-      width: 100%;
-      margin-top: 18px;
-      padding: 12px;
-      border-radius: 5px;
-      overflow-wrap: anywhere;
-      line-height: 1.6;
-    }
-
-    #formMessage.success {
-      display: block;
-      background: #dcfce7;
-      color: #166534;
-    }
-
-    #formMessage.error {
-      display: block;
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    #formMessage.info {
-      display: block;
-      background: #eff6ff;
-      color: #1e40af;
-    }
-
-    [hidden] {
-      display: none !important;
-    }
-
-    /* FOOTER */
-
-    footer {
-      width: 100%;
-      background: var(--frosttech-primary);
-      color: #ffffff;
-      padding: 24px 14px 0;
-    }
-
-    footer h2,
-    footer p,
-    footer a {
-      color: #ffffff;
-    }
-
-    footer h2 {
-      font-size: 20px;
-      font-weight: 800;
-    }
-
-    .footer-content {
-      display: flex;
-      flex-wrap: wrap;
-      justify-content: space-between;
-      gap: 20px;
-      width: 100%;
-      max-width: 1100px;
-      margin: 0 auto;
-    }
-
-    footer .copyright {
-      border-top: 1px solid rgba(255,255,255,0.2);
-      padding: 14px;
-      margin-top: 18px;
-      text-align: center;
-    }
-
-    /* MOBILE LAYOUT */
-
-    @media (max-width: 600px) {
-      .topbar {
-        padding: 15px 12px;
-      }
-
-      .topbar > .container.nav {
-        display: grid;
-        grid-template-columns: minmax(0, 1fr);
-        justify-items: stretch;
-        gap: 13px;
-      }
-
-      .topbar .logo {
-        width: 100%;
-        min-width: 0;
-        text-align: center;
-        font-size: 21px;
-        line-height: 1.4;
-      }
-
-      .topbar nav {
-        display: grid;
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-        width: 100%;
-        min-width: 0;
-        gap: 8px;
-      }
-
-      .topbar nav a {
-        display: flex;
-        width: 100%;
-        min-width: 0;
-        max-width: 100%;
-        padding: 11px 5px;
-        font-size: 14px;
-        white-space: normal;
-        overflow-wrap: anywhere;
-        text-align: center;
-      }
-
-      .quote-container {
-        width: calc(100% - 24px);
-        margin: 16px auto;
-        padding: 20px 16px;
-      }
-
-      .quote-container h1 {
-        font-size: 27px;
-      }
-
-      .quote-container h3 {
-        font-size: 19px;
-      }
-
-      .footer-content {
-        flex-direction: column;
-        gap: 8px;
-      }
-    }
-
-    @media (max-width: 360px) {
-      .topbar .logo {
-        font-size: 19px;
-      }
-
-      .topbar nav {
-        gap: 6px;
-      }
-
-      .topbar nav a {
-        padding: 10px 3px;
-        font-size: 13px;
-      }
-
-      .quote-container {
-        padding: 17px 13px;
-      }
-    }
-  </style>
+footer {
+  width:100%;
+  padding:24px 14px 0;
+  background:var(--primary);
+  color:#fff;
+}
+footer h2,footer p { color:#fff; }
+.footer-content {
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:space-between;
+  gap:20px;
+  width:100%;
+  max-width:1100px;
+  margin:auto;
+}
+.copyright {
+  margin-top:18px;
+  padding:14px;
+  border-top:1px solid rgba(255,255,255,.2);
+  text-align:center;
+}
+@media(max-width:600px) {
+  .topbar { padding:15px 12px; }
+  .topbar-inner {
+    grid-template-columns:minmax(0,1fr);
+    justify-items:stretch;
+    gap:13px;
+  }
+  .logo { text-align:center; font-size:21px; }
+  .topbar nav {
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
+  }
+  .topbar nav a { width:100%; padding:11px 5px; font-size:14px; }
+  .quote-container {
+    width:calc(100% - 24px);
+    margin:16px auto;
+    padding:20px 16px;
+  }
+  h1 { font-size:27px; }
+  .footer-content { flex-direction:column; gap:8px; }
+}
+@media(max-width:360px) {
+  .logo { font-size:19px; }
+  .topbar nav a { padding:10px 3px; font-size:13px; }
+  .quote-container { padding:17px 13px; }
+}
+</style>
 </head>
 
 <body>
 
 <header class="topbar">
-  <div class="container nav">
-
-    <a href="index.html" class="logo">
-      ❄ FrostTech HVAC & Refrigeration Marketplace
-    </a>
-
+  <div class="topbar-inner">
+    <a href="index.html" class="logo">❄ FrostTech HVAC & Refrigeration Marketplace</a>
     <nav aria-label="Main navigation">
       <a href="index.html">Home</a>
       <a href="catalog.html">Catalogue</a>
     </nav>
-
   </div>
 </header>
 
 <main class="quote-container">
-
   <h1>Request a Quote</h1>
-
-  <p style="font-weight:600;color:#063b70;">
-    Welcome to FrostTech!
-  </p>
-
-  <p>
+  <p class="welcome">Welcome to FrostTech!</p>
+  <p class="intro">
     Your trusted marketplace for HVAC and Refrigeration products and services.
-    Fill in your details, select your preferred products or tell us what
-    product or services you need, and provide the necessary details for
-    your quotation.
+    Select your product, then add any extra items or services you specifically
+    require. You can request more than one additional item.
   </p>
 
   <form id="quoteForm" class="quote-form">
 
     <label for="customerName">Full Name *</label>
-    <input
-      id="customerName"
-      name="customerName"
-      type="text"
-      maxlength="150"
-      autocomplete="name"
-      required
-    >
+    <input id="customerName" name="customerName" type="text"
+      maxlength="150" autocomplete="name" required>
 
     <label for="customerPhone">Phone / WhatsApp *</label>
-    <input
-      id="customerPhone"
-      name="customerPhone"
-      type="tel"
-      maxlength="30"
-      autocomplete="tel"
-      required
-    >
+    <input id="customerPhone" name="customerPhone" type="tel"
+      maxlength="30" autocomplete="tel" required>
 
     <label for="customerEmail">Email Address</label>
-    <input
-      id="customerEmail"
-      name="customerEmail"
-      type="email"
-      maxlength="254"
-      autocomplete="email"
-    >
+    <input id="customerEmail" name="customerEmail" type="email"
+      maxlength="254" autocomplete="email">
 
     <label for="productId">Product *</label>
     <select id="productId" name="productId" required>
@@ -459,189 +303,166 @@
     </select>
 
     <div id="unlistedProductFields" hidden>
-
-      <label for="requestedProductName">
-        Name or Description of Product Required *
-      </label>
-
-      <input
-        id="requestedProductName"
-        name="requestedProductName"
-        type="text"
-        maxlength="200"
-        placeholder="Enter the product or equipment you need"
-        disabled
-      >
+      <label for="requestedProductName">Name or Description of Product Required *</label>
+      <input id="requestedProductName" name="requestedProductName"
+        type="text" maxlength="200"
+        placeholder="Enter the product or equipment you need" disabled>
 
       <label for="budget">Estimated Budget (₦)</label>
-
-      <input
-        id="budget"
-        name="budget"
-        type="number"
-        min="1"
-        max="1000000000000"
-        step="0.01"
-        placeholder="Enter your budget, if known"
-        disabled
-      >
+      <input id="budget" name="budget" type="number" min="1"
+        max="1000000000000" step="0.01"
+        placeholder="Enter your budget, if known" disabled>
 
       <p class="field-help">
-        Optional. This field is only for products or equipment
-        not listed in the FrostTech catalogue.
+        Optional. This field is only for products or equipment not listed
+        in the FrostTech catalogue.
       </p>
-
     </div>
 
     <label for="quantity">Quantity *</label>
-    <input
-      id="quantity"
-      name="quantity"
-      type="number"
-      min="1"
-      max="10000"
-      step="1"
-      value="1"
-      required
-    >
+    <input id="quantity" name="quantity" type="number"
+      min="1" max="10000" step="1" value="1" required>
 
     <label for="preferredBrand">Preferred Brand</label>
-    <input
-      id="preferredBrand"
-      name="preferredBrand"
-      type="text"
-      maxlength="100"
-      placeholder="e.g. LG, Samsung, Daikin"
-    >
+    <input id="preferredBrand" name="preferredBrand" type="text"
+      maxlength="100" placeholder="e.g. LG, Samsung, Daikin">
 
     <label for="deliveryAddress">Delivery Address *</label>
-    <textarea
-      id="deliveryAddress"
-      name="deliveryAddress"
-      maxlength="1000"
-      rows="3"
-      autocomplete="street-address"
-      required
-    ></textarea>
+    <textarea id="deliveryAddress" name="deliveryAddress"
+      maxlength="1000" rows="3" autocomplete="street-address" required></textarea>
 
-    <h3>Additional Items and Services</h3>
-
+    <h2 class="section-heading">Additional Items and Services</h2>
     <p class="field-help">
-      Select only the additional items or services you specifically require.
+      Open the relevant category and select “Add item” to list each item
+      or service you need. You can add several entries in a category.
+      Enter the quantity and any useful description or specifications.
       FrostTech will not add unrequested items to your quotation.
     </p>
 
-    <label style="font-weight:normal;">
-      <input
-        type="checkbox"
-        id="requestInstallation"
-      >
-      I specifically request installation.
-    </label>
+    <!-- HVAC ACCESSORIES -->
+    <details class="category">
+      <summary>HVAC Accessories</summary>
+      <div class="category-content">
+        <p class="field-help">Add each accessory you require separately.</p>
+        <div class="item-list" data-category="HVAC Accessories"></div>
+        <button type="button" class="add-item">+ Add accessory</button>
 
-    <label style="font-weight:normal;">
-      <input
-        type="checkbox"
-        id="requestBrackets"
-      >
-      I specifically request outdoor brackets.
-    </label>
+        <label class="legacy-check">
+          <input type="checkbox" id="requestBrackets">
+          I specifically request outdoor brackets.
+        </label>
 
-    <div id="bracketRequestFields" hidden>
+        <div id="bracketRequestFields" hidden>
+          <label for="requestedBracketQuantity">Number of outdoor bracket sets requested *</label>
+          <input type="number" id="requestedBracketQuantity"
+            min="1" max="1000" step="1" value="1">
+        </div>
 
-      <label for="requestedBracketQuantity">
-        Number of outdoor bracket sets requested *
-      </label>
+        <label class="legacy-check">
+          <input type="checkbox" id="requestAccessories">
+          I specifically request additional accessories.
+        </label>
 
-      <input
-        type="number"
-        id="requestedBracketQuantity"
-        min="1"
-        max="1000"
-        step="1"
-        value="1"
-      >
+        <div id="accessoryRequestFields" hidden>
+          <label for="requestedAccessories">Describe the accessories requested *</label>
+          <textarea id="requestedAccessories" rows="3" maxlength="1000"
+            placeholder="List the accessories you require"></textarea>
+        </div>
+      </div>
+    </details>
 
-    </div>
+    <!-- INSTALLATION SERVICES -->
+    <details class="category">
+      <summary>Installation Services</summary>
+      <div class="category-content">
+        <p class="field-help">
+          Add installation work, installation materials or other
+          installation-related services you require.
+        </p>
+        <div class="item-list" data-category="Installation Services"></div>
+        <button type="button" class="add-item">+ Add installation item or service</button>
 
-    <label style="font-weight:normal;">
-      <input
-        type="checkbox"
-        id="requestAccessories"
-      >
-      I specifically request accessories.
-    </label>
+        <label class="legacy-check">
+          <input type="checkbox" id="requestInstallation">
+          I specifically request installation.
+        </label>
+      </div>
+    </details>
 
-    <div id="accessoryRequestFields" hidden>
+    <!-- REFRIGERATION ACCESSORIES -->
+    <details class="category">
+      <summary>Refrigeration Accessories</summary>
+      <div class="category-content">
+        <p class="field-help">
+          List refrigeration accessories, components or materials required.
+        </p>
+        <div class="item-list" data-category="Refrigeration Accessories"></div>
+        <button type="button" class="add-item">+ Add refrigeration accessory</button>
+      </div>
+    </details>
 
-      <label for="requestedAccessories">
-        Describe the accessories requested *
-      </label>
+    <!-- SPARE PARTS -->
+    <details class="category">
+      <summary>Spare Parts</summary>
+      <div class="category-content">
+        <p class="field-help">
+          Specify the spare part, equipment model and quantity where known.
+        </p>
+        <div class="item-list" data-category="Spare Parts"></div>
+        <button type="button" class="add-item">+ Add spare part</button>
+      </div>
+    </details>
 
-      <textarea
-        id="requestedAccessories"
-        rows="3"
-        maxlength="1000"
-        placeholder="List the accessories you require"
-      ></textarea>
+    <!-- REPAIRS AND MAINTENANCE -->
+    <details class="category">
+      <summary>Repairs and Maintenance</summary>
+      <div class="category-content">
+        <p class="field-help">
+          Describe the repair or maintenance service required.
+        </p>
+        <div class="item-list" data-category="Repairs and Maintenance"></div>
+        <button type="button" class="add-item">+ Add repair or maintenance service</button>
+      </div>
+    </details>
 
-    </div>
+    <!-- OTHER REQUIREMENTS -->
+    <details class="category">
+      <summary>Other Requirements</summary>
+      <div class="category-content">
+        <p class="field-help">
+          Use this category for any other item or service not covered above.
+        </p>
+        <div class="item-list" data-category="Other Requirements"></div>
+        <button type="button" class="add-item">+ Add other requirement</button>
 
-    <label for="otherRequestedItems">
-      Other items specifically requested
-    </label>
+        <label for="otherRequestedItems">Other items specifically requested</label>
+        <textarea id="otherRequestedItems" rows="3" maxlength="1500"
+          placeholder="Describe any other products or items you want included"></textarea>
+      </div>
+    </details>
 
-    <textarea
-      id="otherRequestedItems"
-      rows="3"
-      maxlength="1500"
-      placeholder="Describe any other products or items you want included"
-    ></textarea>
+    <label for="additionalDetails">Other specifications or questions</label>
+    <textarea id="additionalDetails" rows="3" maxlength="2000"
+      placeholder="Enter any relevant specifications or questions"></textarea>
 
-    <label for="additionalDetails">
-      Other specifications or questions
-    </label>
+    <button id="submitButton" type="submit">Submit Quote Request</button>
 
-    <textarea
-      id="additionalDetails"
-      rows="3"
-      maxlength="2000"
-      placeholder="Enter any relevant specifications or questions"
-    ></textarea>
-
-    <button id="submitButton" type="submit">
-      Submit Quote Request
-    </button>
-
-    <div
-      id="formMessage"
-      role="status"
-      aria-live="polite"
-    ></div>
-
+    <div id="formMessage" role="status" aria-live="polite"></div>
   </form>
 </main>
 
 <footer>
-
-  <div class="container footer-content">
-
+  <div class="footer-content">
     <div>
       <h2>❄ FrostTech HVAC & Refrigeration Marketplace</h2>
       <p>Welcome to FrostTech!</p>
     </div>
-
     <div>
       <p>Website: frosttechonline.com</p>
       <p>WhatsApp: +234 803 200 8635</p>
     </div>
-
   </div>
-
-  <div class="copyright">
-    © 2026 FrostTech. All rights reserved.
-  </div>
-
+  <div class="copyright">© 2026 FrostTech. All rights reserved.</div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -655,73 +476,176 @@ const submitButton = document.getElementById("submitButton");
 const formMessage = document.getElementById("formMessage");
 const productSelect = document.getElementById("productId");
 
-const unlistedFields =
-  document.getElementById("unlistedProductFields");
+const unlistedFields = document.getElementById("unlistedProductFields");
+const requestedProductName = document.getElementById("requestedProductName");
+const budgetInput = document.getElementById("budget");
 
-const requestedProductName =
-  document.getElementById("requestedProductName");
-
-const budgetInput =
-  document.getElementById("budget");
+const customerNameInput = document.getElementById("customerName");
+const customerPhoneInput = document.getElementById("customerPhone");
+const customerEmailInput = document.getElementById("customerEmail");
 
 const OTHER_PRODUCT = "__other_product__";
-
-const customerNameInput =
-  document.getElementById("customerName");
-
-const customerPhoneInput =
-  document.getElementById("customerPhone");
-
-const customerEmailInput =
-  document.getElementById("customerEmail");
-
-const signedInNotice =
-  document.getElementById("signedInNotice");
 
 let client = null;
 let products = [];
 let submissionInProgress = false;
 
-const installationCheckbox =
-  document.getElementById("requestInstallation");
-
-const bracketsCheckbox =
-  document.getElementById("requestBrackets");
-
-const bracketRequestFields =
-  document.getElementById("bracketRequestFields");
-
-const requestedBracketQuantity =
-  document.getElementById("requestedBracketQuantity");
-
-const accessoriesCheckbox =
-  document.getElementById("requestAccessories");
-
-const accessoryRequestFields =
-  document.getElementById("accessoryRequestFields");
-
-const requestedAccessories =
-  document.getElementById("requestedAccessories");
+const installationCheckbox = document.getElementById("requestInstallation");
+const bracketsCheckbox = document.getElementById("requestBrackets");
+const bracketRequestFields = document.getElementById("bracketRequestFields");
+const requestedBracketQuantity = document.getElementById("requestedBracketQuantity");
+const accessoriesCheckbox = document.getElementById("requestAccessories");
+const accessoryRequestFields = document.getElementById("accessoryRequestFields");
+const requestedAccessories = document.getElementById("requestedAccessories");
 
 
-/* ADDITIONAL REQUEST CONTROLS */
+/* CATEGORY ITEM ROWS */
 
-accessoriesCheckbox.addEventListener("change", function () {
+function addCategoryItemRow(container) {
+  const row = document.createElement("div");
+  row.className = "item-row";
+
+  const itemLabel = document.createElement("label");
+  itemLabel.textContent = "Item or service name *";
+
+  const itemInput = document.createElement("input");
+  itemInput.type = "text";
+  itemInput.maxLength = 200;
+  itemInput.placeholder = "Enter the item or service required";
+  itemInput.className = "category-item-name";
+  itemInput.autocomplete = "off";
+  itemLabel.appendChild(itemInput);
+
+  const quantityLabel = document.createElement("label");
+  quantityLabel.textContent = "Quantity *";
+
+  const quantityInput = document.createElement("input");
+  quantityInput.type = "number";
+  quantityInput.min = "1";
+  quantityInput.max = "10000";
+  quantityInput.step = "1";
+  quantityInput.value = "1";
+  quantityInput.className = "category-item-quantity";
+  quantityLabel.appendChild(quantityInput);
+
+  const descriptionLabel = document.createElement("label");
+  descriptionLabel.textContent = "Description";
+
+  const descriptionInput = document.createElement("textarea");
+  descriptionInput.rows = 2;
+  descriptionInput.maxLength = 1000;
+  descriptionInput.placeholder = "Describe what you need, if necessary";
+  descriptionInput.className = "category-item-description";
+  descriptionLabel.appendChild(descriptionInput);
+
+  const specificationsLabel = document.createElement("label");
+  specificationsLabel.textContent = "Specifications (optional)";
+
+  const specificationsInput = document.createElement("textarea");
+  specificationsInput.rows = 2;
+  specificationsInput.maxLength = 1000;
+  specificationsInput.placeholder = "Enter model, size, capacity or other specifications";
+  specificationsInput.className = "category-item-specifications";
+  specificationsLabel.appendChild(specificationsInput);
+
+  const removeButton = document.createElement("button");
+  removeButton.type = "button";
+  removeButton.className = "remove-item";
+  removeButton.textContent = "Remove this item";
+  removeButton.addEventListener("click", function() {
+    row.remove();
+  });
+
+  row.append(
+    itemLabel,
+    quantityLabel,
+    descriptionLabel,
+    specificationsLabel,
+    removeButton
+  );
+
+  container.appendChild(row);
+}
+
+document.querySelectorAll(".category").forEach(function(category) {
+  const addButton = category.querySelector(".add-item");
+  const itemList = category.querySelector(".item-list");
+
+  addButton.addEventListener("click", function() {
+    addCategoryItemRow(itemList);
+  });
+});
+
+
+/* COLLECT AND VALIDATE CATEGORY ITEMS */
+
+function collectCategoryRequests() {
+  const requests = [];
+
+  document.querySelectorAll(".item-list").forEach(function(list) {
+    const categoryName = list.dataset.category;
+    const items = [];
+
+    list.querySelectorAll(".item-row").forEach(function(row) {
+      const item = row.querySelector(".category-item-name").value.trim();
+      const quantityValue = row.querySelector(".category-item-quantity").value;
+      const description = row.querySelector(".category-item-description").value.trim();
+      const specifications = row.querySelector(".category-item-specifications").value.trim();
+
+      const hasOtherContent =
+        quantityValue !== "1" || description || specifications;
+
+      if (!item) {
+        if (hasOtherContent) {
+          throw new Error(
+            "Please enter the item or service name for every additional entry you have started."
+          );
+        }
+        return;
+      }
+
+      const quantity = Number(quantityValue);
+
+      if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
+        throw new Error(
+          "Please enter a valid quantity between 1 and 10,000 for " + item + "."
+        );
+      }
+
+      items.push({
+        item: item,
+        quantity: quantity,
+        description: description || null,
+        specifications: specifications || null
+      });
+    });
+
+    if (items.length) {
+      requests.push({
+        category: categoryName,
+        items: items
+      });
+    }
+  });
+
+  return requests;
+}
+
+
+/* LEGACY ADDITIONAL REQUEST CONTROLS */
+
+accessoriesCheckbox.addEventListener("change", function() {
   accessoryRequestFields.hidden = !this.checked;
   requestedAccessories.required = this.checked;
 
-  if (!this.checked) {
-    requestedAccessories.value = "";
-  }
+  if (!this.checked) requestedAccessories.value = "";
 });
 
-bracketsCheckbox.addEventListener("change", function () {
+bracketsCheckbox.addEventListener("change", function() {
   bracketRequestFields.hidden = !this.checked;
   requestedBracketQuantity.required = this.checked;
 
-  if (!this.checked) {
-    requestedBracketQuantity.value = "1";
-  }
+  if (!this.checked) requestedBracketQuantity.value = "1";
 });
 
 
@@ -743,12 +667,9 @@ function clearMessage() {
 /* SUPABASE CONNECTION */
 
 function getClient() {
-  if (window.supabaseClient) {
-    return window.supabaseClient;
-  }
+  if (window.supabaseClient) return window.supabaseClient;
 
   const url = window.SUPABASE_URL;
-
   const key =
     window.SUPABASE_PUBLISHABLE_KEY ||
     window.SUPABASE_ANON_KEY;
@@ -759,9 +680,7 @@ function getClient() {
     url &&
     key
   ) {
-    window.supabaseClient =
-      window.supabase.createClient(url, key);
-
+    window.supabaseClient = window.supabase.createClient(url, key);
     return window.supabaseClient;
   }
 
@@ -774,14 +693,11 @@ function getClient() {
 /* UNLISTED PRODUCT FIELDS */
 
 function updateProductFields() {
-  const isUnlisted =
-    productSelect.value === OTHER_PRODUCT;
+  const isUnlisted = productSelect.value === OTHER_PRODUCT;
 
   unlistedFields.hidden = !isUnlisted;
-
   requestedProductName.disabled = !isUnlisted;
   requestedProductName.required = isUnlisted;
-
   budgetInput.disabled = !isUnlisted;
 
   if (!isUnlisted) {
@@ -792,8 +708,7 @@ function updateProductFields() {
 
 
 /* OPTIONAL SIGNED-IN CUSTOMER PREFILL
-   Retained from the existing form.
-   It is not automatically invoked. */
+   Retained but not automatically invoked. */
 
 async function prefillSignedInCustomer() {
   try {
@@ -802,9 +717,7 @@ async function prefillSignedInCustomer() {
       error: userError
     } = await client.auth.getUser();
 
-    if (userError || !user) {
-      return;
-    }
+    if (userError || !user) return;
 
     const { data: profile, error: profileError } = await client
       .from("profiles")
@@ -812,21 +725,9 @@ async function prefillSignedInCustomer() {
       .eq("id", user.id)
       .maybeSingle();
 
-    if (profileError) {
-      console.warn(
-        "FrostTech customer prefill could not load profile:",
-        profileError
-      );
-      return;
-    }
-
-    if (
-      !profile ||
-      profile.role !== "customer" ||
-      profile.is_active !== true
-    ) {
-      return;
-    }
+    if (profileError || !profile ||
+        profile.role !== "customer" ||
+        profile.is_active !== true) return;
 
     if (!customerNameInput.value.trim() && profile.full_name) {
       customerNameInput.value = profile.full_name;
@@ -839,19 +740,8 @@ async function prefillSignedInCustomer() {
     if (!customerEmailInput.value.trim() && user.email) {
       customerEmailInput.value = user.email;
     }
-
-    if (signedInNotice) {
-      signedInNotice.textContent =
-        "You are signed in. Your saved customer details have been filled in where available.";
-
-      signedInNotice.hidden = false;
-    }
-
   } catch (error) {
-    console.warn(
-      "FrostTech customer prefill was skipped:",
-      error
-    );
+    console.warn("FrostTech customer prefill was skipped:", error);
   }
 }
 
@@ -864,7 +754,6 @@ async function loadProducts() {
   const loadingOption = document.createElement("option");
   loadingOption.value = "";
   loadingOption.textContent = "Loading products...";
-
   productSelect.appendChild(loadingOption);
   productSelect.disabled = true;
 
@@ -877,49 +766,35 @@ async function loadProducts() {
       .eq("is_active", true)
       .order("name");
 
-    if (error) {
-      throw error;
-    }
+    if (error) throw error;
 
     products = data || [];
-
     productSelect.replaceChildren();
 
     const placeholder = document.createElement("option");
     placeholder.value = "";
     placeholder.textContent = "Select a product";
-
     productSelect.appendChild(placeholder);
 
     products.forEach(function(product) {
       const option = document.createElement("option");
-
       option.value = product.id;
-
       option.textContent = [
         product.name,
         product.brand,
         product.model
       ].filter(Boolean).join(" - ");
-
       productSelect.appendChild(option);
     });
 
     const otherOption = document.createElement("option");
-
     otherOption.value = OTHER_PRODUCT;
-    otherOption.textContent =
-      "Other product — not listed in catalogue";
-
+    otherOption.textContent = "Other product — not listed in catalogue";
     productSelect.appendChild(otherOption);
 
     productSelect.disabled = false;
 
-    /* Preserve product selection from catalogue links. */
-
-    const params =
-      new URLSearchParams(window.location.search);
-
+    const params = new URLSearchParams(window.location.search);
     const requestedId = params.get("product_id");
 
     if (requestedId) {
@@ -927,14 +802,12 @@ async function loadProducts() {
         return product.id === requestedId;
       });
 
-      if (matchingProduct) {
-        productSelect.value = matchingProduct.id;
-      }
+      if (matchingProduct) productSelect.value = matchingProduct.id;
     }
 
     updateProductFields();
 
-    if (products.length === 0) {
+    if (!products.length) {
       showMessage(
         "No active catalogue products were found. You can still select the option for a product not listed in the catalogue.",
         "info"
@@ -942,32 +815,21 @@ async function loadProducts() {
     }
 
   } catch (error) {
-    console.error(
-      "FrostTech product loading error:",
-      error
-    );
-
+    console.error("FrostTech product loading error:", error);
     products = [];
-
     productSelect.replaceChildren();
 
     const placeholder = document.createElement("option");
     placeholder.value = "";
-    placeholder.textContent =
-      "Unable to load catalogue products";
-
+    placeholder.textContent = "Unable to load catalogue products";
     productSelect.appendChild(placeholder);
 
     const otherOption = document.createElement("option");
-
     otherOption.value = OTHER_PRODUCT;
-    otherOption.textContent =
-      "Other product — not listed in catalogue";
-
+    otherOption.textContent = "Other product — not listed in catalogue";
     productSelect.appendChild(otherOption);
 
     productSelect.disabled = false;
-
     updateProductFields();
 
     showMessage(
@@ -977,16 +839,13 @@ async function loadProducts() {
   }
 }
 
-
 productSelect.addEventListener("change", function() {
   clearMessage();
   updateProductFields();
 });
 
 
-/* OPTIONAL CUSTOMER VERIFICATION
-   Guests are allowed to continue without signing in.
-   Signed-in customers must have an active customer profile. */
+/* OPTIONAL CUSTOMER VERIFICATION */
 
 async function getOptionalCustomer() {
   const {
@@ -995,21 +854,12 @@ async function getOptionalCustomer() {
   } = await client.auth.getSession();
 
   if (sessionError) {
-    console.error(
-      "FrostTech session check error:",
-      sessionError
-    );
-
     throw new Error(
       "We could not verify your session. Please refresh the page and try again."
     );
   }
 
-  /* No signed-in session: continue as a guest. */
-
-  if (!session) {
-    return null;
-  }
+  if (!session) return null;
 
   const {
     data: { user },
@@ -1017,11 +867,6 @@ async function getOptionalCustomer() {
   } = await client.auth.getUser();
 
   if (authError || !user) {
-    console.error(
-      "FrostTech authentication error:",
-      authError
-    );
-
     throw new Error(
       "We could not verify your customer login. Please sign in again."
     );
@@ -1034,21 +879,12 @@ async function getOptionalCustomer() {
     .maybeSingle();
 
   if (profileError) {
-    console.error(
-      "FrostTech profile verification error:",
-      profileError
-    );
-
     throw new Error(
       "We could not verify your customer profile. Please try again."
     );
   }
 
-  if (
-    !profile ||
-    profile.role !== "customer" ||
-    profile.is_active !== true
-  ) {
+  if (!profile || profile.role !== "customer" || profile.is_active !== true) {
     throw new Error(
       "Your account does not have an active customer profile. Please contact FrostTech support."
     );
@@ -1063,73 +899,40 @@ async function getOptionalCustomer() {
 async function handleQuoteSubmit(event) {
   event.preventDefault();
 
-  if (submissionInProgress) {
-    return;
-  }
+  if (submissionInProgress) return;
 
   clearMessage();
 
-  if (!form.reportValidity()) {
-    return;
-  }
+  if (!form.reportValidity()) return;
 
   submissionInProgress = true;
   submitButton.disabled = true;
   submitButton.textContent = "Submitting...";
 
   try {
-    if (!client) {
-      client = getClient();
-    }
-
-    /* Returns null for a guest visitor. */
+    if (!client) client = getClient();
 
     const user = await getOptionalCustomer();
 
-    const customerName =
-      customerNameInput.value.trim();
-
-    const customerPhone =
-      customerPhoneInput.value.trim();
-
-    const customerEmail =
-      customerEmailInput.value.trim();
+    const customerName = customerNameInput.value.trim();
+    const customerPhone = customerPhoneInput.value.trim();
+    const customerEmail = customerEmailInput.value.trim();
 
     const selectedId = productSelect.value;
+    const isUnlisted = selectedId === OTHER_PRODUCT;
 
-    const isUnlisted =
-      selectedId === OTHER_PRODUCT;
+    const quantity = Number(document.getElementById("quantity").value);
+    const preferredBrand = document.getElementById("preferredBrand").value.trim();
+    const deliveryAddress = document.getElementById("deliveryAddress").value.trim();
+    const additionalDetails = document.getElementById("additionalDetails").value.trim();
 
-    const quantity = Number(
-      document.getElementById("quantity").value
-    );
+    const installationRequested = installationCheckbox.checked;
+    const bracketsRequested = bracketsCheckbox.checked;
+    const accessoriesRequested = accessoriesCheckbox.checked;
+    const accessoriesDescription = requestedAccessories.value.trim();
+    const otherRequestedItems = document.getElementById("otherRequestedItems").value.trim();
 
-    const preferredBrand =
-      document.getElementById("preferredBrand").value.trim();
-
-    const deliveryAddress =
-      document.getElementById("deliveryAddress").value.trim();
-
-    const additionalDetails =
-      document.getElementById("additionalDetails").value.trim();
-
-    const installationRequested =
-      installationCheckbox.checked;
-
-    const bracketsRequested =
-      bracketsCheckbox.checked;
-
-    const accessoriesRequested =
-      accessoriesCheckbox.checked;
-
-    const accessoriesDescription =
-      requestedAccessories.value.trim();
-
-    const otherRequestedItems =
-      document.getElementById("otherRequestedItems").value.trim();
-
-
-    /* ACCESSORY VALIDATION */
+    const categoryRequests = collectCategoryRequests();
 
     if (accessoriesRequested && !accessoriesDescription) {
       throw new Error(
@@ -1137,42 +940,30 @@ async function handleQuoteSubmit(event) {
       );
     }
 
-
-    /* OUTDOOR BRACKET VALIDATION */
-
     let bracketQuantity = null;
 
     if (bracketsRequested) {
-      bracketQuantity =
-        Number(requestedBracketQuantity.value);
+      bracketQuantity = Number(requestedBracketQuantity.value);
 
-      if (
-        !Number.isInteger(bracketQuantity) ||
-        bracketQuantity < 1 ||
-        bracketQuantity > 1000
-      ) {
+      if (!Number.isInteger(bracketQuantity) ||
+          bracketQuantity < 1 || bracketQuantity > 1000) {
         throw new Error(
           "Please enter a valid outdoor bracket quantity between 1 and 1,000."
         );
       }
     }
 
-
-    /* ADDITIONAL REQUEST DATA */
-
     const requestedItems = {
       version: 1,
       installation: installationRequested,
       outdoor_brackets: bracketsRequested,
       bracket_quantity: bracketQuantity,
-      accessories: accessoriesRequested
-        ? accessoriesDescription
-        : null,
-      other_items: otherRequestedItems || null
+      accessories: accessoriesRequested ? accessoriesDescription : null,
+      other_items: otherRequestedItems || null,
+
+      /* New category information; original fields above are retained. */
+      categories: categoryRequests
     };
-
-
-    /* PRODUCT AND CUSTOMER VALIDATION */
 
     const budgetValue = budgetInput.value.trim();
 
@@ -1182,43 +973,27 @@ async function handleQuoteSubmit(event) {
           return product.id === selectedId;
         });
 
-    if (
-      !customerName ||
-      !customerPhone ||
-      !deliveryAddress
-    ) {
+    if (!customerName || !customerPhone || !deliveryAddress) {
       throw new Error(
         "Please complete your name, phone number and delivery address."
       );
     }
 
-    if (
-      !Number.isInteger(quantity) ||
-      quantity < 1 ||
-      quantity > 10000
-    ) {
+    if (!Number.isInteger(quantity) || quantity < 1 || quantity > 10000) {
       throw new Error(
         "Please enter a quantity between 1 and 10,000."
       );
     }
 
     if (!isUnlisted && !selectedProduct) {
-      throw new Error(
-        "Please select a valid catalogue product."
-      );
+      throw new Error("Please select a valid catalogue product.");
     }
 
-    if (
-      isUnlisted &&
-      !requestedProductName.value.trim()
-    ) {
+    if (isUnlisted && !requestedProductName.value.trim()) {
       throw new Error(
         "Please enter the name or description of the product you need."
       );
     }
-
-
-    /* BUDGET VALIDATION */
 
     let budget = null;
 
@@ -1232,49 +1007,29 @@ async function handleQuoteSubmit(event) {
       }
     }
 
-
-    /* PRODUCT DESCRIPTION */
-
     const productName = isUnlisted
       ? requestedProductName.value.trim()
       : selectedProduct.name;
 
     const description = [
       "Customer: " + customerName,
-
       "Phone: " + customerPhone,
-
-      "Email: " + (
-        customerEmail ||
-        (user && user.email) ||
-        "Not provided"
-      ),
-
+      "Email: " + (customerEmail || (user && user.email) || "Not provided"),
       "Request type: " + (
         isUnlisted
           ? "Product not listed in catalogue"
           : "Catalogue product"
       ),
-
       "Product: " + productName,
-
       "Budget: " + (
         isUnlisted && budget !== null
           ? "₦" + budget.toLocaleString("en-NG")
           : "Not provided"
       ),
-
       "FROSTTECH_REQUESTED_ITEMS_V1:",
-
       JSON.stringify(requestedItems),
-
-      "Other specifications or questions: " +
-        (additionalDetails || "None")
-
+      "Other specifications or questions: " + (additionalDetails || "None")
     ].join("\n");
-
-
-    /* GENERATE REQUEST REFERENCE */
 
     const requestNumber =
       "FT-" +
@@ -1282,66 +1037,37 @@ async function handleQuoteSubmit(event) {
       "-" +
       Math.random().toString(36).slice(2, 7).toUpperCase();
 
-
-    /* DATABASE INSERT DATA */
-
     const requestData = {
-
       customer_id: user ? user.id : null,
-
       customer_name: customerName,
-
       customer_phone: customerPhone,
-
-      customer_email:
-        customerEmail || (user && user.email) || null,
-
+      customer_email: customerEmail || (user && user.email) || null,
       request_number: requestNumber,
-
       title: "Quote Request - " + productName,
-
       description: description,
-
       quantity: quantity,
-
       preferred_brand: preferredBrand ||
         (selectedProduct && selectedProduct.brand) || null,
-
       budget: isUnlisted ? budget : null,
-
       delivery_address: deliveryAddress
     };
-
-
-    /* Only attach product_id for a real catalogue product.
-       Unlisted requests do not use a fabricated product ID. */
 
     if (!isUnlisted) {
       requestData.product_id = selectedProduct.id;
     }
-
-
-    /* SAVE REQUEST */
 
     const { error } = await client
       .from("quote_requests")
       .insert(requestData);
 
     if (error) {
-      console.error(
-        "FrostTech submission error:",
-        error
-      );
-
+      console.error("FrostTech submission error:", error);
       throw new Error(
         "Your request could not be saved. " + error.message
       );
     }
 
-
-    /* ADMINISTRATOR EMAIL NOTIFICATION
-       Notification failure must not affect the saved request. */
-
+    /* Notification failure does not invalidate a saved request. */
     try {
       const { error: notificationError } =
         await client.functions.invoke(
@@ -1360,16 +1086,12 @@ async function handleQuoteSubmit(event) {
           notificationError
         );
       }
-
     } catch (notificationError) {
       console.warn(
         "Quotation email notification error:",
         notificationError
       );
     }
-
-
-    /* SUCCESS MESSAGE */
 
     showMessage(
       "Your quote request was submitted successfully. Reference: " +
@@ -1378,13 +1100,9 @@ async function handleQuoteSubmit(event) {
       "success"
     );
 
-
-    /* RESET FORM */
-
     form.reset();
 
     document.getElementById("quantity").value = "1";
-
     updateProductFields();
 
     bracketRequestFields.hidden = true;
@@ -1395,42 +1113,30 @@ async function handleQuoteSubmit(event) {
     requestedAccessories.required = false;
     requestedAccessories.value = "";
 
+    /* Clear dynamically added category rows after successful submission. */
+    document.querySelectorAll(".item-list").forEach(function(list) {
+      list.replaceChildren();
+    });
 
   } catch (error) {
-
-    console.error(
-      "FrostTech quote submission failed:",
-      error
-    );
+    console.error("FrostTech quote submission failed:", error);
 
     showMessage(
-      error.message ||
-      "An unexpected error occurred. Please try again.",
+      error.message || "An unexpected error occurred. Please try again.",
       "error"
     );
 
   } finally {
-
     submissionInProgress = false;
     submitButton.disabled = false;
     submitButton.textContent = "Submit Quote Request";
-
   }
 }
 
+form.addEventListener("submit", handleQuoteSubmit);
 
-/* FORM SUBMISSION EVENT */
-
-form.addEventListener(
-  "submit",
-  handleQuoteSubmit
-);
-
-
-/* START CATALOGUE LOADING */
-
+/* Start catalogue loading. */
 loadProducts();
-
 </script>
 
 </body>
