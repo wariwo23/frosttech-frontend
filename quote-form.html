@@ -169,6 +169,117 @@
     [hidden] {
       display: none !important;
     }
+
+
+    /* FROSTTECH CUSTOMER PAGE BRANDING */
+
+:root {
+  --frosttech-primary: #063b70;
+  --frosttech-secondary: #0879c9;
+  --frosttech-background: #f3f6fa;
+  --frosttech-border: #dce3eb;
+}
+
+body {
+  background: var(--frosttech-background);
+  color: #1e293b;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.topbar {
+  background: var(--frosttech-primary);
+  color: #ffffff;
+}
+
+.topbar .logo {
+  color: #ffffff !important;
+  font-weight: 700;
+  line-height: 1.5;
+}
+
+.topbar nav a {
+  color: #ffffff;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.topbar nav a:hover {
+  color: #bfdbfe;
+}
+
+.quote-container {
+  max-width: 700px;
+  margin: 30px auto;
+  padding: 26px;
+  background: #ffffff;
+  border: 1px solid var(--frosttech-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(6, 59, 112, 0.08);
+}
+
+.quote-container h1,
+.quote-container h2,
+.quote-container h3 {
+  color: var(--frosttech-primary);
+}
+
+.quote-form input,
+.quote-form select,
+.quote-form textarea {
+  border: 1px solid var(--frosttech-border);
+  border-radius: 7px;
+}
+
+.quote-form input:focus,
+.quote-form select:focus,
+.quote-form textarea:focus {
+  outline: 2px solid #93c5fd;
+  border-color: var(--frosttech-secondary);
+}
+
+.quote-form button {
+  background: var(--frosttech-primary);
+  border-radius: 7px;
+}
+
+.quote-form button:hover {
+  background: var(--frosttech-secondary);
+}
+
+footer {
+  background: var(--frosttech-primary);
+  color: #ffffff;
+  padding-top: 22px;
+}
+
+footer h2,
+footer p,
+footer a {
+  color: #ffffff;
+}
+
+footer .copyright {
+  border-top: 1px solid rgba(255,255,255,0.2);
+  padding: 14px;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .quote-container {
+    margin: 16px 12px;
+    padding: 18px;
+  }
+
+  .topbar .nav {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .topbar .logo {
+    font-size: 17px;
+  }
+}
+    
   </style>
 </head>
 
@@ -179,13 +290,12 @@
     <a href="index.html"
        class="logo"
        style="text-decoration:none;color:inherit;">
-      <span aria-hidden="true">❄</span> FrostTech
+      ❄ FrostTech HVAC & Refrigeration Marketplace
     </a>
 
     <nav aria-label="Main navigation">
       <a href="index.html">Home</a>
       <a href="catalog.html">Catalogue</a>
-      <a href="quote.html">Request a Quote</a>
     </nav>
   </div>
 </header>
