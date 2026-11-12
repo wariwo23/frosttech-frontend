@@ -1,0 +1,147 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request a Quote | FrostTech</title>
+  <link rel="stylesheet" href="style.css">
+
+  <style>
+    .choice-container {
+      max-width: 650px;
+      margin: 60px auto;
+      padding: 25px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.08);
+      text-align: center;
+    }
+
+    .choice-container h1 {
+      color: #063b70;
+    }
+
+    .choice-container p {
+      line-height: 1.7;
+      color: #475569;
+    }
+
+    .choice-actions {
+      display: grid;
+      gap: 15px;
+      margin-top: 30px;
+    }
+
+    .choice-button {
+      display: block;
+      padding: 16px;
+      border-radius: 6px;
+      background: #063b70;
+      color: white;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+    .choice-button.signin {
+      background: #0879c9;
+    }
+
+    .choice-button.guest {
+      background: white;
+      color: #063b70;
+      border: 2px solid #063b70;
+    }
+
+    .choice-button:hover {
+      opacity: .88;
+    }
+  </style>
+</head>
+
+<body>
+
+<header class="topbar">
+  <div class="container nav">
+    <a href="index.html" class="logo">❄ FrostTech</a>
+    <nav>
+      <a href="index.html">Home</a>
+      <a href="catalog.html">Catalogue</a>
+    </nav>
+  </div>
+</header>
+
+<main class="choice-container">
+
+  <h1>Request a Quote</h1>
+
+  <p>
+    Welcome to FrostTech HVAC and Refrigeration.
+    Choose how you would like to submit your quotation request.
+  </p>
+
+  <div class="choice-actions">
+
+    <a class="choice-button" id="createAccountLink"
+       href="customer-register.html?return=quote-form.html">
+      Create Customer Account
+    </a>
+
+    <a class="choice-button signin" id="signInLink"
+       href="customer-login.html?return=quote-form.html">
+      Sign In
+    </a>
+
+    <a class="choice-button guest" id="guestLink"
+       href="quote-form.html?guest=1">
+      Continue as Guest
+    </a>
+
+  </div>
+
+  <p>
+    Creating an account allows you to manage your quotation
+    requests. You can also continue as a guest without registering.
+  </p>
+
+</main>
+
+<footer>
+  <div class="container">
+    <p>FrostTech HVAC and Refrigeration</p>
+    <p>© 2026 FrostTech. All rights reserved.</p>
+  </div>
+</footer>
+
+<script>
+(function () {
+  const params = new URLSearchParams(window.location.search);
+  const productId = params.get("product_id");
+
+  if (!productId) return;
+
+  const formUrl = new URL("quote-form.html", window.location.href);
+  formUrl.searchParams.set("product_id", productId);
+  formUrl.searchParams.set("guest", "1");
+
+  document.getElementById("guestLink").href =
+    formUrl.pathname.split("/").pop() + formUrl.search;
+
+  const returnUrl = new URL("quote-form.html", window.location.href);
+  returnUrl.searchParams.set("product_id", productId);
+
+  const returnPath =
+    returnUrl.pathname.split("/").pop() + returnUrl.search;
+
+  const encodedReturn = encodeURIComponent(returnPath);
+
+  document.getElementById("createAccountLink").href =
+    "customer-register.html?return=" + encodedReturn;
+
+  document.getElementById("signInLink").href =
+    "customer-login.html?return=" + encodedReturn;
+})();
+</script>
+
+</body>
+</html>
