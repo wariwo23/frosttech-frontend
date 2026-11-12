@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,109 +6,240 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Customer Registration | FrostTech</title>
 <style>
-body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:20px;color:#172b4d}
-.card{max-width:430px;margin:25px auto;background:white;padding:24px;border-radius:12px;box-shadow:0 4px 18px #0001}
-h1{color:#075985;font-size:25px}
-label{display:block;margin-top:15px;font-weight:bold}
-input{box-sizing:border-box;width:100%;padding:12px;margin-top:6px;border:1px solid #cbd5e1;border-radius:6px;font-size:16px}
-button{width:100%;margin-top:22px;padding:13px;background:#075985;color:white;border:0;border-radius:6px;font-size:16px}
-#message{overflow-wrap:anywhere;line-height:1.5}
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;background:#f1f5f9;margin:0;padding:18px;color:#183153}
+.card{max-width:460px;margin:28px auto;background:#fff;padding:26px;border-radius:14px;box-shadow:0 5px 22px #00000012}
+.brand{text-align:center;margin-bottom:24px}
+.brand h1{margin:0 0 7px;color:#075985;font-size:29px}
+.brand p{margin:0;color:#64748b;font-size:14px}
+h2{color:#183153;font-size:22px;margin:0 0 10px}
+.intro{color:#64748b;line-height:1.6;font-size:14px;margin-bottom:20px}
+label{display:block;margin-top:16px;font-weight:600;font-size:14px}
+input{width:100%;padding:13px;margin-top:7px;border:1px solid #cbd5e1;border-radius:7px;font-size:16px}
+input:focus{outline:2px solid #bae6fd;border-color:#075985}
+button,.action-link{display:block;width:100%;margin-top:21px;padding:14px;background:#075985;color:#fff;border:0;border-radius:7px;font-size:16px;font-weight:600;text-align:center;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}
+.secondary{background:#e2e8f0;color:#183153;margin-top:12px}
+#message{display:none;margin-top:18px;padding:12px;border-radius:7px;line-height:1.6;font-size:14px;overflow-wrap:anywhere}
+#message.success{display:block;background:#dcfce7;color:#166534}
+#message.error{display:block;background:#fee2e2;color:#991b1b}
+#message.info{display:block;background:#eff6ff;color:#1e40af}
+#nextStep{display:none;margin-top:14px}
+#nextStep a{color:#075985;font-weight:700}
+.footer-links{text-align:center;margin-top:20px;font-size:14px;line-height:2}
 a{color:#075985}
+.small-note{font-size:12px;color:#64748b;line-height:1.5;margin-top:14px}
 </style>
 </head>
 <body>
-<div class="card">
-<h1>Create a Customer Account</h1>
-<p>Register with FrostTech HVAC and Refrigeration to request quotations.</p>
+<main class="card">
+  <header class="brand">
+    <h1>❄ FrostTech</h1>
+    <p>HVAC and Refrigeration Marketplace</p>
+  </header>
 
-<form id="registerForm">
-<label for="fullName">Full name</label>
-<input id="fullName" required autocomplete="name">
+  <h2>Create a Customer Account</h2>
+  <p class="intro">
+    Register to manage your quotation requests and access your
+    FrostTech customer account. You can also request a quotation
+    without creating an account.
+  </p>
 
-<label for="phone">Phone number</label>
-<input id="phone" type="tel" required autocomplete="tel">
+  <form id="registerForm">
+    <label for="fullName">Full name *</label>
+    <input id="fullName" type="text" maxlength="150"
+      required autocomplete="name">
 
-<label for="email">Email address</label>
-<input id="email" type="email" required autocomplete="email">
+    <label for="phone">Phone / WhatsApp number *</label>
+    <input id="phone" type="tel" maxlength="30"
+      required autocomplete="tel">
 
-<label for="password">Password (minimum 8 characters)</label>
-<input id="password" type="password" minlength="8" required autocomplete="new-password">
+    <label for="email">Email address *</label>
+    <input id="email" type="email" maxlength="254"
+      required autocomplete="email">
 
-<button id="registerButton" type="submit">Create Account</button>
-</form>
+    <label for="password">Password *</label>
+    <input id="password" type="password" minlength="8"
+      required autocomplete="new-password"
+      placeholder="At least 8 characters">
 
-<p id="message" role="status"></p>
-<p>Already registered? <a href="customer-login.html">Sign in</a></p>
-<p><a href="index.html">Return to homepage</a></p>
-</div>
- <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <button id="registerButton" type="submit">
+      Create Customer Account
+    </button>
+  </form>
+
+  <div id="message" role="status" aria-live="polite"></div>
+  <div id="nextStep"></div>
+
+  <p class="small-note">
+    If email confirmation is required, check your inbox and follow
+    the confirmation link before signing in.
+  </p>
+
+  <div class="footer-links">
+    <p>Already registered?
+      <a id="loginLink" href="customer-login.html">Sign in</a>
+    </p>
+    <p><a href="quote.html">Continue as a guest</a></p>
+    <p><a href="index.html">Return to homepage</a></p>
+  </div>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
 <script>
-const form = document.getElementById("registerForm");
-const message = document.getElementById("message");
-const button = document.getElementById("registerButton");
+"use strict";
 
-form.addEventListener("submit", async function(e) {
-    e.preventDefault();
+(function () {
+  const form = document.getElementById("registerForm");
+  const message = document.getElementById("message");
+  const button = document.getElementById("registerButton");
+  const nextStep = document.getElementById("nextStep");
+  const loginLink = document.getElementById("loginLink");
+
+  function getSafeReturnPath() {
+    const params = new URLSearchParams(window.location.search);
+    const requested = params.get("return");
+
+    if (!requested) {
+      return "index.html";
+    }
+
+    try {
+      const base = new URL(".", window.location.href);
+      const destination = new URL(requested, base);
+
+      if (
+        destination.origin !== base.origin ||
+        !destination.pathname.startsWith(base.pathname)
+      ) {
+        return "index.html";
+      }
+
+      return destination.pathname.slice(base.pathname.length) +
+        destination.search + destination.hash;
+    } catch (error) {
+      return "index.html";
+    }
+  }
+
+  const returnPath = getSafeReturnPath();
+
+  const loginUrl = new URL("customer-login.html", window.location.href);
+  loginUrl.searchParams.set("return", returnPath);
+  loginLink.href = loginUrl.href;
+
+  function showMessage(text, type) {
+    message.textContent = text;
+    message.className = type;
+    message.style.display = "block";
+  }
+
+  function showLoginNextStep() {
+    nextStep.replaceChildren();
+
+    const link = document.createElement("a");
+    link.href = loginUrl.href;
+    link.textContent = "Continue to Customer Login";
+
+    nextStep.appendChild(link);
+    nextStep.style.display = "block";
+  }
+
+  form.addEventListener("submit", async function (event) {
+    event.preventDefault();
 
     const client = window.supabaseClient;
 
-    if (!client) {
-        message.textContent =
-            "Connection error. Please check supabase.js.";
-        return;
+    if (!client || !client.auth) {
+      showMessage(
+        "FrostTech could not connect to the registration service. Please refresh and try again.",
+        "error"
+      );
+      return;
     }
 
-    const fullName =
-        document.getElementById("fullName").value.trim();
+    const fullName = document.getElementById("fullName").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const email = document.getElementById("email").value.trim().toLowerCase();
+    const password = document.getElementById("password").value;
 
-    const phone =
-        document.getElementById("phone").value.trim();
+    if (!fullName || !phone || !email) {
+      showMessage("Please complete all required fields.", "error");
+      return;
+    }
 
-    const email =
-        document.getElementById("email").value.trim().toLowerCase();
-
-    const password =
-        document.getElementById("password").value;
+    if (password.length < 8) {
+      showMessage(
+        "Your password must contain at least 8 characters.",
+        "error"
+      );
+      return;
+    }
 
     button.disabled = true;
-    message.textContent = "Creating your account...";
+    button.textContent = "Creating Account...";
+    nextStep.style.display = "none";
 
     try {
-        const { data, error } = await client.auth.signUp({
-            email: email,
-            password: password,
-            options: {
-                emailRedirectTo:
-                    "https://wariwo23.github.io/frosttech-frontend/customer-login.html",
-                data: {
-                    full_name: fullName,
-                    phone: phone,
-                    account_type: "customer"
-                }
-            }
-        });
+      const confirmationUrl =
+        new URL("customer-login.html", window.location.href);
 
-        if (error) {
-            throw error;
-        }
+      confirmationUrl.searchParams.set("return", returnPath);
 
-        if (data.session) {
-            message.textContent =
-                "Account created successfully. You can now continue to FrostTech.";
-        } else {
-            message.textContent =
-                "Registration successful. Please check your email and click the confirmation link. After confirmation, return to the FrostTech Customer Login page.";
+      const { data, error } = await client.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          emailRedirectTo: confirmationUrl.href,
+          data: {
+            full_name: fullName,
+            phone: phone,
+            account_type: "customer"
+          }
         }
+      });
+
+      if (error) {
+        throw error;
+      }
+
+      if (data && data.session) {
+        showMessage(
+          "Your FrostTech customer account has been created. Opening your next page...",
+          "success"
+        );
+
+        window.location.replace(
+          new URL(returnPath, window.location.href).href
+        );
+        return;
+      }
+
+      showMessage(
+        "Registration successful. Please check your email and click the confirmation link. After confirmation, sign in to continue to your quotation request.",
+        "success"
+      );
+
+      showLoginNextStep();
+
+      form.reset();
 
     } catch (error) {
-        message.textContent =
-            "Registration failed: " + error.message;
+      console.error("FrostTech customer registration error:", error);
+
+      showMessage(
+        "Registration could not be completed: " +
+        (error.message || "Please try again."),
+        "error"
+      );
 
     } finally {
-        button.disabled = false;
+      button.disabled = false;
+      button.textContent = "Create Customer Account";
     }
-});
+  });
+})();
 </script>
 </body>
 </html>
