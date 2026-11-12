@@ -566,14 +566,7 @@ const customerEmailInput =
 const signedInNotice =
   document.getElementById("signedInNotice");
 
-function updateAccountReturnLinks() {
-  const returnUrl = new URL("quote.html", window.location.href);
-  const currentParams = new URLSearchParams(window.location.search);
-  const productId = currentParams.get("product_id");
 
-  if (productId) {
-    returnUrl.searchParams.set("product_id", productId);
-  }
 
   const returnPath =
     returnUrl.pathname.split("/").pop() + returnUrl.search;
