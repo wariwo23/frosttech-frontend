@@ -1,0 +1,410 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#075985">
+
+<title>Customer Access | FrostTech</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 18px;
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  color: #183153;
+}
+
+.card {
+  max-width: 520px;
+  margin: 35px auto;
+  padding: 28px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 18px #00000012;
+}
+
+.brand {
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.brand h1 {
+  margin: 0;
+  color: #075985;
+  font-size: 25px;
+  line-height: 1.4;
+}
+
+.card h2 {
+  text-align: center;
+  color: #183153;
+}
+
+#welcomeMessage {
+  font-size: 17px;
+  font-weight: bold;
+  color: #183153;
+  line-height: 1.6;
+  text-align: center;
+}
+
+#accessMessage {
+  padding: 12px;
+  border-radius: 6px;
+  background: #eff6ff;
+  color: #1e40af;
+  text-align: center;
+  line-height: 1.6;
+}
+
+#accessMessage.error {
+  background: #fef2f2;
+  color: #991b1b;
+}
+
+.access-button {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 15px;
+  border: 0;
+  border-radius: 7px;
+  background: #075985;
+  color: white;
+  text-decoration: none;
+  text-align: center;
+  font-weight: bold;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.secondary {
+  background: #e2e8f0;
+  color: #183153;
+}
+
+.logout {
+  display: block;
+  margin: 18px auto 0;
+  border: 0;
+  background: transparent;
+  color: #075985;
+  text-decoration: underline;
+  padding: 12px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+footer {
+  max-width: 520px;
+  margin: 25px auto 10px;
+  padding: 22px;
+  text-align: center;
+  background: #fff;
+  border-radius: 10px;
+  color: #475569;
+  font-size: 14px;
+  line-height: 1.9;
+  box-shadow: 0 2px 10px #00000008;
+}
+
+footer a {
+  color: #075985;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+[hidden] {
+  display: none !important;
+}
+</style>
+</head>
+
+<body>
+
+<main class="card">
+
+  <header class="brand">
+    <h1>❄ FrostTech HVAC &amp; Refrigeration Marketplace</h1>
+  </header>
+
+  <h2>Customer Access</h2>
+
+  <p
+    id="accessMessage"
+    role="status"
+    aria-live="polite"
+  >
+    Verifying your customer account...
+  </p>
+
+  <div id="customerActions" hidden>
+
+    <p id="welcomeMessage"></p>
+
+    <a
+      id="requestQuoteButton"
+      class="access-button"
+      href="quote-form.html"
+    >
+      Request a Quote
+    </a>
+
+    <a
+      id="catalogueButton"
+      class="access-button secondary"
+      href="catalog.html"
+    >
+      Explore Product Catalogue
+    </a>
+
+    <button
+      id="signOutButton"
+      class="logout"
+      type="button"
+    >
+      Sign Out
+    </button>
+
+  </div>
+
+</main>
+
+<footer>
+  <strong>❄ FrostTech HVAC &amp; Refrigeration Marketplace</strong>
+  <br>
+
+  Website:
+  <a href="https://frosttechonline.com">
+    frosttechonline.com
+  </a>
+
+  <br>
+
+  WhatsApp:
+  <a href="https://wa.me/2348032008635">
+    +234 803 200 8635
+  </a>
+
+  <br>
+
+  © 2026 FrostTech. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+
+<script>
+(function () {
+  "use strict";
+
+  const message = document.getElementById("accessMessage");
+  const actions = document.getElementById("customerActions");
+  const welcome = document.getElementById("welcomeMessage");
+  const quoteButton = document.getElementById("requestQuoteButton");
+  const signOutButton = document.getElementById("signOutButton");
+
+  let redirectingToLogin = false;
+  let verificationComplete = false;
+
+  function showMessage(text, isError) {
+    message.textContent = text;
+    message.hidden = false;
+
+    if (isError) {
+      message.classList.add("error");
+    } else {
+      message.classList.remove("error");
+    }
+
+    actions.hidden = true;
+  }
+
+  function getClient() {
+    const client = window.supabaseClient;
+
+    if (!client || !client.auth || typeof client.from !== "function") {
+      throw new Error(
+        "The FrostTech Supabase client is not available. Check supabase.js."
+      );
+    }
+
+    return client;
+  }
+
+  function withTimeout(promise, label) {
+    let timeoutId;
+
+    const timeout = new Promise(function (_, reject) {
+      timeoutId = setTimeout(function () {
+        reject(new Error(label + " timed out. Please try again."));
+      }, 15000);
+    });
+
+    return Promise.race([promise, timeout])
+      .finally(function () {
+        clearTimeout(timeoutId);
+      });
+  }
+
+  function redirectToLogin() {
+    if (redirectingToLogin) return;
+
+    redirectingToLogin = true;
+
+    const login = new URL(
+      "customer-login.html",
+      window.location.href
+    );
+
+    login.searchParams.set(
+      "return",
+      "customer-access.html" + window.location.search
+    );
+
+    window.location.replace(login.href);
+  }
+
+  async function initialize() {
+    try {
+      const client = getClient();
+
+      const params = new URLSearchParams(window.location.search);
+      const productId = params.get("product_id");
+
+      const sessionResult = await withTimeout(
+        client.auth.getSession(),
+        "Customer session verification"
+      );
+
+      if (sessionResult.error) {
+        throw sessionResult.error;
+      }
+
+      const session = sessionResult.data &&
+        sessionResult.data.session;
+
+      if (!session) {
+        redirectToLogin();
+        return;
+      }
+
+      const userResult = await withTimeout(
+        client.auth.getUser(),
+        "Customer identity verification"
+      );
+
+      if (userResult.error || !userResult.data.user) {
+        showMessage(
+          "Your login could not be verified. Please sign in again.",
+          true
+        );
+        return;
+      }
+
+      const user = userResult.data.user;
+
+      const profileResult = await withTimeout(
+        client
+          .from("profiles")
+          .select("full_name, role, is_active")
+          .eq("id", user.id)
+          .maybeSingle(),
+        "Customer profile verification"
+      );
+
+      if (profileResult.error) {
+        throw profileResult.error;
+      }
+
+      const profile = profileResult.data;
+
+      if (
+        !profile ||
+        profile.role !== "customer" ||
+        profile.is_active !== true
+      ) {
+        showMessage(
+          "This account does not have an active FrostTech customer profile. Please contact FrostTech support.",
+          true
+        );
+        return;
+      }
+
+      const quoteUrl = new URL(
+        "quote-form.html",
+        window.location.href
+      );
+
+      if (productId) {
+        quoteUrl.searchParams.set("product_id", productId);
+      }
+
+      quoteButton.href = quoteUrl.href;
+
+      welcome.textContent =
+        "Welcome to FrostTech" +
+        (profile.full_name ? ", " + profile.full_name : "") +
+        "! Your customer account is active.";
+
+      verificationComplete = true;
+
+      message.hidden = true;
+      actions.hidden = false;
+
+    } catch (error) {
+      console.error(
+        "FrostTech Customer Access verification error:",
+        error
+      );
+
+      showMessage(
+        "We could not complete your customer account verification. Please check your connection and try again. If the problem continues, contact FrostTech support.",
+        true
+      );
+    }
+  }
+
+  signOutButton.addEventListener("click", async function () {
+    signOutButton.disabled = true;
+
+    try {
+      const client = getClient();
+
+      const result = await withTimeout(
+        client.auth.signOut(),
+        "Sign-out request"
+      );
+
+      if (result.error) {
+        throw result.error;
+      }
+
+      window.location.replace("quote.html");
+
+    } catch (error) {
+      console.error("FrostTech sign-out error:", error);
+
+      signOutButton.disabled = false;
+
+      showMessage(
+        "We could not sign you out. Please try again.",
+        true
+      );
+    }
+  });
+
+  initialize();
+
+})();
+</script>
+
+</body>
+</html>
