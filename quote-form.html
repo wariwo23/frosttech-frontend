@@ -438,6 +438,70 @@
       padding: 17px 13px;
     }
   }
+
+
+/* FrostTech header navigation correction */
+.topbar {
+    width: 100%;
+    box-sizing: border-box;
+    overflow: visible;
+}
+
+.topbar .container.nav {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 14px 16px;
+    box-sizing: border-box;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+}
+
+.topbar .container.nav nav {
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-left: auto;
+    min-width: 0;
+}
+
+.topbar .container.nav nav a {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 9px 13px;
+    box-sizing: border-box;
+    font-weight: 700;
+}
+
+@media (max-width: 600px) {
+    .topbar .container.nav {
+        flex-direction: column;
+        justify-content: center;
+        gap: 12px;
+    }
+
+    .topbar .container.nav nav {
+        width: 100%;
+        margin: 0 auto;
+        justify-content: center;
+        gap: 10px;
+    }
+
+    .topbar .container.nav nav a {
+        min-width: 105px;
+        padding: 10px 14px;
+    }
+}
+
 </style>
 
 </head>
