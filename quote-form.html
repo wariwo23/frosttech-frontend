@@ -13,18 +13,61 @@
   <link rel="stylesheet" href="style.css">
 
   <style>
+    :root {
+      --frosttech-primary: #063b70;
+      --frosttech-secondary: #0879c9;
+      --frosttech-background: #f3f6fa;
+      --frosttech-border: #dce3eb;
+    }
+
+    body {
+      background: var(--frosttech-background);
+      color: #1e293b;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+
+    .topbar {
+      background: var(--frosttech-primary);
+      color: #ffffff;
+    }
+
+    .topbar .logo {
+      color: #ffffff !important;
+      font-weight: 700;
+      line-height: 1.5;
+    }
+
+    .topbar nav a {
+      color: #ffffff;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .topbar nav a:hover {
+      color: #bfdbfe;
+    }
+
     .quote-container {
-      max-width: 650px;
+      max-width: 700px;
       margin: 30px auto;
-      padding: 24px;
-      background: #fff;
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+      padding: 26px;
+      background: #ffffff;
+      border: 1px solid var(--frosttech-border);
+      border-radius: 12px;
+      box-shadow: 0 4px 18px rgba(6, 59, 112, 0.08);
     }
 
     .quote-container h1,
+    .quote-container h2,
+    .quote-container h3,
     .quote-container > p {
       text-align: center;
+    }
+
+    .quote-container h1,
+    .quote-container h2,
+    .quote-container h3 {
+      color: var(--frosttech-primary);
     }
 
     .quote-form label {
@@ -41,10 +84,17 @@
       box-sizing: border-box;
       padding: 12px;
       margin-top: 6px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border: 1px solid var(--frosttech-border);
+      border-radius: 7px;
       font-size: 16px;
       background: #fff;
+    }
+
+    .quote-form input:focus,
+    .quote-form select:focus,
+    .quote-form textarea:focus {
+      outline: 2px solid #93c5fd;
+      border-color: var(--frosttech-secondary);
     }
 
     .quote-form button {
@@ -52,12 +102,16 @@
       margin-top: 24px;
       padding: 14px;
       border: 0;
-      border-radius: 5px;
-      background: #075985;
+      border-radius: 7px;
+      background: var(--frosttech-primary);
       color: white;
       font-size: 16px;
       font-weight: bold;
       cursor: pointer;
+    }
+
+    .quote-form button:hover {
+      background: var(--frosttech-secondary);
     }
 
     .quote-form button:disabled {
@@ -70,15 +124,6 @@
       color: #64748b;
       font-size: 13px;
       line-height: 1.6;
-    }
-
-    .login-link {
-      text-align: center;
-      margin-top: 16px;
-    }
-
-    .login-link a {
-      font-weight: bold;
     }
 
     #formMessage {
@@ -108,178 +153,43 @@
       color: #1e40af;
     }
 
-    .account-choice {
-      margin: 22px 0 28px;
-      padding: 18px;
-      border: 1px solid #dce3eb;
-      border-radius: 8px;
-      background: #f8fafc;
+    footer {
+      background: var(--frosttech-primary);
+      color: #ffffff;
+      padding-top: 22px;
     }
 
-    .account-choice h2 {
-      margin: 0 0 8px;
-      font-size: 19px;
+    footer h2,
+    footer p,
+    footer a {
+      color: #ffffff;
+    }
+
+    footer .copyright {
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding: 14px;
       text-align: center;
-    }
-
-    .account-choice p {
-      line-height: 1.6;
-    }
-
-    .account-choice-actions {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 10px;
-      margin-top: 14px;
-    }
-
-    .account-choice-button {
-      display: block;
-      box-sizing: border-box;
-      padding: 12px 14px;
-      border-radius: 5px;
-      background: #075985;
-      color: #fff;
-      font-weight: bold;
-      text-align: center;
-      text-decoration: none;
-    }
-
-    .account-choice-button.secondary {
-      background: #e2e8f0;
-      color: #0f172a;
-    }
-
-    .account-choice-button.guest {
-      background: #fff;
-      color: #075985;
-      border: 1px solid #075985;
-    }
-
-    .account-choice-button:hover {
-      opacity: .9;
-    }
-
-    @media (min-width: 560px) {
-      .account-choice-actions {
-        grid-template-columns: 1fr 1fr 1fr;
-      }
     }
 
     [hidden] {
       display: none !important;
     }
 
+    @media (max-width: 600px) {
+      .quote-container {
+        margin: 16px 12px;
+        padding: 18px;
+      }
 
-    /* FROSTTECH CUSTOMER PAGE BRANDING */
+      .topbar .nav {
+        flex-wrap: wrap;
+        gap: 12px;
+      }
 
-:root {
-  --frosttech-primary: #063b70;
-  --frosttech-secondary: #0879c9;
-  --frosttech-background: #f3f6fa;
-  --frosttech-border: #dce3eb;
-}
-
-body {
-  background: var(--frosttech-background);
-  color: #1e293b;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.topbar {
-  background: var(--frosttech-primary);
-  color: #ffffff;
-}
-
-.topbar .logo {
-  color: #ffffff !important;
-  font-weight: 700;
-  line-height: 1.5;
-}
-
-.topbar nav a {
-  color: #ffffff;
-  text-decoration: none;
-  font-weight: 600;
-}
-
-.topbar nav a:hover {
-  color: #bfdbfe;
-}
-
-.quote-container {
-  max-width: 700px;
-  margin: 30px auto;
-  padding: 26px;
-  background: #ffffff;
-  border: 1px solid var(--frosttech-border);
-  border-radius: 12px;
-  box-shadow: 0 4px 18px rgba(6, 59, 112, 0.08);
-}
-
-.quote-container h1,
-.quote-container h2,
-.quote-container h3 {
-  color: var(--frosttech-primary);
-}
-
-.quote-form input,
-.quote-form select,
-.quote-form textarea {
-  border: 1px solid var(--frosttech-border);
-  border-radius: 7px;
-}
-
-.quote-form input:focus,
-.quote-form select:focus,
-.quote-form textarea:focus {
-  outline: 2px solid #93c5fd;
-  border-color: var(--frosttech-secondary);
-}
-
-.quote-form button {
-  background: var(--frosttech-primary);
-  border-radius: 7px;
-}
-
-.quote-form button:hover {
-  background: var(--frosttech-secondary);
-}
-
-footer {
-  background: var(--frosttech-primary);
-  color: #ffffff;
-  padding-top: 22px;
-}
-
-footer h2,
-footer p,
-footer a {
-  color: #ffffff;
-}
-
-footer .copyright {
-  border-top: 1px solid rgba(255,255,255,0.2);
-  padding: 14px;
-  text-align: center;
-}
-
-@media (max-width: 600px) {
-  .quote-container {
-    margin: 16px 12px;
-    padding: 18px;
-  }
-
-  .topbar .nav {
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .topbar .logo {
-    font-size: 17px;
-  }
-}
-    
+      .topbar .logo {
+        font-size: 17px;
+      }
+    }
   </style>
 </head>
 
@@ -302,18 +212,16 @@ footer .copyright {
 
 <main class="quote-container">
 
-  
-<h1>Request a Quote</h1>
+  <h1>Request a Quote</h1>
 
-<p style="text-align:center;font-weight:600;color:#063b70;">
-  Welcome to FrostTech!
-</p>
+  <p style="text-align:center;font-weight:600;color:#063b70;">
+    Welcome to FrostTech!
+  </p>
 
-<p style="text-align:center;">
-  Your trusted marketplace for HVAC and Refrigeration products and services.
-  Fill in your details, select your preferred products or tell us what product/services you need, and provide the necessary details for your quotation.
-</p>
-
+  <p style="text-align:center;">
+    Your trusted marketplace for HVAC and Refrigeration products and services.
+    Fill in your details, select your preferred products or tell us what product/services you need, and provide the necessary details for your quotation.
+  </p>
 
   <form id="quoteForm" class="quote-form">
 
@@ -562,22 +470,10 @@ const customerPhoneInput =
 const customerEmailInput =
   document.getElementById("customerEmail");
 
+// This page does not currently display a signed-in notice.
+// Keep the reference optional so it cannot stop the script.
 const signedInNotice =
   document.getElementById("signedInNotice");
-
-
-
-  const returnPath =
-    returnUrl.pathname.split("/").pop() + returnUrl.search;
-
-  const encodedReturn = encodeURIComponent(returnPath);
-
-  document.getElementById("createAccountLink").href =
-    "customer-register.html?return=" + encodedReturn;
-
-  document.getElementById("signInLink").href =
-    "customer-login.html?return=" + encodedReturn;
-}
 
 let client = null;
 let products = [];
@@ -723,10 +619,12 @@ async function prefillSignedInCustomer() {
       customerEmailInput.value = user.email;
     }
 
-    signedInNotice.textContent =
-      "You are signed in. Your saved customer details have been filled in where available.";
+    if (signedInNotice) {
+      signedInNotice.textContent =
+        "You are signed in. Your saved customer details have been filled in where available.";
 
-    signedInNotice.hidden = false;
+      signedInNotice.hidden = false;
+    }
 
   } catch (error) {
     // Prefill is helpful but must never prevent a guest from requesting a quote.
@@ -736,7 +634,6 @@ async function prefillSignedInCustomer() {
     );
   }
 }
-
 
 async function loadProducts() {
   productSelect.replaceChildren();
@@ -849,7 +746,6 @@ async function loadProducts() {
   }
 }
 
-  
 productSelect.addEventListener("change", function() {
   clearMessage();
   updateProductFields();
@@ -1207,7 +1103,8 @@ async function handleQuoteSubmit(event) {
 
 form.addEventListener("submit", handleQuoteSubmit);
 
-updateAccountReturnLinks();
+// Start catalogue loading.
+// No obsolete account-navigation function is called here.
 loadProducts();
 
 </script>
