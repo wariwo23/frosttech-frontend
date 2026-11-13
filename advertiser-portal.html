@@ -4,164 +4,666 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Advertiser Portal | FrostTech</title>
+<meta name="theme-color" content="#081b35">
+<title>Advertiser Workspace | FrostTech</title>
 
 <style>
+:root{
+    --navy:#081b35;
+    --navy-light:#102b4e;
+    --blue:#1677e8;
+    --blue-dark:#0757bc;
+    --cyan:#20c4df;
+    --background:#f3f6fa;
+    --white:#ffffff;
+    --text:#183153;
+    --muted:#64748b;
+    --border:#dce5ef;
+    --success:#16803c;
+    --success-bg:#dcfce7;
+    --warning:#a45b08;
+    --warning-bg:#fff7e6;
+    --danger:#b42318;
+    --danger-bg:#fee2e2;
+    --info:#075985;
+    --info-bg:#e0f2fe;
+    --shadow:0 8px 28px rgba(8,27,53,.07);
+}
+
 *{box-sizing:border-box}
-body{margin:0;padding:16px;font-family:Arial,sans-serif;background:#f1f5f9;color:#183153}
-.container{max-width:760px;margin:20px auto}
-header,.panel{background:white;padding:22px;border-radius:12px;margin-bottom:18px;box-shadow:0 4px 16px #0000000d}
-header{text-align:center}
-header h1{margin:0;color:#087f8c}
-header p,.muted{color:#64748b;font-size:14px;line-height:1.6}
-h2{font-size:20px;margin:0 0 12px}
-h3{font-size:16px;margin:20px 0 8px}
-label{display:block;font-weight:600;font-size:14px;margin:14px 0 6px}
-input,textarea,select{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:7px;font-size:15px;background:white}
-input{min-height:44px}
-textarea{min-height:85px;resize:vertical}
-button{border:0;border-radius:7px;background:#087f8c;color:white;padding:12px 16px;min-height:44px;font-size:14px;font-weight:600;cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
-.secondary{background:#64748b}
-.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:18px}
+
+body{
+    margin:0;
+    padding:0;
+    font-family:Arial,Helvetica,sans-serif;
+    background:var(--background);
+    color:var(--text);
+    line-height:1.55;
+}
+
+button,input,textarea,select{font:inherit}
+
+.topbar{
+    background:linear-gradient(115deg,var(--navy),var(--navy-light));
+    color:white;
+    padding:19px 20px;
+}
+
+.topbar-inner{
+    max-width:1050px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+}
+
+.brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+}
+
+.brand-mark{
+    width:43px;
+    height:43px;
+    border-radius:12px;
+    display:grid;
+    place-items:center;
+    background:linear-gradient(135deg,var(--blue),var(--cyan));
+    font-size:21px;
+    font-weight:800;
+    color:white;
+}
+
+.brand-name{
+    font-size:21px;
+    font-weight:800;
+    letter-spacing:.3px;
+}
+
+.brand-caption{
+    color:#c7d8eb;
+    font-size:12px;
+    margin-top:1px;
+}
+
+.container{
+    max-width:1050px;
+    margin:28px auto;
+    padding:0 18px 40px;
+}
+
+.welcome-panel{
+    background:linear-gradient(120deg,#0c2850,#14518a);
+    color:white;
+    padding:30px;
+    border-radius:18px;
+    margin-bottom:22px;
+    box-shadow:var(--shadow);
+    position:relative;
+    overflow:hidden;
+}
+
+.welcome-panel:after{
+    content:"";
+    position:absolute;
+    width:220px;
+    height:220px;
+    border:35px solid rgba(255,255,255,.07);
+    border-radius:50%;
+    right:-65px;
+    top:-100px;
+    pointer-events:none;
+}
+
+.welcome-panel h1{
+    margin:0 0 8px;
+    font-size:27px;
+    line-height:1.25;
+    position:relative;
+    z-index:1;
+}
+
+.welcome-panel p{
+    color:#d8e8f8;
+    margin:0;
+    max-width:650px;
+    font-size:14px;
+    position:relative;
+    z-index:1;
+}
+
+.account-line{
+    margin-top:16px;
+    font-size:13px;
+    color:#d8e8f8;
+    overflow-wrap:anywhere;
+    position:relative;
+    z-index:1;
+}
+
+.panel{
+    background:var(--white);
+    padding:25px;
+    border:1px solid var(--border);
+    border-radius:15px;
+    margin-bottom:20px;
+    box-shadow:var(--shadow);
+}
+
+.panel-heading{
+    display:flex;
+    align-items:flex-start;
+    gap:13px;
+    margin-bottom:17px;
+}
+
+.panel-icon{
+    width:40px;
+    height:40px;
+    flex:0 0 40px;
+    display:grid;
+    place-items:center;
+    border-radius:11px;
+    background:#eaf3ff;
+    color:var(--blue-dark);
+    font-size:19px;
+    font-weight:700;
+}
+
+h2{
+    font-size:19px;
+    line-height:1.3;
+    margin:0 0 5px;
+    color:var(--navy);
+}
+
+h3{
+    font-size:15px;
+    margin:22px 0 10px;
+    color:var(--navy);
+}
+
+.muted{
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.65;
+}
+
+.panel-heading .muted{margin:0}
+
+label{
+    display:block;
+    font-weight:700;
+    font-size:13px;
+    margin:17px 0 7px;
+    color:#263e5b;
+}
+
+input,textarea,select{
+    display:block;
+    width:100%;
+    min-height:49px;
+    padding:12px 14px;
+    border:1px solid #cbd5e1;
+    border-radius:9px;
+    font-size:15px;
+    color:var(--text);
+    background:white;
+    outline:none;
+    transition:border-color .15s,box-shadow .15s;
+}
+
+input:focus,textarea:focus,select:focus{
+    border-color:var(--blue);
+    box-shadow:0 0 0 3px rgba(22,119,232,.12);
+}
+
+input[readonly]{
+    background:#f4f7fb;
+    color:#64748b;
+}
+
+textarea{
+    min-height:100px;
+    resize:vertical;
+}
+
+input[type="file"]{
+    min-height:54px;
+    padding:10px;
+    background:#f8fbff;
+}
+
+input[type="file"]::file-selector-button{
+    border:0;
+    border-radius:7px;
+    padding:8px 12px;
+    margin-right:10px;
+    background:#e6f0ff;
+    color:var(--blue-dark);
+    font-weight:700;
+    cursor:pointer;
+}
+
+button{
+    border:0;
+    border-radius:9px;
+    background:linear-gradient(110deg,var(--blue),var(--blue-dark));
+    color:white;
+    padding:13px 18px;
+    min-height:49px;
+    font-size:14px;
+    font-weight:700;
+    cursor:pointer;
+    transition:transform .15s,opacity .15s;
+}
+
+button:active{transform:scale(.99)}
+
+button:disabled{
+    opacity:.55;
+    cursor:not-allowed;
+}
+
+.secondary{
+    background:#e9eff7;
+    color:#24415f;
+}
+
+.topbar button{
+    min-height:42px;
+    padding:10px 16px;
+    background:rgba(255,255,255,.12);
+    border:1px solid rgba(255,255,255,.3);
+    color:white;
+}
+
+.actions{
+    display:flex;
+    gap:11px;
+    flex-wrap:wrap;
+    margin-top:20px;
+}
+
 .actions button{flex:1}
-.message{display:none;padding:12px;border-radius:7px;margin:14px 0;font-size:14px;line-height:1.5;overflow-wrap:anywhere}
-.message.success{display:block;background:#dcfce7;color:#166534}
-.message.error{display:block;background:#fee2e2;color:#991b1b}
-.message.info{display:block;background:#e0f2fe;color:#075985}
-.status{display:inline-block;padding:7px 12px;border-radius:20px;background:#e0f2fe;color:#075985;font-weight:700;font-size:13px}
+
+.form-submit{
+    width:100%;
+    margin-top:20px;
+}
+
+.message{
+    display:none;
+    padding:14px 16px;
+    border-radius:10px;
+    margin:0 0 20px;
+    font-size:14px;
+    line-height:1.55;
+    overflow-wrap:anywhere;
+}
+
+.message.success{
+    display:block;
+    background:var(--success-bg);
+    color:#166534;
+    border:1px solid #bbf7d0;
+}
+
+.message.error{
+    display:block;
+    background:var(--danger-bg);
+    color:#991b1b;
+    border:1px solid #fecaca;
+}
+
+.message.info{
+    display:block;
+    background:var(--info-bg);
+    color:#075985;
+    border:1px solid #bae6fd;
+}
+
+.status{
+    display:inline-flex;
+    align-items:center;
+    padding:8px 14px;
+    border-radius:30px;
+    background:var(--warning-bg);
+    color:var(--warning);
+    border:1px solid #f3d9a5;
+    font-weight:800;
+    font-size:13px;
+}
+
+.status-description{
+    margin:10px 0 17px;
+}
+
+.status-card{
+    padding:19px;
+    background:#f7faff;
+    border:1px solid var(--border);
+    border-radius:12px;
+    margin-top:12px;
+}
+
+.status-card .muted{margin:0}
+
+.required-note{
+    padding:14px 16px;
+    background:var(--warning-bg);
+    color:#8a4b08;
+    border:1px solid #f4d7a1;
+    border-radius:10px;
+    font-size:13px;
+    line-height:1.6;
+    margin:17px 0;
+}
+
+.doc-note{
+    font-size:13px;
+    color:var(--muted);
+    line-height:1.6;
+    margin:9px 0 14px;
+}
+
+.document-list{
+    padding:13px 15px;
+    background:#f7faff;
+    border:1px solid var(--border);
+    border-radius:10px;
+    overflow-wrap:anywhere;
+}
+
+.document-list p{
+    padding:9px 0;
+    margin:0;
+    border-bottom:1px solid var(--border);
+    font-size:14px;
+}
+
+.document-list p:last-child{border-bottom:0}
+
+.steps{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    margin:20px 0 0;
+}
+
+.step{
+    background:#f5f8fc;
+    border:1px solid var(--border);
+    border-radius:10px;
+    padding:12px;
+    text-align:center;
+    color:#52677f;
+    font-size:12px;
+    font-weight:700;
+}
+
+.step-number{
+    display:grid;
+    place-items:center;
+    width:27px;
+    height:27px;
+    margin:0 auto 7px;
+    border-radius:50%;
+    background:#e1edff;
+    color:var(--blue-dark);
+    font-size:12px;
+}
+
+a{
+    color:var(--blue-dark);
+    font-weight:700;
+}
+
 .hidden{display:none!important}
-.doc-note{font-size:13px;color:#64748b;line-height:1.5}
-.required-note{padding:12px;background:#fff7ed;color:#9a3412;border-radius:7px;font-size:13px;line-height:1.5}
-a{color:#087f8c}
-@media(max-width:520px){
-body{padding:10px}
-header,.panel{padding:18px}
-.actions{flex-direction:column}
-.actions button{width:100%}
+
+.footer{
+    text-align:center;
+    color:var(--muted);
+    font-size:12px;
+    padding:12px 10px 25px;
+}
+
+.footer strong{color:var(--navy)}
+
+@media(max-width:650px){
+    .topbar{padding:14px}
+    .topbar-inner{gap:10px}
+    .brand-name{font-size:18px}
+    .brand-caption{font-size:11px}
+    .brand-mark{width:39px;height:39px}
+    .topbar button{padding:9px 12px;font-size:12px}
+    .container{margin:17px auto;padding:0 12px 28px}
+    .welcome-panel{padding:23px 20px;border-radius:14px}
+    .welcome-panel h1{font-size:23px}
+    .panel{padding:19px 16px;border-radius:13px}
+    .panel-heading{gap:10px}
+    .panel-icon{width:36px;height:36px;flex-basis:36px}
+    .steps{gap:6px}
+    .step{padding:10px 5px;font-size:11px}
+    .actions{flex-direction:column}
+    .actions button{width:100%}
+}
+
+@media(max-width:380px){
+    .brand-caption{display:none}
+    .welcome-panel h1{font-size:21px}
+    .step{font-size:10px}
 }
 </style>
 </head>
 
 <body>
+
+<div class="topbar">
+    <div class="topbar-inner">
+        <div class="brand">
+            <div class="brand-mark">F</div>
+            <div>
+                <div class="brand-name">FrostTech</div>
+                <div class="brand-caption">HVAC and Refrigeration Marketplace</div>
+            </div>
+        </div>
+
+        <button id="signOutButton" type="button">Sign Out</button>
+    </div>
+</div>
+
 <main class="container">
 
-<header>
-<h1>FrostTech</h1>
-<p>Advertiser Workspace</p>
-<div id="welcome" class="muted">Checking your account...</div>
-<div class="actions" style="justify-content:center">
-<button id="signOutButton" class="secondary" type="button">Sign Out</button>
-</div>
-</header>
+    <section class="welcome-panel">
+        <h1>Your Advertiser Workspace</h1>
+        <p>
+            Manage your company verification, submit supporting documents
+            and follow the progress of your FrostTech advertiser application.
+        </p>
+        <div id="welcome" class="account-line">Checking your account...</div>
+    </section>
 
-<div id="message" class="message" role="status" aria-live="polite"></div>
+    <div id="message" class="message" role="status" aria-live="polite"></div>
 
-<section id="applicationPanel" class="panel hidden">
-<h2>Company Verification Application</h2>
+    <section id="applicationPanel" class="panel hidden">
 
-<p class="muted">
-FrostTech accepts advertiser applications from CAC-registered businesses only.
-Complete your company details and provide your CAC certificate.
-Your application will remain pending until FrostTech reviews your documents.
-</p>
+        <div class="panel-heading">
+            <div class="panel-icon">✓</div>
+            <div>
+                <h2>Company Verification</h2>
+                <p class="muted">
+                    Complete your business details to begin your advertiser application.
+                </p>
+            </div>
+        </div>
 
-<div class="required-note">
-A valid CAC registration number and CAC certificate are compulsory.
-Do not enter an invented registration number or upload an unrelated document.
-</div>
+        <p class="muted">
+            FrostTech accepts advertiser applications from CAC-registered
+            businesses only. Your application will remain pending until
+            FrostTech reviews your documents.
+        </p>
 
-<form id="applicationForm">
+        <div class="steps">
+            <div class="step">
+                <span class="step-number">1</span>
+                Company Details
+            </div>
+            <div class="step">
+                <span class="step-number">2</span>
+                CAC Certificate
+            </div>
+            <div class="step">
+                <span class="step-number">3</span>
+                FrostTech Review
+            </div>
+        </div>
 
-<label for="companyName">Registered company name *</label>
-<input id="companyName" required maxlength="180">
+        <div class="required-note">
+            A valid CAC registration number and CAC certificate are compulsory.
+            Do not enter an invented registration number or upload an unrelated document.
+        </div>
 
-<label for="contactPerson">Contact person's full name *</label>
-<input id="contactPerson" required maxlength="150">
+        <form id="applicationForm">
 
-<label for="businessEmail">Business email address</label>
-<input id="businessEmail" type="email" readonly>
+            <label for="companyName">Registered company name *</label>
+            <input id="companyName" required maxlength="180"
+                   placeholder="Enter your registered business name">
 
-<label for="phone">Business phone number *</label>
-<input id="phone" type="tel" required maxlength="40">
+            <label for="contactPerson">Contact person's full name *</label>
+            <input id="contactPerson" required maxlength="150"
+                   placeholder="Enter the full name of your contact person">
 
-<label for="businessAddress">Business address *</label>
-<textarea id="businessAddress" required maxlength="500"></textarea>
+            <label for="businessEmail">Business email address</label>
+            <input id="businessEmail" type="email" readonly>
 
-<label for="registrationNumber">CAC registration number *</label>
-<input id="registrationNumber" required maxlength="100"
-       placeholder="Enter your valid CAC registration number">
+            <label for="phone">Business phone number *</label>
+            <input id="phone" type="tel" required maxlength="40"
+                   placeholder="Enter your business phone number">
 
-<label for="cacCertificate">CAC certificate *</label>
-<input id="cacCertificate" type="file"
-       accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-       required>
+            <label for="businessAddress">Business address *</label>
+            <textarea id="businessAddress" required maxlength="500"
+                      placeholder="Enter your registered business address"></textarea>
 
-<p class="doc-note">
-Accepted formats: PDF, JPG and PNG. Maximum file size: 10MB.
-The certificate will be stored privately.
-</p>
+            <label for="registrationNumber">CAC registration number *</label>
+            <input id="registrationNumber" required maxlength="100"
+                   placeholder="Enter your valid CAC registration number">
 
-<button id="applicationButton" type="submit">
-Submit Company Details and CAC Certificate
-</button>
+            <label for="cacCertificate">CAC certificate *</label>
+            <input id="cacCertificate" type="file"
+                   accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                   required>
 
-</form>
-</section>
+            <p class="doc-note">
+                Accepted formats: PDF, JPG and PNG. Maximum file size: 10MB.
+                Your certificate will be stored privately.
+            </p>
 
-<section id="documentsPanel" class="panel hidden">
-<h2>Verification Documents</h2>
+            <button id="applicationButton" class="form-submit" type="submit">
+                Submit Company Details and CAC Certificate
+            </button>
 
-<p class="muted">
-Your documents are stored privately and are available only to authorised
-FrostTech personnel and your advertiser account.
-</p>
+        </form>
+    </section>
 
-<div id="cacRequirement" class="required-note hidden">
-Your CAC certificate has not yet been recorded.
-Please upload it before your application can be considered for approval.
-</div>
+    <section id="documentsPanel" class="panel hidden">
 
-<form id="documentForm">
+        <div class="panel-heading">
+            <div class="panel-icon">▤</div>
+            <div>
+                <h2>Verification Documents</h2>
+                <p class="muted">
+                    Upload and review documents associated with your application.
+                </p>
+            </div>
+        </div>
 
-<label for="documentType">Document type *</label>
-<select id="documentType" required>
-<option value="CAC_CERTIFICATE">CAC Certificate</option>
-</select>
+        <p class="muted">
+            Your documents are stored privately and are available only to
+            authorised FrostTech personnel and your advertiser account.
+        </p>
 
-<label for="documentFile">Choose document *</label>
-<input id="documentFile" type="file"
-       accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-       required>
+        <div id="cacRequirement" class="required-note hidden">
+            Your CAC certificate has not yet been recorded.
+            Please upload it before your application can be considered for approval.
+        </div>
 
-<p class="doc-note">
-Accepted formats: PDF, JPG and PNG. Maximum file size: 10MB per file.
-</p>
+        <form id="documentForm">
 
-<button id="uploadButton" type="submit">Upload Document</button>
-</form>
+            <label for="documentType">Document type *</label>
+            <select id="documentType" required>
+                <option value="CAC_CERTIFICATE">CAC Certificate</option>
+            </select>
 
-<h3>Submitted Documents</h3>
-<div id="documentList" class="muted">No documents loaded yet.</div>
-</section>
+            <label for="documentFile">Choose document *</label>
+            <input id="documentFile" type="file"
+                   accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
+                   required>
 
-<section id="statusPanel" class="panel hidden">
-<h2>Application Status</h2>
-<p>Your current verification status:</p>
-<p><span id="verificationStatus" class="status">Pending</span></p>
-<p id="statusExplanation" class="muted"></p>
-<button id="refreshButton" class="secondary" type="button">
-Refresh Application Status
-</button>
-</section>
+            <p class="doc-note">
+                Accepted formats: PDF, JPG and PNG. Maximum file size: 10MB per file.
+            </p>
 
-<section id="signedOutPanel" class="panel hidden">
-<h2>Sign in required</h2>
-<p class="muted">
-Please sign in with your FrostTech account to access the advertiser workspace.
-</p>
-<a href="advertiser-login.html">Go to Advertiser Sign In</a>
-</section>
+            <button id="uploadButton" class="form-submit" type="submit">
+                Upload Document
+            </button>
+
+        </form>
+
+        <h3>Submitted Documents</h3>
+        <div id="documentList" class="document-list muted">
+            No documents loaded yet.
+        </div>
+
+    </section>
+
+    <section id="statusPanel" class="panel hidden">
+
+        <div class="panel-heading">
+            <div class="panel-icon">◎</div>
+            <div>
+                <h2>Application Status</h2>
+                <p class="muted">
+                    Follow the current progress of your FrostTech verification.
+                </p>
+            </div>
+        </div>
+
+        <div class="status-card">
+            <p class="muted">Your current verification status</p>
+            <p>
+                <span id="verificationStatus" class="status">Pending</span>
+            </p>
+            <p id="statusExplanation" class="muted status-description"></p>
+        </div>
+
+        <button id="refreshButton" class="secondary" type="button"
+                style="margin-top:17px;width:100%">
+            Refresh Application Status
+        </button>
+
+    </section>
+
+    <section id="signedOutPanel" class="panel hidden">
+        <div class="panel-heading">
+            <div class="panel-icon">!</div>
+            <div>
+                <h2>Sign In Required</h2>
+                <p class="muted">
+                    Please sign in with your FrostTech account to access your advertiser workspace.
+                </p>
+            </div>
+        </div>
+        <a href="advertiser-login.html">Go to Advertiser Sign In</a>
+    </section>
+
+    <div class="footer">
+        <strong>FrostTech HVAC and Refrigeration</strong>
+        <p>Advertiser Workspace</p>
+        <p>Need assistance? Contact FrostTech support.</p>
+    </div>
 
 </main>
 
