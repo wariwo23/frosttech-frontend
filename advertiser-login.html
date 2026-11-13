@@ -4,219 +4,715 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#081b35">
 <title>Advertiser Sign In | FrostTech</title>
 
 <style>
-    
+:root {
+    --navy: #081b35;
+    --navy-light: #102b4e;
+    --blue: #1677e8;
+    --blue-dark: #0757bc;
+    --cyan: #20c4df;
+    --ink: #172b45;
+    --muted: #697a90;
+    --light: #f4f8fc;
+    --border: #e4ebf3;
+    --white: #ffffff;
+    --radius: 20px;
+}
+
 * {
     box-sizing: border-box;
 }
 
-body {
-    margin: 0;
-    padding: 18px;
-    font-family: Arial, sans-serif;
-    background: #f1f5f9;
-    color: #183153;
+html {
+    min-height: 100%;
+    scroll-behavior: smooth;
 }
 
-.card {
-    max-width: 460px;
-    margin: 30px auto;
-    padding: 26px;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px #0001;
+body {
+    margin: 0;
+    min-height: 100vh;
+    padding: 24px;
+    font-family: Inter, Arial, sans-serif;
+    color: var(--ink);
+    background:
+        radial-gradient(circle at 8% 8%, #dceeff 0, transparent 30%),
+        linear-gradient(135deg, #f4f8fc, #eaf2fb);
+}
+
+a {
+    color: var(--blue);
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.page {
+    width: 100%;
+    max-width: 1120px;
+    margin: 0 auto;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    margin: 0 auto 28px;
 }
 
 .brand {
-    text-align: center;
-    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
-.brand h1 {
-    margin: 0;
-    color: #087f8c;
-}
-
-.brand p {
-    color: #64748b;
-    font-size: 14px;
-}
-
-h2 {
+.brand-mark {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 15px;
+    color: #fff;
     font-size: 22px;
-    text-align: center;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--blue), var(--cyan));
+    box-shadow: 0 8px 20px #1677e833;
 }
 
-label {
+.brand-name {
+    margin: 0;
+    color: var(--navy);
+    font-size: 23px;
+    font-weight: 900;
+    letter-spacing: -.7px;
+}
+
+.brand-caption {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 11px;
+    letter-spacing: .7px;
+    text-transform: uppercase;
+}
+
+.top-contact {
+    color: var(--navy-light);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.top-contact span {
+    color: var(--blue);
+}
+
+.main-layout {
+    display: grid;
+    grid-template-columns: 1fr 460px;
+    gap: 48px;
+    align-items: center;
+    min-height: 620px;
+}
+
+.intro {
+    padding: 30px 10px 30px 0;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border: 1px solid #cfe3fa;
+    border-radius: 30px;
+    color: var(--blue-dark);
+    background: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .6px;
+    text-transform: uppercase;
+}
+
+.eyebrow-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--cyan);
+}
+
+.intro h1 {
+    max-width: 570px;
+    margin: 25px 0 18px;
+    color: var(--navy);
+    font-size: clamp(36px, 5vw, 55px);
+    line-height: 1.08;
+    letter-spacing: -2px;
+}
+
+.intro h1 span {
+    color: var(--blue);
+}
+
+.intro-text {
+    max-width: 500px;
+    margin: 0;
+    color: var(--muted);
+    font-size: 16px;
+    line-height: 1.8;
+}
+
+.benefits {
+    display: grid;
+    gap: 17px;
+    margin-top: 34px;
+}
+
+.benefit {
+    display: flex;
+    align-items: flex-start;
+    gap: 13px;
+}
+
+.benefit-icon {
+    display: grid;
+    flex: 0 0 38px;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 12px;
+    color: var(--blue);
+    background: #e3f0ff;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.benefit strong {
     display: block;
-    margin: 16px 0 6px;
-    font-weight: 600;
+    margin: 1px 0 4px;
+    color: var(--navy);
     font-size: 14px;
 }
 
-input {
+.benefit p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.card {
     width: 100%;
-    min-height: 46px;
-    padding: 11px 12px;
-    border: 1px solid #cbd5e1;
-    border-radius: 7px;
-    font-size: 16px;
+    padding: 34px;
+    border: 1px solid #e8eef5;
+    border-radius: var(--radius);
+    background: var(--white);
+    box-shadow: 0 20px 60px #102b4e16;
+}
+
+.card-heading {
+    margin-bottom: 25px;
+}
+
+.card-heading .small-label {
+    margin: 0 0 9px;
+    color: var(--blue);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+}
+
+.card-heading h2 {
+    margin: 0 0 8px;
+    color: var(--navy);
+    font-size: 27px;
+    letter-spacing: -.7px;
+}
+
+.card-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+label.field-label {
+    display: block;
+    margin: 17px 0 8px;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+input[type="email"],
+input[type="password"],
+input[type="text"] {
+    display: block;
+    width: 100%;
+    min-height: 51px;
+    padding: 13px 14px;
+    border: 1px solid #d8e2ee;
+    border-radius: 11px;
+    outline: none;
+    color: var(--ink);
+    background: #fbfdff;
+    font-family: inherit;
+    font-size: 15px;
+    transition: border-color .2s, box-shadow .2s;
+}
+
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="text"]:focus {
+    border-color: var(--blue);
+    background: #fff;
+    box-shadow: 0 0 0 4px #1677e817;
 }
 
 .password-toggle {
     display: flex;
     align-items: center;
     gap: 9px;
-    margin-top: 10px;
-    font-size: 14px;
-    color: #475569;
-    font-weight: normal;
+    margin-top: 13px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
 }
 
 .password-toggle input {
-    width: 18px;
-    min-height: 18px;
+    width: 17px;
+    height: 17px;
     margin: 0;
-    accent-color: #087f8c;
+    accent-color: var(--blue);
 }
 
 button {
+    display: block;
     width: 100%;
-    min-height: 46px;
-    margin-top: 20px;
-    padding: 12px;
+    min-height: 52px;
+    margin-top: 23px;
+    padding: 13px 18px;
     border: 0;
-    border-radius: 7px;
-    background: #087f8c;
-    color: white;
+    border-radius: 11px;
+    color: #fff;
+    background: linear-gradient(110deg, var(--blue-dark), var(--blue));
+    box-shadow: 0 9px 20px #1677e82b;
+    font-family: inherit;
     font-size: 15px;
-    font-weight: 600;
+    font-weight: 800;
     cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+}
+
+button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 24px #1677e83d;
 }
 
 button:disabled {
     opacity: .6;
     cursor: not-allowed;
+    transform: none;
 }
 
 .forgot-password-link {
     display: block;
-    text-align: center;
     margin-top: 14px;
-    font-size: 14px;
-    font-weight: 600;
-    text-decoration: none;
-    color: #087f8c;
-}
-
-.forgot-password-link:hover {
-    text-decoration: underline;
+    color: var(--blue);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 700;
 }
 
 .message {
     display: none;
-    margin: 14px 0;
-    padding: 12px;
-    border-radius: 7px;
-    font-size: 14px;
-    line-height: 1.5;
+    margin: 0 0 15px;
+    padding: 12px 13px;
+    border-radius: 10px;
+    font-size: 13px;
+    line-height: 1.6;
     overflow-wrap: anywhere;
 }
 
 .message.success {
     display: block;
-    background: #dcfce7;
+    border: 1px solid #bbebcf;
     color: #166534;
+    background: #effcf4;
 }
 
 .message.error {
     display: block;
-    background: #fee2e2;
+    border: 1px solid #fecaca;
     color: #991b1b;
+    background: #fff1f2;
 }
 
-.muted {
+.register-prompt {
+    margin: 25px 0 0;
+    padding-top: 21px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
     text-align: center;
-    color: #64748b;
-    font-size: 14px;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+.register-prompt a {
+    font-weight: 800;
+}
+
+.contact-panel {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    padding: 15px;
+    border: 1px solid #dcecfb;
+    border-radius: 13px;
+    background: #f3f9ff;
+}
+
+.contact-icon {
+    display: grid;
+    flex: 0 0 38px;
+    place-items: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    color: #fff;
+    background: #159b62;
+    font-size: 17px;
+    font-weight: 900;
+}
+
+.contact-copy {
+    min-width: 0;
+}
+
+.contact-copy strong {
+    display: block;
+    margin-bottom: 3px;
+    color: var(--navy);
+    font-size: 12px;
+}
+
+.contact-copy a {
+    color: var(--blue-dark);
+    font-size: 13px;
+    font-weight: 800;
+}
+
+.home-link {
+    display: block;
+    margin-top: 23px;
+    color: var(--muted);
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.footer {
+    display: flex;
+    justify-content: space-between;
+    gap: 14px;
+    margin-top: 35px;
+    padding: 20px 0 5px;
+    border-top: 1px solid #dce5ef;
+    color: var(--muted);
+    font-size: 12px;
     line-height: 1.6;
 }
 
-a {
-    color: #087f8c;
+.footer a {
+    font-weight: 700;
+}
+
+@media (max-width: 850px) {
+    body {
+        padding: 20px;
+    }
+
+    .main-layout {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        min-height: auto;
+        max-width: 560px;
+        margin: 0 auto;
+    }
+
+    .intro {
+        padding: 15px 0 5px;
+    }
+
+    .intro h1 {
+        max-width: 600px;
+        margin-top: 18px;
+        font-size: 40px;
+    }
+
+    .intro-text {
+        font-size: 14px;
+    }
+
+    .benefits {
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-top: 22px;
+    }
+
+    .card {
+        padding: 29px;
+    }
+
+    .footer {
+        max-width: 560px;
+        margin: 28px auto 0;
+    }
+}
+
+@media (max-width: 600px) {
+    body {
+        padding: 16px;
+    }
+
+    .topbar {
+        margin-bottom: 17px;
+    }
+
+    .brand-mark {
+        width: 42px;
+        height: 42px;
+        border-radius: 13px;
+    }
+
+    .brand-name {
+        font-size: 20px;
+    }
+
+    .brand-caption {
+        font-size: 9px;
+    }
+
+    .top-contact {
+        font-size: 11px;
+    }
+
+    .intro {
+        padding-top: 8px;
+    }
+
+    .intro h1 {
+        margin: 17px 0 12px;
+        font-size: 35px;
+        letter-spacing: -1.3px;
+    }
+
+    .intro-text {
+        font-size: 13px;
+        line-height: 1.7;
+    }
+
+    .benefits {
+        grid-template-columns: 1fr;
+        gap: 13px;
+        margin-top: 19px;
+    }
+
+    .benefit-icon {
+        width: 34px;
+        height: 34px;
+        flex-basis: 34px;
+    }
+
+    .card {
+        padding: 23px 19px;
+        border-radius: 17px;
+    }
+
+    .card-heading h2 {
+        font-size: 24px;
+    }
+
+    .footer {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+
+@media (max-width: 360px) {
+    body {
+        padding: 12px;
+    }
+
+    .top-contact {
+        max-width: 115px;
+        text-align: right;
+        line-height: 1.5;
+    }
+
+    .intro h1 {
+        font-size: 31px;
+    }
+
+    .card {
+        padding: 20px 15px;
+    }
 }
 </style>
 </head>
 
 <body>
+<div class="page">
 
-<main class="card">
+<header class="topbar">
+    <div class="brand">
+        <div class="brand-mark" aria-hidden="true">F</div>
+        <div>
+            <p class="brand-name">FrostTech</p>
+            <p class="brand-caption">HVAC & Refrigeration Marketplace</p>
+        </div>
+    </div>
 
-<header class="brand">
-    <h1>FrostTech</h1>
-    <p>HVAC and Refrigeration Advertising Marketplace</p>
+    <a class="top-contact" href="https://wa.me/2348032008635">
+        Need help? <span>Contact us</span>
+    </a>
 </header>
 
-<h2>Advertiser Sign In</h2>
+<main class="main-layout">
 
-<div
-    id="message"
-    class="message"
-    role="status"
-    aria-live="polite"
-></div>
+    <section class="intro">
+        <div class="eyebrow">
+            <span class="eyebrow-dot"></span>
+            Advertiser workspace
+        </div>
 
-<form id="loginForm">
+        <h1>
+            Put your business in front of
+            <span>the right customers.</span>
+        </h1>
 
-    <label for="email">Email address</label>
-    <input
-        id="email"
-        type="email"
-        autocomplete="username"
-        required
-    >
+        <p class="intro-text">
+            Welcome to FrostTech Advertising. Sign in to access your
+            advertiser workspace, manage your business application and
+            stay connected with the FrostTech marketplace.
+        </p>
 
-    <label for="password">Password</label>
-    <input
-        id="password"
-        type="password"
-        autocomplete="current-password"
-        required
-    >
+        <div class="benefits">
+            <div class="benefit">
+                <div class="benefit-icon" aria-hidden="true">✓</div>
+                <div>
+                    <strong>Manage your application</strong>
+                    <p>Access your advertiser account and application status.</p>
+                </div>
+            </div>
 
-    <label class="password-toggle" for="showPassword">
-        <input id="showPassword" type="checkbox">
-        Show password
-    </label>
+            <div class="benefit">
+                <div class="benefit-icon" aria-hidden="true">↗</div>
+                <div>
+                    <strong>Grow your visibility</strong>
+                    <p>Connect your business with customers in the HVAC market.</p>
+                </div>
+            </div>
 
-    <button id="loginButton" type="submit">
-        Sign In
-    </button>
+            <div class="benefit">
+                <div class="benefit-icon" aria-hidden="true">⌂</div>
+                <div>
+                    <strong>One convenient workspace</strong>
+                    <p>Return to your advertiser portal whenever you need it.</p>
+                </div>
+            </div>
+        </div>
+    </section>
 
-    <a
-        href="#"
-        id="forgotPasswordLink"
-        class="forgot-password-link"
-    >
-        Forgot Password?
-    </a>
+    <section class="card" aria-labelledby="loginHeading">
 
-</form>
+        <div class="card-heading">
+            <p class="small-label">Welcome back</p>
+            <h2 id="loginHeading">Advertiser Sign In</h2>
+            <p>Enter your registered email and password to continue.</p>
+        </div>
 
-<p class="muted">
-    New to FrostTech advertising?
-    <a href="advertiser-register.html">
-        Create an advertiser account
-    </a>.
-</p>
+        <div
+            id="message"
+            class="message"
+            role="status"
+            aria-live="polite"
+        ></div>
 
-<p class="muted">
-    <a href="index.html">Return to FrostTech homepage</a>
-</p>
+        <form id="loginForm">
+
+            <label class="field-label" for="email">Email address</label>
+            <input
+                id="email"
+                type="email"
+                placeholder="Enter your registered email"
+                autocomplete="username"
+                required
+            >
+
+            <label class="field-label" for="password">Password</label>
+            <input
+                id="password"
+                type="password"
+                placeholder="Enter your password"
+                autocomplete="current-password"
+                required
+            >
+
+            <label class="password-toggle" for="showPassword">
+                <input id="showPassword" type="checkbox">
+                Show password
+            </label>
+
+            <button id="loginButton" type="submit">
+                Sign In
+            </button>
+
+            <a
+                href="#"
+                id="forgotPasswordLink"
+                class="forgot-password-link"
+            >
+                Forgot Password?
+            </a>
+
+        </form>
+
+        <p class="register-prompt">
+            New to FrostTech advertising?
+            <a href="advertiser-register.html">Create an advertiser account</a>
+        </p>
+
+        <div class="contact-panel">
+            <div class="contact-icon" aria-hidden="true">W</div>
+            <div class="contact-copy">
+                <strong>Need assistance with your account?</strong>
+                <a href="https://wa.me/2348032008635">
+                    WhatsApp: +234 803 200 8635
+                </a>
+            </div>
+        </div>
+
+        <a class="home-link" href="index.html">
+            ← Return to FrostTech homepage
+        </a>
+
+    </section>
 
 </main>
+
+<footer class="footer">
+    <span>© 2026 FrostTech HVAC and Refrigeration.</span>
+    <span>Professional solutions. Trusted connections.</span>
+</footer>
+
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase.js"></script>
