@@ -370,6 +370,24 @@ footer{
 
   .ft-confirm-box{padding:20px}
 }
+
+/* Guest quotation access */
+.guest-access{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.guest-access h2{margin:0 0 6px;font-size:20px}
+.guest-access p{color:var(--muted);margin:5px 0 12px}
+.guest-access .field{margin:12px 0}
+.guest-access input{width:100%;min-height:46px;padding:11px;border:1px solid #b9c7d8;border-radius:8px;font:14px Inter,Arial,sans-serif}
+.guest-access .guest-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.guest-access .guest-actions button{flex:1}
+.guest-access .guest-hint{font-size:12px;color:var(--muted)}
+.guest-access .guest-fee{margin-top:14px;padding:15px;background:var(--light);border:1px solid #c8ddff;border-radius:10px}
+.guest-access .guest-fee strong{display:block}
+.guest-access .guest-fee .fee-amount{font-size:22px;font-weight:800;color:var(--dark)}
+.guest-access .guest-terms{display:flex;align-items:flex-start;gap:10px;margin:14px 0}
+.guest-access .guest-terms input{width:18px;min-width:18px;height:18px;min-height:18px;margin-top:4px}
+.guest-access a{color:var(--blue);font-weight:700}
+@media(max-width:480px){.guest-access{padding:14px}.guest-access .guest-actions button{width:100%;flex-basis:100%}}
+
 </style>
 </head>
 
@@ -389,6 +407,35 @@ footer{
    <button id="refreshButton" class="primary" type="button">Refresh Quotations</button>
    <button id="signOutButton" class="secondary" type="button">Sign Out</button>
   </div>
+ </section>
+
+
+ <section id="guestAccessPanel" class="guest-access hidden">
+  <h2>Access a Guest Quotation</h2>
+  <p>You can review a quotation without creating an account. Enter the quotation reference and the email address originally supplied with your request.</p>
+  <div class="field">
+   <label for="guestQuotationNumber">Quotation reference</label>
+   <input id="guestQuotationNumber" type="text" maxlength="80" autocomplete="off" placeholder="e.g. FT-Q-..." required>
+  </div>
+  <div class="field">
+   <label for="guestEmail">Email address used for the quotation request</label>
+   <input id="guestEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+  </div>
+  <div class="guest-actions">
+   <button id="guestSendCode" class="primary" type="button">Send Verification Code</button>
+  </div>
+  <div id="guestOtpArea" class="hidden">
+   <div class="field">
+    <label for="guestOtp">Six-digit email verification code</label>
+    <input id="guestOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter verification code">
+   </div>
+   <div class="guest-actions">
+    <button id="guestVerifyCode" class="primary" type="button">Verify Email and Continue</button>
+    <button id="guestNewCode" class="secondary" type="button">Send Another Code</button>
+   </div>
+  </div>
+  <div id="guestQuotationResult" class="hidden"></div>
+  <p class="guest-hint">For security, the verification code expires after 10 minutes. Your quotation prices remain hidden until the administration fee is successfully verified.</p>
  </section>
 
  <div id="message" class="message hidden" role="status" aria-live="polite"></div>
@@ -414,6 +461,8 @@ const container = document.getElementById("quotationsContainer");
 const messageBox = document.getElementById("message");
 const refreshButton = document.getElementById("refreshButton");
 const signOutButton = document.getElementById("signOutButton");
+const guestPanel = document.getElementById("guestAccessPanel");
+const guestResult = document.getElementById("guestQuotationResult");
 
 document.getElementById("currentYear").textContent = new Date().getFullYear();
 
@@ -421,6 +470,9 @@ let currentSession = null;
 let paymentInProgress = false;
 let decisionInProgress = false;
 let cachedCustomerRecordId = null;
+let guestAccessToken = sessionStorage.getItem("ft_guest_quote_token") || "";
+let guestQuotationNumber = sessionStorage.getItem("ft_guest_quote_number") || "";
+let guestPaymentReference = sessionStorage.getItem("ft_guest_fee_reference") || "";
 
 /* General helpers */
 
@@ -499,7 +551,6 @@ async function getSession() {
 
   if (!data.session) {
     currentSession = null;
-    window.location.href = "customer-login.html?next=my-quotations.html";
     return null;
   }
 
@@ -1347,7 +1398,205 @@ async function submitDecision(
   }
 }
 
+/* Guest quotation access — separate from registered-customer authentication */
+
+async function invokeGuestFunction(action, extra = {}, tokenOverride = guestAccessToken) {
+  const headers = tokenOverride ? { Authorization: "Bearer " + tokenOverride } : {};
+  const { data, error } = await db.functions.invoke("guest-quotation-access", {
+    body: { action, quotation_number: guestQuotationNumber || document.getElementById("guestQuotationNumber").value.trim(), ...extra },
+    headers
+  });
+  if (error) {
+    let detail = data?.error || "";
+    if (!detail && error.context instanceof Response) {
+      try { detail = (await error.context.clone().json())?.error || ""; } catch (_) {}
+    }
+    throw new Error(detail || "The guest quotation service could not complete the request.");
+  }
+  if (!data || data.error || data.success === false) throw new Error(data?.error || "Unexpected guest quotation response.");
+  return data;
+}
+
+function setGuestBusy(button, busy, label) {
+  if (!button) return;
+  button.disabled = busy;
+  if (label) button.textContent = label;
+}
+
+async function sendGuestCode() {
+  const number = document.getElementById("guestQuotationNumber").value.trim();
+  const email = document.getElementById("guestEmail").value.trim();
+  if (!number || !email) {
+    showMessage("Enter both the quotation reference and the original email address.", "error");
+    return;
+  }
+  guestQuotationNumber = number;
+  sessionStorage.setItem("ft_guest_quote_number", number);
+  const button = document.getElementById("guestSendCode");
+  setGuestBusy(button, true, "Sending...");
+  try {
+    const result = await invokeGuestFunction("send_otp", { email }, "");
+    document.getElementById("guestOtpArea").classList.remove("hidden");
+    showMessage(result.message || "If the quotation details match our records, a verification code will be sent.", "success");
+  } catch (error) {
+    showMessage(error.message || "Unable to send the verification code.", "error");
+  } finally {
+    setGuestBusy(button, false, "Send Verification Code");
+  }
+}
+
+async function verifyGuestCode() {
+  const number = document.getElementById("guestQuotationNumber").value.trim();
+  const otp = document.getElementById("guestOtp").value.trim();
+  if (!number || !/^\d{6}$/.test(otp)) {
+    showMessage("Enter the six-digit code sent to your email.", "error");
+    return;
+  }
+  guestQuotationNumber = number;
+  const button = document.getElementById("guestVerifyCode");
+  setGuestBusy(button, true, "Verifying...");
+  try {
+    const result = await invokeGuestFunction("verify_otp", { otp }, "");
+    if (!result.access_token) throw new Error("Secure guest access could not be established.");
+    guestAccessToken = result.access_token;
+    sessionStorage.setItem("ft_guest_quote_token", guestAccessToken);
+    sessionStorage.setItem("ft_guest_quote_number", guestQuotationNumber);
+    document.getElementById("guestOtpArea").classList.add("hidden");
+    await loadGuestQuotation();
+  } catch (error) {
+    showMessage(error.message || "Email verification failed.", "error");
+  } finally {
+    setGuestBusy(button, false, "Verify Email and Continue");
+  }
+}
+
+function renderGuestLocked(q) {
+  guestResult.replaceChildren();
+  guestResult.classList.remove("hidden");
+  const panel = document.createElement("div");
+  panel.className = "guest-fee";
+  addText(panel, "h3", "Quotation received");
+  addText(panel, "p", "Reference: " + q.quotation_number, "reference");
+  addDetail(panel, "Quotation status", q.status || "Submitted");
+  addDetail(panel, "Date issued", displayDate(q.created_at));
+  addText(panel, "strong", "Quotation Processing and Marketplace Administration Fee");
+  addText(panel, "p", money(q.admin_fee), "fee-amount");
+  addText(panel, "p", "Your full quotation details and prices will be available after this fee has been successfully paid and verified.");
+  const terms = document.createElement("label");
+  terms.className = "guest-terms";
+  const check = document.createElement("input");
+  check.type = "checkbox";
+  check.checked = !!q.prepayment_terms_accepted_at;
+  const span = document.createElement("span");
+  span.textContent = "I have read and agreed to the FrostTech General Terms and Conditions.";
+  terms.append(check, span);
+  panel.appendChild(terms);
+  const link = document.createElement("a");
+  link.href = "../terms.html";
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = "Read General Terms and Conditions";
+  panel.appendChild(link);
+  const actions = document.createElement("div");
+  actions.className = "guest-actions";
+  const pay = addText(actions, "button", q.prepayment_terms_accepted_at ? "Pay Administration Fee" : "Accept Terms and Continue", "primary");
+  pay.type = "button";
+  pay.addEventListener("click", async () => {
+    if (!q.prepayment_terms_accepted_at && !check.checked) {
+      showMessage("Please accept the General Terms and Conditions before proceeding.", "error");
+      check.focus();
+      return;
+    }
+    setGuestBusy(pay, true, "Preparing secure payment...");
+    try {
+      if (!q.prepayment_terms_accepted_at) {
+        await invokeGuestFunction("accept_prepayment_terms", { terms_accepted: true });
+      }
+      const checkout = await invokeGuestFunction("initialize_fee_payment");
+      if (!checkout.authorization_url || !checkout.reference) throw new Error("Paystack did not return a valid checkout session.");
+      guestPaymentReference = checkout.reference;
+      sessionStorage.setItem("ft_guest_fee_reference", guestPaymentReference);
+      window.location.assign(checkout.authorization_url);
+    } catch (error) {
+      showMessage(error.message || "Unable to start administration-fee payment.", "error");
+      setGuestBusy(pay, false, q.prepayment_terms_accepted_at ? "Pay Administration Fee" : "Accept Terms and Continue");
+    }
+  });
+  panel.appendChild(actions);
+  guestResult.appendChild(panel);
+}
+
+function renderGuestUnlocked(q) {
+  guestResult.replaceChildren();
+  guestResult.classList.remove("hidden");
+  const card = document.createElement("article");
+  card.className = "quotation-card";
+  addText(card, "h3", q.quotation_number || "FrostTech Quotation");
+  addText(card, "div", "Guest quotation — email verified", "reference");
+  addText(card, "span", "Administration fee paid and verified", "status status-paid");
+  const details = document.createElement("div");
+  details.className = "details";
+  addDetail(details, "Product / Service", q.product_description);
+  addDetail(details, "Quantity", q.quantity);
+  addDetail(details, "Unit price", money(q.unit_price));
+  addDetail(details, "Subtotal", money(q.subtotal));
+  addDetail(details, "Additional charges", money(q.additional_charges));
+  addDetail(details, "Discount", money(q.discount));
+  addDetail(details, "Delivery", money(q.delivery_cost));
+  addDetail(details, "Total quotation amount", money(q.total_amount), true);
+  addDetail(details, "Valid until", displayDate(q.validity_date));
+  addDetail(details, "Date issued", displayDate(q.created_at));
+  addDetail(details, "Administration fee paid", money(q.admin_fee));
+  card.appendChild(details);
+  const print = addText(card, "button", "Print / Save Quotation as PDF", "print-quotation-button");
+  print.type = "button";
+  q.administration_fee = q.admin_fee;
+  print.addEventListener("click", () => printCustomerQuotation(q));
+  addText(card, "p", "Your quotation is now available for review. To accept or decline this offer, please contact FrostTech while the secure guest decision facility is being completed.", "muted");
+  guestResult.appendChild(card);
+}
+
+async function loadGuestQuotation() {
+  if (!guestAccessToken || !guestQuotationNumber) return;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const returnedReference = params.get("reference") || params.get("trxref") || guestPaymentReference;
+    if (returnedReference && guestPaymentReference && returnedReference === guestPaymentReference) {
+      showMessage("Checking your guest administration-fee payment with Paystack...", "info");
+      await invokeGuestFunction("verify_fee_payment", { reference: returnedReference });
+      sessionStorage.removeItem("ft_guest_fee_reference");
+      guestPaymentReference = "";
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    const result = await invokeGuestFunction("get_status");
+    if (!result.quotation) throw new Error("The guest quotation service returned an invalid response.");
+    const q = result.quotation;
+    if (q.details_unlocked === true || q.quotation_details_unlocked === true) {
+      renderGuestUnlocked(q);
+      showMessage("Your administration fee is verified. Your full quotation is now available.", "success");
+    } else {
+      renderGuestLocked(q);
+    }
+    container.replaceChildren();
+  } catch (error) {
+    console.error("Guest quotation load failed:", error);
+    showMessage(error.message || "Unable to load this guest quotation.", "error");
+    if (/expired|verify your email/i.test(error.message || "")) {
+      guestAccessToken = "";
+      sessionStorage.removeItem("ft_guest_quote_token");
+      guestResult.replaceChildren();
+      guestResult.classList.add("hidden");
+      document.getElementById("guestOtpArea").classList.remove("hidden");
+    }
+  }
+}
+
+document.getElementById("guestSendCode").addEventListener("click", sendGuestCode);
+document.getElementById("guestVerifyCode").addEventListener("click", verifyGuestCode);
+document.getElementById("guestNewCode").addEventListener("click", sendGuestCode);
+
 /* Load the customer's quotations */
+
 
 async function loadQuotations(keepMessage = false) {
   if (!keepMessage) hideMessage();
@@ -1358,8 +1607,22 @@ async function loadQuotations(keepMessage = false) {
 
   try {
     await getSession();
-    if (!currentSession) return;
+    if (!currentSession) {
+      signOutButton.classList.add("hidden");
+      guestPanel.classList.remove("hidden");
+      refreshButton.textContent = "Refresh Quotations";
+      if (guestAccessToken && guestQuotationNumber) {
+        document.getElementById("guestQuotationNumber").value = guestQuotationNumber;
+        await loadGuestQuotation();
+      } else {
+        container.replaceChildren();
+        addText(container, "div", "Sign in to view registered-customer quotations, or use the guest access section above to retrieve a quotation without creating an account.", "notice");
+      }
+      return;
+    }
 
+    guestPanel.classList.add("hidden");
+    signOutButton.classList.remove("hidden");
     await handlePaystackReturn();
 
     const result = await invokeFunction("get-customer-quotations", {});
