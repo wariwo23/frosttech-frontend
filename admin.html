@@ -1402,9 +1402,6 @@ footer {
     <input type="hidden" id="directQuoteId">
     <input type="hidden" id="directRequestId">
 
-    <p>Request reference: <strong id="directRequestReference"></strong></p>
-    <div id="directRequestRequirements" class="requirements">Customer requirements will appear here.</div>
-
     <label for="directProductDescription">Product / Service *</label>
     <textarea id="directProductDescription" required></textarea>
 
@@ -2919,8 +2916,6 @@ function resetDirectQuotationForm() {
 
     $("directQuoteId").value = "";
     $("directRequestId").value = "";
-    $("directRequestReference").textContent = "";
-    $("directRequestRequirements").textContent = "";
 
     currentDirectQuoteRequest = null;
 
@@ -2986,12 +2981,6 @@ async function openDirectQuotationForRequest(requestId) {
     currentDirectQuoteRequest = request;
 
     $("directRequestId").value = request.id;
-
-    $("directRequestReference").textContent =
-        request.request_number || request.id;
-
-    $("directRequestRequirements").textContent =
-        request.description || "No description supplied.";
 
     $("directQuoteForm").classList.remove("hidden");
     $("directQuotationSection").hidden = false;
@@ -3791,12 +3780,6 @@ async function editDirectQuotation(id) {
         );
 
         currentDirectQuoteRequest = request || null;
-
-        $("directRequestReference").textContent =
-            request?.request_number || quote.request_id || "";
-
-        $("directRequestRequirements").textContent =
-            request?.description || "";
 
         $("directQuoteForm").classList.remove("hidden");
         $("directQuotationSection").hidden = false;
