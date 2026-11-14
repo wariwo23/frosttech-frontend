@@ -3095,19 +3095,21 @@ function calculateDirectQuotation() {
     const accessoriesSellingTotal =
         accessoriesCost * (1 + v.markup / 100);
 
-    const subtotal =
-        productSellingTotal +
-        bracketsSellingTotal +
-        installationSellingTotal +
-        accessoriesSellingTotal;
-
-    const total =
-        Math.max(0, subtotal - v.discount) + v.delivery;
+    /*
+     * Keep the product subtotal separate from additional items.
+     * This matches the quotation breakdown, database fields, and
+     * approved total/fee formulas without counting extras twice.
+     */
+    const subtotal = productSellingTotal;
 
     const additionalCharges =
         bracketsSellingTotal +
         installationSellingTotal +
         accessoriesSellingTotal;
+
+    const total =
+        Math.max(0, subtotal + additionalCharges - v.discount) +
+        v.delivery;
 
     return {
         ...v,
