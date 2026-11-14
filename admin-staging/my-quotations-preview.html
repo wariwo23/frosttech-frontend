@@ -1709,13 +1709,8 @@ async function loadGuestQuotation() {
     if (!result.quotation) throw new Error("The guest quotation service returned an invalid response.");
     const q = result.quotation;
     if (q.details_unlocked === true || q.quotation_details_unlocked === true) {
-      if (String(q.customer_decision || "").toLowerCase() === "accepted") {
-        const { data: orderData, error: orderError } = await db.from("orders")
-          .select("id,order_number,status,customer_total")
-          .eq("quotation_id", q.id).is("customer_id", null).maybeSingle();
-        if (!orderError && orderData) q.order_paid = orderData.status === "paid" ||
-          ["processing","ready_for_delivery","out_for_delivery","delivered","completed"].includes(orderData.status);
-      }
+      // Guest order state is supplied by the token-protected server response.
+      // Do not query orders directly from the public browser session.
       renderGuestUnlocked(q);
       showMessage("Your administration fee is verified. Your full quotation is now available.", "success");
     } else {
