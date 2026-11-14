@@ -1400,7 +1400,7 @@ footer {
 <form id="directQuoteForm" class="hidden">
     <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
     <div class="message info">
-        Enter the applicable product cost, add any relevant charges or delivery, and verify the calculated quotation total before submitting.
+        This is FrostTech's quotation preparation page. The customer supplies the requested product or service and quantity. The administrator enters the applicable product cost and markup, sets delivery cost, and applies any appropriate discount. Add only additional items specifically requested by the customer.
     </div>
     <input type="hidden" id="directQuoteId">
     <input type="hidden" id="directRequestId">
@@ -1419,7 +1419,7 @@ footer {
 
     <div class="message info">Markup applies to the product and permitted additional items. Delivery is excluded.</div>
 
-    <label for="directDeliveryCost">Delivery Cost (₦)</label>
+    <label for="directDeliveryCost">Delivery Cost — Set by Administrator (₦)</label>
     <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
 
     <div id="directBracketsFields" class="hidden">
@@ -1449,7 +1449,7 @@ footer {
         <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
     </div>
 
-    <label for="directDiscount">Discount (₦)</label>
+    <label for="directDiscount">Discount — Set by Administrator (₦)</label>
     <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
 
     <div class="quote-breakdown">
@@ -3896,7 +3896,9 @@ async function editDirectQuotation(id) {
 
         showMessage(
             "directQuoteMessage",
-            "Draft loaded. Review and re-enter supplier cost and markup before saving.",
+            safeCustomerPriceDraft
+                ? "Saved quotation loaded. Review the customer-facing prices, delivery cost and any applicable discount before saving."
+                : "Saved draft loaded. Review the product cost, markup, delivery cost and any applicable discount before saving.",
             "info"
         );
     } catch (error) {
