@@ -1,0 +1,5561 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FrostTech Administration</title>
+
+<style>
+:root {
+    --primary:#063b70;
+    --secondary:#0879c9;
+    --background:#f3f6fa;
+    --border:#dce3eb;
+    --success:#16803c;
+    --danger:#c62828;
+    --warning:#a76500;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:var(--background);color:#172333}
+header{background:var(--primary);color:white;padding:18px}
+header h1{margin:0 0 8px;font-size:23px}
+main{max-width:1200px;margin:auto;padding:16px}
+.card{background:white;border:1px solid var(--border);border-radius:10px;padding:18px;margin-bottom:18px;box-shadow:0 2px 5px rgba(0,0,0,.04)}
+h2{color:var(--primary);margin-top:0}
+h3{margin-bottom:8px}
+input,select,textarea,button{width:100%;font:inherit;padding:11px;margin:5px 0;border-radius:6px}
+input,select,textarea{border:1px solid #bdc9d6;background:white}
+textarea{min-height:70px;resize:vertical}
+button{border:0;background:var(--secondary);color:white;font-weight:bold;cursor:pointer}
+button:disabled{opacity:.6;cursor:wait}
+button.success{background:var(--success)}
+button.danger{background:var(--danger)}
+button.warning{background:var(--warning)}
+button.neutral{background:#596579}
+.hidden{display:none!important}
+.message{padding:10px;border-radius:6px;margin:10px 0;overflow-wrap:anywhere}
+.info{background:#e8f3ff;color:#06477c}
+.error{background:#ffebee;color:#a11919}
+.success-message{background:#e8f5e9;color:#166534}
+.warning-message{background:#fff5dc;color:#805000}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.stat{background:#edf5ff;border-radius:8px;padding:15px;margin:10px 0}
+.stat strong{display:block;font-size:25px;color:var(--primary);margin-top:5px}
+label{display:block;margin-top:8px;font-weight:bold}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:650px}
+th,td{border-bottom:1px solid var(--border);padding:10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+th{background:#edf3fa}
+.badge{display:inline-block;padding:5px 8px;border-radius:5px;background:#e8edf3;font-size:12px;font-weight:bold}
+.badge.approved,.badge.selected,.badge.completed,.badge.submitted,.badge.active{background:#d8f3df;color:#176532}
+.badge.pending,.badge.draft,.badge.reviewing,.badge.in_review,.badge.more_info{background:#fff0c2;color:#805500}
+.badge.rejected,.badge.suspended,.badge.expired,.badge.cancelled{background:#ffe0e0;color:#a21d1d}
+.product-image{max-width:120px;max-height:100px;object-fit:contain;display:block;margin:8px 0}
+.action-row{display:flex;flex-wrap:wrap;gap:6px}
+.action-row button{width:auto;flex:1 1 140px}
+.requirements{background:#fff8e7;border-left:4px solid #e6a323;padding:12px;margin:12px 0;overflow-wrap:anywhere}
+.quote-breakdown{background:#edf5ff;padding:14px;border-radius:8px;margin:12px 0}
+.quote-line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #dce3eb}
+.quote-line span:last-child{font-weight:bold;text-align:right}
+.quote-total{font-size:20px;color:var(--primary);font-weight:bold;padding-top:12px}
+small{color:#596579}
+hr{border:0;border-top:1px solid var(--border);margin:22px 0}
+footer{text-align:center;padding:20px;color:#64748b}
+.ft-modal{position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(0,0,0,.55)}
+.ft-modal.hidden{display:none!important}
+.ft-modal-box{width:100%;max-width:420px;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.ft-modal-header{background:var(--primary);color:#fff;padding:18px}
+.ft-modal-header h2{color:#fff;margin:0;font-size:21px}
+.ft-modal-body{padding:20px;line-height:1.6}
+.ft-modal-actions{display:flex;gap:10px;padding:0 20px 20px}
+.ft-modal-actions button{flex:1;margin:0}
+.ft-modal-actions .ft-cancel{background:#596579}
+body.ft-modal-open{overflow:hidden}
+@media(max-width:600px){
+    main{padding:10px}
+    .card{padding:13px}
+    header h1{font-size:20px}
+}
+
+
+/* FROSTTECH ADMIN DASHBOARD — VISUAL POLISH ONLY */
+
+:root {
+    --primary: #073b70;
+    --secondary: #0879c9;
+    --background: #f1f5f9;
+    --border: #d9e2ec;
+}
+
+body {
+    background: #f1f5f9;
+    color: #1e293b;
+    font-family: Arial, Helvetica, sans-serif;
+    line-height: 1.5;
+}
+
+header {
+    background: linear-gradient(120deg, #052b50, #075a9c);
+    padding: 28px 18px;
+    border-bottom: 4px solid #19a4e8;
+}
+
+header h1 {
+    max-width: 1240px;
+    margin: 0 auto 6px;
+    font-size: clamp(21px, 4vw, 29px);
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+header p {
+    max-width: 1240px;
+    margin: 0 auto;
+    color: #dceeff;
+    font-size: 14px;
+}
+
+main {
+    max-width: 1280px;
+    padding: 24px 18px;
+}
+
+.card {
+    background: #ffffff;
+    border: 1px solid #e0e7ef;
+    border-radius: 14px;
+    padding: 22px;
+    margin-bottom: 22px;
+    box-shadow: 0 4px 18px rgba(15, 40, 70, .055);
+}
+
+.card > h2 {
+    color: #073b70;
+    font-size: 20px;
+    font-weight: 800;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e8eef5;
+}
+
+.card > p {
+    color: #526174;
+    line-height: 1.65;
+}
+
+h3 {
+    color: #17466f;
+}
+
+.stat {
+    background: linear-gradient(145deg, #f7fbff, #eaf3fc);
+    border: 1px solid #d8e7f5;
+    border-radius: 12px;
+    padding: 18px;
+    min-width: 0;
+    color: #40556b;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.stat strong {
+    color: #073b70;
+    font-size: 27px;
+    font-weight: 800;
+    margin-top: 8px;
+}
+
+input, select, textarea {
+    border: 1px solid #cbd5e1;
+    background: #fff;
+    color: #1e293b;
+    border-radius: 8px;
+    padding: 12px;
+    min-height: 44px;
+    outline: none;
+}
+
+input:focus, select:focus, textarea:focus {
+    border-color: #0879c9;
+    box-shadow: 0 0 0 3px rgba(8, 121, 201, .12);
+}
+
+label {
+    color: #334b63;
+    font-size: 13px;
+    font-weight: 700;
+    margin-top: 13px;
+}
+
+button {
+    border-radius: 8px;
+    padding: 12px 15px;
+    font-weight: 700;
+    transition: filter .15s ease, box-shadow .15s ease;
+}
+
+button:hover:not(:disabled) {
+    filter: brightness(.94);
+    box-shadow: 0 3px 9px rgba(0, 40, 80, .12);
+}
+
+button:focus-visible {
+    outline: 3px solid rgba(8, 121, 201, .3);
+    outline-offset: 2px;
+}
+
+button.neutral {
+    background: #526174;
+}
+
+.action-row {
+    gap: 9px;
+}
+
+.action-row button {
+    flex: 1 1 150px;
+}
+
+.message {
+    border-radius: 9px;
+    padding: 12px 14px;
+    line-height: 1.5;
+}
+
+.form-panel {
+    background: #f8fbfe;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+}
+
+.form-panel summary {
+    color: #073b70;
+}
+
+.requirements,
+.quote-breakdown {
+    border-radius: 10px;
+}
+
+.table-wrap {
+    border-radius: 11px;
+    border-color: #dce5ee;
+}
+
+.admin-table th {
+    background: #eaf2fa;
+    color: #173b60;
+}
+
+.admin-table td {
+    color: #34465a;
+}
+
+.admin-table tbody tr:nth-child(even) {
+    background: #fbfdff;
+}
+
+.badge {
+    border-radius: 20px;
+    padding: 5px 10px;
+}
+
+.product-image {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background: #fff;
+    padding: 4px;
+}
+
+hr {
+    border-top-color: #e2e8f0;
+}
+
+footer {
+    background: #eaf0f6;
+    color: #526174;
+    border-top: 1px solid #dce5ee;
+}
+
+/* MOBILE PRESENTATION */
+@media (max-width: 700px) {
+    header {
+        padding: 22px 15px;
+    }
+
+    main {
+        padding: 14px 10px;
+    }
+
+    .card {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 11px;
+    }
+
+    .card > h2 {
+        font-size: 18px;
+    }
+
+    .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 9px;
+    }
+
+    .stat {
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    .stat strong {
+        font-size: 23px;
+    }
+
+    .action-row button {
+        flex: 1 1 100%;
+    }
+
+    input, select, textarea {
+        font-size: 16px;
+    }
+
+    .table-wrap {
+        margin-top: 12px;
+    }
+}
+
+@media (max-width: 360px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+
+/* FROSTTECH ADMIN LOGIN AND STATUS PRESENTATION */
+
+#systemStatus {
+    max-width: 1240px;
+    margin: 18px auto;
+    border-radius: 10px;
+    padding: 14px 17px;
+    font-size: 14px;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(20, 45, 75, .04);
+}
+
+#loginSection {
+    max-width: 480px;
+    margin: 35px auto 50px;
+    padding: 28px;
+    border-top: 4px solid #0879c9;
+    box-shadow: 0 8px 28px rgba(15, 45, 75, .09);
+}
+
+#loginSection h2 {
+    text-align: center;
+    font-size: 23px;
+    margin-bottom: 22px;
+}
+
+#loginForm label {
+    display: block;
+    margin: 15px 0 6px;
+    color: #344b62;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#loginForm input {
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 8px;
+    border-radius: 8px;
+}
+
+#loginForm button {
+    min-height: 46px;
+    margin-top: 12px;
+}
+
+#loginForm #loginBtn {
+    background: linear-gradient(110deg, #063b70, #0879c9);
+}
+
+/* FrostTech standard: password recovery is a text link below Login. */
+#loginForm .forgot-password-link {
+    display: block;
+    width: fit-content;
+    margin: 10px auto 0;
+    padding: 4px 8px;
+    color: #0879c9;
+    background: transparent;
+    border: 0;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: underline;
+    cursor: pointer;
+}
+#loginForm .forgot-password-link:hover {
+    color: #063b70;
+}
+#loginForm .forgot-password-link:focus-visible {
+    outline: 2px solid #0879c9;
+    outline-offset: 3px;
+    border-radius: 4px;
+}
+
+#loginMessage {
+    margin-top: 12px;
+    line-height: 1.5;
+}
+
+#loggedUser {
+    color: #0879c9;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 600px) {
+    #systemStatus {
+        margin: 12px 0;
+        padding: 12px;
+    }
+
+    #loginSection {
+        margin: 18px auto 28px;
+        padding: 20px 16px;
+    }
+
+    #loginSection h2 {
+        font-size: 20px;
+    }
+}
+
+
+/* FROSTTECH MARKETPLACE SUMMARY CARDS */
+
+#dashboard > .card:nth-child(2) .grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 15px;
+    margin-top: 18px;
+}
+
+#dashboard > .card:nth-child(2) .stat {
+    position: relative;
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    background: #ffffff;
+    border: 1px solid #dce7f1;
+    border-left: 4px solid #0879c9;
+    border-radius: 11px;
+    padding: 16px;
+    margin: 0;
+    box-shadow: 0 3px 10px rgba(20, 45, 75, .045);
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+#dashboard > .card:nth-child(2) .stat:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(20, 45, 75, .09);
+}
+
+#dashboard > .card:nth-child(2) .stat strong {
+    display: block;
+    margin-top: 12px;
+    color: #073b70;
+    font-size: 29px;
+    font-weight: 800;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+    #dashboard > .card:nth-child(2) .grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    #dashboard > .card:nth-child(2) .stat {
+        min-height: 100px;
+        padding: 12px;
+        font-size: 12px;
+    }
+
+    #dashboard > .card:nth-child(2) .stat strong {
+        font-size: 25px;
+    }
+}
+
+@media (max-width: 350px) {
+    #dashboard > .card:nth-child(2) .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* FROSTTECH ADMIN TABLE READABILITY */
+
+.table-wrap {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    background: #ffffff;
+}
+
+.admin-table {
+    width: 100%;
+    min-width: 650px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.admin-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    padding: 13px 12px;
+    text-align: left;
+    white-space: nowrap;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .2px;
+}
+
+.admin-table td {
+    padding: 12px;
+    border-bottom: 1px solid #e8eef4;
+    vertical-align: middle;
+    line-height: 1.5;
+    font-size: 13px;
+}
+
+.admin-table tbody tr:hover {
+    background: #f1f7fd;
+}
+
+.admin-table td button {
+    margin: 3px;
+    white-space: nowrap;
+}
+
+@media (max-width: 700px) {
+    .table-wrap {
+        border-radius: 9px;
+    }
+
+    .admin-table {
+        min-width: 600px;
+    }
+
+    .admin-table th,
+    .admin-table td {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .admin-table td button {
+        padding: 9px 11px;
+    }
+}
+
+/* FROSTTECH ADMIN SECTION PRESENTATION */
+
+#dashboard > .card {
+    position: relative;
+    overflow: hidden;
+}
+
+#dashboard > .card > h2 {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 17px;
+    padding-bottom: 13px;
+    border-bottom: 2px solid #e8eef5;
+    line-height: 1.35;
+}
+
+#dashboard > .card > h2::before {
+    content: "";
+    display: inline-block;
+    flex: 0 0 5px;
+    height: 25px;
+    border-radius: 5px;
+    background: #0879c9;
+}
+
+#dashboard > .card h3 {
+    margin-top: 20px;
+    margin-bottom: 12px;
+    padding-bottom: 7px;
+    border-bottom: 1px solid #edf1f5;
+    font-size: 16px;
+    font-weight: 800;
+}
+
+#dashboard > .card p {
+    line-height: 1.65;
+}
+
+#dashboard > .card .action-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+@media (max-width: 600px) {
+    #dashboard > .card > h2 {
+        font-size: 17px;
+    }
+
+    #dashboard > .card h3 {
+        font-size: 15px;
+    }
+}
+
+/* FROSTTECH STATUS BADGES AND ACTION BUTTONS */
+
+.badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 25px;
+    padding: 5px 11px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.3;
+    white-space: nowrap;
+}
+
+button {
+    min-height: 40px;
+    cursor: pointer;
+}
+
+button:disabled {
+    cursor: not-allowed;
+    opacity: .6;
+    box-shadow: none;
+}
+
+.admin-table td button {
+    min-height: 34px;
+    padding: 8px 11px;
+    font-size: 12px;
+}
+
+.action-row button {
+    min-height: 42px;
+}
+
+@media (max-width: 600px) {
+    button {
+        min-height: 42px;
+    }
+
+    .badge {
+        font-size: 10px;
+        padding: 5px 9px;
+    }
+}
+
+/* FROSTTECH ADMIN FORM LAYOUT */
+
+#dashboard .form-panel {
+    padding: 18px;
+    margin: 16px 0;
+    background: #f8fbfe;
+    border: 1px solid #dce6f0;
+    border-radius: 12px;
+}
+
+#dashboard .form-panel summary {
+    padding: 5px 0;
+    font-weight: 800;
+    cursor: pointer;
+}
+
+#dashboard form {
+    width: 100%;
+}
+
+#dashboard form input,
+#dashboard form select,
+#dashboard form textarea {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+#dashboard form label {
+    display: block;
+    margin: 13px 0 6px;
+}
+
+#dashboard form button {
+    margin-top: 12px;
+}
+
+#dashboard input[type="checkbox"],
+#dashboard input[type="radio"] {
+    width: auto;
+    min-height: auto;
+    margin-right: 7px;
+}
+
+#dashboard textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
+@media (max-width: 600px) {
+    #dashboard .form-panel {
+        padding: 13px;
+    }
+
+    #dashboard form button {
+        max-width: 100%;
+    }
+}
+
+/* FROSTTECH FINAL MOBILE LAYOUT POLISH */
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    width: 100%;
+    overflow-x: hidden;
+}
+
+body {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: hidden;
+}
+
+main,
+#dashboard,
+#loginSection {
+    width: 100%;
+    min-width: 0;
+}
+
+#dashboard > .card {
+    min-width: 0;
+}
+
+#dashboard .grid {
+    width: 100%;
+    min-width: 0;
+}
+
+#dashboard img {
+    max-width: 100%;
+    height: auto;
+}
+
+#dashboard pre,
+#dashboard code {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+}
+
+@media (max-width: 600px) {
+    header h1 {
+        line-height: 1.3;
+    }
+
+    main {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+
+    #dashboard > .card {
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    #dashboard .action-row {
+        align-items: stretch;
+    }
+
+    #dashboard .action-row button {
+        width: 100%;
+    }
+}
+
+
+
+
+/* COMPACT RECORD TABLES AND RECORD DETAIL VIEW */
+.admin-record-table{width:100%;min-width:760px;border-collapse:collapse}
+.admin-record-table th,.admin-record-table td{padding:10px 12px;border-bottom:1px solid #dce5ee;text-align:left;vertical-align:middle}
+.admin-record-table th{background:#eaf2fa;color:#173b60;white-space:nowrap}
+.admin-record-table tbody tr:nth-child(even){background:#fbfdff}
+.admin-record-table .record-actions{display:flex;gap:6px;flex-wrap:wrap;min-width:190px}
+.admin-record-table .record-actions button{width:auto;flex:0 0 auto;margin:2px;padding:8px 10px;font-size:12px}
+.record-detail-box{max-width:760px;max-height:88vh;overflow:auto}
+.record-detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}
+.record-detail-item{padding:10px;background:#f7faff;border:1px solid #e1eaf3;border-radius:8px;overflow-wrap:anywhere}
+.record-detail-item strong{display:block;color:#17466f;font-size:12px;text-transform:capitalize;margin-bottom:4px}
+@media(max-width:600px){.admin-record-table .record-actions{min-width:160px}.admin-record-table .record-actions button{flex:1 1 100%}}
+
+
+/* FROSTTECH ADMIN WORKSPACE NAVIGATION */
+.admin-home-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:14px}
+.admin-nav-card{display:flex;flex-direction:column;align-items:flex-start;text-align:left;justify-content:flex-start;min-height:112px;padding:17px;background:#fff;color:#123c63;border:1px solid #d7e3ef;border-left:4px solid #0879c9;border-radius:12px;box-shadow:0 3px 12px rgba(15,40,70,.045);margin:0;white-space:normal}
+.admin-nav-card strong{font-size:15px;margin-bottom:6px}
+.admin-nav-card span{font-size:12px;line-height:1.45;font-weight:400;color:#53677c}
+.admin-nav-card:active{transform:translateY(1px)}
+.admin-page-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:14px;padding:12px 14px;background:#eaf3fb;border:1px solid #d5e5f3;border-radius:12px}
+.admin-page-toolbar button{width:auto;min-width:160px;margin:0}
+.admin-page-toolbar strong{color:#073b70;font-size:16px}
+.admin-page-section{scroll-margin-top:12px}
+.admin-page-section>h2{font-size:21px}
+.admin-home-intro{margin-bottom:12px}
+@media(max-width:600px){.admin-home-grid{grid-template-columns:1fr 1fr;gap:9px}.admin-nav-card{min-height:118px;padding:13px}.admin-page-toolbar{align-items:stretch}.admin-page-toolbar button{width:100%}.admin-page-toolbar strong{width:100%}}
+@media(max-width:380px){.admin-home-grid{grid-template-columns:1fr}}
+
+
+.ft-print-approval-status {
+    margin: 16px 0 0;
+    padding: 11px 13px;
+    border: 1px solid #dce6f0;
+    border-radius: 9px;
+    background: #f5f8fc;
+    color: #17324d;
+    font-size: 13px;
+}
+.ft-print-actions { flex-wrap: wrap; }
+.ft-workspace-print-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    margin: 0 0 14px;
+}
+@media print {
+    .ft-workspace-print-toolbar, .ft-modal, button { display: none !important; }
+}
+
+
+/* =========================================================
+   FROSTTECH APPROVED RESPONSIVE ADMIN HOME DESIGN
+   Presentation layer only; existing workspace and workflow
+   handlers remain in place.
+   ========================================================= */
+:root {
+    --ft-navy: #082f55;
+    --ft-blue: #1686c9;
+    --ft-ice: #eaf5fc;
+    --ft-ink: #172b40;
+    --ft-muted: #607286;
+    --ft-line: #dce7f0;
+    --ft-bg: #f3f7fb;
+}
+body {
+    background: var(--ft-bg);
+    color: var(--ft-ink);
+    font: 15px/1.5 Arial, Helvetica, sans-serif;
+}
+.ft-site-header {
+    background: linear-gradient(115deg, #062746, #0b4778);
+    color: #fff;
+    padding: 22px max(18px, calc((100vw - 1180px) / 2));
+    border-bottom: 4px solid #55b9ed;
+}
+.ft-site-header .brand {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+.ft-site-header .mark {
+    width: 46px;
+    height: 46px;
+    flex: 0 0 46px;
+    border-radius: 13px;
+    background: linear-gradient(145deg, #dff5ff, #74c7f1);
+    display: grid;
+    place-items: center;
+    color: #07365e;
+    font-weight: 900;
+    font-size: 21px;
+}
+.ft-site-header h1 {
+    margin: 0;
+    color: #fff;
+    font-size: clamp(19px, 3vw, 25px);
+    line-height: 1.3;
+    font-weight: 800;
+}
+.ft-site-header p {
+    margin: 3px 0 0;
+    color: #d4eafa;
+    font-size: 13px;
+}
+main {
+    max-width: 1180px;
+    padding: 24px 18px 50px;
+}
+#systemStatus {
+    max-width: 100%;
+    margin: 0 0 18px;
+    border-radius: 12px;
+    padding: 13px 16px;
+}
+#dashboard > #adminHomeOverview {
+    width: 100%;
+    min-width: 0;
+}
+#adminHomeOverview .welcome {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    background: #fff;
+    border: 1px solid var(--ft-line);
+    border-radius: 17px;
+    padding: 22px;
+    box-shadow: 0 8px 24px rgba(10, 42, 72, .07);
+    margin-bottom: 18px;
+}
+#adminHomeOverview .welcome h2 {
+    margin: 0;
+    color: var(--ft-navy);
+    font-size: 22px;
+    border: 0;
+    padding: 0;
+}
+#adminHomeOverview .welcome h2::before { display: none; }
+#adminHomeOverview .welcome p {
+    margin: 6px 0 0;
+    color: var(--ft-muted);
+}
+#adminHomeOverview .welcome #message {
+    flex: 1 0 100%;
+}
+#adminHomeOverview .actions {
+    display: flex;
+    gap: 9px;
+    flex-wrap: wrap;
+    margin: 0;
+}
+#adminHomeOverview .actions button {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
+    margin: 0;
+    min-height: 42px;
+    border-radius: 9px;
+    padding: 11px 15px;
+    font-size: 13px;
+}
+#adminHomeOverview .actions .secondary {
+    background: #edf3f8;
+    color: #29465f;
+    border: 1px solid var(--ft-line);
+}
+#adminHomeOverview .actions .logout {
+    background: #fff0f0;
+    color: #a22b2b;
+    border: 1px solid #f2d4d4;
+}
+#adminHomeOverview .heading {
+    margin: 24px 2px 13px;
+}
+#adminHomeOverview .heading h2 {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    color: var(--ft-navy);
+    font-size: 19px;
+}
+#adminHomeOverview .heading h2::before { display: none; }
+#adminHomeOverview .heading p {
+    margin: 3px 0 0;
+    color: var(--ft-muted);
+    font-size: 13px;
+}
+#adminHomeOverview .stats {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    width: 100%;
+    min-width: 0;
+}
+#adminHomeOverview .snapshot-stat {
+    background: #fff;
+    border: 1px solid var(--ft-line);
+    border-radius: 14px;
+    padding: 16px;
+    margin: 0;
+    min-width: 0;
+    box-shadow: 0 3px 12px rgba(10, 42, 72, .035);
+}
+#adminHomeOverview .snapshot-stat .label {
+    color: var(--ft-muted);
+    font-size: 12px;
+    font-weight: 700;
+}
+#adminHomeOverview .snapshot-stat strong {
+    display: block;
+    color: var(--ft-navy);
+    font-size: 27px;
+    margin-top: 9px;
+    overflow-wrap: anywhere;
+}
+#adminHomeOverview .snapshot-stat .hint {
+    display: block;
+    color: #7b8da0;
+    font-size: 11px;
+    margin-top: 6px;
+}
+#adminHomeOverview .workspaces {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 13px;
+    width: 100%;
+    min-width: 0;
+}
+#adminHomeOverview .workspace {
+    display: flex;
+    flex-direction: row;
+    gap: 13px;
+    align-items: flex-start;
+    justify-content: flex-start;
+    text-align: left;
+    background: #fff;
+    border: 1px solid var(--ft-line);
+    border-radius: 14px;
+    padding: 16px;
+    min-height: 106px;
+    color: var(--ft-ink);
+    box-shadow: 0 3px 12px rgba(10, 42, 72, .035);
+    margin: 0;
+    width: 100%;
+    white-space: normal;
+    font: inherit;
+    cursor: pointer;
+}
+#adminHomeOverview .workspace .ico {
+    flex: 0 0 39px;
+    width: 39px;
+    height: 39px;
+    border-radius: 11px;
+    background: var(--ft-ice);
+    display: grid;
+    place-items: center;
+    color: #0866a4;
+    font-size: 18px;
+    font-weight: 800;
+}
+#adminHomeOverview .workspace .workspace-copy {
+    display: block;
+    min-width: 0;
+}
+#adminHomeOverview .workspace strong {
+    display: block;
+    color: var(--ft-navy);
+    font-size: 14px;
+    margin: 1px 0 5px;
+}
+#adminHomeOverview .workspace .workspace-copy > span {
+    display: block;
+    color: var(--ft-muted);
+    font-size: 12px;
+    line-height: 1.45;
+    font-weight: 400;
+}
+#adminHomeOverview .workspace:hover {
+    border-color: #a9cde5;
+    box-shadow: 0 6px 16px rgba(10, 42, 72, .08);
+}
+#adminHomeOverview .workspace:focus-visible {
+    outline: 3px solid rgba(22, 134, 201, .3);
+    outline-offset: 2px;
+}
+#adminPageToolbar {
+    background: #eaf3fb;
+    border: 1px solid #d5e5f3;
+    border-radius: 12px;
+}
+#adminPageToolbar button {
+    border-radius: 9px;
+}
+footer {
+    background: transparent;
+    color: #8190a0;
+    border: 0;
+    font-size: 12px;
+}
+@media (max-width: 900px) {
+    #adminHomeOverview .stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    #adminHomeOverview .workspaces { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 560px) {
+    .ft-site-header { padding: 18px 15px; }
+    .ft-site-header .mark { width: 40px; height: 40px; flex-basis: 40px; }
+    main { padding: 15px 11px 35px; }
+    #adminHomeOverview .welcome { padding: 17px; }
+    #adminHomeOverview .welcome h2 { font-size: 19px; }
+    #adminHomeOverview .actions { width: 100%; }
+    #adminHomeOverview .actions button { flex: 1 1 0; }
+    #adminHomeOverview .heading { margin-top: 21px; }
+    #adminHomeOverview .stats { gap: 9px; }
+    #adminHomeOverview .snapshot-stat { padding: 13px; }
+    #adminHomeOverview .snapshot-stat strong { font-size: 23px; }
+    #adminHomeOverview .workspaces { grid-template-columns: 1fr; gap: 9px; }
+    #adminHomeOverview .workspace { min-height: 0; padding: 14px; }
+    #systemStatus { font-size: 13px; }
+}
+@media (max-width: 350px) {
+    #adminHomeOverview .stats { grid-template-columns: 1fr; }
+    #adminHomeOverview .actions button { width: 100%; }
+}
+
+</style>
+</head>
+
+<body>
+<header class="ft-site-header">
+    <div class="brand">
+        <div class="mark" aria-hidden="true">F</div>
+        <div>
+            <h1>FrostTech HVAC and Refrigeration</h1>
+            <p>Marketplace Administration</p>
+        </div>
+    </div>
+</header>
+
+<main>
+<div id="systemStatus" class="message info">Connecting to FrostTech...</div>
+
+<section id="loginSection" class="card">
+    <h2>Administrator Login</h2>
+    <form id="loginForm" autocomplete="off">
+        <label for="email">Administrator Email</label>
+        <input id="email" type="email" autocomplete="off" required>
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="new-password" required>
+        <button id="loginBtn" type="submit">Login</button>
+        <a href="#" id="forgotAdminPassword" class="forgot-password-link">Forgot Password?</a>
+    </form>
+    <div id="loginMessage" role="status"></div>
+</section>
+
+<section id="dashboard" class="hidden">
+
+<div id="adminHomeOverview">
+<section class="card admin-home-intro welcome">
+    <div>
+        <h2>Administration Overview</h2>
+        <p>Signed in as <strong id="loggedUser"></strong></p>
+    </div>
+    <div class="action-row actions">
+        <button id="refreshBtn" type="button" class="secondary">Refresh Dashboard</button>
+        <button id="logoutBtn" type="button" class="logout">Logout</button>
+    </div>
+    <div id="message" role="status"></div>
+</section>
+
+<div class="heading">
+    <h2>Marketplace Snapshot</h2>
+    <p>A quick view of key marketplace activity</p>
+</div>
+<section class="stats" aria-label="Marketplace snapshot">
+    <div class="stat snapshot-stat"><span class="label">Products</span><strong id="snapshotProductCount">—</strong><span class="hint">Catalogue records</span></div>
+    <div class="stat snapshot-stat"><span class="label">Customer Requests</span><strong id="snapshotRequestCount">—</strong><span class="hint">Quote requests</span></div>
+    <div class="stat snapshot-stat"><span class="label">Supplier Applications</span><strong id="snapshotSupplierCount">—</strong><span class="hint">Supplier records</span></div>
+    <div class="stat snapshot-stat"><span class="label">Direct Quotations</span><strong id="snapshotDirectQuoteCount">—</strong><span class="hint">Prepared quotations</span></div>
+</section>
+
+<div class="heading">
+    <h2>Administration Workspaces</h2>
+    <p>Select a workspace to manage that area</p>
+</div>
+<section class="workspaces" id="adminNavigationCard" aria-label="Administration workspaces">
+    <button type="button" class="admin-nav-card workspace" data-admin-open="marketplaceSummaryPage"><span class="ico" aria-hidden="true">▦</span><span class="workspace-copy"><strong>Marketplace Summary</strong><span>Products, requests, suppliers and quotations</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="financialDashboard"><span class="ico" aria-hidden="true">₦</span><span class="workspace-copy"><strong>Financial Dashboard</strong><span>Income, fees, receipts and reconciliation</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="productManagement"><span class="ico" aria-hidden="true">▣</span><span class="workspace-copy"><strong>Product Management</strong><span>Catalogue, images, stock and visibility</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="directQuotationSection"><span class="ico" aria-hidden="true">✎</span><span class="workspace-copy"><strong>Admin-Direct Quotations</strong><span>Prepare and review customer quotations</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="customerRequestsPage"><span class="ico" aria-hidden="true">☷</span><span class="workspace-copy"><strong>Customer Quote Requests</strong><span>Review customer requirements</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="supplierQuotationsPage"><span class="ico" aria-hidden="true">▤</span><span class="workspace-copy"><strong>Saved Supplier Quotations</strong><span>Review supplier pricing and decisions</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="supplierManagement"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Supplier Management</strong><span>Applications, verification and account status</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="advertiserVerification"><span class="ico" aria-hidden="true">✓</span><span class="workspace-copy"><strong>Advertiser Verification</strong><span>Review advertiser applications and CAC status</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="paymentRecordsPage"><span class="ico" aria-hidden="true">▧</span><span class="workspace-copy"><strong>Payment Records</strong><span>Read-only payment history and references</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="supplierMaintenancePage"><span class="ico" aria-hidden="true">⚙</span><span class="workspace-copy"><strong>Supplier Account Maintenance</strong><span>Administrative supplier account actions</span></span></button>
+</section>
+</div>
+
+<div id="adminPageToolbar" class="admin-page-toolbar hidden">
+    <button type="button" id="backToAdminDashboard" class="neutral">← Back to Previous Page</button>
+    <strong id="adminCurrentPageTitle">Workspace</strong>
+</div>
+
+<!-- MARKETPLACE SUMMARY WORKSPACE — EXISTING LIVE DASHBOARD COUNTS -->
+<section class="card admin-page-section hidden" id="marketplaceSummaryPage" data-admin-title="Marketplace Summary">
+    <h2>Marketplace Summary</h2>
+    <p>Live overview counts for the main marketplace activities. Use Refresh Dashboard on the main admin page to request updated counts.</p>
+    <div class="grid">
+        <div class="stat">Products<strong id="productCount">0</strong></div>
+        <div class="stat">Customer Requests<strong id="requestCount">0</strong></div>
+        <div class="stat">Supplier Applications<strong id="supplierCount">0</strong></div>
+        <div class="stat">Pending Supplier Reviews<strong id="pendingSupplierCount">0</strong></div>
+        <div class="stat">Supplier Quotations<strong id="quotationCount">0</strong></div>
+        <div class="stat">Direct Quotations<strong id="directQuoteCount">0</strong></div>
+    </div>
+</section>
+
+<!-- FINANCIAL DASHBOARD — READ ONLY; SUPER ADMINISTRATOR RPC AUTHORIZATION -->
+<section class="card admin-page-section hidden" id="financialDashboard" data-admin-title="Financial Dashboard">
+    <h2>Financial Dashboard</h2>
+    <p>Read-only financial reporting. Access to the report is enforced by the secured database function.</p>
+    <div class="stat" style="border-left:4px solid #b7791f;">
+        <strong>TEST / DEVELOPMENT TRANSACTIONS</strong>
+        All transactions made before the live launch are test activity. They are displayed separately and are excluded from production revenue, verified income, realised profit and operating results.
+    </div>
+    <div class="grid">
+        <div>
+            <label for="financialStartDate">Start date</label>
+            <input id="financialStartDate" type="date" required>
+        </div>
+        <div>
+            <label for="financialEndDate">End date</label>
+            <input id="financialEndDate" type="date" required>
+        </div>
+    </div>
+    <button id="loadFinancialReportBtn" type="button">Load Financial Report</button>
+    <div id="financialReportMessage" role="status" aria-live="polite"></div>
+    <div id="financialReportResults" class="hidden" aria-live="polite">
+        <p><strong>Reporting period:</strong> <span id="finReportPeriod">—</span></p>
+
+        <h3>Production Payments and Income</h3>
+        <p><small>Only verified production transactions matched to valid production receipts are included. Development/test transactions are excluded.</small></p>
+        <div class="grid">
+            <div class="stat">Verified production payments<strong id="finVerifiedPayments">—</strong></div>
+            <div class="stat">Verified cash received<strong id="finVerifiedCash">—</strong></div>
+            <div class="stat">Recorded paid admin fees<strong id="finAdminFeesPaid">—</strong></div>
+            <div class="stat">Receipt-verified admin fees<strong id="finAdminFeesVerified">—</strong></div>
+            <div class="stat">Unverified admin fee records<strong id="finAdminFeesUnverified">—</strong></div>
+            <div class="stat">Verified admin-fee receipts<strong id="finAdminFeeReceiptCount">—</strong></div>
+            <div class="stat">Verified admin-fee receipt amount<strong id="finAdminFeeReceiptAmount">—</strong></div>
+            <div class="stat">Recognised delivery income<strong id="finDeliveryIncome">—</strong></div>
+            <div class="stat">Refund amounts<strong id="finRefunds">Not available</strong></div>
+        </div>
+
+        <h3>Recognised Orders — Actual Production Performance</h3>
+        <p><small>These figures relate only to fully paid, production orders that pass the report's reconciliation checks. Quotation estimates and stock valuation are not included here.</small></p>
+        <p class="stat"><strong>Cost-data validation caution</strong><small>The installed V2 SQL checks do not explicitly classify NULL supplier unit costs or NULL item sales values as invalid. Until that SQL validation is separately reviewed and corrected, treat any returned realised gross profit and operating result as provisional if production order items may contain missing values. This dashboard update does not change the installed SQL function.</small></p>
+        <div class="grid">
+            <div class="stat">Fully paid production orders<strong id="finFullyPaidOrders">—</strong></div>
+            <div class="stat">Reconciled orders<strong id="finReconciledOrders">—</strong></div>
+            <div class="stat">Recognised product sales<strong id="finRecognisedSales">—</strong></div>
+            <div class="stat">Recognised delivery income<strong id="finRecognisedDelivery">—</strong></div>
+            <div class="stat">Reconciled order value<strong id="finReconciledOrderValue">—</strong></div>
+            <div class="stat">Realised product gross profit<strong id="finRealisedGrossProfit">—</strong></div>
+            <div class="stat">Order reconciliation exceptions<strong id="finOrderExceptions">—</strong></div>
+            <div class="stat">Orders with missing/invalid cost data<strong id="finMissingOrderCosts">—</strong></div>
+        </div>
+        <div class="stat"><strong>Production Operating Result</strong><strong id="finOperatingResult">—</strong><small>Realised product gross profit + recognised delivery income − production expenses. If realised gross profit is unavailable, the operating result is also unavailable.</small></div>
+
+        <h3>Accepted Quotations — Estimates Only</h3>
+        <p><small>Accepted quotations are not proof of completed sales or received payments. These figures are estimates based on the latest eligible cost snapshot at acceptance.</small></p>
+        <div class="grid">
+            <div class="stat">Accepted quotations<strong id="finAcceptedQuoteCount">—</strong></div>
+            <div class="stat">Accepted quotation value<strong id="finQuotationValue">—</strong></div>
+            <div class="stat">Estimated product cost<strong id="finQuoteProductCost">—</strong></div>
+            <div class="stat">Estimated delivery cost<strong id="finQuoteDeliveryCost">—</strong></div>
+            <div class="stat">Quotation markup<strong id="finMarkup">—</strong></div>
+            <div class="stat">Quotation discounts<strong id="finDiscounts">—</strong></div>
+            <div class="stat">Estimated quotation profit<strong id="finProfit">—</strong></div>
+            <div class="stat">Accepted quotes without cost snapshot<strong id="finQuotesWithoutSnapshot">—</strong></div>
+            <div class="stat">Snapshots missing delivery cost<strong id="finSnapshotsMissingDelivery">—</strong></div>
+        </div>
+
+        <h3>Production Expenses</h3>
+        <div class="stat">Total production expenses<strong id="finTotalExpenses">—</strong></div>
+        <div id="finExpenseBreakdown">No expense breakdown loaded.</div>
+
+        <h3>Current Inventory — Valuation Estimates Only</h3>
+        <p><small>Current stock values are not sales, cash received or realised profit.</small></p>
+        <div class="grid">
+            <div class="stat">Products<strong id="finInventoryProducts">—</strong></div>
+            <div class="stat">Active products<strong id="finInventoryActiveProducts">—</strong></div>
+            <div class="stat">Inventory retail value<strong id="finInventoryRetailValue">—</strong></div>
+            <div class="stat">Inventory supplier-cost value<strong id="finInventoryCostValue">—</strong></div>
+            <div class="stat">Potential inventory gross profit<strong id="finInventoryPotentialProfit">—</strong></div>
+            <div class="stat">Inventory cost exceptions<strong id="finInventoryCostExceptions">—</strong></div>
+        </div>
+        <p id="finInventoryNote"><small>Inventory valuation note will appear here.</small></p>
+
+        <h3>Test / Development Activity — Excluded from Production Totals</h3>
+        <div class="grid">
+            <div class="stat">Development payment attempts<strong id="finDevelopmentAttempts">—</strong></div>
+            <div class="stat">Successful development payment rows<strong id="finDevelopmentSuccesses">—</strong></div>
+            <div class="stat">Development attempt amount total<strong id="finDevelopmentAttemptAmount">—</strong></div>
+        </div>
+        <p><small>The development attempt amount is a test-activity measure only. It is not revenue, verified cash received or profit.</small></p>
+
+        <h3>Reconciliation and Report Integrity</h3>
+        <p><strong>Report status:</strong> <span id="finSummaryStatus" class="badge">Not loaded</span></p>
+        <div class="grid">
+            <div class="stat">Unmatched successful production payments<strong id="finUnmatchedPayments">—</strong></div>
+            <div class="stat">Orphaned final-order receipts<strong id="finOrphanedReceipts">—</strong></div>
+            <div class="stat">Order reconciliation exceptions<strong id="finIntegrityOrderExceptions">—</strong></div>
+            <div class="stat">Missing order costs<strong id="finIntegrityMissingCosts">—</strong></div>
+            <div class="stat">Unverified admin fees<strong id="finIntegrityUnverifiedFees">—</strong></div>
+        </div>
+        <p><small>Refund amounts remain unavailable until a reliable verified refund ledger is established. Unavailable values must not be interpreted as zero.</small></p>
+    </div>
+</section>
+
+<!-- PRODUCT MANAGEMENT -->
+<section class="card admin-page-section hidden" id="productManagement" data-admin-title="Product Management">
+<h2>Product Management</h2>
+<p>Manage catalogue descriptions, pictures, stock and customer visibility. Supplier costs are maintained separately through the protected supplier-cost process.</p>
+<div id="productMessage" role="status"></div>
+<h3 id="productFormTitle">Add Product</h3>
+
+<form id="productForm">
+    <input type="hidden" id="productId">
+
+    <label for="productName">Product Name *</label>
+    <input id="productName" required placeholder="LG 1.5HP Split Air Conditioner">
+
+    <label for="productCategory">Category</label>
+    <select id="productCategory">
+        <option value="">Select category</option>
+        <option>Air Conditioners</option>
+        <option>Refrigeration Parts</option>
+        <option>HVAC Accessories</option>
+        <option>HVAC Services</option>
+    </select>
+
+    <label for="productBrand">Brand</label>
+    <input id="productBrand" placeholder="LG">
+
+    <label for="productModel">Model</label>
+    <input id="productModel">
+
+    <label for="productSku">SKU / Product Code</label>
+    <input id="productSku">
+
+    <label for="productUnit">Unit</label>
+    <select id="productUnit">
+        <option value="piece">Piece</option>
+        <option value="set">Set</option>
+        <option value="pack">Pack</option>
+        <option value="meter">Meter</option>
+        <option value="service">Service</option>
+    </select>
+
+    <label for="productDescription">Description</label>
+    <textarea id="productDescription"></textarea>
+
+    <label for="productSellingPrice">Current Catalogue Selling Price (₦)</label>
+    <input id="productSellingPrice" type="number" min="0" step="0.01" readonly placeholder="Assigned through supplier pricing">
+    <small>Reference only. Product Management cannot edit supplier costs or selling prices.</small>
+
+    <label for="productStock">Stock Quantity *</label>
+    <input id="productStock" type="number" min="0" step="1" value="0" required>
+
+    <label for="productMinStock">Minimum Stock Level</label>
+    <input id="productMinStock" type="number" min="0" step="1" value="0" required>
+
+    <label for="productImage">Product Image</label>
+    <input id="productImage" type="file" accept="image/*">
+
+    <label for="productActive">Catalogue Visibility</label>
+    <select id="productActive">
+        <option value="false" selected>Inactive — hidden from catalogue</option>
+        <option value="true">Active — visible to customers</option>
+    </select>
+
+    <button id="saveProductBtn" type="submit">Save Product</button>
+    <button id="cancelProductEditBtn" type="button" class="neutral hidden">Cancel Editing</button>
+</form>
+
+<hr>
+<h3>Existing Products</h3>
+<button id="loadProductsBtn" type="button">Load Products</button>
+<div id="productList">Load products to view the catalogue.</div>
+</section>
+
+<!-- DIRECT QUOTATIONS -->
+<section class="card admin-page-section hidden" id="directQuotationSection" data-admin-title="Admin-Direct Quotations">
+<h2>Admin-Direct Quotations</h2>
+<p>Prepare quotations directly for customers without requiring supplier participation.</p>
+<div class="message info">
+    Enter the product cost, markup, delivery and applicable additional charges. Review the calculation before submitting.
+</div>
+<div id="directQuoteMessage" role="status"></div>
+
+<form id="directQuoteForm" class="hidden">
+    <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
+    <input type="hidden" id="directQuoteId">
+    <input type="hidden" id="directRequestId">
+
+    <p>Request reference: <strong id="directRequestReference"></strong></p>
+    <div id="directRequestRequirements" class="requirements">Customer requirements will appear here.</div>
+
+    <label for="directProductDescription">Product / Service *</label>
+    <textarea id="directProductDescription" required></textarea>
+
+    <label for="directQuantity">Quantity *</label>
+    <input id="directQuantity" type="number" min="1" step="1" required value="1">
+
+    <label for="directUnitCost">Product Unit Cost (₦) *</label>
+    <input id="directUnitCost" type="number" min="0" step="0.01" required>
+
+    <label for="directMarkup">Markup (%)</label>
+    <input id="directMarkup" type="number" min="0" step="0.01" value="15" required>
+
+    <div class="message info">Markup applies to the product and permitted additional items. Delivery is excluded.</div>
+
+    <label for="directDeliveryCost">Delivery Cost (₦)</label>
+    <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
+    <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
+
+    <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
+    <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
+    <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directAccessoryDescription">Accessory Description</label>
+    <input id="directAccessoryDescription" type="text" placeholder="e.g. Copper pipe, installation kit">
+
+    <label for="directAccessoryUnit">Accessory Unit / Pack Description</label>
+    <input id="directAccessoryUnit" type="text" placeholder="e.g. metre, pack, roll, kit">
+
+    <label for="directAccessoryQuantity">Accessories Quantity</label>
+    <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
+
+    <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
+    <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
+
+    <label for="directDiscount">Discount (₦)</label>
+    <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
+
+    <div class="quote-breakdown">
+        <h3>Quotation Calculation</h3>
+        <div class="quote-line"><span>Product cost per unit</span><span id="displayUnitCost">₦0.00</span></div>
+        <div class="quote-line"><span>Markup percentage</span><span id="displayMarkup">15%</span></div>
+        <div class="quote-line"><span>Customer unit price after markup</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
+        <div class="quote-line"><span>Product subtotal</span><span id="directSubtotal">₦0.00</span></div>
+        <div class="quote-line"><span>Delivery</span><span id="displayDelivery">₦0.00</span></div>
+        <div class="quote-line"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
+        <div class="quote-line"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
+        <div class="quote-line"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
+        <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
+        <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
+    </div>
+
+    <label for="directValidity">Valid Until</label>
+    <input id="directValidity" type="date">
+
+    <label for="directNotes">Notes for Customer</label>
+    <textarea id="directNotes" placeholder="Delivery arrangements, warranty, or other details"></textarea>
+
+    <div class="action-row">
+        <button id="saveDraftBtn" type="button" class="neutral">Save Draft</button>
+        <button id="submitDirectQuoteBtn" type="button" class="success">Submit Quotation</button>
+        <button id="cancelDirectQuoteBtn" type="button" class="danger">Cancel</button>
+    </div>
+</form>
+
+<hr>
+<h3>Saved Direct Quotations</h3>
+<button id="loadDirectQuotesBtn" type="button">Load Direct Quotations</button>
+<div id="directQuoteList">Tap the button to load direct quotations.</div>
+</section>
+
+<!-- CUSTOMER REQUESTS -->
+<section class="card admin-page-section hidden" id="customerRequestsPage" data-admin-title="Customer Quote Requests">
+<h2>Customer Quote Requests</h2>
+<button id="loadRequestsBtn" type="button">Load Customer Requests</button>
+<div id="requestMessage" role="status"></div>
+<div id="quoteRequests">Loading requests...</div>
+</section>
+
+<!-- SUPPLIER QUOTATIONS -->
+<section class="card admin-page-section hidden" id="supplierQuotationsPage" data-admin-title="Saved Supplier Quotations">
+<h2>Saved Supplier Quotations</h2>
+<p>Review supplier pricing and select or reject supplier quotations.</p>
+<button id="loadSupplierQuotesBtn" type="button">Load Supplier Quotations</button>
+<div id="quotationMessage" role="status"></div>
+<div id="supplierQuotes">Loading supplier quotations...</div>
+</section>
+
+<!-- SUPPLIER MANAGEMENT -->
+<section class="card admin-page-section hidden" id="supplierManagement" data-admin-title="Supplier Management">
+<h2>Supplier Management</h2>
+<p>Review supplier applications and make approval decisions.</p>
+<button id="loadSuppliersBtn" type="button">Load Supplier Applications</button>
+<div id="supplierManagementMessage" role="status"></div>
+<div id="supplierManagementRows">Supplier applications will appear here.</div>
+</section>
+
+<!-- ADVERTISER VERIFICATION -->
+<section class="card admin-page-section hidden" id="advertiserVerification" data-admin-title="Advertiser Verification">
+<h2>Advertiser Verification</h2>
+<p>Review advertiser applications, CAC certificates and supporting documents.</p>
+<button id="loadAdvertisersBtn" type="button">Load Advertiser Applications</button>
+<div id="advertiserMessage" role="status"></div>
+<div id="advertiserRows">Advertiser applications will appear here.</div>
+</section>
+
+<!-- PAYMENTS -->
+<section class="card admin-page-section hidden" id="paymentRecordsPage" data-admin-title="Payment Records">
+<h2>Payment Records</h2>
+<p>This section displays payment records only. It does not initiate payments or change payment statuses.</p>
+<button id="loadPaymentsBtn" type="button">Load Payment Records</button>
+<div id="paymentMessage" role="status"></div>
+<div id="paymentRecords">Tap the button to load payment records.</div>
+</section>
+
+<!-- SUPPLIER ACCOUNT MAINTENANCE -->
+<section class="card admin-page-section hidden" id="supplierMaintenancePage" data-admin-title="Supplier Account Maintenance">
+<h2>Supplier Account Maintenance</h2>
+<p>Confirm the existing supplier email using administrator access.</p>
+<button id="confirmSupplierEmailBtn" type="button">
+    Confirm Supplier Email
+</button>
+<p id="confirmSupplierEmailResult" role="status" aria-live="polite"></p>
+</section>
+
+</section>
+</main>
+
+<footer>FrostTech HVAC and Refrigeration Marketplace</footer>
+
+<div id="ftConfirmModal" class="ft-modal hidden" role="dialog"
+     aria-modal="true" aria-labelledby="ftConfirmTitle"
+     aria-describedby="ftConfirmText">
+    <div class="ft-modal-box">
+        <div class="ft-modal-header">
+            <h2 id="ftConfirmTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+        </div>
+        <div class="ft-modal-body">
+            <p id="ftConfirmText">Are you sure you want to continue?</p>
+        </div>
+        <div class="ft-modal-actions">
+            <button id="ftConfirmCancel" type="button" class="ft-cancel">Cancel</button>
+            <button id="ftConfirmYes" type="button" class="success">Yes, Continue</button>
+        </div>
+    </div>
+</div>
+
+
+<div id="ftRecordModal" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecordTitle">
+    <div class="ft-modal-box record-detail-box">
+        <div class="ft-modal-header"><h2 id="ftRecordTitle">Record Details</h2></div>
+        <div class="ft-modal-body">
+            <div id="ftRecordContent" class="record-detail-grid"></div>
+            <p id="ftPrintApprovalStatus" class="ft-print-approval-status" role="status" aria-live="polite">Print approval has not been requested.</p>
+        </div>
+        <div class="ft-modal-actions ft-print-actions">
+            <button id="ftApprovePrintBtn" type="button" class="success" disabled>Approve for Printing</button>
+            <button id="ftRejectPrintBtn" type="button" class="danger" disabled>Reject Print Request</button>
+            <button id="ftPrintApprovedBtn" type="button" disabled>Print Approved Copy</button>
+            <button id="ftRecordClose" type="button" class="ft-cancel">Close</button>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+
+const SUPABASE_URL = "https://nftxptjpgidcsgtaltjn.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+
+const db = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_PUBLISHABLE_KEY
+);
+window.supabaseClient = db;
+
+let currentAdmin = null;
+let currentAdvertisers = [];
+let currentRequests = [];
+let currentSuppliers = [];
+let currentSupplierQuotes = [];
+let currentProducts = [];
+let currentDirectQuotes = [];
+
+function el(id) {
+    return document.getElementById(id);
+}
+
+function escapeHtml(value) {
+    return String(value ?? "").replace(/[&<>"']/g, char => ({
+        "&":"&amp;",
+        "<":"&lt;",
+        ">":"&gt;",
+        '"':"&quot;",
+        "'":"&#39;"
+    })[char]);
+}
+
+function money(value) {
+    const amount = Number(value ?? 0);
+    return "₦" + (Number.isFinite(amount) ? amount : 0)
+        .toLocaleString("en-NG", {
+            minimumFractionDigits:2,
+            maximumFractionDigits:2
+        });
+}
+
+function dateText(value) {
+    if (!value) return "Not recorded";
+    const date = new Date(value);
+    return Number.isNaN(date.getTime())
+        ? escapeHtml(value)
+        : date.toLocaleString("en-NG");
+}
+
+function badge(status) {
+    const safe = String(status || "unknown")
+        .toLowerCase()
+        .replace(/[^a-z0-9_-]/g, "");
+    return '<span class="badge ' + safe + '">' +
+        escapeHtml(status || "unknown") + '</span>';
+}
+
+function showMessage(id, text, type = "info") {
+    const target = el(id);
+    if (!target) return;
+
+    const messageType = type === "success"
+        ? "success-message"
+        : type === "warning"
+            ? "warning-message"
+            : type;
+
+    target.className = "message " + messageType;
+    target.textContent = text;
+}
+
+function clearMessage(id) {
+    const target = el(id);
+    if (!target) return;
+    target.className = "";
+    target.textContent = "";
+}
+
+function errorText(error) {
+    return error?.message || String(error || "Unknown error");
+}
+
+function numericInput(id) {
+    const field = el(id);
+    const value = Number(field?.value);
+    return Number.isFinite(value) ? value : 0;
+}
+
+function makeReference(prefix) {
+    return prefix + "-" + Date.now() + "-" +
+        Math.random().toString(36).slice(2,7).toUpperCase();
+}
+
+/* FROSTTECH BRANDED CONFIRMATION */
+
+function frostTechConfirm(message, confirmLabel = "Yes, Continue") {
+    return new Promise(resolve => {
+        const modal = el("ftConfirmModal");
+        const text = el("ftConfirmText");
+        const yes = el("ftConfirmYes");
+        const cancel = el("ftConfirmCancel");
+
+        if (!modal || !text || !yes || !cancel) {
+            resolve(false);
+            return;
+        }
+
+        text.textContent = message;
+        yes.textContent = confirmLabel;
+        modal.classList.remove("hidden");
+        document.body.classList.add("ft-modal-open");
+        yes.focus();
+
+        function finish(answer) {
+            modal.classList.add("hidden");
+            document.body.classList.remove("ft-modal-open");
+            yes.removeEventListener("click", onYes);
+            cancel.removeEventListener("click", onCancel);
+            modal.removeEventListener("click", onBackdrop);
+            document.removeEventListener("keydown", onKeydown);
+            resolve(answer);
+        }
+
+        function onYes() { finish(true); }
+        function onCancel() { finish(false); }
+        function onBackdrop(event) {
+            if (event.target === modal) finish(false);
+        }
+        function onKeydown(event) {
+            if (event.key === "Escape") finish(false);
+        }
+
+        yes.addEventListener("click", onYes);
+        cancel.addEventListener("click", onCancel);
+        modal.addEventListener("click", onBackdrop);
+        document.addEventListener("keydown", onKeydown);
+    });
+}
+
+/* CUSTOMER REQUEST ITEM MARKER */
+
+function getCustomerRequestedItems(request) {
+    const description = String(request?.description || "");
+    const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+    const markerIndex = description.indexOf(marker);
+
+    if (markerIndex === -1) return null;
+
+    const jsonText = description
+        .slice(markerIndex + marker.length)
+        .split("\n")[0]
+        .trim();
+
+    try {
+        const items = JSON.parse(jsonText);
+        return items && items.version === 1 ? items : null;
+    } catch (error) {
+        console.error("Could not read customer selections:", error);
+        return null;
+    }
+}
+
+function requirementsText(request) {
+    const items = getCustomerRequestedItems(request);
+
+    const requested = items ? [
+        "Installation requested: " +
+            (items.installation ? "YES" : "NO"),
+        "Outdoor brackets requested: " +
+            (items.outdoor_brackets ? "YES" : "NO"),
+        "Accessories requested: " +
+            (items.accessories || "NO"),
+        "Other requested items: " +
+            (items.other_items || "NONE")
+    ].join("\n") :
+    "Additional item selections: Not recorded in this request.";
+
+    return [
+        "CUSTOMER REQUEST — DO NOT ALTER",
+        "Product: " + (request.title || request.product_id || "Not specified"),
+        "Quantity: " + (request.quantity ?? 1),
+        "Preferred brand: " + (request.preferred_brand || "Any"),
+        requested,
+        "Original request details: " + (request.description || "None"),
+        "Delivery address: " + (request.delivery_address || "Not provided")
+    ].join("\n");
+}
+
+
+
+/* Authentication is handled once in the unified Part 2 section. */
+
+    
+
+    
+/* DASHBOARD REFRESH */
+
+async function refreshAllDashboardSections() {
+    if (!currentAdmin) return;
+
+    showMessage("message", "Refreshing FrostTech administration data...", "info");
+
+    const jobs = [
+        loadDashboardCounts(),
+        loadProducts(),
+        loadCustomerRequests(),
+        loadDirectQuotes(),
+        loadSupplierQuotes(),
+        loadSuppliers(),
+        loadAdvertisers(),
+        loadPayments()
+    ];
+
+    const results = await Promise.allSettled(jobs);
+    const failed = results.filter((result) => result.status === "rejected");
+
+    showMessage(
+        "message",
+        failed.length
+            ? "Refresh finished with one or more errors. Check the individual section messages."
+            : "Refresh requests completed. Check each section message for any data-loading warnings.",
+        failed.length ? "warning-message" : "info"
+    );
+}
+
+
+/* =========================================================
+   UNIFIED ADMIN CONNECTION AND AUTHENTICATION
+   Uses the existing Supabase client from Part 1.
+   ========================================================= */
+
+window.db = db;
+window.supabaseClient = db;
+
+const $ = (id) => document.getElementById(id);
+
+/* Variables used by quotation sections. */
+let currentQuoteRequests = [];
+let currentDirectQuoteRequest = null;
+
+const setButtonLoading = (
+    button,
+    loading,
+    loadingText = "Please wait..."
+) => {
+    if (!button) return;
+
+    if (loading) {
+        button.dataset.originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = loadingText;
+    } else {
+        button.disabled = false;
+
+        if (button.dataset.originalText) {
+            button.textContent = button.dataset.originalText;
+        }
+    }
+};
+
+
+/* Verify administrator access against the profiles table. */
+async function requireAdmin() {
+    const {
+        data: { user },
+        error: authError
+    } = await db.auth.getUser();
+
+    if (authError || !user) {
+        throw new Error("Please sign in again.");
+    }
+
+    const { data: profile, error: profileError } = await db
+        .from("profiles")
+        .select("id, full_name, role, is_active")
+        .eq("id", user.id)
+        .maybeSingle();
+
+    if (profileError) {
+        throw profileError;
+    }
+
+    if (
+        !profile ||
+        profile.role !== "admin" ||
+        profile.is_active !== true
+    ) {
+        await db.auth.signOut();
+        throw new Error(
+            "This account is not authorised to access the admin portal."
+        );
+    }
+
+    currentAdmin = user;
+
+    return { user, profile };
+}
+
+
+/* Show the login screen and hide the dashboard. */
+function showAdminLogin() {
+    currentAdmin = null;
+
+    // Clear administrator credentials whenever the login screen is shown.
+    // This prevents the previous session's email/password remaining in the form.
+    if ($("loginForm")) {
+        $("loginForm").reset();
+    }
+    if ($("email")) {
+        $("email").value = "";
+    }
+    if ($("password")) {
+        $("password").value = "";
+    }
+
+    if ($("dashboard")) {
+        $("dashboard").classList.add("hidden");
+    }
+
+    if ($("loginSection")) {
+        $("loginSection").classList.remove("hidden");
+    }
+}
+
+/* Show the dashboard and hide the login screen. */
+function showAdminDashboard() {
+    if ($("loginSection")) {
+        $("loginSection").classList.add("hidden");
+    }
+
+    if ($("dashboard")) {
+        $("dashboard").classList.remove("hidden");
+    }
+}
+
+/* Restore and verify an existing administrator session. */
+async function refreshAdminSession() {
+    try {
+        const { user, profile } = await requireAdmin();
+
+        if ($("loggedUser")) {
+            $("loggedUser").textContent =
+                profile.full_name ||
+                profile.email ||
+                user.email ||
+                "Administrator";
+        }
+
+        showAdminDashboard();
+
+        showMessage(
+            "systemStatus",
+            "Connected. Administrator access verified.",
+            "success-message"
+        );
+
+        await refreshAllDashboardSections();
+
+        return true;
+
+    } catch (error) {
+        showAdminLogin();
+
+        showMessage(
+            "systemStatus",
+            error.message || "Please sign in to continue.",
+            "error"
+        );
+
+        return false;
+    }
+}
+
+/* ADMIN LOGIN */
+if ($("loginForm")) {
+    $("loginForm").addEventListener("submit", async (event) => {
+        event.preventDefault();
+
+        const email = $("email")?.value.trim();
+        const password = $("password")?.value;
+
+        if (!email || !password) {
+            showMessage(
+                "loginMessage",
+                "Enter your email and password.",
+                "error"
+            );
+            return;
+        }
+
+        
+        const button = $("loginBtn");
+        setButtonLoading(button, true, "Signing in...");
+
+        try {
+            const { error } = await db.auth.signInWithPassword({
+                email,
+                password
+            });
+
+            if (error) throw error;
+
+            const verified = await refreshAdminSession();
+
+            if (!verified) return;
+
+            showMessage(
+                "loginMessage",
+                "Login successful.",
+                "success-message"
+            );
+
+        } catch (error) {
+            showMessage(
+                "loginMessage",
+                "Login failed: " + errorText(error),
+                "error"
+            );
+
+        } finally {
+            setButtonLoading(button, false);
+        }
+    });
+}
+
+/* PASSWORD RESET */
+if ($("forgotAdminPassword")) {
+    $("forgotAdminPassword").addEventListener(
+        "click",
+        async (event) => {
+            event.preventDefault();
+
+            const email = $("email")?.value.trim();
+
+            if (!email) {
+                showMessage(
+                    "loginMessage",
+                    "Please enter your administrator email address first.",
+                    "error"
+                );
+
+                $("email")?.focus();
+                return;
+            }
+
+            try {
+                const redirectTo = new URL(
+                    "customer-login.html?reset=1",
+                    window.location.href
+                ).toString();
+
+                const { error } =
+                    await db.auth.resetPasswordForEmail(email, {
+                        redirectTo
+                    });
+
+                if (error) throw error;
+
+                showMessage(
+                    "loginMessage",
+                    "If an account exists with that email, a password-reset email has been requested. Please check your inbox and spam folder.",
+                    "success-message"
+                );
+
+            } catch (error) {
+                showMessage(
+                    "loginMessage",
+                    "Password reset request failed: " +
+                    errorText(error),
+                    "error"
+                );
+            }
+        }
+    );
+}
+
+/* LOGOUT */
+if ($("logoutBtn")) {
+    $("logoutBtn").addEventListener("click", async () => {
+        try {
+            const { error } = await db.auth.signOut();
+
+            if (error) throw error;
+
+            showAdminLogin();
+
+            showMessage(
+                "systemStatus",
+                "You have logged out.",
+                "info"
+            );
+
+        } catch (error) {
+            showMessage(
+                "message",
+                errorText(error),
+                "error"
+            );
+        }
+    });
+}
+
+/* AUTH STATE */
+db.auth.onAuthStateChange((event) => {
+    if (event === "SIGNED_OUT") {
+        showAdminLogin();
+    }
+});
+
+/* -------------------------
+   DASHBOARD COUNTS
+   ------------------------- */
+
+async function loadDashboardCounts() {
+    await requireAdmin();
+
+    const countRows = async (table, filters = []) => {
+        let query = db
+            .from(table)
+            .select("*", { count: "exact", head: true });
+
+        for (const filter of filters) {
+            query = query.eq(filter.column, filter.value);
+        }
+
+        const { count, error } = await query;
+        if (error) throw error;
+        return count || 0;
+    };
+
+    try {
+        const [products, requests, suppliers, directQuotes, supplierQuoteResult, supplierRowsResult] =
+            await Promise.all([
+                countRows("products"),
+                countRows("quote_requests"),
+                countRows("suppliers"),
+                countRows("admin_quotations"),
+                db.rpc("admin_list_supplier_quotes"),
+                db.from("suppliers").select("review_status")
+            ]);
+
+        if (supplierQuoteResult.error) throw supplierQuoteResult.error;
+        if (supplierRowsResult.error) throw supplierRowsResult.error;
+
+        const supplierQuoteCount = (supplierQuoteResult.data || []).length;
+        const pendingCount = (supplierRowsResult.data || []).filter((supplier) => {
+            const status = String(supplier.review_status || "pending").toLowerCase();
+            return !["approved", "rejected", "suspended"].includes(status);
+        }).length;
+
+        if ($("productCount")) $("productCount").textContent = products;
+        if ($("requestCount")) $("requestCount").textContent = requests;
+        if ($("supplierCount")) $("supplierCount").textContent = suppliers;
+        if ($("pendingSupplierCount")) $("pendingSupplierCount").textContent = pendingCount;
+        if ($("quotationCount")) $("quotationCount").textContent = supplierQuoteCount;
+        if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
+
+        // Keep the approved homepage snapshot in sync with the existing live counts.
+        if ($("snapshotProductCount")) $("snapshotProductCount").textContent = products;
+        if ($("snapshotRequestCount")) $("snapshotRequestCount").textContent = requests;
+        if ($("snapshotSupplierCount")) $("snapshotSupplierCount").textContent = suppliers;
+        if ($("snapshotDirectQuoteCount")) $("snapshotDirectQuoteCount").textContent = directQuotes;
+
+    } catch (error) {
+        showMessage(
+            "message",
+            error.message || "Unable to load dashboard counts.",
+            "error"
+        );
+        throw error;
+    }
+}
+
+
+/* =========================================================
+   ADVERTISER APPLICATION MANAGEMENT
+   ========================================================= */
+
+async function loadAdvertisers() {
+    await requireAdmin();
+
+    showMessage("advertiserMessage", "Loading advertiser applications...", "info");
+
+    try {
+        const { data, error } = await db
+            .from("advertisers")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentAdvertisers = data || [];
+
+        renderAdvertisers();
+
+        showMessage(
+            "advertiserMessage",
+            `${currentAdvertisers.length} advertiser application(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "advertiserMessage",
+            error.message || "Unable to load advertiser applications.",
+            "error"
+        );
+    }
+}
+
+function renderAdvertisers() {
+    const container = $("advertiserRows");
+
+    if (!container) return;
+
+    if (!currentAdvertisers.length) {
+        container.innerHTML = "<p>No advertiser applications found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentAdvertisers.map((advertiser) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(advertiser.company_name || "Unnamed company")}</h3>
+
+            <p><strong>Contact:</strong>
+                ${escapeHtml(advertiser.contact_person || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(advertiser.email || "")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(advertiser.phone || "")}
+            </p>
+
+            <p><strong>Business address:</strong>
+                ${escapeHtml(advertiser.business_address || "Not supplied")}
+            </p>
+
+            <p><strong>CAC registration number:</strong>
+                ${escapeHtml(advertiser.registration_number || "Not supplied")}
+            </p>
+
+            <p><strong>Verification status:</strong>
+                ${badge(advertiser.verification_status)}
+            </p>
+
+            <button type="button" disabled
+                title="Private advertiser document access is not connected in this admin file.">
+                Document Review Not Connected
+            </button>
+            <small>Private CAC documents are not opened until the approved admin-only document retrieval workflow is connected.</small>
+        </article>
+    `).join("");
+}
+
+if ($("loadAdvertisersBtn")) {
+    $("loadAdvertisersBtn").addEventListener("click", loadAdvertisers);
+}
+
+/*
+ * Advertiser CAC documents are stored in a private bucket.
+ * This page has no verified document-path field or admin-only
+ * signed-URL function, so it must not construct public URLs or
+ * guess storage paths. Document access remains intentionally disabled.
+ */
+
+/* =========================================================
+   PRODUCT MANAGEMENT
+   ========================================================= */
+
+async function loadProducts() {
+    await requireAdmin();
+
+    showMessage("productMessage", "Loading products...", "info");
+
+    try {
+        const { data, error } = await db
+            .from("products")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentProducts = data || [];
+
+        renderProducts();
+
+        showMessage(
+            "productMessage",
+            `${currentProducts.length} product(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            error.message || "Unable to load products.",
+            "error"
+        );
+    }
+}
+
+function renderProducts() {
+    const container = $("productList");
+
+    if (!container) return;
+
+    if (!currentProducts.length) {
+        container.innerHTML = "<p>No products found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentProducts.map((product) => `
+        <article class="admin-card product-card">
+            ${product.image_url ? `
+                <img
+                    src="${escapeHtml(product.image_url)}"
+                    alt="${escapeHtml(product.name)}"
+                    class="product-admin-image"
+                >
+            ` : ""}
+
+            <h3>${escapeHtml(product.name)}</h3>
+
+            <p><strong>Category:</strong>
+                ${escapeHtml(product.category || "")}
+            </p>
+
+            <p><strong>Brand:</strong>
+                ${escapeHtml(product.brand || "Not specified")}
+            </p>
+
+            <p><strong>Catalogue Selling Price:</strong>
+                ${Number(product.selling_price) > 0
+                    ? money(product.selling_price)
+                    : "Not yet priced"}
+            </p>
+
+            <p><strong>Stock:</strong>
+                ${escapeHtml(product.stock_quantity)}
+            </p>
+
+            <p><strong>Visibility:</strong>
+                ${product.is_active ? badge("active") : badge("inactive")}
+            </p>
+
+            <button type="button"
+                class="edit-product"
+                data-id="${escapeHtml(product.id)}">
+                Edit Product
+            </button>
+
+            <button type="button"
+                class="toggle-product"
+                data-id="${escapeHtml(product.id)}"
+                data-active="${product.is_active ? "true" : "false"}">
+                ${product.is_active ? "Deactivate" : "Activate"}
+            </button>
+        </article>
+    `).join("");
+}
+
+if ($("loadProductsBtn")) {
+    $("loadProductsBtn").addEventListener("click", loadProducts);
+}
+
+if ($("productList")) {
+    $("productList").addEventListener("click", async (event) => {
+        const editButton = event.target.closest(".edit-product");
+        const toggleButton = event.target.closest(".toggle-product");
+
+        if (editButton) {
+            editProduct(editButton.dataset.id);
+        }
+
+        if (toggleButton) {
+            await toggleProduct(toggleButton.dataset.id);
+        }
+    });
+}
+
+async function hasApprovedSelectedPricing(product) {
+    const { data, error } = await db.rpc(
+        "admin_list_product_supplier_costs",
+        {
+            p_product_id: product.id
+        }
+    );
+
+    if (error) throw error;
+
+    return (data || []).some((row) =>
+        row.is_selected === true &&
+        Number(row.supplier_cost) > 0
+    );
+}
+
+function editProduct(id) {
+    const product = currentProducts.find((item) => item.id === id);
+
+    if (!product) {
+        showMessage("productMessage", "Product not found.", "error");
+        return;
+    }
+
+    $("productId").value = product.id;
+    $("productName").value = product.name || "";
+    $("productCategory").value = product.category || "";
+    $("productBrand").value = product.brand || "";
+    $("productModel").value = product.model || "";
+    $("productSku").value = product.sku || "";
+    $("productUnit").value = product.unit || "";
+    $("productDescription").value = product.description || "";
+    $("productSellingPrice").value = product.selling_price ?? "";
+    $("productStock").value = product.stock_quantity ?? 0;
+    $("productMinStock").value = product.min_stock_level ?? 0;
+    $("productActive").value = product.is_active === true ? "true" : "false";
+
+    showMessage(
+        "productMessage",
+        "Editing product. Save your changes when ready.",
+        "info"
+    );
+
+    $("productName")?.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+    });
+}
+
+function resetProductForm() {
+    $("productId").value = "";
+    $("productName").value = "";
+    $("productCategory").value = "";
+    $("productBrand").value = "";
+    $("productModel").value = "";
+    $("productSku").value = "";
+    $("productUnit").value = "";
+    $("productDescription").value = "";
+    $("productSellingPrice").value = "";
+    $("productStock").value = "0";
+    $("productMinStock").value = "0";
+    $("productImage").value = "";
+    $("productActive").value = "false";
+
+    showMessage("productMessage", "Product form cleared.", "info");
+}
+
+if ($("cancelProductEditBtn")) {
+    $("cancelProductEditBtn").addEventListener("click", resetProductForm);
+}
+
+async function saveProduct(event) {
+    event.preventDefault();
+
+    await requireAdmin();
+
+    const productId = $("productId").value.trim();
+    const existing = currentProducts.find((item) => item.id === productId);
+
+    const name = $("productName").value.trim();
+    const category = $("productCategory").value.trim();
+
+    if (!name || !category) {
+        showMessage(
+            "productMessage",
+            "Product name and category are required.",
+            "error"
+        );
+        return;
+    }
+
+    const stock = Number($("productStock").value);
+    const minStock = Number($("productMinStock").value);
+
+    if (
+        !Number.isFinite(stock) ||
+        stock < 0 ||
+        !Number.isFinite(minStock) ||
+        minStock < 0
+    ) {
+        showMessage(
+            "productMessage",
+            "Enter valid stock quantities.",
+            "error"
+        );
+        return;
+    }
+
+    const values = {
+        name,
+        category,
+        brand: $("productBrand").value.trim() || null,
+        model: $("productModel").value.trim() || null,
+        sku: $("productSku").value.trim() || null,
+        unit: $("productUnit").value.trim() || null,
+        description: $("productDescription").value.trim() || null,
+        stock_quantity: stock,
+        min_stock_level: minStock,
+        updated_at: new Date().toISOString()
+    };
+
+    const button = $("saveProductBtn");
+    setButtonLoading(button, true, "Saving product...");
+
+    try {
+        const imageFile = $("productImage").files?.[0];
+
+        let imageUrl = existing?.image_url || null;
+
+        if (imageFile) {
+            const extension = imageFile.name.split(".").pop()?.toLowerCase();
+
+            if (!["jpg", "jpeg", "png", "webp"].includes(extension)) {
+                throw new Error("Use a JPG, PNG or WEBP product image.");
+            }
+
+            const path = `products/${crypto.randomUUID()}.${extension}`;
+
+            const { error: uploadError } = await db.storage
+                .from("product-images")
+                .upload(path, imageFile, {
+                    upsert: false,
+                    contentType: imageFile.type
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicData } = db.storage
+                .from("product-images")
+                .getPublicUrl(path);
+
+            imageUrl = publicData.publicUrl;
+        }
+
+        if (imageUrl) {
+            values.image_url = imageUrl;
+        }
+
+        if (existing) {
+            /*
+             * Preserve existing supplier pricing and supplier link.
+             * This form must not directly edit supplier cost.
+             */
+            if ($("productActive").value === "true") {
+                const hasPricing = await hasApprovedSelectedPricing(existing);
+
+                if (!hasPricing) {
+                    throw new Error(
+                        "This product cannot be activated until an approved supplier price is selected."
+                    );
+                }
+            }
+
+            values.is_active = $("productActive").value === "true";
+
+            const { error } = await db
+                .from("products")
+                .update(values)
+                .eq("id", productId);
+
+            if (error) throw error;
+        } else {
+            /*
+             * New products start inactive and unpriced.
+             * Supplier cost and selling price are managed
+             * through the supplier-pricing workflow.
+             */
+            values.is_active = false;
+            values.supplier_cost = null;
+            values.selling_price = null;
+            values.supplier_id = null;
+
+            const { error } = await db
+                .from("products")
+                .insert(values);
+
+            if (error) throw error;
+        }
+
+        await loadProducts();
+        resetProductForm();
+
+        showMessage(
+            "productMessage",
+            existing
+                ? "Product updated successfully."
+                : "Product created. Select approved supplier pricing before activation.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            error.message || "Unable to save product.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+if ($("productForm")) {
+    $("productForm").addEventListener("submit", saveProduct);
+}
+
+async function toggleProduct(id) {
+    await requireAdmin();
+
+    const product = currentProducts.find((item) => item.id === id);
+
+    if (!product) {
+        showMessage("productMessage", "Product not found.", "error");
+        return;
+    }
+
+    const nextActive = !product.is_active;
+
+    try {
+        if (nextActive) {
+            const hasPricing = await hasApprovedSelectedPricing(product);
+
+            if (!hasPricing) {
+                throw new Error(
+                    "An approved supplier price must be selected before this product can be activated."
+                );
+            }
+        }
+
+        const { error } = await db
+            .from("products")
+            .update({
+                is_active: nextActive,
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (error) throw error;
+
+        await loadProducts();
+
+        showMessage(
+            "productMessage",
+            nextActive ? "Product activated." : "Product deactivated.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "productMessage",
+            error.message || "Unable to change product visibility.",
+            "error"
+        );
+    }
+}
+
+</script> 
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN PORTAL
+   PART 3: CUSTOMER REQUESTS, ADMIN FEE AND DIRECT QUOTATIONS
+   ========================================================= */
+
+/* -------------------------
+   CUSTOMER QUOTATION REQUESTS
+   ------------------------- */
+
+async function loadCustomerRequests() {
+    await requireAdmin();
+
+    showMessage("requestMessage", "Loading customer requests...", "info");
+
+    try {
+        const { data, error } = await db
+            .from("quote_requests")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentQuoteRequests = data || [];
+
+        renderCustomerRequests();
+
+        showMessage(
+            "requestMessage",
+            `${currentQuoteRequests.length} customer request(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "requestMessage",
+            error.message || "Unable to load customer requests.",
+            "error"
+        );
+    }
+}
+
+function renderCustomerRequests() {
+    const container = $("quoteRequests");
+
+    if (!container) return;
+
+    if (!currentQuoteRequests.length) {
+        container.innerHTML = "<p>No customer requests found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentQuoteRequests.map((request) => `
+        <article class="admin-card">
+            <h3>
+                Request ${escapeHtml(request.request_number || request.id)}
+            </h3>
+
+            <p><strong>Customer:</strong>
+                ${escapeHtml(request.customer_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(request.customer_email || "Not supplied")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(request.customer_phone || "Not supplied")}
+            </p>
+
+            <p><strong>Requirement:</strong><br>
+                ${escapeHtml(request.description || "No description supplied")}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(request.status)}
+            </p>
+
+            <p><strong>Submitted:</strong>
+                ${escapeHtml(request.created_at || "")}
+            </p>
+
+            <button type="button"
+                class="mark-request-reviewing"
+                data-id="${escapeHtml(request.id)}">
+                Mark Reviewing
+            </button>
+
+            <button type="button"
+                class="create-direct-quotation"
+                data-id="${escapeHtml(request.id)}">
+                Prepare Direct Quotation
+            </button>
+        </article>
+    `).join("");
+}
+
+if ($("loadRequestsBtn")) {
+    $("loadRequestsBtn").addEventListener("click", loadCustomerRequests);
+}
+
+if ($("quoteRequests")) {
+    $("quoteRequests").addEventListener("click", async (event) => {
+        const reviewingButton = event.target.closest(".mark-request-reviewing");
+        const quotationButton = event.target.closest(".create-direct-quotation");
+
+        if (reviewingButton) {
+            await markRequestReviewing(reviewingButton.dataset.id);
+        }
+
+        if (quotationButton) {
+            await openDirectQuotationForRequest(quotationButton.dataset.id);
+        }
+    });
+}
+
+async function markRequestReviewing(id) {
+    await requireAdmin();
+
+    try {
+        const { error } = await db
+            .from("quote_requests")
+            .update({
+                status: "reviewing",
+                updated_at: new Date().toISOString()
+            })
+            .eq("id", id);
+
+        if (error) throw error;
+
+        await loadCustomerRequests();
+
+        showMessage(
+            "requestMessage",
+            "Customer request marked as reviewing.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "requestMessage",
+            error.message || "Unable to update request status.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   QUOTATION PROCESSING FEE
+   ========================================================= */
+
+/*
+ * The processing fee is 2% of:
+ *
+ * Product subtotal
+ * + additional charges
+ * - discount
+ *
+ * Delivery is excluded.
+ *
+ * The fee is paid separately before the customer receives
+ * the full quotation details.
+ */
+
+function calculateQuotationAdminFee(quote) {
+    /*
+     * admin_quotations records created by this form store the
+     * customer unit price and quantity, not a subtotal column.
+     * Derive the product subtotal without adding delivery.
+     */
+    const storedSubtotal = Number(quote.subtotal);
+    const unitPrice = Number(quote.unit_price || 0);
+    const quantity = Number(quote.quantity || 0);
+    const subtotal = Number.isFinite(storedSubtotal) && storedSubtotal > 0
+        ? storedSubtotal
+        : unitPrice * quantity;
+    const additional = Number(quote.additional_charges || 0);
+    const discount = Number(quote.discount || 0);
+
+    const feeBasis = Math.max(
+        0,
+        subtotal + additional - discount
+    );
+
+    const fee = Math.round(feeBasis * 0.02 * 100) / 100;
+
+    return {
+        subtotal,
+        additional,
+        discount,
+        feeBasis,
+        fee
+    };
+}
+
+async function notifyCustomerFeeRequired(request, quote, fee) {
+    /*
+     * Guest customers do not have an authenticated customer
+     * account to receive an in-app notification.
+     */
+    if (!request.customer_id) return;
+
+    const { data: customer, error: customerError } = await db
+        .from("customers")
+        .select("user_id")
+        /* quote_requests.customer_id references profiles.id (auth user id). */
+        .eq("user_id", request.customer_id)
+        .maybeSingle();
+
+    if (customerError) throw customerError;
+
+    if (!customer?.user_id) return;
+
+    const notificationTitle = "Quotation processing fee required";
+
+    const { data: existing, error: existingError } = await db
+        .from("notifications")
+        .select("id")
+        .eq("user_id", customer.user_id)
+        .eq("reference_type", "admin_quotation")
+        .eq("reference_id", quote.id)
+        .eq("title", notificationTitle)
+        .limit(1);
+
+    if (existingError) throw existingError;
+
+    if (existing?.length) return;
+
+    const reference = request.request_number || request.id;
+
+    const { error: insertError } = await db
+        .from("notifications")
+        .insert({
+            user_id: customer.user_id,
+            title: notificationTitle,
+            message:
+                `Quotation ${reference} has been prepared. ` +
+                `A separate quotation processing and marketplace ` +
+                `administration fee of ${money(fee)} is required ` +
+                `before the full quotation details are released. ` +
+                `Delivery charges are excluded from the fee calculation.`,
+            type: "quotation",
+            reference_type: "admin_quotation",
+            reference_id: quote.id
+        });
+
+    if (insertError) throw insertError;
+}
+
+/* =========================================================
+   DIRECT QUOTATION FORM
+   ========================================================= */
+
+function setDirectQuotationDraftPriceMode(isDraftPriceMode) {
+    const labels = {
+        directUnitCost: isDraftPriceMode
+            ? "Product Customer Unit Price (₦) *"
+            : "Product Unit Cost (₦) *",
+        directBracketUnitCost: isDraftPriceMode
+            ? "Customer Price per Bracket Set (₦)"
+            : "Cost per Bracket Set (₦)",
+        directInstallationPerAc: isDraftPriceMode
+            ? "Customer Installation Price per AC (₦)"
+            : "Installation Cost per AC (₦)",
+        directAccessoryUnitCost: isDraftPriceMode
+            ? "Customer Accessory Price per Unit / Pack (₦)"
+            : "Accessory Cost per Unit / Pack (₦)"
+    };
+
+    for (const [fieldId, labelText] of Object.entries(labels)) {
+        const label = document.querySelector(`label[for="${fieldId}"]`);
+        if (label) label.textContent = labelText;
+    }
+}
+
+function resetDirectQuotationForm() {
+    const form = $("directQuoteForm");
+
+    if (form) {
+        form.reset();
+        form.classList.add("hidden");
+    }
+    $("directMarkup").disabled = false;
+    setDirectQuotationDraftPriceMode(false);
+
+    $("directQuoteId").value = "";
+    $("directRequestId").value = "";
+    $("directRequestReference").textContent = "";
+    $("directRequestRequirements").textContent = "";
+
+    currentDirectQuoteRequest = null;
+
+    updateDirectQuotationPreview();
+
+    showMessage(
+        "directQuoteMessage",
+        "Quotation form cleared.",
+        "info"
+    );
+}
+
+function readRequestedItems(quotation) {
+    /* The quotation marker is saved in admin_quotations.notes. */
+    const notes = String(quotation?.notes || quotation?.description || "");
+
+    const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+    const markerPosition = notes.indexOf(marker);
+
+    if (markerPosition === -1) return null;
+
+    const jsonText = notes
+        .slice(markerPosition + marker.length)
+        .split("\n")[0]
+        .trim();
+
+    try {
+        const parsed = JSON.parse(jsonText);
+
+        if (
+            !parsed ||
+            typeof parsed !== "object" ||
+            Array.isArray(parsed) ||
+            parsed.version !== 1
+        ) {
+            return null;
+        }
+
+        return parsed;
+    } catch {
+        return null;
+    }
+}
+
+async function openDirectQuotationForRequest(requestId) {
+    await requireAdmin();
+
+    const request = currentQuoteRequests.find(
+        (item) => item.id === requestId
+    );
+
+    if (!request) {
+        showMessage(
+            "directQuoteMessage",
+            "Customer request not found. Refresh the requests list.",
+            "error"
+        );
+        return;
+    }
+
+    resetDirectQuotationForm();
+
+    currentDirectQuoteRequest = request;
+
+    $("directRequestId").value = request.id;
+
+    $("directRequestReference").textContent =
+        request.request_number || request.id;
+
+    $("directRequestRequirements").textContent =
+        request.description || "No description supplied.";
+
+    $("directQuoteForm").classList.remove("hidden");
+    $("directQuotationSection").hidden = false;
+    window.frostTechOpenAdminPage?.("directQuotationSection");
+
+    $("directQuotationSection").scrollIntoView({
+        behavior: "smooth",
+        block: "start"
+    });
+
+    showMessage(
+        "directQuoteMessage",
+        "Enter the quotation details and review the calculated total.",
+        "info"
+    );
+}
+
+/* =========================================================
+   DIRECT QUOTATION CALCULATIONS
+   ========================================================= */
+
+function getDirectQuotationValues() {
+    const quantity = Number($("directQuantity").value || 0);
+    const unitCost = Number($("directUnitCost").value || 0);
+    const markup = Number($("directMarkup").value || 0);
+
+    const delivery = Number($("directDeliveryCost").value || 0);
+
+    const bracketQuantity = Number(
+        $("directBracketQuantity").value || 0
+    );
+
+    const bracketUnitCost = Number(
+        $("directBracketUnitCost").value || 0
+    );
+
+    const installationPerAc = Number(
+        $("directInstallationPerAc").value || 0
+    );
+
+    const accessoryDescription =
+        $("directAccessoryDescription").value.trim();
+
+    const accessoryUnit =
+        $("directAccessoryUnit").value.trim();
+
+    const accessoryQuantity = Number(
+        $("directAccessoryQuantity").value || 0
+    );
+
+    const accessoryUnitCost = Number(
+        $("directAccessoryUnitCost").value || 0
+    );
+
+    const discount = Number(
+        $("directDiscount").value || 0
+    );
+
+    return {
+        quantity,
+        unitCost,
+        markup,
+        delivery,
+        bracketQuantity,
+        bracketUnitCost,
+        installationPerAc,
+        accessoryDescription,
+        accessoryUnit,
+        accessoryQuantity,
+        accessoryUnitCost,
+        discount
+    };
+}
+
+function calculateDirectQuotation() {
+    const v = getDirectQuotationValues();
+
+    const productCost = v.quantity * v.unitCost;
+
+    const customerUnitPrice =
+        v.unitCost * (1 + v.markup / 100);
+
+    const productSellingTotal =
+        v.quantity * customerUnitPrice;
+
+    const bracketsCost =
+        v.bracketQuantity * v.bracketUnitCost;
+
+    const bracketsSellingTotal =
+        bracketsCost * (1 + v.markup / 100);
+
+    const installationCost =
+        v.quantity * v.installationPerAc;
+
+    const installationSellingTotal =
+        installationCost * (1 + v.markup / 100);
+
+    const accessoriesCost =
+        v.accessoryQuantity * v.accessoryUnitCost;
+
+    const accessoriesSellingTotal =
+        accessoriesCost * (1 + v.markup / 100);
+
+    const subtotal =
+        productSellingTotal +
+        bracketsSellingTotal +
+        installationSellingTotal +
+        accessoriesSellingTotal;
+
+    const total =
+        Math.max(0, subtotal - v.discount) + v.delivery;
+
+    const additionalCharges =
+        bracketsSellingTotal +
+        installationSellingTotal +
+        accessoriesSellingTotal;
+
+    return {
+        ...v,
+        productCost,
+        customerUnitPrice,
+        productSellingTotal,
+        bracketsCost,
+        bracketsSellingTotal,
+        installationCost,
+        installationSellingTotal,
+        accessoriesCost,
+        accessoriesSellingTotal,
+        subtotal,
+        additionalCharges,
+        total
+    };
+}
+
+function updateDirectQuotationPreview() {
+    if (!$("directQuoteForm")) return;
+
+    const v = getDirectQuotationValues();
+
+    const values = [
+        v.quantity,
+        v.unitCost,
+        v.markup,
+        v.delivery,
+        v.bracketQuantity,
+        v.bracketUnitCost,
+        v.installationPerAc,
+        v.accessoryQuantity,
+        v.accessoryUnitCost,
+        v.discount
+    ];
+
+    if (values.some((value) => !Number.isFinite(value))) {
+        return;
+    }
+
+    const result = calculateDirectQuotation();
+
+    if ($("displayUnitCost")) {
+        $("displayUnitCost").textContent = money(result.unitCost);
+    }
+
+    if ($("displayMarkup")) {
+        $("displayMarkup").textContent = `${result.markup}%`;
+    }
+
+    if ($("displayCustomerUnitPrice")) {
+        $("displayCustomerUnitPrice").textContent =
+            money(result.customerUnitPrice);
+    }
+
+    if ($("directSubtotal")) {
+        $("directSubtotal").textContent = money(result.subtotal);
+    }
+
+    if ($("displayDelivery")) {
+        $("displayDelivery").textContent = money(result.delivery);
+    }
+
+    if ($("displayBrackets")) {
+        $("displayBrackets").textContent =
+            money(result.bracketsSellingTotal);
+    }
+
+    if ($("displayInstallation")) {
+        $("displayInstallation").textContent =
+            money(result.installationSellingTotal);
+    }
+
+    if ($("displayAccessories")) {
+        $("displayAccessories").textContent =
+            money(result.accessoriesSellingTotal);
+    }
+
+    if ($("displayDiscount")) {
+        $("displayDiscount").textContent = money(result.discount);
+    }
+
+    if ($("directTotal")) {
+        $("directTotal").textContent = money(result.total);
+    }
+}
+
+if ($("directQuoteForm")) {
+    $("directQuoteForm").addEventListener("input", updateDirectQuotationPreview);
+    $("directQuoteForm").addEventListener("change", updateDirectQuotationPreview);
+}
+
+async function getSelectedProductSupplierCost(productId) {
+    const { data, error } = await db.rpc(
+        "admin_list_product_supplier_costs",
+        {
+            p_product_id: productId
+        }
+    );
+
+    if (error) throw error;
+
+    const selected = (data || []).find((row) =>
+        row.is_selected === true &&
+        Number(row.supplier_cost) > 0
+    );
+
+    if (!selected) {
+        throw new Error(
+            "No approved selected supplier cost is available for this product."
+        );
+    }
+
+    return Number(selected.supplier_cost);
+}
+
+/* =========================================================
+   DIRECT QUOTATION RECORD HELPERS
+   ========================================================= */
+
+function getDirectQuotationRecord() {
+    const result = calculateDirectQuotation();
+
+    const description = $("directProductDescription").value.trim();
+
+    if (!description) {
+        throw new Error("Enter the product or service description.");
+    }
+
+    if (
+        !Number.isInteger(result.quantity) ||
+        result.quantity < 1
+    ) {
+        throw new Error("Quantity must be a whole number greater than zero.");
+    }
+
+    if (
+        result.unitCost <= 0 ||
+        result.markup < 0 ||
+        result.delivery < 0 ||
+        result.bracketQuantity < 0 ||
+        result.bracketUnitCost < 0 ||
+        result.installationPerAc < 0 ||
+        result.accessoryQuantity < 0 ||
+        result.accessoryUnitCost < 0 ||
+        result.discount < 0
+    ) {
+        throw new Error("Enter valid non-negative quotation values.");
+    }
+
+    if (
+        result.accessoryQuantity > 0 &&
+        !result.accessoryDescription
+    ) {
+        throw new Error("Describe the accessory being quoted.");
+    }
+
+    if (
+        result.discount >
+        result.subtotal
+    ) {
+        throw new Error("Discount cannot exceed the quotation subtotal.");
+    }
+
+    /*
+     * Notes may be shown on the customer-facing quotation.
+     * Store only customer prices here, never supplier cost inputs.
+     * The edit screen restores these prices with zero markup.
+     */
+    const markupFactor = 1 + result.markup / 100;
+    const requestedItems = {
+        version: 1,
+        pricing_mode: "customer_prices_v1",
+        items: {
+            product: {
+                customer_unit_price: result.customerUnitPrice
+            },
+            installation: {
+                customer_unit_price: result.installationPerAc * markupFactor,
+                quantity: result.quantity
+            },
+            outdoor_brackets: {
+                quantity: result.bracketQuantity,
+                customer_unit_price: result.bracketUnitCost * markupFactor
+            },
+            accessories: result.accessoryQuantity > 0 ? [{
+                description: result.accessoryDescription,
+                unit: result.accessoryUnit || null,
+                quantity: result.accessoryQuantity,
+                customer_unit_price: result.accessoryUnitCost * markupFactor
+            }] : [],
+            other_items: []
+        }
+    };
+
+    return {
+        request_id: $("directRequestId").value || null,
+        customer_id: currentDirectQuoteRequest?.customer_id || null,
+        product_description: description,
+        quantity: result.quantity,
+        unit_price: result.customerUnitPrice,
+        delivery_cost: result.delivery,
+        additional_charges: result.additionalCharges,
+        discount: result.discount,
+        validity_date: $("directValidity").value || null,
+        notes: [
+            $("directNotes").value.trim(),
+            "",
+            "FROSTTECH_REQUESTED_ITEMS_V1:",
+            JSON.stringify(requestedItems)
+        ].filter(Boolean).join("\n"),
+        status: "draft"
+    };
+}
+
+async function saveDirectDraftRecord() {
+    await requireAdmin();
+
+    const values = getDirectQuotationRecord();
+
+    const quotationId = $("directQuoteId").value.trim();
+
+    if (quotationId) {
+        const { data, error } = await db
+            .from("admin_quotations")
+            .update(values)
+            .eq("id", quotationId)
+            .eq("status", "draft")
+            .select("id")
+            .maybeSingle();
+
+        if (error) throw error;
+
+        if (!data) {
+            throw new Error(
+                "This quotation is no longer an editable draft. It was not changed or resubmitted."
+            );
+        }
+
+        return data.id;
+    }
+
+    const { data, error } = await db
+        .from("admin_quotations")
+        .insert(values)
+        .select("id")
+        .single();
+
+    if (error) throw error;
+
+    $("directQuoteId").value = data.id;
+
+    return data.id;
+}
+
+async function saveDirectDraft() {
+    const button = $("saveDraftBtn");
+
+    setButtonLoading(button, true, "Saving draft...");
+
+    try {
+        const id = await saveDirectDraftRecord();
+
+        await loadDirectQuotes();
+
+        showMessage(
+            "directQuoteMessage",
+            `Quotation draft saved successfully. Reference: ${id}`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to save quotation draft.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+if ($("saveDraftBtn")) {
+    $("saveDraftBtn").addEventListener("click", saveDirectDraft);
+}
+
+/* =========================================================
+   DIRECT QUOTATION SUBMISSION
+   ========================================================= */
+
+let directQuotationSubmissionInProgress = false;
+
+async function submitDirectQuotation() {
+    if (directQuotationSubmissionInProgress) {
+        showMessage("directQuoteMessage", "This quotation submission is already being processed. Please wait.", "warning-message");
+        return;
+    }
+    directQuotationSubmissionInProgress = true;
+
+    const button = $("submitDirectQuoteBtn");
+
+    setButtonLoading(button, true, "Submitting quotation...");
+
+    try {
+        await requireAdmin();
+        const quotationId = await saveDirectDraftRecord();
+
+        const { data: quote, error: quoteError } = await db
+            .from("admin_quotations")
+            .select("*")
+            .eq("id", quotationId)
+            .single();
+
+        if (quoteError) throw quoteError;
+
+        if (quote.status !== "draft") {
+            throw new Error(
+                "This quotation has already left draft status and cannot be submitted again."
+            );
+        }
+
+        if (!quote.request_id) {
+            throw new Error(
+                "This quotation is not linked to a customer request."
+            );
+        }
+
+        const request = currentQuoteRequests.find(
+            (item) => item.id === quote.request_id
+        );
+
+        if (!request) {
+            const { data: savedRequest, error: requestError } = await db
+                .from("quote_requests")
+                .select("*")
+                .eq("id", quote.request_id)
+                .single();
+
+            if (requestError) throw requestError;
+
+            currentDirectQuoteRequest = savedRequest;
+        } else {
+            currentDirectQuoteRequest = request;
+        }
+
+        const currentRequest = currentDirectQuoteRequest;
+
+        const fee = calculateQuotationAdminFee(quote);
+
+        if (fee.feeBasis <= 0) {
+            throw new Error(
+                "The quotation amount must be greater than zero before submission."
+            );
+        }
+
+        /*
+         * One server-side transaction locks the draft and request,
+         * calculates the 2% processing fee, and changes both records.
+         * The matching SQL migration must be applied before this
+         * dashboard version is deployed.
+         */
+        const { data: submissionResult, error: submissionError } = await db.rpc(
+            "admin_submit_direct_quotation",
+            { p_quotation_id: quotationId }
+        );
+
+        if (submissionError) throw submissionError;
+
+        const submitted = Array.isArray(submissionResult)
+            ? submissionResult[0]
+            : submissionResult;
+
+        if (
+            !submitted ||
+            submitted.quotation_id !== quotationId ||
+            submitted.request_id !== currentRequest.id ||
+            Number(submitted.fee) <= 0
+        ) {
+            throw new Error("The server did not confirm a complete quotation submission. Check the quotation status before retrying.");
+        }
+
+        const confirmedFee = Number(submitted.fee);
+        if (Math.abs(confirmedFee - fee.fee) > 0.01) {
+            throw new Error("The server-calculated processing fee differs from the displayed amount. Please review the quotation before continuing.");
+        }
+
+        let notificationFailed = false;
+        try {
+            await notifyCustomerFeeRequired(
+                currentRequest,
+                quote,
+                confirmedFee
+            );
+        } catch (notificationError) {
+            notificationFailed = true;
+            console.error("Quotation submitted but notification failed:", notificationError);
+        }
+
+        /* The quotation is already submitted; refreshes are non-critical. */
+        await Promise.allSettled([
+            loadDirectQuotes(),
+            loadCustomerRequests(),
+            loadDashboardCounts()
+        ]);
+
+        showMessage(
+            "directQuoteMessage",
+            notificationFailed
+                ? `Quotation submitted and the separate processing fee of ${money(confirmedFee)} was recorded. Customer notification failed; do not submit this quotation again. Delivery is excluded from the fee calculation.`
+                : `Quotation submitted. The separate processing fee is ${money(confirmedFee)}. Delivery is excluded from the fee calculation.`,
+            notificationFailed ? "warning-message" : "success"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to submit quotation.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
+        directQuotationSubmissionInProgress = false;
+    }
+}
+
+if ($("submitDirectQuoteBtn")) {
+    $("submitDirectQuoteBtn").addEventListener(
+        "click",
+        submitDirectQuotation
+    );
+}
+
+if ($("cancelDirectQuoteBtn")) {
+    $("cancelDirectQuoteBtn").addEventListener(
+        "click",
+        resetDirectQuotationForm
+    );
+}
+
+/* =========================================================
+   EXISTING DIRECT QUOTATION DRAFTS
+   ========================================================= */
+
+async function loadDirectQuotes() {
+    showMessage(
+        "directQuoteMessage",
+        "Loading saved direct quotations...",
+        "info"
+    );
+
+    try {
+        await requireAdmin();
+        const { data, error } = await db
+            .from("admin_quotations")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        const container = $("directQuoteList");
+
+        if (!container) return;
+
+        const drafts = (data || []).filter(
+            (quote) => quote.status === "draft"
+        );
+        currentDirectQuotes = drafts;
+
+        if (!drafts.length) {
+            container.innerHTML = "<p>No quotation drafts found.</p>";
+            showMessage(
+                "directQuoteMessage",
+                "No saved quotation drafts were found.",
+                "info"
+            );
+            return;
+        }
+
+        container.innerHTML = drafts.map((quote) => `
+            <article class="admin-card">
+                <h3>${escapeHtml(quote.product_description || "Quotation draft")}</h3>
+
+                <p><strong>Quantity:</strong>
+                    ${escapeHtml(quote.quantity)}
+                </p>
+
+                <p><strong>Unit price:</strong>
+                    ${money(quote.unit_price)}
+                </p>
+
+                <p><strong>Delivery:</strong>
+                    ${money(quote.delivery_cost)}
+                </p>
+
+                <p><strong>Additional charges:</strong>
+                    ${money(quote.additional_charges)}
+                </p>
+
+                <p><strong>Status:</strong>
+                    ${badge(quote.status)}
+                </p>
+
+                <button type="button"
+                    class="edit-direct-quotation"
+                    data-id="${escapeHtml(quote.id)}">
+                    Edit Draft
+                </button>
+            </article>
+        `).join("");
+
+        /* Compact table replaces the card display while retaining all draft actions. */
+        const directQuoteRows = drafts.map((quote) => `<tr>
+            <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation draft")}</td>
+            <td>${escapeHtml(quote.quantity)}</td>
+            <td>${money(quote.unit_price)}</td>
+            <td>${money(quote.delivery_cost)}</td>
+            <td>${money(quote.additional_charges)}</td>
+            <td>${badge(quote.status)}</td>
+            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Edit Draft</button></div></td>
+        </tr>`);
+        container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
+
+        showMessage(
+            "directQuoteMessage",
+            `${drafts.length} saved quotation draft(s) loaded successfully.`,
+            "success"
+        );
+
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to load direct quotations.",
+            "error"
+        );
+    }
+}
+
+if ($("loadDirectQuotesBtn")) {
+    $("loadDirectQuotesBtn").addEventListener("click", loadDirectQuotes);
+}
+
+if ($("directQuoteList")) {
+    $("directQuoteList").addEventListener("click", async (event) => {
+        const button = event.target.closest(".edit-direct-quotation");
+
+        if (button) {
+            await editDirectQuotation(button.dataset.id);
+        }
+    });
+}
+
+async function editDirectQuotation(id) {
+    await requireAdmin();
+
+    try {
+        const { data: quote, error } = await db
+            .from("admin_quotations")
+            .select("*")
+            .eq("id", id)
+            .single();
+
+        if (error) throw error;
+
+        if (quote.status !== "draft") {
+            throw new Error("Only quotation drafts can be edited.");
+        }
+
+        /*
+         * Do not guess how legacy combined additional charges
+         * were distributed. An old draft without the structured
+         * marker must be recreated as an itemised quotation.
+         */
+        const requestedItems = readRequestedItems(quote);
+
+        if (
+            Number(quote.additional_charges || 0) > 0 &&
+            !requestedItems
+        ) {
+            throw new Error(
+                "This older draft contains combined additional charges that cannot be safely itemised. Please prepare a fresh quotation."
+            );
+        }
+
+        $("directQuoteId").value = quote.id;
+        $("directRequestId").value = quote.request_id || "";
+
+        $("directProductDescription").value =
+            quote.product_description || "";
+
+        $("directQuantity").value = quote.quantity || 1;
+
+        /*
+         * The saved unit_price is the customer-facing unit price.
+         * Recovering the original supplier cost and markup from
+         * this value is not reliable, so the user must review
+         * and enter the current supplier cost and markup.
+         */
+        $("directUnitCost").value = "";
+        $("directMarkup").value = "";
+
+        $("directDeliveryCost").value =
+            quote.delivery_cost || 0;
+
+        $("directDiscount").value =
+            quote.discount || 0;
+
+        $("directValidity").value =
+            quote.validity_date || "";
+
+        const noteText = String(quote.notes || "");
+
+        const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+
+        const markerPosition = noteText.indexOf(marker);
+
+        $("directNotes").value = markerPosition >= 0
+            ? noteText.slice(0, markerPosition).trim()
+            : noteText;
+
+        const items = requestedItems?.items || {};
+        const safeCustomerPriceDraft =
+            requestedItems?.pricing_mode === "customer_prices_v1";
+
+        if (safeCustomerPriceDraft) {
+            /* Restore customer-facing amounts without exposing supplier costs. */
+            $("directUnitCost").value =
+                items.product?.customer_unit_price ?? quote.unit_price ?? 0;
+            $("directMarkup").value = "0";
+            $("directMarkup").disabled = true;
+
+            $("directInstallationPerAc").value =
+                items.installation?.customer_unit_price ?? 0;
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity ?? 0;
+            $("directBracketUnitCost").value =
+                items.outdoor_brackets?.customer_unit_price ?? 0;
+
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
+
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value =
+                firstAccessory.customer_unit_price ?? 0;
+
+            setDirectQuotationDraftPriceMode(true);
+        } else {
+            /* Legacy markers may contain supplier costs. Never load them. */
+            $("directUnitCost").value = "";
+            $("directMarkup").value = "15";
+            $("directMarkup").disabled = false;
+            $("directInstallationPerAc").value = "0";
+            $("directBracketQuantity").value =
+                items.outdoor_brackets?.quantity || 0;
+            $("directBracketUnitCost").value = "0";
+
+            const accessories = Array.isArray(items.accessories)
+                ? items.accessories
+                : [];
+            const firstAccessory = accessories[0] || {};
+
+            $("directAccessoryDescription").value =
+                firstAccessory.description || "";
+            $("directAccessoryUnit").value =
+                firstAccessory.unit || "";
+            $("directAccessoryQuantity").value =
+                firstAccessory.quantity || 0;
+            $("directAccessoryUnitCost").value = "0";
+
+            setDirectQuotationDraftPriceMode(false);
+        }
+
+        const request = currentQuoteRequests.find(
+            (item) => item.id === quote.request_id
+        );
+
+        currentDirectQuoteRequest = request || null;
+
+        $("directRequestReference").textContent =
+            request?.request_number || quote.request_id || "";
+
+        $("directRequestRequirements").textContent =
+            request?.description || "";
+
+        $("directQuoteForm").classList.remove("hidden");
+        $("directQuotationSection").hidden = false;
+        window.frostTechOpenAdminPage?.("directQuotationSection");
+
+        updateDirectQuotationPreview();
+
+        $("directQuotationSection").scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+        showMessage(
+            "directQuoteMessage",
+            "Draft loaded. Review and re-enter supplier cost and markup before saving.",
+            "info"
+        );
+    } catch (error) {
+        showMessage(
+            "directQuoteMessage",
+            error.message || "Unable to edit quotation draft.",
+            "error"
+        );
+    }
+}
+
+/* -------------------------
+   INITIAL CALCULATION
+   ------------------------- */
+
+updateDirectQuotationPreview();
+
+</script>
+
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN PORTAL
+   PART 4: SUPPLIER QUOTATIONS, SUPPLIERS, PAYMENTS
+   AND SUPPLIER ACCOUNT MAINTENANCE
+   ========================================================= */
+
+/* =========================================================
+   BRANDED ADMIN CONFIRMATION MODAL
+   ========================================================= */
+
+function adminConfirm(options = {}) {
+    return new Promise((resolve) => {
+        const modal = $("ftConfirmModal");
+        const title = $("ftConfirmTitle");
+        const message = $("ftConfirmText");
+        const cancelButton = $("ftConfirmCancel");
+        const yesButton = $("ftConfirmYes");
+
+        if (!modal || !cancelButton || !yesButton) {
+            resolve({
+                confirmed: false,
+                reason: ""
+            });
+            return;
+        }
+
+        title.textContent =
+            options.title || "FrostTech HVAC and Refrigeration Marketplace";
+
+        message.textContent = options.message || "Are you sure?";
+
+        let reasonInput = modal.querySelector("#ftConfirmReason");
+
+        if (reasonInput) reasonInput.remove();
+
+        if (options.requireReason) {
+            reasonInput = document.createElement("textarea");
+            reasonInput.id = "ftConfirmReason";
+            reasonInput.placeholder =
+                options.reasonPlaceholder || "Enter the reason...";
+            reasonInput.rows = 3;
+            reasonInput.maxLength = 1000;
+            reasonInput.style.width = "100%";
+            reasonInput.style.marginTop = "12px";
+            reasonInput.style.padding = "10px";
+
+            message.insertAdjacentElement("afterend", reasonInput);
+        }
+
+        yesButton.textContent = options.confirmText || "Yes, Continue";
+        cancelButton.textContent = options.cancelText || "Cancel";
+
+        modal.classList.remove("hidden");
+        document.body.classList.add("ft-modal-open");
+
+        const finish = (confirmed) => {
+            modal.classList.add("hidden");
+            document.body.classList.remove("ft-modal-open");
+
+            const reason = reasonInput
+                ? reasonInput.value.trim()
+                : "";
+
+            if (reasonInput) reasonInput.remove();
+
+            cancelButton.removeEventListener("click", cancel);
+            yesButton.removeEventListener("click", accept);
+
+            resolve({
+                confirmed,
+                reason
+            });
+        };
+
+        const cancel = () => finish(false);
+
+        const accept = () => {
+            const reason = reasonInput
+                ? reasonInput.value.trim()
+                : "";
+
+            if (options.requireReason && reasonInput) {
+                /* Clear any previous validation error before rechecking. */
+                reasonInput.setCustomValidity("");
+
+                if (!reason) {
+                    reasonInput.focus();
+                    reasonInput.setCustomValidity(
+                        "Please enter a reason before continuing."
+                    );
+                    reasonInput.reportValidity();
+                    return;
+                }
+            }
+
+            finish(true);
+        };
+
+        cancelButton.addEventListener("click", cancel);
+        yesButton.addEventListener("click", accept);
+    });
+}
+
+/* =========================================================
+   SUPPLIER QUOTATIONS
+   ========================================================= */
+
+async function loadSupplierQuotes() {
+    await requireAdmin();
+
+    showMessage(
+        "quotationMessage",
+        "Loading supplier quotations...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db.rpc(
+            "admin_list_supplier_quotes"
+        );
+
+        if (error) throw error;
+
+        currentSupplierQuotes = data || [];
+
+        renderSupplierQuotes();
+
+        showMessage(
+            "quotationMessage",
+            `${currentSupplierQuotes.length} supplier quotation(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to load supplier quotations.",
+            "error"
+        );
+    }
+}
+
+function renderSupplierQuotes() {
+    const container = $("supplierQuotes");
+
+    if (!container) return;
+
+    if (!currentSupplierQuotes.length) {
+        container.innerHTML = "<p>No supplier quotations found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentSupplierQuotes.map((quote) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                quote.product_name ||
+                quote.product_description ||
+                "Supplier quotation"
+            )}</h3>
+
+            <p><strong>Supplier:</strong>
+                ${escapeHtml(
+                    quote.supplier_name ||
+                    quote.business_name ||
+                    "Supplier"
+                )}
+            </p>
+
+            <p><strong>Supplier price:</strong>
+                ${money(quote.supplier_price ?? quote.unit_price)}
+            </p>
+
+            <p><strong>Total supplier cost:</strong>
+                ${money(quote.total_cost ?? quote.total_amount)}
+            </p>
+
+            <p><strong>Delivery:</strong>
+                ${money(quote.delivery_cost)}
+            </p>
+
+            <p><strong>FrostTech margin:</strong>
+                ${money(quote.frosttech_margin ?? quote.margin)}
+            </p>
+
+            <p><strong>Customer total:</strong>
+                ${money(quote.customer_total)}
+            </p>
+
+            <p><strong>Status:</strong>
+                ${badge(quote.status)}
+            </p>
+
+            <button type="button"
+                class="select-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Select Supplier Quotation
+            </button>
+
+            <button type="button"
+                class="reject-supplier-quote"
+                data-id="${escapeHtml(quote.id)}">
+                Reject Supplier Quotation
+            </button>
+        </article>
+    `).join("");
+}
+
+if ($("loadSupplierQuotesBtn")) {
+    $("loadSupplierQuotesBtn").addEventListener(
+        "click",
+        loadSupplierQuotes
+    );
+}
+
+if ($("supplierQuotes")) {
+    $("supplierQuotes").addEventListener("click", async (event) => {
+        const selectButton = event.target.closest(".select-supplier-quote");
+        const rejectButton = event.target.closest(".reject-supplier-quote");
+
+        if (selectButton) {
+            await selectSupplierQuote(selectButton.dataset.id);
+        }
+
+        if (rejectButton) {
+            await rejectSupplierQuote(rejectButton.dataset.id);
+        }
+    });
+}
+
+async function selectSupplierQuote(id) {
+    await requireAdmin();
+
+    const confirmation = await adminConfirm({
+        message:
+            "Select this supplier quotation? This may update the selected supplier pricing for the product.",
+        confirmText: "Yes, Select Quotation"
+    });
+
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_select_supplier_quote",
+            {
+                p_quote_id: id
+            }
+        );
+
+        if (error) throw error;
+
+        await loadSupplierQuotes();
+        await loadProducts();
+
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation selected successfully.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to select supplier quotation.",
+            "error"
+        );
+    }
+}
+
+async function rejectSupplierQuote(id) {
+    await requireAdmin();
+
+    const confirmation = await adminConfirm({
+        message: "Are you sure you want to reject this supplier quotation?",
+        confirmText: "Yes, Reject Quotation"
+    });
+
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_reject_supplier_quote",
+            {
+                p_quote_id: id
+            }
+        );
+
+        if (error) throw error;
+
+        await loadSupplierQuotes();
+
+        showMessage(
+            "quotationMessage",
+            "Supplier quotation rejected.",
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "quotationMessage",
+            error.message || "Unable to reject supplier quotation.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   SUPPLIER MANAGEMENT
+   ========================================================= */
+
+async function loadSuppliers() {
+    await requireAdmin();
+
+    showMessage(
+        "supplierManagementMessage",
+        "Loading suppliers...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db
+            .from("suppliers")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        currentSuppliers = data || [];
+
+        renderSuppliers();
+
+        const pendingCount = currentSuppliers.filter((supplier) => {
+            const status = String(
+                supplier.review_status || "pending"
+            ).toLowerCase();
+
+            return ![
+                "approved",
+                "rejected",
+                "suspended"
+            ].includes(status);
+        }).length;
+
+        if ($("pendingSupplierCount")) {
+            $("pendingSupplierCount").textContent = pendingCount;
+        }
+
+        showMessage(
+            "supplierManagementMessage",
+            `${currentSuppliers.length} supplier record(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "supplierManagementMessage",
+            error.message || "Unable to load suppliers.",
+            "error"
+        );
+    }
+}
+
+function renderSuppliers() {
+    const container = $("supplierManagementRows");
+
+    if (!container) return;
+
+    if (!currentSuppliers.length) {
+        container.innerHTML = "<p>No supplier records found.</p>";
+        return;
+    }
+
+    container.innerHTML = currentSuppliers.map((supplier) => `
+        <article class="admin-card">
+            <h3>${escapeHtml(
+                supplier.business_name || "Unnamed supplier"
+            )}</h3>
+
+            <p><strong>Contact person:</strong>
+                ${escapeHtml(supplier.contact_name || "Not supplied")}
+            </p>
+
+            <p><strong>Email:</strong>
+                ${escapeHtml(supplier.email || "")}
+            </p>
+
+            <p><strong>Phone:</strong>
+                ${escapeHtml(supplier.phone || "")}
+            </p>
+
+            <p><strong>Address:</strong>
+                ${escapeHtml(supplier.address || "Not supplied")}
+            </p>
+
+            <p><strong>Review status:</strong>
+                ${badge(supplier.review_status)}
+            </p>
+
+            <p><strong>Verified:</strong>
+                ${supplier.is_verified ? "Yes" : "No"}
+            </p>
+
+            <p><strong>Account active:</strong>
+                ${supplier.is_active ? "Yes" : "No"}
+            </p>
+
+            <div class="supplier-review-actions">
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="approved">
+                    Approve
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="more_info">
+                    Request More Information
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="rejected">
+                    Reject
+                </button>
+
+                <button type="button"
+                    class="review-supplier"
+                    data-id="${escapeHtml(supplier.id)}"
+                    data-status="suspended">
+                    Suspend
+                </button>
+            </div>
+        </article>
+    `).join("");
+}
+
+if ($("loadSuppliersBtn")) {
+    $("loadSuppliersBtn").addEventListener("click", loadSuppliers);
+}
+
+if ($("supplierManagementRows")) {
+    $("supplierManagementRows").addEventListener(
+        "click",
+        async (event) => {
+            const button = event.target.closest(".review-supplier");
+
+            if (!button) return;
+
+            await reviewSupplier(
+                button.dataset.id,
+                button.dataset.status
+            );
+        }
+    );
+}
+
+async function reviewSupplier(supplierId, newStatus) {
+    await requireAdmin();
+
+    const supplier = currentSuppliers.find(
+        (item) => item.id === supplierId
+    );
+
+    if (!supplier) {
+        showMessage(
+            "supplierManagementMessage",
+            "Supplier record not found. Refresh the supplier list.",
+            "error"
+        );
+        return;
+    }
+
+    const needsReason = [
+        "rejected",
+        "suspended",
+        "more_info"
+    ].includes(newStatus);
+
+    const confirmation = await adminConfirm({
+        message:
+            newStatus === "approved"
+                ? `Approve ${supplier.business_name || "this supplier"}?`
+                : newStatus === "suspended"
+                    ? `Suspend ${supplier.business_name || "this supplier"}?`
+                    : newStatus === "rejected"
+                        ? `Reject ${supplier.business_name || "this supplier"}?`
+                        : `Request more information from ${supplier.business_name || "this supplier"}?`,
+        confirmText:
+            newStatus === "approved"
+                ? "Yes, Approve"
+                : newStatus === "suspended"
+                    ? "Yes, Suspend"
+                    : newStatus === "rejected"
+                        ? "Yes, Reject"
+                        : "Send Request",
+        requireReason: needsReason,
+        reasonPlaceholder: "Enter the reason for this decision..."
+    });
+
+    if (!confirmation.confirmed) return;
+
+    try {
+        const { error } = await db.rpc(
+            "admin_review_supplier",
+            {
+                target_supplier_id: supplierId,
+                new_status: newStatus,
+                reason: confirmation.reason || null
+            }
+        );
+
+        if (error) throw error;
+
+        showMessage(
+            "supplierManagementMessage",
+            `Supplier review status updated to ${newStatus.replaceAll("_", " ")}.`,
+            "success"
+        );
+
+        /* Refreshing counts must not turn a successful review into a false failure. */
+        await Promise.allSettled([
+            loadSuppliers(),
+            loadDashboardCounts()
+        ]);
+    } catch (error) {
+        showMessage(
+            "supplierManagementMessage",
+            error.message || "Unable to update supplier review status.",
+            "error"
+        );
+    }
+}
+
+/* =========================================================
+   PAYMENT RECORDS — READ ONLY
+   ========================================================= */
+
+async function loadPayments() {
+    await requireAdmin();
+
+    showMessage(
+        "paymentMessage",
+        "Loading payment records...",
+        "info"
+    );
+
+    try {
+        const { data, error } = await db
+            .from("payments")
+            .select("*")
+            .order("created_at", { ascending: false });
+
+        if (error) throw error;
+
+        renderPayments(data || []);
+
+        showMessage(
+            "paymentMessage",
+            `${(data || []).length} payment record(s) loaded.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "paymentMessage",
+            error.message || "Unable to load payment records.",
+            "error"
+        );
+    }
+}
+
+function renderPayments(payments) {
+    const container = $("paymentRecords");
+
+    if (!container) return;
+
+    if (!payments.length) {
+        container.innerHTML = "<p>No payment records found.</p>";
+        return;
+    }
+
+    const visiblePaymentFields = [
+        "id",
+        "order_id",
+        "amount",
+        "currency",
+        "status",
+        "reference",
+        "payment_reference",
+        "provider",
+        "created_at",
+        "paid_at"
+    ];
+
+    container.innerHTML = payments.map((payment) => {
+        const fields = visiblePaymentFields
+            .filter((key) => Object.prototype.hasOwnProperty.call(payment, key))
+            .map((key) => `
+                <p>
+                    <strong>${escapeHtml(key.replaceAll("_", " "))}:</strong>
+                    ${escapeHtml(payment[key] ?? "")}
+                </p>
+            `)
+            .join("");
+
+        return `
+            <article class="admin-card payment-record">
+                ${fields || "<p>No approved display fields are available.</p>"}
+            </article>
+        `;
+    }).join("");
+}
+
+if ($("loadPaymentsBtn")) {
+    $("loadPaymentsBtn").addEventListener("click", loadPayments);
+}
+
+/* =========================================================
+   SUPPLIER ACCOUNT EMAIL MAINTENANCE
+   ========================================================= */
+
+if ($("confirmSupplierEmailBtn")) {
+    $("confirmSupplierEmailBtn").addEventListener(
+        "click",
+        async () => {
+            const button = $("confirmSupplierEmailBtn");
+
+            setButtonLoading(
+                button,
+                true,
+                "Checking account..."
+            );
+
+            showMessage(
+                "confirmSupplierEmailResult",
+                "Verifying administrator access...",
+                "info"
+            );
+
+            try {
+                const { data: { user }, error: authError } =
+                    await db.auth.getUser();
+
+                if (authError || !user) {
+                    throw new Error(
+                        "Your administrator session has expired. Sign in again."
+                    );
+                }
+
+                const { data: profile, error: profileError } = await db
+                    .from("profiles")
+                    .select("role, is_active")
+                    .eq("id", user.id)
+                    .maybeSingle();
+
+                if (profileError) throw profileError;
+
+                if (
+                    !profile ||
+                    profile.role !== "admin" ||
+                    profile.is_active !== true
+                ) {
+                    throw new Error(
+                        "Only an active administrator can perform this operation."
+                    );
+                }
+
+                /*
+                 * The deployed function identifies the intended
+                 * supplier account on the server and accepts an
+                 * empty request body. It verifies administrator
+                 * access and the target account before confirmation.
+                 */
+                const { data, error } = await db.functions.invoke(
+                    "confirm-existing-supplier",
+                    {
+                        body: {}
+                    }
+                );
+
+                if (error) throw error;
+
+                showMessage(
+                    "confirmSupplierEmailResult",
+                    data?.message ||
+                        "Supplier account confirmation function completed.",
+                    "success"
+                );
+            } catch (error) {
+                showMessage(
+                    "confirmSupplierEmailResult",
+                    error.message ||
+                        "Supplier account confirmation failed.",
+                    "error"
+                );
+            } finally {
+                setButtonLoading(button, false);
+            }
+        }
+    );
+}
+
+
+/* =========================================================
+   FINANCIAL DASHBOARD — READ ONLY
+   Uses the authenticated session and the secured RPC.
+   Does not read or modify financial tables directly.
+   ========================================================= */
+
+function financialMoney(value) {
+    if (value === null || value === undefined || value === "") return "Not available";
+    const amount = Number(value);
+    if (!Number.isFinite(amount)) return "Not available";
+    return money(amount);
+}
+
+function financialDateInputValue(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+}
+
+function financialCount(value) {
+    if (value === null || value === undefined || value === "") return "Not available";
+    const count = Number(value);
+    if (!Number.isFinite(count)) return "Not available";
+    return new Intl.NumberFormat("en-NG", { maximumFractionDigits: 0 }).format(count);
+}
+
+function financialSetText(id, value, formatter = financialMoney) {
+    const target = $(id);
+    if (target) target.textContent = formatter(value);
+}
+
+function financialObject(value) {
+    if (value && typeof value === "object" && !Array.isArray(value)) return value;
+    if (typeof value === "string") {
+        try {
+            const parsed = JSON.parse(value);
+            return parsed && typeof parsed === "object" && !Array.isArray(parsed) ? parsed : {};
+        } catch (_) { return {}; }
+    }
+    return {};
+}
+
+function renderFinancialExpenseBreakdown(byCategory) {
+    const target = $("finExpenseBreakdown");
+    if (!target) return;
+    const entries = Object.entries(financialObject(byCategory));
+    if (!entries.length) {
+        target.textContent = "No production expenses recorded for this period.";
+        return;
+    }
+    const table = document.createElement("table");
+    table.className = "data-table";
+    const thead = document.createElement("thead");
+    const header = document.createElement("tr");
+    for (const label of ["Expense category", "Production expense total"]) {
+        const th = document.createElement("th");
+        th.textContent = label;
+        header.appendChild(th);
+    }
+    thead.appendChild(header);
+    table.appendChild(thead);
+    const tbody = document.createElement("tbody");
+    for (const [category, amount] of entries) {
+        const tr = document.createElement("tr");
+        const nameCell = document.createElement("td");
+        const amountCell = document.createElement("td");
+        nameCell.textContent = category || "Uncategorised";
+        amountCell.textContent = financialMoney(amount);
+        tr.append(nameCell, amountCell);
+        tbody.appendChild(tr);
+    }
+    table.appendChild(tbody);
+    target.replaceChildren(table);
+}
+
+function renderFinancialReport(report) {
+    if (!report || typeof report !== "object" || Array.isArray(report)) {
+        throw new Error("The V2 financial report returned an invalid response.");
+    }
+
+    const period = financialObject(report.report_period);
+    const payments = financialObject(report.production_payments);
+    const orders = financialObject(report.recognised_orders);
+    const fees = financialObject(report.admin_fees);
+    const quotations = financialObject(report.accepted_quotations_estimates);
+    const expenses = financialObject(report.production_expenses);
+    const inventory = financialObject(report.inventory);
+    const development = financialObject(report.development_activity);
+    const integrity = financialObject(report.report_integrity);
+    const refunds = financialObject(report.refunds);
+
+    const periodText = `${period.start_date || "Not available"} to ${period.end_date || "Not available"} (${period.timezone || "timezone not supplied"})`;
+    financialSetText("finReportPeriod", periodText, value => value);
+
+    financialSetText("finVerifiedPayments", payments.verified_payment_count, financialCount);
+    financialSetText("finVerifiedCash", payments.verified_cash_received);
+    financialSetText("finAdminFeesPaid", fees.recorded_paid_admin_fees);
+    financialSetText("finAdminFeesVerified", fees.verified_admin_fees);
+    financialSetText("finAdminFeesUnverified", fees.unverified_admin_fee_count, financialCount);
+    financialSetText("finAdminFeeReceiptCount", fees.production_admin_fee_receipt_count, financialCount);
+    financialSetText("finAdminFeeReceiptAmount", fees.production_admin_fee_receipt_amount);
+    financialSetText("finDeliveryIncome", orders.recognised_delivery_income);
+    financialSetText("finRefunds", refunds.amount);
+
+    financialSetText("finFullyPaidOrders", orders.fully_paid_order_count, financialCount);
+    financialSetText("finReconciledOrders", orders.reconciled_order_count, financialCount);
+    financialSetText("finRecognisedSales", orders.recognised_product_sales);
+    financialSetText("finRecognisedDelivery", orders.recognised_delivery_income);
+    financialSetText("finReconciledOrderValue", orders.reconciled_order_value);
+    financialSetText("finRealisedGrossProfit", orders.realised_product_gross_profit);
+    financialSetText("finOrderExceptions", orders.order_reconciliation_exception_count, financialCount);
+    financialSetText("finMissingOrderCosts", orders.missing_order_cost_count, financialCount);
+    financialSetText("finOperatingResult", report.operating_result);
+
+    financialSetText("finAcceptedQuoteCount", quotations.accepted_quotation_count, financialCount);
+    financialSetText("finQuotationValue", quotations.accepted_quotation_value);
+    financialSetText("finQuoteProductCost", quotations.accepted_quotation_product_cost);
+    financialSetText("finQuoteDeliveryCost", quotations.accepted_quotation_delivery_cost);
+    financialSetText("finMarkup", quotations.accepted_quotation_markup);
+    financialSetText("finDiscounts", quotations.accepted_quotation_discount);
+    financialSetText("finProfit", quotations.estimated_quotation_profit);
+    financialSetText("finQuotesWithoutSnapshot", quotations.accepted_quotes_without_snapshot, financialCount);
+    financialSetText("finSnapshotsMissingDelivery", quotations.snapshots_without_delivery_cost, financialCount);
+
+    financialSetText("finTotalExpenses", expenses.total);
+    renderFinancialExpenseBreakdown(expenses.by_category);
+
+    financialSetText("finInventoryProducts", inventory.product_count, financialCount);
+    financialSetText("finInventoryActiveProducts", inventory.active_product_count, financialCount);
+    financialSetText("finInventoryRetailValue", inventory.inventory_retail_value);
+    financialSetText("finInventoryCostValue", inventory.inventory_supplier_cost_value);
+    financialSetText("finInventoryPotentialProfit", inventory.potential_inventory_gross_profit);
+    financialSetText("finInventoryCostExceptions", inventory.inventory_cost_exceptions, financialCount);
+    financialSetText("finInventoryNote", inventory.valuation_note || "Current stock valuation only; not realised revenue or profit.", value => value);
+
+    financialSetText("finDevelopmentAttempts", development.payment_attempts, financialCount);
+    financialSetText("finDevelopmentSuccesses", development.successful_payment_rows, financialCount);
+    financialSetText("finDevelopmentAttemptAmount", development.attempt_amount_total);
+
+    financialSetText("finUnmatchedPayments", integrity.unmatched_successful_payments, financialCount);
+    financialSetText("finOrphanedReceipts", integrity.orphaned_final_order_receipts, financialCount);
+    financialSetText("finIntegrityOrderExceptions", integrity.order_reconciliation_exceptions, financialCount);
+    financialSetText("finIntegrityMissingCosts", integrity.missing_order_costs, financialCount);
+    financialSetText("finIntegrityUnverifiedFees", integrity.unverified_admin_fees, financialCount);
+
+    const status = $("finSummaryStatus");
+    if (status) {
+        const value = String(integrity.status || "status_unavailable");
+        status.textContent = value.replaceAll("_", " ");
+        status.className = "badge " + value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+    }
+
+    const results = $("financialReportResults");
+    if (results) results.classList.remove("hidden");
+}
+
+async function loadFinancialReport() {
+    const button = $("loadFinancialReportBtn");
+    const startDate = $("financialStartDate")?.value;
+    const endDate = $("financialEndDate")?.value;
+
+    if (!startDate || !endDate) {
+        showMessage("financialReportMessage", "Select both the start date and end date.", "error");
+        return;
+    }
+    if (endDate < startDate) {
+        showMessage("financialReportMessage", "The end date cannot be earlier than the start date.", "error");
+        return;
+    }
+
+    setButtonLoading(button, true, "Loading financial report...");
+    showMessage("financialReportMessage", "Verifying Super Administrator access and loading report...", "info");
+
+    try {
+        await requireAdmin();
+        const { data, error } = await db.rpc("get_financial_dashboard_v2", {
+            p_start_date: startDate,
+            p_end_date: endDate
+        });
+        if (error) throw error;
+
+        let report = data;
+        if (typeof report === "string") {
+            try { report = JSON.parse(report); }
+            catch (_) { throw new Error("The V2 financial report returned unreadable JSON."); }
+        }
+        if (!report || typeof report !== "object" || Array.isArray(report)) {
+            throw new Error("The V2 financial report returned no valid report for the selected period.");
+        }
+
+        renderFinancialReport(report);
+        currentFinancialReport = report;
+        const period = financialObject(report.report_period);
+        showMessage(
+            "financialReportMessage",
+            `V2 financial report loaded for ${period.start_date || startDate} to ${period.end_date || endDate}. Test/development activity remains excluded from production totals.`,
+            "success"
+        );
+    } catch (error) {
+        showMessage(
+            "financialReportMessage",
+            error.message || "Unable to load the financial report.",
+            "error"
+        );
+    } finally {
+        setButtonLoading(button, false);
+    }
+}
+
+if ($("financialStartDate") && $("financialEndDate")) {
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(start.getDate() - 29);
+    $("financialStartDate").value = financialDateInputValue(start);
+    $("financialEndDate").value = financialDateInputValue(today);
+}
+
+if ($("loadFinancialReportBtn")) {
+    $("loadFinancialReportBtn").addEventListener("click", loadFinancialReport);
+}
+
+/* =========================================================
+   STARTUP AND EVENT WIRING
+   ========================================================= */
+
+/*
+ * Part 2 already performs the initial authentication check.
+ * This section deliberately does not create a second login
+ * or authentication listener.
+ */
+
+/* Start only after every admin section and handler has been defined. */
+if ($("refreshBtn")) {
+    $("refreshBtn").addEventListener("click", refreshAllDashboardSections);
+}
+
+(async function initialiseAdminPortal() {
+    try {
+        const {
+            data: { session },
+            error
+        } = await db.auth.getSession();
+
+        if (error) throw error;
+
+        if (session?.user) {
+            await refreshAdminSession();
+        } else {
+            showAdminLogin();
+            showMessage(
+                "systemStatus",
+                "Please log in as a FrostTech administrator.",
+                "info"
+            );
+        }
+    } catch (error) {
+        showAdminLogin();
+        showMessage(
+            "systemStatus",
+            "Connection error: " + errorText(error),
+            "error"
+        );
+    }
+})();
+
+   
+
+</script>
+
+<script>
+/* =========================================================
+   FROSTTECH ADMIN DISPLAY CORRECTIONS — ADDITIVE OVERRIDES
+   Original dashboard functions are retained above unchanged.
+   ========================================================= */
+
+let currentPayments = [];
+let currentFinancialReport = null;
+let currentPrintReview = null;
+
+function ftAdminTable(headers, rows) {
+    return `<div class="table-wrap"><table class="admin-record-table"><thead><tr>${headers.map((h) => `<th>${escapeHtml(h)}</th>`).join("")}</tr></thead><tbody>${rows.join("")}</tbody></table></div>`;
+}
+
+function ftViewRecord(type, id) {
+    return `<button type="button" class="view-admin-record neutral" data-record-type="${escapeHtml(type)}" data-id="${escapeHtml(id)}">View Record</button>`;
+}
+
+function ftRecordList(type) {
+    const lists = {
+        advertiser: currentAdvertisers,
+        product: currentProducts,
+        request: currentQuoteRequests,
+        direct_quote: currentDirectQuotes,
+        supplier_quote: currentSupplierQuotes,
+        supplier: currentSuppliers,
+        payment: currentPayments
+    };
+    return lists[type] || [];
+}
+
+function ftPrintSafeFields(type, record) {
+    const protectedFields = new Set([
+        "supplier_cost", "supplier_unit_cost", "supplier_cost_price", "cost_price",
+        "supplier_id", "document_path", "cac_document_path", "storage_path",
+        "password", "access_token", "refresh_token", "secret", "service_role_key", "private_key"
+    ]);
+    const paymentFields = new Set([
+        "id", "order_id", "amount", "currency", "status", "reference",
+        "transaction_reference", "payment_reference", "provider", "payment_method",
+        "created_at", "paid_at", "environment"
+    ]);
+    return Object.entries(record || {}).filter(([key, value]) => {
+        if (protectedFields.has(String(key).toLowerCase()) || value === null || value === undefined || typeof value === "object") return false;
+        if (type === "payment") return paymentFields.has(key);
+        return true;
+    }).map(([key, value]) => [key, String(value)]);
+}
+
+function ftSetPrintControls(state, message) {
+    const approve = $("ftApprovePrintBtn");
+    const reject = $("ftRejectPrintBtn");
+    const print = $("ftPrintApprovedBtn");
+    if (approve) approve.disabled = state !== "pending";
+    if (reject) reject.disabled = state !== "pending";
+    if (print) print.disabled = state !== "approved";
+    const status = $("ftPrintApprovalStatus");
+    if (status) status.textContent = message;
+}
+
+async function ftRegisterPrintView(workspaceKey, recordType, recordId, snapshot) {
+    const review = { id: null, workspaceKey, recordType, recordId, snapshot, status: "registering" };
+    currentPrintReview = review;
+    ftSetPrintControls("none", "Recording the Super Admin's review in Supabase...");
+    try {
+        const { data, error } = await db.rpc("admin_register_print_view", {
+            p_workspace_key: workspaceKey,
+            p_record_type: recordType,
+            p_record_id: String(recordId),
+            p_record_snapshot: snapshot
+        });
+        if (error) throw error;
+        const reviewId = typeof data === "string" ? data : (Array.isArray(data) ? data[0] : data?.review_id || data?.id);
+        if (!reviewId) throw new Error("Supabase did not return a print-review reference.");
+        if (currentPrintReview !== review) return;
+        review.id = reviewId;
+        review.status = "pending_review";
+        ftSetPrintControls("pending", "Record view logged. The Super Admin may now approve or reject this exact snapshot.");
+    } catch (error) {
+        if (currentPrintReview !== review) return;
+        review.status = "error";
+        ftSetPrintControls("none", `Print approval unavailable: ${error.message || "Super Admin authorization or database setup is required."}`);
+    }
+}
+
+function ftShowRecord(type, id) {
+    const record = ftRecordList(type).find((item) => String(item.id) === String(id));
+    if (!record) {
+        showMessage("message", "This record is no longer in the loaded list. Reload the section and try again.", "error");
+        return;
+    }
+    const titleMap = {
+        advertiser: record.company_name || "Advertiser Record",
+        product: record.name || "Product Record",
+        request: record.request_number || "Customer Request",
+        direct_quote: record.quotation_number || record.product_description || "Quotation Draft",
+        supplier_quote: record.product_name || record.product_description || "Supplier Quotation",
+        supplier: record.business_name || "Supplier Record",
+        payment: "Payment Record"
+    };
+    const fields = ftPrintSafeFields(type, record);
+    const title = titleMap[type] || "Record Details";
+    const workspaceMap = {
+        advertiser: "advertiserVerification", product: "productManagement",
+        request: "customerRequestsPage", direct_quote: "directQuotationSection",
+        supplier_quote: "supplierQuotationsPage", supplier: "supplierManagement",
+        payment: "paymentRecordsPage"
+    };
+    const snapshot = {
+        document_title: title,
+        workspace_title: document.querySelector(`#${workspaceMap[type]}`)?.dataset.adminTitle || "Administration Workspace",
+        record_type: type,
+        record_id: String(id),
+        viewed_snapshot_at: new Date().toISOString(),
+        fields: Object.fromEntries(fields)
+    };
+    $("ftRecordTitle").textContent = title;
+    $("ftRecordContent").innerHTML = fields.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key.replaceAll("_", " "))}</strong><span>${escapeHtml(value)}</span></div>`).join("") || "<p>No approved detail fields are available.</p>";
+    $("ftRecordModal").classList.remove("hidden");
+    document.body.classList.add("ft-modal-open");
+    void ftRegisterPrintView(workspaceMap[type] || "unknown_workspace", type, id, snapshot);
+}
+
+function ftWorkspacePrintSnapshot(workspaceKey) {
+    const workspace = document.getElementById(workspaceKey);
+    if (!workspace) return null;
+    const title = workspace.dataset.adminTitle || "Administration Workspace";
+    const map = {
+        productManagement: ["product", currentProducts],
+        directQuotationSection: ["direct_quote", currentDirectQuotes],
+        customerRequestsPage: ["request", currentQuoteRequests],
+        supplierQuotationsPage: ["supplier_quote", currentSupplierQuotes],
+        supplierManagement: ["supplier", currentSuppliers],
+        advertiserVerification: ["advertiser", currentAdvertisers],
+        paymentRecordsPage: ["payment", currentPayments]
+    };
+    if (workspaceKey === "financialDashboard") {
+        if (!currentFinancialReport) return null;
+        const period = financialObject(currentFinancialReport.report_period);
+        return {
+            document_title: title,
+            workspace_title: title,
+            record_type: "financial_report",
+            record_id: `financial:${period.start_date || "unknown"}:${period.end_date || "unknown"}`,
+            viewed_snapshot_at: new Date().toISOString(),
+            scope_note: "This is the complete financial report returned by the secured V2 report function for the selected period.",
+            report: currentFinancialReport
+        };
+    }
+    if (workspaceKey === "marketplaceSummaryPage") {
+        const ids = ["productCount", "requestCount", "supplierCount", "pendingSupplierCount", "quotationCount", "directQuoteCount"];
+        const labels = ["Products", "Customer requests", "Supplier applications", "Pending supplier reviews", "Supplier quotations", "Direct quotations"];
+        return {
+            document_title: title,
+            workspace_title: title,
+            record_type: "marketplace_summary",
+            record_id: `marketplace-summary:${new Date().toISOString()}`,
+            viewed_snapshot_at: new Date().toISOString(),
+            scope_note: "This is the Marketplace Summary snapshot displayed at review time.",
+            summary: labels.map((label, index) => [label, document.getElementById(ids[index])?.textContent?.trim() || "Not loaded"])
+        };
+    }
+    if (workspaceKey === "supplierMaintenancePage") return null;
+    const entry = map[workspaceKey];
+    if (!entry || !entry[1]?.length) return null;
+    const [type, records] = entry;
+    const printableRecords = records.map((record) => ({
+        record_id: String(record.id ?? ""),
+        fields: Object.fromEntries(ftPrintSafeFields(type, record))
+    }));
+    return {
+        document_title: `${title} — Workspace Register`,
+        workspace_title: title,
+        record_type: "workspace_report",
+        record_id: `${workspaceKey}:${new Date().toISOString()}`,
+        viewed_snapshot_at: new Date().toISOString(),
+        scope_note: "This register contains the records currently loaded in this workspace at review time. Reload the workspace before review if a fresh list is required.",
+        source_record_type: type,
+        record_count: printableRecords.length,
+        records: printableRecords
+    };
+}
+
+function ftShowWorkspacePrintReview(workspaceKey) {
+    const snapshot = ftWorkspacePrintSnapshot(workspaceKey);
+    const workspace = document.getElementById(workspaceKey);
+    if (!snapshot) {
+        const message = workspace?.querySelector('[role="status"]');
+        if (message) message.textContent = workspaceKey === "supplierMaintenancePage"
+            ? "This workspace is an account-maintenance action and has no printable record loaded."
+            : "Load the workspace records or report before requesting print approval.";
+        return;
+    }
+    $("ftRecordTitle").textContent = snapshot.document_title;
+    let preview = [];
+    if (snapshot.fields) {
+        preview = Object.entries(snapshot.fields);
+    } else if (snapshot.summary) {
+        preview = snapshot.summary;
+    } else if (snapshot.records) {
+        snapshot.records.forEach((record, index) => {
+            preview.push([`Record ${index + 1} reference`, record.record_id || "Not supplied"]);
+            Object.entries(record.fields || {}).forEach(([key, value]) => preview.push([`Record ${index + 1} — ${key.replaceAll("_", " ")}`, value]));
+        });
+    } else if (snapshot.report) {
+        preview = ftFlattenSnapshot(snapshot.report);
+    }
+    $("ftRecordContent").innerHTML = `<p><strong>${escapeHtml(snapshot.workspace_title)}</strong></p><p>${escapeHtml(snapshot.scope_note || "Review the complete snapshot below before approving.")}</p><p>This print request contains ${escapeHtml(String(snapshot.record_count ?? preview.length))} record(s) or report details.</p>` + preview.map(([key, value]) => `<div class="record-detail-item"><strong>${escapeHtml(key)}</strong><span>${escapeHtml(value)}</span></div>`).join("");
+    $("ftRecordModal").classList.remove("hidden");
+    document.body.classList.add("ft-modal-open");
+    void ftRegisterPrintView(workspaceKey, snapshot.record_type, snapshot.record_id, snapshot);
+}
+
+async function ftDecidePrintApproval(decision) {
+    const review = currentPrintReview;
+    if (!review?.id || review.status !== "pending_review") return;
+    ftSetPrintControls("none", "Saving the Super Admin's print decision in Supabase...");
+    const { error } = await db.rpc("admin_decide_print_approval", {
+        p_review_id: review.id,
+        p_decision: decision
+    });
+    if (currentPrintReview !== review) return;
+    if (error) {
+        ftSetPrintControls("pending", `Unable to record the decision: ${error.message}`);
+        return;
+    }
+    review.status = decision;
+    if (decision === "approved") {
+        ftSetPrintControls("approved", "Approved by the Super Admin. Only this reviewed snapshot is authorized for printing.");
+    } else {
+        ftSetPrintControls("rejected", "Print request rejected. No print copy is authorized.");
+    }
+}
+
+function ftFlattenSnapshot(value, prefix = "", rows = []) {
+    if (Array.isArray(value)) {
+        value.forEach((item, index) => ftFlattenSnapshot(item, prefix ? `${prefix} ${index + 1}` : String(index + 1), rows));
+    } else if (value && typeof value === "object") {
+        Object.entries(value).forEach(([key, item]) => ftFlattenSnapshot(item, prefix ? `${prefix} / ${key.replaceAll("_", " ")}` : key.replaceAll("_", " "), rows));
+    } else {
+        rows.push([prefix || "Detail", value === null || value === undefined ? "Not available" : String(value)]);
+    }
+    return rows;
+}
+
+async function ftPrintApprovedSnapshot() {
+    const review = currentPrintReview;
+    if (!review?.id || review.status !== "approved") {
+        ftSetPrintControls("approved", "No approved review is available. Review and approve the record again before printing.");
+        return;
+    }
+
+    let printWindow = null;
+
+    try {
+        // Open synchronously from the administrator's tap so the browser does not block it.
+        printWindow = window.open("", "_blank");
+
+        if (!printWindow) {
+            ftSetPrintControls(
+                "approved",
+                "The print page was blocked. Allow pop-ups for FrostTech, then select Print Approved Copy again."
+            );
+            return;
+        }
+
+        // Populate the new tab immediately. It must never remain an unexplained blank page
+        // while the approval event is being verified by Supabase.
+        printWindow.document.open();
+        printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Verifying print approval</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #d5e5f3;border-radius:12px;background:#f5f9fd}
+h1{color:#063b70;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="panel" role="status" aria-live="polite">
+<h1>FrostTech HVAC and Refrigeration</h1>
+<p><strong>Verifying Super Admin approval…</strong></p>
+<p>Please keep this page open. The approved record will appear here after the database confirms the print authorization.</p>
+<p>If verification fails, this page will explain what happened. No print copy is available until verification succeeds.</p>
+</div>
+</body>
+</html>`);
+        printWindow.document.close();
+
+        ftSetPrintControls("none", "Verifying approval and recording this print event...");
+
+        const { data, error } = await db.rpc("admin_authorize_print", {
+            p_review_id: review.id,
+            p_record_snapshot: review.snapshot
+        });
+
+        if (error || !data) {
+            const reason = error?.message || "Approval or snapshot verification failed.";
+            printWindow.document.open();
+            printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Print not authorized</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #f0caca;border-radius:12px;background:#fff7f7}
+h1{color:#9b1c1c;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="panel" role="alert">
+<h1>Print authorization was not completed</h1>
+<p>${escapeHtml(reason)}</p>
+<p>No approved print copy has been produced by this page.</p>
+<button type="button" id="closeFailedPrint">Close and Return</button>
+</div>
+<script>
+document.getElementById("closeFailedPrint").addEventListener("click", function () {
+    if (window.opener && !window.opener.closed) window.opener.focus();
+    window.close();
+});
+<\/script>
+</body>
+</html>`);
+            printWindow.document.close();
+            ftSetPrintControls("approved", `Printing was not authorized: ${reason}`);
+            return;
+        }
+
+        const eventId = typeof data === "string"
+            ? data
+            : (Array.isArray(data)
+                ? data[0]
+                : data?.event_id || data?.id || "Recorded");
+
+        const snapshot = review.snapshot;
+        const rows = ftFlattenSnapshot(snapshot);
+        const tableRows = rows.map(([key, value]) =>
+            `<tr><th>${escapeHtml(key)}</th><td>${escapeHtml(value)}</td></tr>`
+        ).join("");
+
+        const recordMarkup = `
+            <header>
+                <h1>FrostTech HVAC and Refrigeration</h1>
+                <div>Marketplace Administration — Controlled Print Copy</div>
+            </header>
+
+            <h2>${escapeHtml(snapshot.document_title || "Approved Record")}</h2>
+
+            <div class="meta">
+                Workspace: ${escapeHtml(snapshot.workspace_title || "—")}<br>
+                Record reference: ${escapeHtml(snapshot.record_id || "—")}<br>
+                Reviewed snapshot: ${escapeHtml(snapshot.viewed_snapshot_at || "—")}<br>
+                Scope: ${escapeHtml(snapshot.scope_note || "Single reviewed record snapshot")}<br>
+                Printed: ${escapeHtml(new Date().toLocaleString("en-NG", {timeZone:"Africa/Lagos"}))}<br>
+                Approval: Super Admin approval verified by Supabase<br>
+                Print event reference: ${escapeHtml(String(eventId))}<br>
+            </div>
+
+            <table><tbody>${tableRows}</tbody></table>
+
+            <footer>
+                Confidential FrostTech administration record.
+                Generated after Super Admin approval.
+                All copies in this job belong to the same authorized print event.
+            </footer>
+        `;
+
+        const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>${escapeHtml(snapshot.document_title || "FrostTech Record")}</title>
+
+<style>
+body {
+    font-family: Arial, sans-serif;
+    color: #172b40;
+    margin: 28px;
+}
+header {
+    border-bottom: 3px solid #0879c9;
+    padding-bottom: 14px;
+    margin-bottom: 18px;
+}
+h1 {
+    font-size: 22px;
+    margin: 0 0 5px;
+    color: #063b70;
+}
+h2 {
+    font-size: 17px;
+    margin: 18px 0 8px;
+}
+.meta {
+    font-size: 12px;
+    line-height: 1.8;
+    overflow-wrap: anywhere;
+}
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 18px;
+}
+th, td {
+    border: 1px solid #cbd5df;
+    padding: 8px;
+    text-align: left;
+    vertical-align: top;
+    font-size: 12px;
+    overflow-wrap: anywhere;
+}
+th {
+    width: 32%;
+    background: #f1f5f9;
+}
+footer {
+    border-top: 1px solid #cbd5df;
+    margin-top: 24px;
+    padding-top: 10px;
+    font-size: 11px;
+    color: #526273;
+}
+.print-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    margin-bottom: 20px;
+    background: #edf5fc;
+    border: 1px solid #d5e5f3;
+    border-radius: 9px;
+}
+.print-toolbar label {
+    font-weight: bold;
+}
+.print-toolbar select,
+.print-toolbar button {
+    font: inherit;
+    padding: 11px;
+    border-radius: 6px;
+}
+.print-toolbar select {
+    background: white;
+    border: 1px solid #bdc9d6;
+}
+.print-toolbar button {
+    border: 0;
+    background: #0879c9;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+}
+.print-toolbar .close-btn {
+    background: #596579;
+}
+.print-toolbar button:disabled {
+    opacity: .6;
+    cursor: not-allowed;
+}
+@media print {
+    body { margin: 15mm; }
+    .print-toolbar { display: none !important; }
+}
+@media(max-width:600px) {
+    body { margin: 12px; }
+    .print-toolbar { align-items: stretch; }
+    .print-toolbar select,
+    .print-toolbar button { width: 100%; }
+}
+</style>
+</head>
+
+<body>
+
+<div class="print-toolbar">
+    <button type="button" id="printBtn">Print Approved Document</button>
+    <button type="button" class="close-btn" id="closeBtn">Close and Return</button>
+</div>
+
+<div id="printArea">
+    ${recordMarkup}
+</div>
+
+<script>
+const printButton = document.getElementById("printBtn");
+const closeButton = document.getElementById("closeBtn");
+
+printButton.addEventListener("click", function() {
+    if (this.disabled) return;
+
+    this.disabled = true;
+    this.textContent = "Print dialog opened";
+
+    // Submit one complete approved document. Select the number of copies
+    // in Android's native print settings; no copies are generated in HTML.
+    window.focus();
+    window.print();
+
+    const note = document.createElement("p");
+    note.textContent = "The approved document has been submitted to Android printing. Set the required number of copies in the Android print settings. To start a new authorized print job, return to the approved record and select Print Approved Copy again.";
+    note.setAttribute("role", "status");
+    document.querySelector(".print-toolbar").appendChild(note);
+});
+
+closeButton.addEventListener("click", function() {
+    try {
+        if (window.opener && !window.opener.closed) window.opener.focus();
+    } catch (error) {
+        // Continue to the close attempt even if focusing the opener is blocked.
+    }
+    window.close();
+});
+<\/script>
+
+</body>
+</html>`;
+
+        printWindow.document.open();
+        printWindow.document.write(html);
+        printWindow.document.close();
+
+        if (currentPrintReview === review) {
+            ftSetPrintControls(
+                "approved",
+                `Print event ${String(eventId)} has been recorded. Set the number of copies in Android's print settings. A separate print event will be recorded for each later reprint.`
+            );
+        }
+    } catch (err) {
+        const message = err?.message || String(err || "Unexpected print preparation error.");
+
+        if (printWindow && !printWindow.closed) {
+            try {
+                printWindow.document.open();
+                printWindow.document.write(`<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech — Print page error</title>
+<style>
+body{font-family:Arial,sans-serif;color:#172b40;margin:24px;line-height:1.55}
+.panel{max-width:620px;margin:12vh auto;padding:22px;border:1px solid #f0caca;border-radius:12px;background:#fff7f7}
+h1{color:#9b1c1c;font-size:21px}
+button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="panel" role="alert">
+<h1>FrostTech print page could not be prepared</h1>
+<p>${escapeHtml(message)}</p>
+<p>No print copy is available from this page. Return to the approved record and check its status before trying again.</p>
+<button type="button" id="closeErrorPage">Close and Return</button>
+</div>
+<script>
+document.getElementById("closeErrorPage").addEventListener("click", function () {
+    if (window.opener && !window.opener.closed) window.opener.focus();
+    window.close();
+});
+<\/script>
+</body>
+</html>`);
+                printWindow.document.close();
+            } catch (_) {
+                // The dashboard status below remains the fallback if the browser
+                // no longer permits writing to the secondary window.
+            }
+        }
+
+        ftSetPrintControls(
+            "approved",
+            `The print page could not be prepared: ${message}`
+        );
+    }
+}
+
+function ftCloseRecord() {
+    $("ftRecordModal")?.classList.add("hidden");
+    document.body.classList.remove("ft-modal-open");
+    currentPrintReview = null;
+}
+
+$("ftApprovePrintBtn")?.addEventListener("click", () => void ftDecidePrintApproval("approved"));
+$("ftRejectPrintBtn")?.addEventListener("click", () => void ftDecidePrintApproval("rejected"));
+$("ftPrintApprovedBtn")?.addEventListener("click", () => void ftPrintApprovedSnapshot());
+$("ftRecordClose")?.addEventListener("click", ftCloseRecord);
+$("ftRecordModal")?.addEventListener("click", (event) => {
+    if (event.target === $("ftRecordModal")) ftCloseRecord();
+});
+document.addEventListener("click", (event) => {
+    const button = event.target.closest(".view-admin-record");
+    if (button) ftShowRecord(button.dataset.recordType, button.dataset.id);
+});
+
+function ftInstallWorkspacePrintActions() {
+    document.querySelectorAll(".admin-page-section[data-admin-title]").forEach((section) => {
+        if (section.querySelector(".ft-workspace-print-toolbar")) return;
+        const toolbar = document.createElement("div");
+        toolbar.className = "ft-workspace-print-toolbar";
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "neutral";
+        button.textContent = "Review & Approve Workspace Print";
+        button.addEventListener("click", () => ftShowWorkspacePrintReview(section.id));
+        toolbar.appendChild(button);
+        const heading = section.querySelector("h2");
+        if (heading?.nextSibling) section.insertBefore(toolbar, heading.nextSibling);
+        else section.insertBefore(toolbar, section.firstChild);
+    });
+}
+ftInstallWorkspacePrintActions();
+
+window.renderAdvertisers = function renderAdvertisers() {
+    const container = $("advertiserRows");
+    if (!container) return;
+    if (!currentAdvertisers.length) { container.innerHTML = "<p>No advertiser applications found.</p>"; return; }
+    const rows = currentAdvertisers.map((a) => `<tr><td>${escapeHtml(a.company_name || "Unnamed company")}</td><td>${escapeHtml(a.contact_person || "Not supplied")}</td><td>${escapeHtml(a.email || "")}</td><td>${badge(a.verification_status)}</td><td><div class="record-actions">${ftViewRecord("advertiser", a.id)}<button type="button" disabled title="Private CAC document retrieval is not connected.">CAC Review Unavailable</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Company", "Contact", "Email", "Verification", "Actions"], rows) + `<p><small>Private CAC documents remain protected. Document review stays unavailable until verified administrator-only retrieval is connected.</small></p>`;
+};
+
+window.renderProducts = function renderProducts() {
+    const container = $("productList");
+    if (!container) return;
+    if (!currentProducts.length) { container.innerHTML = "<p>No products found.</p>"; return; }
+    const rows = currentProducts.map((p) => `<tr><td>${escapeHtml(p.name || "")}</td><td>${escapeHtml(p.category || "")}</td><td>${escapeHtml(p.brand || "Not specified")}</td><td>${Number(p.selling_price) > 0 ? money(p.selling_price) : "Not yet priced"}</td><td>${escapeHtml(p.stock_quantity ?? 0)}</td><td>${p.is_active ? badge("active") : badge("inactive")}</td><td><div class="record-actions">${ftViewRecord("product", p.id)}<button type="button" class="edit-product" data-id="${escapeHtml(p.id)}">Edit Product</button><button type="button" class="toggle-product" data-id="${escapeHtml(p.id)}" data-active="${p.is_active ? "true" : "false"}">${p.is_active ? "Deactivate" : "Activate"}</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Product", "Category", "Brand", "Selling Price", "Stock", "Visibility", "Actions"], rows);
+};
+
+window.renderCustomerRequests = function renderCustomerRequests() {
+    const container = $("quoteRequests");
+    if (!container) return;
+    if (!currentQuoteRequests.length) { container.innerHTML = "<p>No customer requests found.</p>"; return; }
+    const rows = currentQuoteRequests.map((r) => `<tr><td>${escapeHtml(r.request_number || r.id)}</td><td>${escapeHtml(r.customer_name || "Not supplied")}</td><td>${escapeHtml(r.customer_email || "Not supplied")}</td><td>${escapeHtml(r.title || r.description || "")}</td><td>${badge(r.status)}</td><td>${escapeHtml(r.created_at || "")}</td><td><div class="record-actions">${ftViewRecord("request", r.id)}<button type="button" class="mark-request-reviewing" data-id="${escapeHtml(r.id)}">Mark Reviewing</button><button type="button" class="create-direct-quotation" data-id="${escapeHtml(r.id)}">Prepare Direct Quotation</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Request", "Customer", "Email", "Requirement", "Status", "Submitted", "Actions"], rows);
+};
+
+window.renderSupplierQuotes = function renderSupplierQuotes() {
+    const container = $("supplierQuotes");
+    if (!container) return;
+    if (!currentSupplierQuotes.length) { container.innerHTML = "<p>No supplier quotations found.</p>"; return; }
+    const rows = currentSupplierQuotes.map((q) => `<tr><td>${escapeHtml(q.product_id || "Not linked")}</td><td>${escapeHtml(q.supplier_id || "Not linked")}</td><td>${escapeHtml(q.request_id || "Not linked")}</td><td>${escapeHtml(q.quantity ?? 1)}</td><td>${money(q.supplier_unit_price)}</td><td>${money(q.supplier_total)}</td><td>${money(q.delivery_cost)}</td><td>${escapeHtml(q.frosttech_margin_percent ?? 15)}%</td><td>${money(q.frosttech_margin_amount)}</td><td>${money(q.customer_total)}</td><td>${badge(q.status)}</td><td>${escapeHtml(q.valid_until || "Not specified")}</td><td><div class="record-actions">${ftViewRecord("supplier_quote", q.id)}<button type="button" class="select-supplier-quote" data-id="${escapeHtml(q.id)}">Select</button><button type="button" class="reject-supplier-quote" data-id="${escapeHtml(q.id)}">Reject</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Product ID", "Supplier ID", "Request ID", "Quantity", "Supplier Unit Cost", "Supplier Total", "Delivery", "Margin %", "Margin Amount", "Customer Total", "Status", "Valid Until", "Actions"], rows);
+};
+
+window.renderSuppliers = function renderSuppliers() {
+    const container = $("supplierManagementRows");
+    if (!container) return;
+    if (!currentSuppliers.length) { container.innerHTML = "<p>No supplier records found.</p>"; return; }
+    const rows = currentSuppliers.map((s) => `<tr><td>${escapeHtml(s.business_name || "Unnamed supplier")}</td><td>${escapeHtml(s.contact_name || "Not supplied")}</td><td>${escapeHtml(s.email || "")}</td><td>${escapeHtml(s.phone || "")}</td><td>${badge(s.review_status)}</td><td>${s.is_verified ? "Yes" : "No"}</td><td>${s.is_active ? "Yes" : "No"}</td><td><div class="record-actions">${ftViewRecord("supplier", s.id)}<button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="approved">Approve</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="more_info">Request More Information</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="rejected">Reject</button><button type="button" class="review-supplier" data-id="${escapeHtml(s.id)}" data-status="suspended">Suspend</button></div></td></tr>`);
+    container.innerHTML = ftAdminTable(["Supplier", "Contact", "Email", "Phone", "Review Status", "Verified", "Active", "Actions"], rows);
+};
+
+window.renderPayments = function renderPayments(payments) {
+    const container = $("paymentRecords");
+    if (!container) return;
+    currentPayments = payments || [];
+    if (!currentPayments.length) { container.innerHTML = "<p>No payment records found.</p>"; return; }
+    const rows = currentPayments.map((p) => `<tr><td>${escapeHtml(p.id)}</td><td>${escapeHtml(p.order_id)}</td><td>${money(p.amount)} ${escapeHtml(p.currency || "NGN")}</td><td>${badge(p.status)}</td><td>${escapeHtml(p.reference || p.transaction_reference || p.payment_reference || "Not supplied")}</td><td>${escapeHtml(p.payment_method || p.provider || "Not specified")}</td><td>${escapeHtml(p.created_at || "")}</td><td>${escapeHtml(p.paid_at || "Not paid")}</td><td>${ftViewRecord("payment", p.id)}</td></tr>`);
+    container.innerHTML = ftAdminTable(["Payment ID", "Order ID", "Amount", "Status", "Reference", "Payment Method", "Created", "Paid At", "Actions"], rows) + `<p><small>Payment records are read-only. This dashboard does not edit or delete payment history.</small></p>`;
+};
+
+</script>
+
+
+<script>
+/* Independent admin workspaces: presentation-only navigation; no database workflow changes. */
+(function () {
+  const home = document.getElementById("adminHomeOverview");
+  const toolbar = document.getElementById("adminPageToolbar");
+  const title = document.getElementById("adminCurrentPageTitle");
+  const back = document.getElementById("backToAdminDashboard");
+  const pages = Array.from(document.querySelectorAll(".admin-page-section[data-admin-title]"));
+  const nav = document.getElementById("adminNavigationCard");
+  if (!home || !toolbar || !back || !pages.length || !nav) return;
+
+  const pageStack = ["admin-home"];
+
+  function currentPageId() {
+    return pages.find((page) => !page.classList.contains("hidden"))?.id ||
+      (home.classList.contains("hidden") ? "admin-home" : "admin-home");
+  }
+
+  function renderPage(id) {
+    const page = pages.find((item) => item.id === id);
+    pages.forEach((item) => item.classList.toggle("hidden", item !== page));
+    home.classList.toggle("hidden", Boolean(page));
+    toolbar.classList.toggle("hidden", !page);
+    if (page) {
+      title.textContent = page.dataset.adminTitle || "Administration Workspace";
+      document.title = title.textContent + " | FrostTech Admin";
+    } else {
+      document.title = "FrostTech Administration";
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function showHome(updateHistory) {
+    const previous = pageStack[pageStack.length - 1];
+    if (updateHistory && previous !== "admin-home") {
+      pageStack.push("admin-home");
+      history.pushState({ adminPage: "home" }, "", "#admin-home");
+    }
+    renderPage("admin-home");
+  }
+
+  function openPage(id, updateHistory) {
+    const page = pages.find((item) => item.id === id);
+    if (!page) return;
+    const current = pageStack[pageStack.length - 1] || "admin-home";
+    if (updateHistory && current !== id) {
+      pageStack.push(id);
+      history.pushState({ adminPage: id }, "", "#" + id);
+    }
+    renderPage(id);
+  }
+
+  function goBack() {
+    if (pageStack.length > 1) {
+      history.back();
+      return;
+    }
+    renderPage("admin-home");
+    if (location.hash !== "#admin-home") {
+      history.replaceState({ adminPage: "home" }, "", "#admin-home");
+    }
+  }
+
+  nav.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-admin-open]");
+    if (button) openPage(button.dataset.adminOpen, true);
+  });
+  back.addEventListener("click", goBack);
+
+  window.addEventListener("popstate", () => {
+    const id = location.hash.replace(/^#/, "") || "admin-home";
+    const validId = id === "admin-home" || pages.some((page) => page.id === id);
+    const target = validId ? id : "admin-home";
+    const existingIndex = pageStack.lastIndexOf(target);
+    if (existingIndex >= 0) pageStack.splice(existingIndex + 1);
+    else pageStack.push(target);
+    renderPage(target);
+  });
+
+  window.frostTechOpenAdminPage = (id) => openPage(id, true);
+
+  /* The dashboard always opens on its home screen after login/refresh. */
+  renderPage("admin-home");
+})();
+</script>
+
+</body>
+</html>
