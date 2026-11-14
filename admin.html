@@ -2795,9 +2795,10 @@ async function markRequestReviewing(id) {
 
 function calculateQuotationAdminFee(quote) {
     /*
-     * admin_quotations records created by this form store the
-     * customer unit price and quantity, not a subtotal column.
-     * Derive the product subtotal without adding delivery.
+     * Direct quotation drafts store the product unit price and
+     * quantity, with additional items and delivery stored separately.
+     * Keep this client-side preview aligned with the server formula:
+     * 2% x (subtotal + additional charges - discount - delivery).
      */
     const storedSubtotal = Number(quote.subtotal);
     const unitPrice = Number(quote.unit_price || 0);
@@ -2807,10 +2808,11 @@ function calculateQuotationAdminFee(quote) {
         : unitPrice * quantity;
     const additional = Number(quote.additional_charges || 0);
     const discount = Number(quote.discount || 0);
+    const delivery = Number(quote.delivery_cost || 0);
 
     const feeBasis = Math.max(
         0,
-        subtotal + additional - discount
+        subtotal + additional - discount - delivery
     );
 
     const fee = Math.round(feeBasis * 0.02 * 100) / 100;
@@ -2819,6 +2821,7 @@ function calculateQuotationAdminFee(quote) {
         subtotal,
         additional,
         discount,
+        delivery,
         feeBasis,
         fee
     };
@@ -3460,10 +3463,10 @@ async function submitDirectQuotation() {
         }
 
         /*
-         * One server-side transaction locks the draft and request,
-         * calculates the 2% processing fee, and changes both records.
-         * The matching SQL migration must be applied before this
-         * dashboard version is deployed.
+         * The installed server-side RPC locks the draft and request,
+         * calculates the authoritative 2% processing fee, and changes
+         * both records in one transaction. This browser calculation is
+         * a consistency check; the server result remains authoritative.
          */
         const { data: submissionResult, error: submissionError } = await db.rpc(
             "admin_submit_direct_quotation",
