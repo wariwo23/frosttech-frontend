@@ -2952,8 +2952,23 @@ function applyDirectQuotationRequestRules(clearUnrequested = false) {
         const fieldGroup = $(fieldGroupId);
         const summaryRow = $(summaryRowId);
 
-        if (fieldGroup) fieldGroup.classList.toggle("hidden", !isRequested);
-        if (summaryRow) summaryRow.classList.toggle("hidden", !isRequested);
+        if (fieldGroup) {
+            fieldGroup.classList.toggle("hidden", !isRequested);
+
+            /*
+             * Disabled controls cannot block form submission when
+             * their corresponding item was not requested by the customer.
+             */
+            fieldGroup.querySelectorAll("input, select, textarea").forEach(
+                (control) => {
+                    control.disabled = !isRequested;
+                }
+            );
+        }
+
+        if (summaryRow) {
+            summaryRow.classList.toggle("hidden", !isRequested);
+        }
     }
 
     if (clearUnrequested) {
