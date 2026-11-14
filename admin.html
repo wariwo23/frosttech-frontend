@@ -1422,26 +1422,32 @@ footer {
     <label for="directDeliveryCost">Delivery Cost (₦)</label>
     <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
 
-    <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
-    <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
+    <div id="directBracketsFields" class="hidden">
+        <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
+        <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
 
-    <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
-    <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
+        <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
+        <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
+    </div>
 
-    <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
-    <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
+    <div id="directInstallationFields" class="hidden">
+        <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
+        <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
+    </div>
 
-    <label for="directAccessoryDescription">Accessory Description</label>
-    <input id="directAccessoryDescription" type="text" placeholder="e.g. Copper pipe, installation kit">
+    <div id="directAccessoriesFields" class="hidden">
+        <label for="directAccessoryDescription">Accessory Description</label>
+        <input id="directAccessoryDescription" type="text" placeholder="e.g. Copper pipe, installation kit">
 
-    <label for="directAccessoryUnit">Accessory Unit / Pack Description</label>
-    <input id="directAccessoryUnit" type="text" placeholder="e.g. metre, pack, roll, kit">
+        <label for="directAccessoryUnit">Accessory Unit / Pack Description</label>
+        <input id="directAccessoryUnit" type="text" placeholder="e.g. metre, pack, roll, kit">
 
-    <label for="directAccessoryQuantity">Accessories Quantity</label>
-    <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
+        <label for="directAccessoryQuantity">Accessories Quantity</label>
+        <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
 
-    <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
-    <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
+        <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
+        <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
+    </div>
 
     <label for="directDiscount">Discount (₦)</label>
     <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
@@ -1453,9 +1459,9 @@ footer {
         <div class="quote-line"><span>Customer unit price after markup</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
         <div class="quote-line"><span>Product subtotal</span><span id="directSubtotal">₦0.00</span></div>
         <div class="quote-line"><span>Delivery</span><span id="displayDelivery">₦0.00</span></div>
-        <div class="quote-line"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
-        <div class="quote-line"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
-        <div class="quote-line"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
+        <div id="displayBracketsRow" class="quote-line hidden"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
+        <div id="displayInstallationRow" class="quote-line hidden"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
+        <div id="displayAccessoriesRow" class="quote-line hidden"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
         <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
         <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
     </div>
@@ -2907,6 +2913,66 @@ function setDirectQuotationDraftPriceMode(isDraftPriceMode) {
     }
 }
 
+function getDirectQuotationRequestOptions() {
+    const items = getCustomerRequestedItems(currentDirectQuoteRequest);
+
+    const hasRequestedItem = (value) => {
+        if (value === true) return true;
+        if (Array.isArray(value)) return value.length > 0;
+        if (typeof value === "string") {
+            const normalized = value.trim().toLowerCase();
+            return normalized !== "" &&
+                normalized !== "no" &&
+                normalized !== "none" &&
+                normalized !== "false";
+        }
+        if (value && typeof value === "object") {
+            return Object.keys(value).length > 0;
+        }
+        return false;
+    };
+
+    return {
+        installation: items?.installation === true,
+        outdoor_brackets: items?.outdoor_brackets === true,
+        accessories: hasRequestedItem(items?.accessories)
+    };
+}
+
+function applyDirectQuotationRequestRules(clearUnrequested = false) {
+    const requested = getDirectQuotationRequestOptions();
+
+    const groups = [
+        ["directBracketsFields", "displayBracketsRow", requested.outdoor_brackets],
+        ["directInstallationFields", "displayInstallationRow", requested.installation],
+        ["directAccessoriesFields", "displayAccessoriesRow", requested.accessories]
+    ];
+
+    for (const [fieldGroupId, summaryRowId, isRequested] of groups) {
+        const fieldGroup = $(fieldGroupId);
+        const summaryRow = $(summaryRowId);
+
+        if (fieldGroup) fieldGroup.classList.toggle("hidden", !isRequested);
+        if (summaryRow) summaryRow.classList.toggle("hidden", !isRequested);
+    }
+
+    if (clearUnrequested) {
+        if (!requested.outdoor_brackets) {
+            $("directBracketQuantity").value = "0";
+            $("directBracketUnitCost").value = "0";
+        }
+        if (!requested.installation) {
+            $("directInstallationPerAc").value = "0";
+        }
+        if (!requested.accessories) {
+            $("directAccessoryDescription").value = "";
+            $("directAccessoryUnit").value = "";
+            $("directAccessoryQuantity").value = "0";
+            $("directAccessoryUnitCost").value = "0";
+        }
+    }
+}
+
 function resetDirectQuotationForm() {
     const form = $("directQuoteForm");
 
@@ -2921,6 +2987,7 @@ function resetDirectQuotationForm() {
     $("directRequestId").value = "";
 
     currentDirectQuoteRequest = null;
+    applyDirectQuotationRequestRules(true);
 
     updateDirectQuotationPreview();
 
@@ -2984,6 +3051,7 @@ async function openDirectQuotationForRequest(requestId) {
     currentDirectQuoteRequest = request;
 
     $("directRequestId").value = request.id;
+    applyDirectQuotationRequestRules(true);
 
     $("directQuoteForm").classList.remove("hidden");
     $("directQuotationSection").hidden = false;
@@ -3012,31 +3080,35 @@ function getDirectQuotationValues() {
 
     const delivery = Number($("directDeliveryCost").value || 0);
 
-    const bracketQuantity = Number(
-        $("directBracketQuantity").value || 0
-    );
+    const requested = getDirectQuotationRequestOptions();
 
-    const bracketUnitCost = Number(
-        $("directBracketUnitCost").value || 0
-    );
+    const bracketQuantity = requested.outdoor_brackets
+        ? Number($("directBracketQuantity").value || 0)
+        : 0;
 
-    const installationPerAc = Number(
-        $("directInstallationPerAc").value || 0
-    );
+    const bracketUnitCost = requested.outdoor_brackets
+        ? Number($("directBracketUnitCost").value || 0)
+        : 0;
 
-    const accessoryDescription =
-        $("directAccessoryDescription").value.trim();
+    const installationPerAc = requested.installation
+        ? Number($("directInstallationPerAc").value || 0)
+        : 0;
 
-    const accessoryUnit =
-        $("directAccessoryUnit").value.trim();
+    const accessoryDescription = requested.accessories
+        ? $("directAccessoryDescription").value.trim()
+        : "";
 
-    const accessoryQuantity = Number(
-        $("directAccessoryQuantity").value || 0
-    );
+    const accessoryUnit = requested.accessories
+        ? $("directAccessoryUnit").value.trim()
+        : "";
 
-    const accessoryUnitCost = Number(
-        $("directAccessoryUnitCost").value || 0
-    );
+    const accessoryQuantity = requested.accessories
+        ? Number($("directAccessoryQuantity").value || 0)
+        : 0;
+
+    const accessoryUnitCost = requested.accessories
+        ? Number($("directAccessoryUnitCost").value || 0)
+        : 0;
 
     const discount = Number(
         $("directDiscount").value || 0
@@ -3778,11 +3850,23 @@ async function editDirectQuotation(id) {
             setDirectQuotationDraftPriceMode(false);
         }
 
-        const request = currentQuoteRequests.find(
+        let request = currentQuoteRequests.find(
             (item) => item.id === quote.request_id
         );
 
+        if (!request && quote.request_id) {
+            const { data: savedRequest, error: requestError } = await db
+                .from("quote_requests")
+                .select("*")
+                .eq("id", quote.request_id)
+                .single();
+
+            if (requestError) throw requestError;
+            request = savedRequest;
+        }
+
         currentDirectQuoteRequest = request || null;
+        applyDirectQuotationRequestRules(true);
 
         $("directQuoteForm").classList.remove("hidden");
         $("directQuotationSection").hidden = false;
