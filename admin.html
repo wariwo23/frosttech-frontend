@@ -3602,7 +3602,7 @@ async function loadDirectQuotes() {
                 <button type="button"
                     class="edit-direct-quotation"
                     data-id="${escapeHtml(quote.id)}">
-                    Edit Draft
+                    Review Quotation
                 </button>
             </article>
         `).join("");
@@ -3615,7 +3615,7 @@ async function loadDirectQuotes() {
             <td>${money(quote.delivery_cost)}</td>
             <td>${money(quote.additional_charges)}</td>
             <td>${badge(quote.status)}</td>
-            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Edit Draft</button></div></td>
+            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Review Quotation</button></div></td>
         </tr>`);
         container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
 
