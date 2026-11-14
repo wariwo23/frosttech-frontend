@@ -3022,10 +3022,21 @@ function readRequestedItems(quotation) {
 
     if (markerPosition === -1) return null;
 
-    const jsonText = notes
-        .slice(markerPosition + marker.length)
-        .split("\n")[0]
-        .trim();
+    /*
+     * The marker is followed by a newline and then the JSON payload.
+     * Find the first JSON object after the marker instead of reading
+     * the marker's remainder on the same line.
+     */
+    const jsonStart = notes.indexOf("{", markerPosition + marker.length);
+
+    if (jsonStart === -1) return null;
+
+    const jsonEnd = notes.indexOf("\n", jsonStart);
+    const jsonText = (
+        jsonEnd === -1
+            ? notes.slice(jsonStart)
+            : notes.slice(jsonStart, jsonEnd)
+    ).trim();
 
     try {
         const parsed = JSON.parse(jsonText);
@@ -3779,13 +3790,19 @@ async function editDirectQuotation(id) {
         $("directQuantity").value = quote.quantity || 1;
 
         /*
-         * The saved unit_price is the customer-facing unit price.
-         * Recovering the original supplier cost and markup from
-         * this value is not reliable, so the user must review
-         * and enter the current supplier cost and markup.
+         * Saved drafts store customer-facing prices, not supplier costs.
+         * FrostTech's approved standard markup is 15%, so restore the
+         * editable cost basis by reversing that markup. This preserves
+         * the saved customer price while restoring the admin's familiar
+         * cost + markup preparation view.
          */
-        $("directUnitCost").value = "";
-        $("directMarkup").value = "";
+        const standardMarkup = 15;
+        const standardMarkupFactor = 1 + standardMarkup / 100;
+        $("directUnitCost").value = quote.unit_price
+            ? Number(quote.unit_price) / standardMarkupFactor
+            : "";
+        $("directMarkup").value = String(standardMarkup);
+        $("directMarkup").disabled = false;
 
         $("directDeliveryCost").value =
             quote.delivery_cost || 0;
@@ -3807,62 +3824,61 @@ async function editDirectQuotation(id) {
             : noteText;
 
         const items = requestedItems?.items || {};
-        const safeCustomerPriceDraft =
-            requestedItems?.pricing_mode === "customer_prices_v1";
+        const markupFactor = 1.15;
 
-        if (safeCustomerPriceDraft) {
-            /* Restore customer-facing amounts without exposing supplier costs. */
-            $("directUnitCost").value =
-                items.product?.customer_unit_price ?? quote.unit_price ?? 0;
-            $("directMarkup").value = "0";
-            $("directMarkup").disabled = true;
+        /*
+         * Reverse the approved 15% markup from stored customer prices.
+         * The database continues to store customer-facing prices only.
+         * No supplier-cost field or customer-visible note is added.
+         */
+        const productCustomerPrice =
+            Number(items.product?.customer_unit_price ?? quote.unit_price ?? 0);
 
-            $("directInstallationPerAc").value =
-                items.installation?.customer_unit_price ?? 0;
-            $("directBracketQuantity").value =
-                items.outdoor_brackets?.quantity ?? 0;
-            $("directBracketUnitCost").value =
-                items.outdoor_brackets?.customer_unit_price ?? 0;
+        $("directUnitCost").value = productCustomerPrice > 0
+            ? productCustomerPrice / markupFactor
+            : "";
+        $("directMarkup").value = "15";
+        $("directMarkup").disabled = false;
 
-            const accessories = Array.isArray(items.accessories)
-                ? items.accessories
-                : [];
-            const firstAccessory = accessories[0] || {};
+        const installationCustomerPrice =
+            Number(items.installation?.customer_unit_price ?? 0);
+        $("directInstallationPerAc").value =
+            installationCustomerPrice / markupFactor;
 
-            $("directAccessoryDescription").value =
-                firstAccessory.description || "";
-            $("directAccessoryUnit").value =
-                firstAccessory.unit || "";
-            $("directAccessoryQuantity").value =
-                firstAccessory.quantity || 0;
-            $("directAccessoryUnitCost").value =
-                firstAccessory.customer_unit_price ?? 0;
+        $("directBracketQuantity").value =
+            items.outdoor_brackets?.quantity ?? 0;
+        const bracketCustomerPrice =
+            Number(items.outdoor_brackets?.customer_unit_price ?? 0);
+        $("directBracketUnitCost").value =
+            bracketCustomerPrice / markupFactor;
 
-            setDirectQuotationDraftPriceMode(true);
-        } else {
-            /* Legacy markers may contain supplier costs. Never load them. */
-            $("directUnitCost").value = "";
-            $("directMarkup").value = "15";
-            $("directMarkup").disabled = false;
-            $("directInstallationPerAc").value = "0";
-            $("directBracketQuantity").value =
-                items.outdoor_brackets?.quantity || 0;
-            $("directBracketUnitCost").value = "0";
+        const accessories = Array.isArray(items.accessories)
+            ? items.accessories
+            : [];
+        const firstAccessory = accessories[0] || {};
 
-            const accessories = Array.isArray(items.accessories)
-                ? items.accessories
-                : [];
-            const firstAccessory = accessories[0] || {};
+        $("directAccessoryDescription").value =
+            firstAccessory.description || "";
+        $("directAccessoryUnit").value =
+            firstAccessory.unit || "";
+        $("directAccessoryQuantity").value =
+            firstAccessory.quantity || 0;
+        const accessoryCustomerPrice =
+            Number(firstAccessory.customer_unit_price ?? 0);
+        $("directAccessoryUnitCost").value =
+            accessoryCustomerPrice / markupFactor;
 
-            $("directAccessoryDescription").value =
-                firstAccessory.description || "";
-            $("directAccessoryUnit").value =
-                firstAccessory.unit || "";
-            $("directAccessoryQuantity").value =
-                firstAccessory.quantity || 0;
-            $("directAccessoryUnitCost").value = "0";
+        setDirectQuotationDraftPriceMode(false);
 
-            setDirectQuotationDraftPriceMode(false);
+        const restoredCustomerUnitPrice =
+            Number($("directUnitCost").value || 0) * markupFactor;
+        if (
+            productCustomerPrice > 0 &&
+            Math.abs(restoredCustomerUnitPrice - productCustomerPrice) > 0.01
+        ) {
+            throw new Error(
+                "The saved customer price could not be restored accurately. The draft has not been changed."
+            );
         }
 
         let request = currentQuoteRequests.find(
@@ -3896,9 +3912,7 @@ async function editDirectQuotation(id) {
 
         showMessage(
             "directQuoteMessage",
-            safeCustomerPriceDraft
-                ? "Saved quotation loaded. Review the customer-facing prices, delivery cost and any applicable discount before saving."
-                : "Saved draft loaded. Review the product cost, markup, delivery cost and any applicable discount before saving.",
+            "Saved quotation loaded. The product cost and standard 15% markup have been restored from the saved customer price. Review delivery, discount and the calculated total before saving.",
             "info"
         );
     } catch (error) {
