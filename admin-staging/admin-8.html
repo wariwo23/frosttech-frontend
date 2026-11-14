@@ -1407,9 +1407,11 @@ footer {
 
     <label for="directProductDescription">Product / Service *</label>
     <textarea id="directProductDescription" required></textarea>
+    <small>When preparing a quotation from a customer request, the requested product is locked to the original request.</small>
 
     <label for="directQuantity">Quantity *</label>
     <input id="directQuantity" type="number" min="1" step="1" required value="1">
+    <small>For customer requests, the original requested quantity is retained and cannot be changed here.</small>
 
     <label for="directUnitCost">Product Unit Cost (₦) *</label>
     <input id="directUnitCost" type="number" min="0" step="0.01" required>
@@ -1443,6 +1445,13 @@ footer {
     <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
     <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
 
+    <label for="directOtherItemDescription">Additional Item / Charge Description</label>
+    <input id="directOtherItemDescription" type="text" maxlength="180" placeholder="Describe any other charge not listed above">
+
+    <label for="directOtherItemCost">Additional Item / Charge Cost (₦)</label>
+    <input id="directOtherItemCost" type="number" min="0" step="0.01" value="0" required>
+    <small>Enter only costs not already included under brackets, installation or accessories. This amount receives the same markup once.</small>
+
     <label for="directDiscount">Discount (₦)</label>
     <input id="directDiscount" type="number" min="0" step="0.01" value="0" required>
 
@@ -1456,6 +1465,7 @@ footer {
         <div class="quote-line"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
         <div class="quote-line"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
         <div class="quote-line"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
+        <div class="quote-line"><span>Other additional item / charge</span><span id="displayOtherItem">₦0.00</span></div>
         <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
         <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
     </div>
@@ -1739,28 +1749,41 @@ function getCustomerRequestedItems(request) {
 
 function requirementsText(request) {
     const items = getCustomerRequestedItems(request);
+    const description = String(request?.description || "");
+    const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+    const markerIndex = description.indexOf(marker);
+    const plainDescription = markerIndex >= 0
+        ? description.slice(0, markerIndex).trim()
+        : description.trim();
+
+    const usefulLines = plainDescription
+        .split("\n")
+        .map((line) => line.trim())
+        .filter((line) => line && !/^(Customer|Phone|Email|Request type|Product|Budget):/i.test(line));
 
     const requested = items ? [
-        "Installation requested: " +
-            (items.installation ? "YES" : "NO"),
-        "Outdoor brackets requested: " +
-            (items.outdoor_brackets ? "YES" : "NO"),
-        "Accessories requested: " +
-            (items.accessories || "NO"),
-        "Other requested items: " +
-            (items.other_items || "NONE")
-    ].join("\n") :
-    "Additional item selections: Not recorded in this request.";
+        "Installation: " + (items.installation ? "Requested" : "Not requested"),
+        "Outdoor brackets: " + (items.outdoor_brackets
+            ? "Requested" + (items.bracket_quantity ? " (" + items.bracket_quantity + " sets)" : "")
+            : "Not requested"),
+        "Accessories: " + (items.accessories || "None"),
+        "Other requested items: " + (items.other_items || "None")
+    ] : ["Additional item selections: Not recorded"];
+
+    const extraDetailsMatch = description.match(/Other specifications or questions:\s*([\s\S]*)/i);
+    const extraDetails = extraDetailsMatch ? extraDetailsMatch[1].trim() : "";
 
     return [
-        "CUSTOMER REQUEST — DO NOT ALTER",
+        "CUSTOMER REQUEST — ORIGINAL REQUIREMENTS",
         "Product: " + (request.title || request.product_id || "Not specified"),
         "Quantity: " + (request.quantity ?? 1),
         "Preferred brand: " + (request.preferred_brand || "Any"),
-        requested,
-        "Original request details: " + (request.description || "None"),
-        "Delivery address: " + (request.delivery_address || "Not provided")
-    ].join("\n");
+        ...requested,
+        usefulLines.length ? "Request details: " + usefulLines.join("\n") : "",
+        "Additional specifications: " + (extraDetails || "None supplied"),
+        "Delivery address: " + (request.delivery_address || "Not provided"),
+        "Customer requirements are for reference and must not be altered in this quotation."
+    ].filter(Boolean).join("\n");
 }
 
 
@@ -2912,6 +2935,8 @@ function resetDirectQuotationForm() {
         form.classList.add("hidden");
     }
     $("directMarkup").disabled = false;
+    $("directProductDescription").readOnly = false;
+    $("directQuantity").readOnly = false;
     setDirectQuotationDraftPriceMode(false);
 
     $("directQuoteId").value = "";
@@ -2987,8 +3012,27 @@ async function openDirectQuotationForRequest(requestId) {
     $("directRequestReference").textContent =
         request.request_number || request.id;
 
-    $("directRequestRequirements").textContent =
-        request.description || "No description supplied.";
+    $("directRequestRequirements").textContent = requirementsText(request);
+
+    $("directProductDescription").value =
+        request.title || request.product_id || "Customer-requested product";
+    $("directProductDescription").readOnly = true;
+    $("directQuantity").value = Number(request.quantity || 1);
+    $("directQuantity").readOnly = true;
+
+    if (request.product_id) {
+        try {
+            const selectedCost = await getSelectedProductSupplierCost(request.product_id);
+            $("directUnitCost").value = selectedCost;
+            updateDirectQuotationPreview();
+        } catch (costError) {
+            showMessage(
+                "directQuoteMessage",
+                "The original request is loaded. Enter or verify the product cost because no selected supplier cost could be retrieved.",
+                "info"
+            );
+        }
+    }
 
     $("directQuoteForm").classList.remove("hidden");
     $("directQuotationSection").hidden = false;
@@ -3043,6 +3087,13 @@ function getDirectQuotationValues() {
         $("directAccessoryUnitCost").value || 0
     );
 
+    const otherItemDescription =
+        $("directOtherItemDescription").value.trim();
+
+    const otherItemCost = Number(
+        $("directOtherItemCost").value || 0
+    );
+
     const discount = Number(
         $("directDiscount").value || 0
     );
@@ -3059,6 +3110,8 @@ function getDirectQuotationValues() {
         accessoryUnit,
         accessoryQuantity,
         accessoryUnitCost,
+        otherItemDescription,
+        otherItemCost,
         discount
     };
 }
@@ -3092,19 +3145,20 @@ function calculateDirectQuotation() {
     const accessoriesSellingTotal =
         accessoriesCost * (1 + v.markup / 100);
 
+    const otherItemSellingTotal =
+        v.otherItemCost * (1 + v.markup / 100);
+
+    const additionalCostBeforeMarkup =
+        bracketsCost + installationCost + accessoriesCost + v.otherItemCost;
+
+    const additionalCharges =
+        additionalCostBeforeMarkup * (1 + v.markup / 100);
+
     const subtotal =
-        productSellingTotal +
-        bracketsSellingTotal +
-        installationSellingTotal +
-        accessoriesSellingTotal;
+        (productCost + additionalCostBeforeMarkup) * (1 + v.markup / 100);
 
     const total =
         Math.max(0, subtotal - v.discount) + v.delivery;
-
-    const additionalCharges =
-        bracketsSellingTotal +
-        installationSellingTotal +
-        accessoriesSellingTotal;
 
     return {
         ...v,
@@ -3117,6 +3171,8 @@ function calculateDirectQuotation() {
         installationSellingTotal,
         accessoriesCost,
         accessoriesSellingTotal,
+        otherItemSellingTotal,
+        additionalCostBeforeMarkup,
         subtotal,
         additionalCharges,
         total
@@ -3138,6 +3194,7 @@ function updateDirectQuotationPreview() {
         v.installationPerAc,
         v.accessoryQuantity,
         v.accessoryUnitCost,
+        v.otherItemCost,
         v.discount
     ];
 
@@ -3181,6 +3238,11 @@ function updateDirectQuotationPreview() {
     if ($("displayAccessories")) {
         $("displayAccessories").textContent =
             money(result.accessoriesSellingTotal);
+    }
+
+    if ($("displayOtherItem")) {
+        $("displayOtherItem").textContent =
+            money(result.otherItemSellingTotal);
     }
 
     if ($("displayDiscount")) {
@@ -3250,6 +3312,7 @@ function getDirectQuotationRecord() {
         result.installationPerAc < 0 ||
         result.accessoryQuantity < 0 ||
         result.accessoryUnitCost < 0 ||
+        result.otherItemCost < 0 ||
         result.discount < 0
     ) {
         throw new Error("Enter valid non-negative quotation values.");
@@ -3260,6 +3323,10 @@ function getDirectQuotationRecord() {
         !result.accessoryDescription
     ) {
         throw new Error("Describe the accessory being quoted.");
+    }
+
+    if (result.otherItemCost > 0 && !result.otherItemDescription) {
+        throw new Error("Describe the additional item or charge.");
     }
 
     if (
@@ -3296,7 +3363,10 @@ function getDirectQuotationRecord() {
                 quantity: result.accessoryQuantity,
                 customer_unit_price: result.accessoryUnitCost * markupFactor
             }] : [],
-            other_items: []
+            other_items: result.otherItemCost > 0 ? [{
+                description: result.otherItemDescription,
+                customer_unit_price: result.otherItemCost * markupFactor
+            }] : []
         }
     };
 
@@ -3744,6 +3814,10 @@ async function editDirectQuotation(id) {
                 ? items.accessories
                 : [];
             const firstAccessory = accessories[0] || {};
+            const otherItems = Array.isArray(items.other_items)
+                ? items.other_items
+                : [];
+            const firstOtherItem = otherItems[0] || {};
 
             $("directAccessoryDescription").value =
                 firstAccessory.description || "";
@@ -3753,6 +3827,10 @@ async function editDirectQuotation(id) {
                 firstAccessory.quantity || 0;
             $("directAccessoryUnitCost").value =
                 firstAccessory.customer_unit_price ?? 0;
+            $("directOtherItemDescription").value =
+                firstOtherItem.description || "";
+            $("directOtherItemCost").value =
+                firstOtherItem.customer_unit_price ?? 0;
 
             setDirectQuotationDraftPriceMode(true);
         } else {
@@ -3777,6 +3855,9 @@ async function editDirectQuotation(id) {
             $("directAccessoryQuantity").value =
                 firstAccessory.quantity || 0;
             $("directAccessoryUnitCost").value = "0";
+            $("directOtherItemDescription").value =
+                items.other_items?.[0]?.description || "";
+            $("directOtherItemCost").value = "0";
 
             setDirectQuotationDraftPriceMode(false);
         }
@@ -3791,7 +3872,18 @@ async function editDirectQuotation(id) {
             request?.request_number || quote.request_id || "";
 
         $("directRequestRequirements").textContent =
-            request?.description || "";
+            request ? requirementsText(request) : "No linked customer request is available.";
+
+        if (request) {
+            $("directProductDescription").value =
+                request.title || request.product_id || quote.product_description || "";
+            $("directProductDescription").readOnly = true;
+            $("directQuantity").value = Number(request.quantity || quote.quantity || 1);
+            $("directQuantity").readOnly = true;
+        } else {
+            $("directProductDescription").readOnly = false;
+            $("directQuantity").readOnly = false;
+        }
 
         $("directQuoteForm").classList.remove("hidden");
         $("directQuotationSection").hidden = false;
