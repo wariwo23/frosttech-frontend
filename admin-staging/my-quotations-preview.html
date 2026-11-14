@@ -386,7 +386,15 @@ footer{
 .guest-access .guest-terms{display:flex;align-items:flex-start;gap:10px;margin:14px 0}
 .guest-access .guest-terms input{width:18px;min-width:18px;height:18px;min-height:18px;margin-top:4px}
 .guest-access a{color:var(--blue);font-weight:700}
-@media(max-width:480px){.guest-access{padding:14px}.guest-access .guest-actions button{width:100%;flex-basis:100%}}
+.guest-decision-panel{margin-top:18px;padding:15px;border:1px solid var(--border);border-radius:10px;background:#fafcff}
+.guest-decision-panel select,.guest-decision-panel textarea{width:100%;padding:11px;border:1px solid #b9c7d8;border-radius:8px;font:14px Inter,Arial,sans-serif;background:#fff}
+.guest-decision-panel .guest-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.guest-decision-panel .guest-actions button{flex:1;min-height:46px}
+.guest-order-terms{display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+.guest-order-terms input{width:18px;min-width:18px;height:18px;min-height:18px;margin-top:4px}
+.guest-order-panel{margin-top:16px;padding:15px;border:1px solid #c8ddff;border-radius:10px;background:var(--light)}
+.guest-order-panel a{display:block;margin:10px 0;color:var(--blue);font-weight:700}
+@media(max-width:480px){.guest-access{padding:14px}.guest-access .guest-actions button{width:100%;flex-basis:100%}.guest-decision-panel .guest-actions button{width:100%;flex-basis:100%}}
 
 </style>
 </head>
@@ -473,6 +481,7 @@ let cachedCustomerRecordId = null;
 let guestAccessToken = sessionStorage.getItem("ft_guest_quote_token") || "";
 let guestQuotationNumber = sessionStorage.getItem("ft_guest_quote_number") || "";
 let guestPaymentReference = sessionStorage.getItem("ft_guest_fee_reference") || "";
+let guestOrderPaymentReference = sessionStorage.getItem("ft_guest_order_reference") || "";
 
 /* General helpers */
 
@@ -1552,7 +1561,128 @@ function renderGuestUnlocked(q) {
   print.type = "button";
   q.administration_fee = q.admin_fee;
   print.addEventListener("click", () => printCustomerQuotation(q));
-  addText(card, "p", "Your quotation is now available for review. To accept or decline this offer, please contact FrostTech while the secure guest decision facility is being completed.", "muted");
+
+  const decision = String(q.customer_decision || "").toLowerCase();
+  if (q.customer_decision_at) addDetail(details, "Decision recorded", displayDate(q.customer_decision_at));
+  if (decision === "declined") {
+    addText(card, "span", "Offer declined", "status status-declined");
+    addText(card, "p", "Your decision has been recorded. Contact FrostTech if you would like to discuss a revised offer.", "muted");
+  } else if (decision === "accepted") {
+    addText(card, "span", "Offer accepted", "status status-accepted");
+    const orderPanel = document.createElement("section");
+    orderPanel.className = "guest-order-panel";
+    addText(orderPanel, "h4", "Complete your order");
+    addText(orderPanel, "p", "Accept the General Terms and Conditions before proceeding to secure payment.");
+    const termsLabel = document.createElement("label");
+    termsLabel.className = "guest-order-terms";
+    const terms = document.createElement("input");
+    terms.type = "checkbox";
+    terms.checked = !!q.order_payment_terms_accepted_at;
+    const termsText = document.createElement("span");
+    termsText.textContent = "I have read and agreed to the FrostTech General Terms and Conditions for this order payment.";
+    termsLabel.append(terms, termsText);
+    orderPanel.appendChild(termsLabel);
+    const termsLink = document.createElement("a");
+    termsLink.href = "../terms.html";
+    termsLink.target = "_blank";
+    termsLink.rel = "noopener";
+    termsLink.textContent = "Read General Terms and Conditions";
+    orderPanel.appendChild(termsLink);
+    const pay = addText(orderPanel, "button", "Proceed to Order Payment", "primary order-payment-button");
+    pay.type = "button";
+    pay.disabled = !!q.order_paid;
+    pay.addEventListener("click", async () => {
+      if (!terms.checked) {
+        showMessage("Please accept the General Terms and Conditions before proceeding to payment.", "error");
+        terms.focus();
+        return;
+      }
+      setGuestBusy(pay, true, "Preparing secure payment...");
+      try {
+        if (!q.order_payment_terms_accepted_at) await invokeGuestFunction("accept_order_terms", { terms_accepted: true });
+        const checkout = await invokeGuestFunction("initialize_order_payment");
+        if (!checkout.authorization_url || !checkout.reference) throw new Error("Paystack did not return a valid order payment session.");
+        guestOrderPaymentReference = checkout.reference;
+        sessionStorage.setItem("ft_guest_order_reference", guestOrderPaymentReference);
+        window.location.assign(checkout.authorization_url);
+      } catch (error) {
+        showMessage(error.message || "Unable to start order payment.", "error");
+        setGuestBusy(pay, false, "Proceed to Order Payment");
+      }
+    });
+    orderPanel.appendChild(pay);
+    if (q.order_paid) addText(orderPanel, "p", "Payment has been verified. FrostTech will review the guest order and arrange the next steps.", "muted");
+    card.appendChild(orderPanel);
+  } else {
+    const panel = document.createElement("section");
+    panel.className = "guest-decision-panel";
+    addText(panel, "h4", "Respond to this offer");
+    addText(panel, "p", "Please review the full quotation above before making your decision.");
+    const termsLabel = document.createElement("label");
+    termsLabel.className = "guest-order-terms";
+    const terms = document.createElement("input");
+    terms.type = "checkbox";
+    const termsText = document.createElement("span");
+    termsText.textContent = "I have reviewed this quotation and agree to its quoted prices, validity period, charges and delivery or installation terms.";
+    termsLabel.append(terms, termsText);
+    panel.appendChild(termsLabel);
+    const reason = document.createElement("select");
+    reason.innerHTML = '<option value="">Select a reason for declining</option><option value="price">Price is too high</option><option value="delivery">Delivery cost or timing</option><option value="specification">Product or service specification</option><option value="validity">Quotation validity or timing</option><option value="other">Other reason</option>';
+    reason.className = "hidden";
+    const comments = document.createElement("textarea");
+    comments.rows = 3;
+    comments.maxLength = 1000;
+    comments.placeholder = "Additional comments (optional)";
+    comments.className = "hidden";
+    const actions = document.createElement("div");
+    actions.className = "guest-actions";
+    const accept = addText(actions, "button", "Accept Offer", "primary");
+    accept.type = "button";
+    const decline = addText(actions, "button", "Decline Offer", "danger");
+    decline.type = "button";
+    const saveDecline = addText(panel, "button", "Confirm Decline", "danger");
+    saveDecline.type = "button";
+    saveDecline.classList.add("hidden");
+    const cancelDecline = addText(panel, "button", "Cancel", "secondary");
+    cancelDecline.type = "button";
+    cancelDecline.classList.add("hidden");
+    decline.addEventListener("click", () => {
+      reason.classList.remove("hidden"); comments.classList.remove("hidden");
+      saveDecline.classList.remove("hidden"); cancelDecline.classList.remove("hidden"); decline.disabled = true;
+    });
+    cancelDecline.addEventListener("click", () => {
+      reason.classList.add("hidden"); comments.classList.add("hidden");
+      saveDecline.classList.add("hidden"); cancelDecline.classList.add("hidden"); decline.disabled = false;
+    });
+    accept.addEventListener("click", async () => {
+      if (!terms.checked) { showMessage("Please confirm that you agree to the quotation and its terms.", "error"); terms.focus(); return; }
+      if (!(await frosttechConfirm())) return;
+      setGuestBusy(accept, true, "Recording acceptance..."); decline.disabled = true;
+      try {
+        await invokeGuestFunction("decide_offer", { decision: "accept", terms_accepted: true });
+        showMessage("Offer accepted. Your guest order is ready for payment.", "success");
+        await loadGuestQuotation();
+      } catch (error) {
+        showMessage(error.message || "Your acceptance could not be saved.", "error");
+        setGuestBusy(accept, false, "Accept Offer"); decline.disabled = false;
+      }
+    });
+    saveDecline.addEventListener("click", async () => {
+      if (!reason.value) { showMessage("Please select a reason for declining this offer.", "error"); reason.focus(); return; }
+      if (!(await showDeclineConfirmation())) return;
+      setGuestBusy(saveDecline, true, "Recording decision..."); accept.disabled = true;
+      try {
+        await invokeGuestFunction("decide_offer", { decision: "decline", decline_reason: reason.value, decline_comments: comments.value.trim() });
+        showMessage("Offer declined. Your reason has been recorded.", "success");
+        await loadGuestQuotation();
+      } catch (error) {
+        showMessage(error.message || "Your decline could not be saved.", "error");
+        setGuestBusy(saveDecline, false, "Confirm Decline"); accept.disabled = false;
+      }
+    });
+    panel.append(reason, comments, actions, saveDecline, cancelDecline);
+    card.appendChild(panel);
+  }
   guestResult.appendChild(card);
 }
 
@@ -1561,6 +1691,13 @@ async function loadGuestQuotation() {
   try {
     const params = new URLSearchParams(window.location.search);
     const returnedReference = params.get("reference") || params.get("trxref") || guestPaymentReference;
+    if (returnedReference && guestOrderPaymentReference && returnedReference === guestOrderPaymentReference) {
+      showMessage("Checking your guest order payment with Paystack...", "info");
+      await invokeGuestFunction("verify_order_payment", { reference: returnedReference });
+      sessionStorage.removeItem("ft_guest_order_reference");
+      guestOrderPaymentReference = "";
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
     if (returnedReference && guestPaymentReference && returnedReference === guestPaymentReference) {
       showMessage("Checking your guest administration-fee payment with Paystack...", "info");
       await invokeGuestFunction("verify_fee_payment", { reference: returnedReference });
@@ -1572,6 +1709,13 @@ async function loadGuestQuotation() {
     if (!result.quotation) throw new Error("The guest quotation service returned an invalid response.");
     const q = result.quotation;
     if (q.details_unlocked === true || q.quotation_details_unlocked === true) {
+      if (String(q.customer_decision || "").toLowerCase() === "accepted") {
+        const { data: orderData, error: orderError } = await db.from("orders")
+          .select("id,order_number,status,customer_total")
+          .eq("quotation_id", q.id).is("customer_id", null).maybeSingle();
+        if (!orderError && orderData) q.order_paid = orderData.status === "paid" ||
+          ["processing","ready_for_delivery","out_for_delivery","delivered","completed"].includes(orderData.status);
+      }
       renderGuestUnlocked(q);
       showMessage("Your administration fee is verified. Your full quotation is now available.", "success");
     } else {
