@@ -3415,12 +3415,42 @@ function getDirectQuotationRecord() {
     };
 }
 
+function getDirectQuotationPricingSnapshot() {
+    const result = calculateDirectQuotation();
+
+    return {
+        version: 1,
+        saved_at: new Date().toISOString(),
+        inputs: {
+            unit_cost: result.unitCost,
+            markup_percent: result.markup,
+            quantity: result.quantity,
+            delivery: result.delivery,
+            bracket_quantity: result.bracketQuantity,
+            bracket_unit_cost: result.bracketUnitCost,
+            installation_per_unit_cost: result.installationPerAc,
+            accessory_description: result.accessoryDescription,
+            accessory_unit: result.accessoryUnit,
+            accessory_quantity: result.accessoryQuantity,
+            accessory_unit_cost: result.accessoryUnitCost,
+            discount: result.discount
+        },
+        calculated: {
+            customer_unit_price: result.customerUnitPrice,
+            product_subtotal: result.subtotal,
+            additional_charges: result.additionalCharges,
+            total: result.total
+        }
+    };
+}
+
 async function saveDirectDraftRecord() {
     await requireAdmin();
 
     const values = getDirectQuotationRecord();
-
+    const pricingSnapshot = getDirectQuotationPricingSnapshot();
     const quotationId = $("directQuoteId").value.trim();
+    let savedId;
 
     if (quotationId) {
         const { data, error } = await db
@@ -3439,20 +3469,39 @@ async function saveDirectDraftRecord() {
             );
         }
 
-        return data.id;
+        savedId = data.id;
+    } else {
+        const { data, error } = await db
+            .from("admin_quotations")
+            .insert(values)
+            .select("id")
+            .single();
+
+        if (error) throw error;
+        savedId = data.id;
+        $("directQuoteId").value = savedId;
     }
 
-    const { data, error } = await db
-        .from("admin_quotations")
-        .insert(values)
-        .select("id")
-        .single();
+    const { data: authData, error: authError } = await db.auth.getUser();
+    if (authError) throw authError;
 
-    if (error) throw error;
+    const { error: snapshotError } = await db
+        .from("admin_quotation_pricing_snapshots")
+        .upsert({
+            quotation_id: savedId,
+            pricing_snapshot: pricingSnapshot,
+            updated_by: authData.user?.id || null,
+            updated_at: new Date().toISOString()
+        }, { onConflict: "quotation_id" });
 
-    $("directQuoteId").value = data.id;
+    if (snapshotError) {
+        throw new Error(
+            "The quotation was saved, but its private pricing snapshot could not be saved. Please save the draft again before leaving this page. " +
+            snapshotError.message
+        );
+    }
 
-    return data.id;
+    return savedId;
 }
 
 async function saveDirectDraft() {
@@ -3790,99 +3839,60 @@ async function editDirectQuotation(id) {
         $("directQuantity").value = quote.quantity || 1;
 
         /*
-         * Saved drafts store customer-facing prices, not supplier costs.
-         * FrostTech's approved standard markup is 15%, so restore the
-         * editable cost basis by reversing that markup. This preserves
-         * the saved customer price while restoring the admin's familiar
-         * cost + markup preparation view.
+         * Restore the exact administrator-entered values captured when
+         * this draft was last saved. Never reverse markup or reconstruct
+         * costs from customer-facing quotation prices.
          */
-        const standardMarkup = 15;
-        const standardMarkupFactor = 1 + standardMarkup / 100;
-        $("directUnitCost").value = quote.unit_price
-            ? Number(quote.unit_price) / standardMarkupFactor
-            : "";
-        $("directMarkup").value = String(standardMarkup);
+        const { data: snapshotRow, error: snapshotError } = await db
+            .from("admin_quotation_pricing_snapshots")
+            .select("pricing_snapshot")
+            .eq("quotation_id", quote.id)
+            .maybeSingle();
+
+        if (snapshotError) throw snapshotError;
+
+        const pricingSnapshot = snapshotRow?.pricing_snapshot;
+        const savedInputs = pricingSnapshot?.inputs;
+
+        if (
+            !savedInputs ||
+            pricingSnapshot.version !== 1
+        ) {
+            throw new Error(
+                "This older draft does not contain an original pricing snapshot. FrostTech will not guess or reconstruct its saved costs. Please prepare a new quotation draft to establish an exact snapshot."
+            );
+        }
+
+        $("directUnitCost").value = savedInputs.unit_cost;
+        $("directMarkup").value = savedInputs.markup_percent;
         $("directMarkup").disabled = false;
+        $("directQuantity").value = savedInputs.quantity;
+        $("directDeliveryCost").value = savedInputs.delivery;
+        $("directDiscount").value = savedInputs.discount;
+        $("directBracketQuantity").value = savedInputs.bracket_quantity;
+        $("directBracketUnitCost").value = savedInputs.bracket_unit_cost;
+        $("directInstallationPerAc").value =
+            savedInputs.installation_per_unit_cost;
+        $("directAccessoryDescription").value =
+            savedInputs.accessory_description || "";
+        $("directAccessoryUnit").value =
+            savedInputs.accessory_unit || "";
+        $("directAccessoryQuantity").value =
+            savedInputs.accessory_quantity;
+        $("directAccessoryUnitCost").value =
+            savedInputs.accessory_unit_cost;
 
-        $("directDeliveryCost").value =
-            quote.delivery_cost || 0;
-
-        $("directDiscount").value =
-            quote.discount || 0;
-
-        $("directValidity").value =
-            quote.validity_date || "";
+        $("directValidity").value = quote.validity_date || "";
 
         const noteText = String(quote.notes || "");
-
         const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
-
         const markerPosition = noteText.indexOf(marker);
 
         $("directNotes").value = markerPosition >= 0
             ? noteText.slice(0, markerPosition).trim()
             : noteText;
 
-        const items = requestedItems?.items || {};
-        const markupFactor = 1.15;
-        const restoreCostFromCustomerPrice = (value) =>
-            Math.round((Number(value || 0) / markupFactor) * 100) / 100;
-
-        /*
-         * Reverse the approved 15% markup from stored customer prices.
-         * Round restored costs to two decimal places to prevent
-         * JavaScript floating-point artefacts in the quotation form.
-         * The database continues to store customer-facing prices only.
-         */
-        const productCustomerPrice =
-            Number(items.product?.customer_unit_price ?? quote.unit_price ?? 0);
-
-        $("directUnitCost").value = productCustomerPrice > 0
-            ? restoreCostFromCustomerPrice(productCustomerPrice)
-            : "";
-        $("directMarkup").value = "15";
-        $("directMarkup").disabled = false;
-
-        const installationCustomerPrice =
-            Number(items.installation?.customer_unit_price ?? 0);
-        $("directInstallationPerAc").value =
-            restoreCostFromCustomerPrice(installationCustomerPrice);
-
-        $("directBracketQuantity").value =
-            items.outdoor_brackets?.quantity ?? 0;
-        const bracketCustomerPrice =
-            Number(items.outdoor_brackets?.customer_unit_price ?? 0);
-        $("directBracketUnitCost").value =
-            restoreCostFromCustomerPrice(bracketCustomerPrice);
-
-        const accessories = Array.isArray(items.accessories)
-            ? items.accessories
-            : [];
-        const firstAccessory = accessories[0] || {};
-
-        $("directAccessoryDescription").value =
-            firstAccessory.description || "";
-        $("directAccessoryUnit").value =
-            firstAccessory.unit || "";
-        $("directAccessoryQuantity").value =
-            firstAccessory.quantity || 0;
-        const accessoryCustomerPrice =
-            Number(firstAccessory.customer_unit_price ?? 0);
-        $("directAccessoryUnitCost").value =
-            restoreCostFromCustomerPrice(accessoryCustomerPrice);
-
         setDirectQuotationDraftPriceMode(false);
-
-        const restoredCustomerUnitPrice =
-            Number($("directUnitCost").value || 0) * markupFactor;
-        if (
-            productCustomerPrice > 0 &&
-            Math.abs(restoredCustomerUnitPrice - productCustomerPrice) > 0.01
-        ) {
-            throw new Error(
-                "The saved customer price could not be restored accurately. The draft has not been changed."
-            );
-        }
 
         let request = currentQuoteRequests.find(
             (item) => item.id === quote.request_id
