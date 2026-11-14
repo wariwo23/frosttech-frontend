@@ -3765,7 +3765,7 @@ async function loadDirectQuotes() {
             <td>${money(quote.delivery_cost)}</td>
             <td>${money(quote.additional_charges)}</td>
             <td>${badge(quote.status)}</td>
-            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Edit Draft</button></div></td>
+            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-action="edit" data-id="${escapeHtml(quote.id)}">Edit Draft</button><button type="button" class="edit-direct-quotation" data-action="prepare" data-id="${escapeHtml(quote.id)}">Prepare Quote</button></div></td>
         </tr>`);
         container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
 
@@ -3793,12 +3793,13 @@ if ($("directQuoteList")) {
         const button = event.target.closest(".edit-direct-quotation");
 
         if (button) {
-            await editDirectQuotation(button.dataset.id);
+            const action = button.dataset.action || "edit";
+            await editDirectQuotation(button.dataset.id, action);
         }
     });
 }
 
-async function editDirectQuotation(id) {
+async function editDirectQuotation(id, action = "edit") {
     await requireAdmin();
 
     try {
@@ -3925,7 +3926,9 @@ async function editDirectQuotation(id) {
 
         showMessage(
             "directQuoteMessage",
-            "Saved quotation loaded using its original pricing snapshot. The saved cost, markup, quantity, delivery, discount and item values have been restored exactly.",
+            action === "prepare"
+                ? "Quotation loaded for preparation and final review. All saved pricing values have been restored exactly. Review the details before submitting."
+                : "Draft opened for editing. You can revise product pricing, markup, quantity, delivery, discount and other requested items, then save the updated draft.",
             "info"
         );
     } catch (error) {
