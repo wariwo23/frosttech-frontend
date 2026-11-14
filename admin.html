@@ -1393,7 +1393,7 @@ footer {
 <h2>Review Customer Quotes</h2>
 <p>Customer quotation details load automatically when you open a request or saved draft. Review the items and quantities, then calculate the quotation for submission.</p>
 <div class="message info">
-    Select View Record to inspect the quotation details, or Prepare Quotation to continue preparing a saved draft.
+    Select View Record to inspect the quotation details, or Edit Draft to revise the administrator's saved quotation before submission.
 </div>
 <div id="directQuoteMessage" role="status"></div>
 
@@ -3765,7 +3765,7 @@ async function loadDirectQuotes() {
             <td>${money(quote.delivery_cost)}</td>
             <td>${money(quote.additional_charges)}</td>
             <td>${badge(quote.status)}</td>
-            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Prepare Quotation</button></div></td>
+            <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-id="${escapeHtml(quote.id)}">Edit Draft</button></div></td>
         </tr>`);
         container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
 
