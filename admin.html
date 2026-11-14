@@ -3825,17 +3825,20 @@ async function editDirectQuotation(id) {
 
         const items = requestedItems?.items || {};
         const markupFactor = 1.15;
+        const restoreCostFromCustomerPrice = (value) =>
+            Math.round((Number(value || 0) / markupFactor) * 100) / 100;
 
         /*
          * Reverse the approved 15% markup from stored customer prices.
+         * Round restored costs to two decimal places to prevent
+         * JavaScript floating-point artefacts in the quotation form.
          * The database continues to store customer-facing prices only.
-         * No supplier-cost field or customer-visible note is added.
          */
         const productCustomerPrice =
             Number(items.product?.customer_unit_price ?? quote.unit_price ?? 0);
 
         $("directUnitCost").value = productCustomerPrice > 0
-            ? productCustomerPrice / markupFactor
+            ? restoreCostFromCustomerPrice(productCustomerPrice)
             : "";
         $("directMarkup").value = "15";
         $("directMarkup").disabled = false;
@@ -3843,14 +3846,14 @@ async function editDirectQuotation(id) {
         const installationCustomerPrice =
             Number(items.installation?.customer_unit_price ?? 0);
         $("directInstallationPerAc").value =
-            installationCustomerPrice / markupFactor;
+            restoreCostFromCustomerPrice(installationCustomerPrice);
 
         $("directBracketQuantity").value =
             items.outdoor_brackets?.quantity ?? 0;
         const bracketCustomerPrice =
             Number(items.outdoor_brackets?.customer_unit_price ?? 0);
         $("directBracketUnitCost").value =
-            bracketCustomerPrice / markupFactor;
+            restoreCostFromCustomerPrice(bracketCustomerPrice);
 
         const accessories = Array.isArray(items.accessories)
             ? items.accessories
@@ -3866,7 +3869,7 @@ async function editDirectQuotation(id) {
         const accessoryCustomerPrice =
             Number(firstAccessory.customer_unit_price ?? 0);
         $("directAccessoryUnitCost").value =
-            accessoryCustomerPrice / markupFactor;
+            restoreCostFromCustomerPrice(accessoryCustomerPrice);
 
         setDirectQuotationDraftPriceMode(false);
 
