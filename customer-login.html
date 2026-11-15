@@ -160,6 +160,50 @@
       line-height: 1.5;
     }
 
+    /* Make guest quotation access as visible as customer login. */
+    .guest-access-panel {
+      margin-top: 24px;
+      padding: 18px 16px;
+      border: 2px solid #087f8c;
+      border-radius: 10px;
+      background: #f0fbfc;
+      text-align: center;
+    }
+
+    .guest-access-panel h2 {
+      margin: 0 0 8px;
+      color: #183153;
+      font-size: 21px;
+    }
+
+    .guest-access-panel p {
+      margin: 0 0 14px;
+      color: #475569;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .guest-access-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      min-height: 48px;
+      padding: 12px;
+      border-radius: 7px;
+      background: #087f8c;
+      color: #fff;
+      font-size: 15px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .guest-access-button:hover,
+    .guest-access-button:focus {
+      background: #066873;
+      color: #fff;
+    }
+
     .message {
       display: none;
       margin: 0 0 16px;
@@ -270,9 +314,16 @@
       <p class="help-text">
         Log in to access your FrostTech customer account.
       </p>
-      <p class="help-text">
-        Have a guest quotation? <a href="guest-quotations.html">Access your quotation securely here.</a>
-      </p>
+      <section class="guest-access-panel" aria-labelledby="guestAccessHeading">
+        <h2 id="guestAccessHeading">Guest Quotation Access</h2>
+        <p>
+          Received a quotation as a guest? You do not need to create an account.
+          Access your quotation securely using your quotation reference and email address.
+        </p>
+        <a class="guest-access-button" href="guest-quotations.html">
+          Access Guest Quotation
+        </a>
+      </section>
     </section>
 
     <!-- REQUEST A PASSWORD RESET EMAIL -->
