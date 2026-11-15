@@ -90,6 +90,26 @@ button{
 .danger{background:var(--red);color:#fff}
 button:disabled{opacity:.6;cursor:not-allowed}
 
+.request-integrity-card{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  margin:0 0 16px;
+  overflow-wrap:anywhere;
+}
+.request-integrity-card h3{margin:0 0 8px;font-size:17px}
+.request-integrity-card h4{margin:14px 0 6px;font-size:14px}
+.request-integrity-card p{margin:6px 0;line-height:1.5}
+.request-integrity-note{font-size:13px;color:var(--muted)}
+.request-original{background:#f3f7fc;border-radius:9px;padding:12px;margin-top:10px}
+.request-alternative{border:1px solid #cbdcf1;border-radius:9px;padding:12px;margin-top:12px}
+.request-difference{font-size:13px;color:var(--muted)}
+.request-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.request-actions button{flex:1;min-width:120px}
+.request-integrity-card .accepted{color:#11613a;font-weight:700}
+.request-integrity-card .rejected{color:#b42318;font-weight:700}
+
 .quotation-card h3{
   margin:0 0 5px;
   font-size:17px;
@@ -387,6 +407,14 @@ footer{
 
  <section id="quotationsContainer" aria-live="polite">
   <div class="notice">Loading your quotations...</div>
+ </section>
+
+ <section class="intro">
+  <h2>Your Original Customer Requests</h2>
+  <p>Your submitted specifications remain the reference. Any alternative is shown separately for your decision.</p>
+ </section>
+ <section id="customerRequestsContainer" aria-live="polite">
+  <div class="notice">Loading your requests...</div>
  </section>
 </main>
 
@@ -1278,10 +1306,8 @@ async function loadQuotations(keepMessage = false) {
     if (result.quotations.length === 0) {
       addText(container, "div",
         "You do not have any quotations available yet.", "notice");
-      return;
-    }
-
-    for (const q of result.quotations) {
+    } else {
+      for (const q of result.quotations) {
       /*
        * Support both field names seen in the quotation response.
        * The server's payment verification remains authoritative.
@@ -1293,7 +1319,10 @@ async function loadQuotations(keepMessage = false) {
       container.appendChild(
         unlocked ? renderUnlockedQuotation(q) : renderLockedQuotation(q)
       );
+      }
     }
+
+    await loadOriginalRequests();
   } catch (error) {
     console.error("Loading quotations failed:", error);
     container.replaceChildren();
@@ -1307,6 +1336,251 @@ async function loadQuotations(keepMessage = false) {
     );
   } finally {
     refreshButton.disabled = false;
+  }
+}
+
+/* Customer request integrity and alternative proposals */
+
+const requestsContainer = document.getElementById("customerRequestsContainer");
+
+function requestField(label, value) {
+  const p = document.createElement("p");
+  const strong = document.createElement("strong");
+  strong.textContent = label + ": ";
+  p.appendChild(strong);
+  p.appendChild(document.createTextNode(
+    value === null || value === undefined || value === "" ? "Not specified" : String(value)
+  ));
+  return p;
+}
+
+function appendOriginalRequest(card, payload, captureType) {
+  const original = document.createElement("div");
+  original.className = "request-original";
+  addText(original, "h4", "Your Original Request");
+  if (captureType === "rollout_baseline_unverified") {
+    addText(original, "p",
+      "Historical baseline: FrostTech has preserved the current record, but cannot independently certify that it is unchanged from the exact time it was first submitted.",
+      "request-integrity-note");
+  } else {
+    addText(original, "p",
+      "Original specifications captured when this request was submitted.",
+      "request-integrity-note");
+  }
+
+  const labels = {
+    title: "Requested item",
+    description: "Specifications and requirements",
+    quantity: "Quantity",
+    preferred_brand: "Preferred brand",
+    product_id: "Catalogue product reference",
+    budget: "Budget",
+    delivery_address: "Delivery address",
+    installation_service: "Installation service",
+    installation_kit_quantity: "Installation kit quantity",
+    outdoor_bracket_quantity: "Outdoor bracket quantity"
+  };
+
+  Object.entries(labels).forEach(([key, label]) => {
+    if (Object.prototype.hasOwnProperty.call(payload || {}, key)) {
+      original.appendChild(requestField(label, payload[key]));
+    }
+  });
+
+  card.appendChild(original);
+}
+
+function appendProposal(card, proposal, decision) {
+  const panel = document.createElement("div");
+  panel.className = "request-alternative";
+  addText(panel, "h4", "Alternative Proposal — " +
+    (proposal.proposer_type === "supplier" ? "Supplier" : "FrostTech"));
+  panel.appendChild(requestField("Version", proposal.version_number));
+  panel.appendChild(requestField("Reason for alternative", proposal.reason));
+
+  const payload = proposal.proposed_payload || {};
+  const labels = {
+    title: "Proposed item",
+    description: "Proposed specifications",
+    quantity: "Proposed quantity",
+    preferred_brand: "Proposed brand",
+    installation_service: "Installation service",
+    installation_kit_quantity: "Installation kit quantity",
+    outdoor_bracket_quantity: "Outdoor bracket quantity"
+  };
+  Object.entries(labels).forEach(([key, label]) => {
+    if (Object.prototype.hasOwnProperty.call(payload, key)) {
+      panel.appendChild(requestField(label, payload[key]));
+    }
+  });
+
+  const differences = proposal.differences || {};
+  const differenceKeys = Object.keys(differences);
+  addText(panel, "h4", "What differs from your original request");
+  if (!differenceKeys.length) {
+    addText(panel, "p", "No specification differences were recorded in the submitted proposal.", "request-difference");
+  } else {
+    differenceKeys.forEach(key => {
+      const entry = differences[key] || {};
+      const p = document.createElement("p");
+      p.className = "request-difference";
+      p.textContent = key.replaceAll("_", " ") + ": " +
+        String(entry.original ?? "Not specified") + " → " +
+        String(entry.proposed ?? "Not specified");
+      panel.appendChild(p);
+    });
+  }
+
+  const terms = proposal.commercial_terms || {};
+  addText(panel, "h4", "Price and commercial terms");
+  const moneyKeys = [
+    ["unit_price", "Unit price"],
+    ["additional_charges", "Additional charges"],
+    ["discount", "Discount"],
+    ["delivery_fee", "Delivery fee"],
+    ["customer_total", "Total customer price"]
+  ];
+  moneyKeys.forEach(([key, label]) => {
+    if (terms[key] !== undefined && terms[key] !== null) {
+      panel.appendChild(requestField(label, money(terms[key])));
+    }
+  });
+  if (terms.availability) panel.appendChild(requestField("Availability", terms.availability));
+  if (terms.lead_time) panel.appendChild(requestField("Lead time", terms.lead_time));
+  if (terms.warranty) panel.appendChild(requestField("Warranty", terms.warranty));
+  if (terms.notes) panel.appendChild(requestField("Additional notes", terms.notes));
+
+  if (decision) {
+    const status = document.createElement("p");
+    status.className = decision.decision === "accepted" ? "accepted" : "rejected";
+    status.textContent = "Your decision: " + decision.decision.toUpperCase() +
+      " — " + displayDate(decision.decided_at);
+    panel.appendChild(status);
+  } else {
+    addText(panel, "p",
+      "This proposal does not replace your original request. Your choice is required before FrostTech treats it as accepted.",
+      "request-integrity-note");
+    const actions = document.createElement("div");
+    actions.className = "request-actions";
+    const accept = addText(actions, "button", "Accept This Alternative", "primary");
+    accept.type = "button";
+    const reject = addText(actions, "button", "Reject Alternative", "secondary");
+    reject.type = "button";
+
+    accept.addEventListener("click", () => decideAlternative(proposal.id, "accepted", accept, reject));
+    reject.addEventListener("click", () => decideAlternative(proposal.id, "rejected", reject, accept));
+    panel.appendChild(actions);
+  }
+
+  card.appendChild(panel);
+}
+
+async function decideAlternative(proposalId, decision, button, otherButton) {
+  if (decisionInProgress) return;
+  const confirmed = decision === "accepted"
+    ? await frosttechConfirm()
+    : window.confirm("Are you sure you want to reject this alternative proposal?");
+  if (!confirmed) return;
+
+  decisionInProgress = true;
+  button.disabled = true;
+  if (otherButton) otherButton.disabled = true;
+
+  try {
+    const { data, error } = await db.rpc("frosttech_decide_alternative_proposal_v1", {
+      p_proposal_id: proposalId,
+      p_decision: decision,
+      p_decision_reason: null
+    });
+    if (error) throw error;
+    if (!data) throw new Error("FrostTech could not confirm the recorded decision.");
+    showMessage(
+      decision === "accepted"
+        ? "Your acceptance has been recorded. Your original request remains unchanged."
+        : "Your rejection has been recorded. Your original request remains unchanged.",
+      "success"
+    );
+    await loadOriginalRequests();
+  } catch (error) {
+    console.error("Alternative decision failed:", error);
+    showMessage(error.message || "Your decision could not be recorded.", "error");
+    button.disabled = false;
+    if (otherButton) otherButton.disabled = false;
+  } finally {
+    decisionInProgress = false;
+  }
+}
+
+async function loadOriginalRequests() {
+  requestsContainer.replaceChildren();
+  addText(requestsContainer, "div", "Loading your original requests...", "notice");
+
+  try {
+    const { data: requests, error } = await db
+      .from("quote_requests")
+      .select("id,request_number,title,status,created_at")
+      .eq("customer_id", currentSession.user.id)
+      .order("created_at", { ascending: false });
+    if (error) throw error;
+
+    requestsContainer.replaceChildren();
+    if (!requests || !requests.length) {
+      addText(requestsContainer, "div",
+        "You have not submitted any customer requests yet.", "notice");
+      return;
+    }
+
+    for (const request of requests) {
+      const card = document.createElement("article");
+      card.className = "request-integrity-card";
+      addText(card, "h3", request.title || "Customer request");
+      card.appendChild(requestField("Request reference", request.request_number || request.id));
+      card.appendChild(requestField("Current processing status", request.status));
+      card.appendChild(requestField("Submitted", displayDate(request.created_at)));
+
+      const { data: snapshot, error: snapshotError } = await db
+        .from("quote_request_original_snapshots")
+        .select("original_payload,capture_type")
+        .eq("request_id", request.id)
+        .maybeSingle();
+      if (snapshotError) throw snapshotError;
+
+      if (snapshot) {
+        appendOriginalRequest(card, snapshot.original_payload, snapshot.capture_type);
+      } else {
+        addText(card, "p",
+          "The original request snapshot is not available. Please contact FrostTech before considering an alternative.",
+          "request-integrity-note");
+      }
+
+      const { data: proposals, error: proposalError } = await db
+        .from("alternative_proposals")
+        .select("id,proposer_type,version_number,reason,proposed_payload,commercial_terms,differences,submitted_at")
+        .eq("request_id", request.id)
+        .order("submitted_at", { ascending: false });
+      if (proposalError) throw proposalError;
+
+      if (!proposals || !proposals.length) {
+        addText(card, "p", "No alternative proposals have been submitted for this request.", "request-integrity-note");
+      } else {
+        for (const proposal of proposals) {
+          const { data: decisions, error: decisionError } = await db
+            .from("alternative_proposal_decisions")
+            .select("decision,decision_reason,decided_at")
+            .eq("proposal_id", proposal.id)
+            .limit(1);
+          if (decisionError) throw decisionError;
+          appendProposal(card, proposal, decisions?.[0] || null);
+        }
+      }
+
+      requestsContainer.appendChild(card);
+    }
+  } catch (error) {
+    console.error("Loading customer requests failed:", error);
+    requestsContainer.replaceChildren();
+    addText(requestsContainer, "div",
+      error.message || "Unable to load your original requests and alternatives.", "notice");
   }
 }
 
