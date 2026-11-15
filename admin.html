@@ -56,6 +56,37 @@ th{background:#edf3fa}
 .action-row{display:flex;flex-wrap:wrap;gap:6px}
 .action-row button{width:auto;flex:1 1 140px}
 .requirements{background:#fff8e7;border-left:4px solid #e6a323;padding:12px;margin:12px 0;overflow-wrap:anywhere}
+.direct-other-items{
+    margin:16px 0;
+    padding:14px;
+    border:1px solid #dce4ee;
+    border-radius:10px;
+    background:#f8fbff;
+}
+.direct-other-items h3{margin:0 0 6px}
+.direct-other-item-row{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:8px;
+    padding:12px;
+    margin:10px 0;
+    border:1px solid #dce4ee;
+    border-radius:8px;
+    background:#fff;
+}
+.direct-other-item-row input,.direct-other-item-row select{
+    width:100%;
+    min-width:0;
+}
+.direct-other-item-row .direct-other-remove{
+    grid-column:1/-1;
+    justify-self:start;
+}
+@media(max-width:560px){
+    .direct-other-item-row{grid-template-columns:1fr}
+    .direct-other-item-row .direct-other-remove{grid-column:auto}
+}
+
 .quote-breakdown{background:#edf5ff;padding:14px;border-radius:8px;margin:12px 0}
 .quote-line{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid #dce3eb}
 .quote-line span:last-child{font-weight:bold;text-align:right}
@@ -1447,6 +1478,13 @@ footer {
 
         <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
         <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
+    </div>
+
+    <div class="direct-other-items">
+        <h3>Other Requested Items</h3>
+        <p class="muted">Add any other products, accessories or services that are part of the customer's original request. Do not add unrequested alternatives here.</p>
+        <div id="directOtherItemsContainer"></div>
+        <button id="addDirectOtherItemBtn" type="button" class="neutral">Add Another Requested Item</button>
     </div>
 
     <label for="directDiscount">Discount — Set by Administrator (₦)</label>
@@ -3242,6 +3280,8 @@ function resetDirectQuotationForm() {
     $("directMarkup").disabled = false;
     setDirectQuotationDraftPriceMode(false);
 
+    clearDirectOtherItems();
+
     $("directQuoteId").value = "";
     $("directRequestId").value = "";
 
@@ -3343,6 +3383,93 @@ async function openDirectQuotationForRequest(requestId) {
    DIRECT QUOTATION CALCULATIONS
    ========================================================= */
 
+function readDirectOtherItemsFromForm() {
+    const container = $("directOtherItemsContainer");
+    if (!container) return [];
+
+    return Array.from(container.querySelectorAll(".direct-other-item-row")).map(row => ({
+        item_type: row.querySelector('[data-field="type"]').value,
+        description: row.querySelector('[data-field="description"]').value.trim(),
+        unit: row.querySelector('[data-field="unit"]').value.trim(),
+        quantity: Number(row.querySelector('[data-field="quantity"]').value || 0),
+        unit_cost: Number(row.querySelector('[data-field="unit_cost"]').value || 0)
+    }));
+}
+
+function clearDirectOtherItems() {
+    const container = $("directOtherItemsContainer");
+    if (container) container.replaceChildren();
+}
+
+function addDirectOtherItemRow(values = {}) {
+    const container = $("directOtherItemsContainer");
+    if (!container) return;
+
+    const row = document.createElement("div");
+    row.className = "direct-other-item-row";
+
+    const type = document.createElement("select");
+    type.dataset.field = "type";
+    [
+        ["product","Additional product"],
+        ["service","Service"],
+        ["accessory","Accessory"],
+        ["installation","Installation"],
+        ["other","Other requested item"]
+    ].forEach(([value,label]) => {
+        const option = document.createElement("option");
+        option.value = value;
+        option.textContent = label;
+        type.appendChild(option);
+    });
+    type.value = values.item_type || "product";
+
+    const description = document.createElement("input");
+    description.type = "text";
+    description.dataset.field = "description";
+    description.placeholder = "Item description / specification";
+    description.value = values.description || "";
+
+    const unit = document.createElement("input");
+    unit.type = "text";
+    unit.dataset.field = "unit";
+    unit.placeholder = "Unit (e.g. piece, metre, roll, service)";
+    unit.value = values.unit || "unit";
+
+    const quantity = document.createElement("input");
+    quantity.type = "number";
+    quantity.min = "0.001";
+    quantity.step = "0.001";
+    quantity.dataset.field = "quantity";
+    quantity.placeholder = "Quantity";
+    quantity.value = values.quantity ?? 1;
+
+    const unitCost = document.createElement("input");
+    unitCost.type = "number";
+    unitCost.min = "0";
+    unitCost.step = "0.01";
+    unitCost.dataset.field = "unit_cost";
+    unitCost.placeholder = "Unit cost (₦)";
+    unitCost.value = values.unit_cost ?? 0;
+
+    const remove = document.createElement("button");
+    remove.type = "button";
+    remove.className = "neutral direct-other-remove";
+    remove.textContent = "Remove Item";
+    remove.addEventListener("click", () => {
+        row.remove();
+        updateDirectQuotationPreview();
+    });
+
+    row.append(type,description,unit,quantity,unitCost,remove);
+    container.appendChild(row);
+    updateDirectQuotationPreview();
+}
+
+if ($("addDirectOtherItemBtn")) {
+    $("addDirectOtherItemBtn").addEventListener("click", () => addDirectOtherItemRow());
+}
+
 function getDirectQuotationValues() {
     const quantity = Number($("directQuantity").value || 0);
     const unitCost = Number($("directUnitCost").value || 0);
@@ -3396,6 +3523,7 @@ function getDirectQuotationValues() {
         accessoryUnit,
         accessoryQuantity,
         accessoryUnitCost,
+        otherItems: readDirectOtherItemsFromForm(),
         discount
     };
 }
@@ -3429,6 +3557,11 @@ function calculateDirectQuotation() {
     const accessoriesSellingTotal =
         accessoriesCost * (1 + v.markup / 100);
 
+    const otherItemsSellingTotal = v.otherItems.reduce(
+        (sum, item) => sum + item.quantity * item.unit_cost * (1 + v.markup / 100),
+        0
+    );
+
     /*
      * Keep the product subtotal separate from additional items.
      * This matches the quotation breakdown, database fields, and
@@ -3439,7 +3572,8 @@ function calculateDirectQuotation() {
     const additionalCharges =
         bracketsSellingTotal +
         installationSellingTotal +
-        accessoriesSellingTotal;
+        accessoriesSellingTotal +
+        otherItemsSellingTotal;
 
     const total =
         Math.max(0, subtotal + additionalCharges - v.discount) +
@@ -3456,6 +3590,7 @@ function calculateDirectQuotation() {
         installationSellingTotal,
         accessoriesCost,
         accessoriesSellingTotal,
+        otherItemsSellingTotal,
         subtotal,
         additionalCharges,
         total
@@ -3477,7 +3612,8 @@ function updateDirectQuotationPreview() {
         v.installationPerAc,
         v.accessoryQuantity,
         v.accessoryUnitCost,
-        v.discount
+        v.discount,
+        ...v.otherItems.flatMap(item => [item.quantity, item.unit_cost])
     ];
 
     if (values.some((value) => !Number.isFinite(value))) {
@@ -3520,6 +3656,16 @@ function updateDirectQuotationPreview() {
     if ($("displayAccessories")) {
         $("displayAccessories").textContent =
             money(result.accessoriesSellingTotal);
+    }
+
+    if ($("displayOtherItems")) {
+        $("displayOtherItems").textContent = money(result.otherItemsSellingTotal);
+    }
+    if ($("displayOtherItemsRow")) {
+        $("displayOtherItemsRow").classList.toggle(
+            "hidden",
+            result.otherItems.length === 0
+        );
     }
 
     if ($("displayDiscount")) {
@@ -3601,6 +3747,19 @@ function getDirectQuotationRecord() {
         throw new Error("Describe the accessory being quoted.");
     }
 
+    for (const [index,item] of result.otherItems.entries()) {
+        if (!item.description || !item.unit) {
+            throw new Error("Complete the description and unit for additional item " + (index + 1) + ".");
+        }
+        if (!Number.isFinite(item.quantity) || item.quantity <= 0 ||
+            !Number.isFinite(item.unit_cost) || item.unit_cost < 0) {
+            throw new Error("Enter a valid quantity and non-negative unit cost for additional item " + (index + 1) + ".");
+        }
+        if (!["product","service","accessory","installation","other"].includes(item.item_type)) {
+            throw new Error("Choose a valid type for additional item " + (index + 1) + ".");
+        }
+    }
+
     if (
         result.discount >
         result.subtotal
@@ -3635,7 +3794,13 @@ function getDirectQuotationRecord() {
                 quantity: result.accessoryQuantity,
                 customer_unit_price: result.accessoryUnitCost * markupFactor
             }] : [],
-            other_items: []
+            other_items: result.otherItems.map(item => ({
+                item_type: item.item_type,
+                description: item.description,
+                unit: item.unit,
+                quantity: item.quantity,
+                customer_unit_price: item.unit_cost * markupFactor
+            }))
         }
     };
 
@@ -3677,6 +3842,7 @@ function getDirectQuotationPricingSnapshot() {
             accessory_unit: result.accessoryUnit,
             accessory_quantity: result.accessoryQuantity,
             accessory_unit_cost: result.accessoryUnitCost,
+            other_items: result.otherItems,
             discount: result.discount
         },
         calculated: {
@@ -3748,6 +3914,21 @@ function buildDirectQuotationItems() {
             unit: result.accessoryUnit || "unit",
             quantity: result.accessoryQuantity,
             unit_price: Number((result.accessoryUnitCost * markupFactor).toFixed(2)),
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    for (const item of result.otherItems) {
+        items.push({
+            item_type: item.item_type,
+            product_id: null,
+            description: item.description,
+            specifications: {},
+            unit: item.unit,
+            quantity: item.quantity,
+            unit_price: Number((item.unit_cost * markupFactor).toFixed(2)),
             sort_order: sortOrder++,
             source_proposal_id: null,
             replaces_item_id: null
@@ -4271,6 +4452,10 @@ async function editDirectQuotation(id, action = "edit") {
             savedInputs.accessory_quantity;
         $("directAccessoryUnitCost").value =
             savedInputs.accessory_unit_cost;
+
+        clearDirectOtherItems();
+        (Array.isArray(savedInputs.other_items) ? savedInputs.other_items : [])
+            .forEach(item => addDirectOtherItemRow(item));
 
         $("directValidity").value = quote.validity_date || "";
 
