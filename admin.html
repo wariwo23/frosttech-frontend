@@ -3688,6 +3688,75 @@ function getDirectQuotationPricingSnapshot() {
     };
 }
 
+function buildDirectQuotationItems() {
+    const result = calculateDirectQuotation();
+    const description = $("directProductDescription").value.trim();
+    const markupFactor = 1 + result.markup / 100;
+    const items = [];
+
+    items.push({
+        item_type: "product",
+        product_id: currentDirectQuoteRequest?.product_id || null,
+        description,
+        specifications: {},
+        unit: "unit",
+        quantity: result.quantity,
+        unit_price: Number((result.customerUnitPrice).toFixed(2)),
+        sort_order: 0,
+        source_proposal_id: null,
+        replaces_item_id: null
+    });
+
+    let sortOrder = 1;
+
+    if (result.bracketQuantity > 0 && result.bracketUnitCost > 0) {
+        items.push({
+            item_type: "accessory",
+            product_id: null,
+            description: "Outdoor bracket set",
+            specifications: {},
+            unit: "set",
+            quantity: result.bracketQuantity,
+            unit_price: Number((result.bracketUnitCost * markupFactor).toFixed(2)),
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    if (result.installationPerAc > 0) {
+        items.push({
+            item_type: "installation",
+            product_id: null,
+            description: "Installation service",
+            specifications: {},
+            unit: "AC",
+            quantity: result.quantity,
+            unit_price: Number((result.installationPerAc * markupFactor).toFixed(2)),
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    if (result.accessoryQuantity > 0 && result.accessoryUnitCost > 0) {
+        items.push({
+            item_type: "accessory",
+            product_id: null,
+            description: result.accessoryDescription,
+            specifications: {},
+            unit: result.accessoryUnit || "unit",
+            quantity: result.accessoryQuantity,
+            unit_price: Number((result.accessoryUnitCost * markupFactor).toFixed(2)),
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    return items;
+}
+
 async function saveDirectDraftRecord() {
     await requireAdmin();
 
@@ -3724,6 +3793,26 @@ async function saveDirectDraftRecord() {
         if (error) throw error;
         savedId = data.id;
         $("directQuoteId").value = savedId;
+    }
+
+    const itemPayload = buildDirectQuotationItems();
+    const { data: itemSaveResult, error: itemSaveError } = await db.rpc(
+        "admin_replace_direct_quotation_items_v2",
+        {
+            p_quotation_id: savedId,
+            p_items: itemPayload
+        }
+    );
+
+    if (itemSaveError) {
+        throw new Error(
+            "The quotation draft was saved, but its item breakdown was not saved. Please retry before submitting. " +
+            itemSaveError.message
+        );
+    }
+
+    if (!itemSaveResult?.success) {
+        throw new Error("FrostTech could not confirm the quotation item breakdown.");
     }
 
     const { data: authData, error: authError } = await db.auth.getUser();
