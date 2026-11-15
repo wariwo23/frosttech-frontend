@@ -3953,7 +3953,7 @@ function buildDirectQuotationItems() {
 }
 
 async function applyAcceptedAlternativeToDirectQuotation(
-    quotationId, requestId, itemPayload
+    quotationId, requestId, itemPayload, quotationValues
 ) {
     const { data: proposals, error: proposalError } = await db.rpc(
         "frosttech_get_request_alternative_review_v1",
@@ -3975,22 +3975,35 @@ async function applyAcceptedAlternativeToDirectQuotation(
     const proposal = accepted[0];
     const payload = proposal.proposed_payload || {};
     const commercial = proposal.commercial_terms || {};
-    const quantity = Number(commercial.quantity ?? payload.quantity ?? 1);
-    const unitPrice = Number(
-        commercial.unit_price ??
-        commercial.customer_unit_price ??
-        commercial.selling_price ??
-        0
+    const expectedQuantity = Number(commercial.quantity ?? payload.quantity ?? 0);
+    const expectedUnitPrice = Number(commercial.unit_price ?? 0);
+    const primaryIndex = itemPayload.findIndex(
+        item => ["product", "primary"].includes(String(item.item_type || "").toLowerCase())
     );
-    const description = String(
-        payload.title || payload.product_description ||
-        payload.description || "Customer-approved alternative"
-    ).trim();
 
-    if (!description || !Number.isFinite(quantity) || quantity <= 0 ||
-        !Number.isFinite(unitPrice) || unitPrice <= 0) {
+    if (primaryIndex < 0) {
+        throw new Error("The quotation needs a primary product or service item.");
+    }
+
+    const primary = itemPayload[primaryIndex];
+    const proposedTitle = String(payload.title || "").trim();
+    if (proposedTitle &&
+        proposedTitle.toLowerCase() !== String(primary.description || "").trim().toLowerCase()) {
         throw new Error(
-            "A customer-approved alternative needs a verified description, quantity and customer unit price before submission."
+            "A customer-approved alternative is recorded. Update the quotation's product description to the approved alternative title before saving."
+        );
+    }
+
+    if (expectedQuantity > 0 && Number(primary.quantity) !== expectedQuantity) {
+        throw new Error(
+            "The quotation quantity must match the customer-approved alternative before it can be saved."
+        );
+    }
+
+    if (expectedUnitPrice > 0 &&
+        Math.round(Number(primary.unit_price) * 100) !== Math.round(expectedUnitPrice * 100)) {
+        throw new Error(
+            "The quotation's customer unit price must match the accepted alternative's recorded price. Review the supplier cost and markup; FrostTech will not invent or alter the supplier cost."
         );
     }
 
@@ -4005,33 +4018,18 @@ async function applyAcceptedAlternativeToDirectQuotation(
         item => ["product", "primary"].includes(String(item.item_type || "").toLowerCase())
     ) || (sourceItems || [])[0];
 
-    const primaryIndex = itemPayload.findIndex(
-        item => ["product", "primary"].includes(String(item.item_type || "").toLowerCase())
-    );
-    const replacement = {
-        item_type: "product",
-        product_id: payload.product_id || null,
-        description,
+    itemPayload[primaryIndex] = {
+        ...primary,
+        source_proposal_id: proposal.id,
+        replaces_item_id: replacedItem?.id || null,
         specifications: {
+            ...(primary.specifications || {}),
             proposal_reason: proposal.reason || null,
             proposal_differences: proposal.differences || null,
             preferred_brand: payload.preferred_brand || null,
             original_request_preserved: true
-        },
-        unit: String(payload.unit || commercial.unit || "unit"),
-        quantity,
-        unit_price: Number(unitPrice.toFixed(2)),
-        sort_order: primaryIndex >= 0 ? itemPayload[primaryIndex].sort_order : 0,
-        source_proposal_id: proposal.id,
-        replaces_item_id: replacedItem?.id || null
+        }
     };
-
-    if (primaryIndex >= 0) {
-        itemPayload[primaryIndex] = replacement;
-    } else {
-        itemPayload.unshift(replacement);
-        itemPayload.forEach((item, index) => item.sort_order = index);
-    }
 
     return itemPayload;
 }
@@ -4077,7 +4075,8 @@ async function saveDirectDraftRecord() {
     itemPayload = await applyAcceptedAlternativeToDirectQuotation(
         savedId,
         values.request_id,
-        itemPayload
+        itemPayload,
+        values
     );
     const { data: itemSaveResult, error: itemSaveError } = await db.rpc(
         "admin_replace_direct_quotation_items_v2",
