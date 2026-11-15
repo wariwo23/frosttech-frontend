@@ -5021,6 +5021,23 @@ function ftShowRecord(type, id) {
         payment: "Payment Record"
     };
     const fields = ftPrintSafeFields(type, record);
+
+    /*
+     * Requested-item JSON is retained in the database for quotation
+     * editing, but it is internal metadata, not an administrator note.
+     * Keep only the readable note in the record view and its print snapshot.
+     */
+    if (type === "direct_quote") {
+        const notesField = fields.find(([key]) => key === "notes");
+        if (notesField) {
+            const marker = "FROSTTECH_REQUESTED_ITEMS_V1:";
+            const markerPosition = notesField[1].indexOf(marker);
+            if (markerPosition >= 0) {
+                notesField[1] = notesField[1].slice(0, markerPosition).trim();
+            }
+        }
+    }
+
     const title = titleMap[type] || "Record Details";
     const workspaceMap = {
         advertiser: "advertiserVerification", product: "productManagement",
