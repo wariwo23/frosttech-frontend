@@ -928,7 +928,8 @@ function renderUnlockedQuotation(q) {
     for (const item of lineItems) {
       const heading = (item.description || "Quotation item") +
         " — " + (item.quantity ?? 1) + " " + (item.unit || "unit");
-      addDetail(details, heading, money(item.line_total));
+      addDetail(details, heading + " — unit price", money(item.unit_price));
+      addDetail(details, "Line total", money(item.line_total));
       if (item.specifications && Object.keys(item.specifications).length) {
         addDetail(details, "Specifications", JSON.stringify(item.specifications));
       }
