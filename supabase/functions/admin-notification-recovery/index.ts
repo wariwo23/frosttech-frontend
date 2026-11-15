@@ -90,6 +90,7 @@ Deno.serve(async (req: Request) => {
     let finalStatus: "sent" | "failed" = "failed";
     let errorText: string | null = null;
     let providerMessageId: string | null = null;
+    let providerHttpStatus: number | null = null;
 
     try {
       if (!RESEND_API_KEY || !EMAIL_FROM) throw new Error("Email provider is not configured");
@@ -144,15 +145,16 @@ Deno.serve(async (req: Request) => {
         },
         body: JSON.stringify({ from: EMAIL_FROM, to: [recovery.recipient], subject, html }),
       });
+      providerHttpStatus = response.status;
       result = await response.json().catch(() => ({}));
       if (!response.ok) {
-        errorText = JSON.stringify(result).slice(0, 2000);
+        errorText = JSON.stringify({ http_status: providerHttpStatus, provider_response: result }).slice(0, 2000);
       } else {
         finalStatus = "sent";
         providerMessageId = typeof result.id === "string" ? result.id : null;
       }
     } catch (error) {
-      errorText = String(error).slice(0, 2000);
+      errorText = JSON.stringify({ outcome: "unknown", error: String(error).slice(0, 1800) });
     }
 
     const { error: finishError } = await userClient.rpc("admin_finish_notification_recovery", {
