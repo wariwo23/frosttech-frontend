@@ -3563,8 +3563,13 @@ function calculateDirectQuotation() {
         v.accessoryQuantity * accessoryCustomerUnitPrice;
 
     const otherItemsSellingTotal = v.otherItems.reduce(
-        (sum, item) => sum + item.quantity *
-            Number((item.unit_cost * markupFactor).toFixed(2)),
+        (sum, item) => {
+            const customerUnitPrice =
+                Number((item.unit_cost * markupFactor).toFixed(2));
+            const lineTotal =
+                Number((item.quantity * customerUnitPrice).toFixed(2));
+            return sum + lineTotal;
+        },
         0
     );
 
