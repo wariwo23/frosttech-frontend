@@ -4017,16 +4017,20 @@ async function applyAcceptedAlternativeToDirectQuotation(
         );
     }
 
-    const { data: sourceItems, error: sourceError } = await db
-        .from("admin_quotation_items")
-        .select("id,item_type")
-        .eq("quotation_id", proposal.admin_quotation_id)
-        .order("sort_order", { ascending: true });
-    if (sourceError) throw sourceError;
+    let sourceItems = [];
+    if (proposal.admin_quotation_id) {
+        const { data, error: sourceError } = await db
+            .from("admin_quotation_items")
+            .select("id,item_type")
+            .eq("quotation_id", proposal.admin_quotation_id)
+            .order("sort_order", { ascending: true });
+        if (sourceError) throw sourceError;
+        sourceItems = data || [];
+    }
 
-    const replacedItem = (sourceItems || []).find(
+    const replacedItem = sourceItems.find(
         item => ["product", "primary"].includes(String(item.item_type || "").toLowerCase())
-    ) || (sourceItems || [])[0];
+    ) || sourceItems[0];
 
     itemPayload[primaryIndex] = {
         ...primary,
