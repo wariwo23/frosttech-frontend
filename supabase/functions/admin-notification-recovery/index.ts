@@ -5,6 +5,7 @@ const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "";
+const EMAIL_RECOVERY_DOMAIN_READY = Deno.env.get("FROSTTECH_EMAIL_RECOVERY_DOMAIN_READY") === "true";
 const ALLOWED_ORIGIN = "https://wariwo23.github.io";
 
 const corsHeaders = {
@@ -71,6 +72,9 @@ Deno.serve(async (req: Request) => {
     }
 
     if (action !== "recover") return respond({ error: "Unsupported action" }, 400, origin);
+    if (!EMAIL_RECOVERY_DOMAIN_READY) {
+      return respond({ error: "Notification recovery is disabled until FrostTech explicitly releases the email sending-domain hold." }, 423, origin);
+    }
     if (typeof body.event_id !== "string" || typeof body.reason !== "string") {
       return respond({ error: "Event and recovery reason are required" }, 400, origin);
     }
