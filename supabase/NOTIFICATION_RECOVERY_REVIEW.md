@@ -5,6 +5,7 @@ This branch contains an implementation draft only. It has not been deployed and 
 ## Files
 - `supabase/migrations/20261115000100_frosttech_notification_recovery.sql`
 - `supabase/functions/admin-notification-recovery/index.ts`
+- `supabase/functions/send-frosttech-notification/index.ts` — proposed compatible sender update to record provider HTTP status and distinguish unknown network outcomes.
 - `admin.html` — adds the Notification Centre workspace and controlled recovery dialog.
 
 ## Security and behavior
