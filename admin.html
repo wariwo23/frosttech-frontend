@@ -3709,7 +3709,7 @@ function buildDirectQuotationItems() {
 
     let sortOrder = 1;
 
-    if (result.bracketQuantity > 0 && result.bracketUnitCost > 0) {
+    if (result.bracketQuantity > 0) {
         items.push({
             item_type: "accessory",
             product_id: null,
@@ -3724,7 +3724,7 @@ function buildDirectQuotationItems() {
         });
     }
 
-    if (result.installationPerAc > 0) {
+    if (result.installationPerAc > 0 || currentDirectQuoteRequest?.installation_service === true) {
         items.push({
             item_type: "installation",
             product_id: null,
@@ -3739,7 +3739,7 @@ function buildDirectQuotationItems() {
         });
     }
 
-    if (result.accessoryQuantity > 0 && result.accessoryUnitCost > 0) {
+    if (result.accessoryQuantity > 0) {
         items.push({
             item_type: "accessory",
             product_id: null,
