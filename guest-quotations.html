@@ -410,6 +410,124 @@ footer{
 .guest-order-panel a{display:block;margin:10px 0;color:var(--blue);font-weight:700}
 @media(max-width:480px){.guest-access{padding:14px}.guest-access .guest-actions button{width:100%;flex-basis:100%}.guest-decision-panel .guest-actions button{width:100%;flex-basis:100%}}
 
+/* FrostTech customer portal visual refinement — presentation only. */
+:root{
+  --blue:#0759b8;
+  --dark:#07366b;
+  --light:#edf5ff;
+  --text:#172b45;
+  --muted:#61738a;
+  --border:#d9e3ef;
+  --bg:#f3f6fb;
+}
+body{
+  background:linear-gradient(180deg,#eaf2fb 0,#f5f8fc 260px,#f5f8fc 100%);
+  color:var(--text);
+}
+header{
+  padding:28px 18px;
+  background:linear-gradient(120deg,#062d59 0%,#0759a8 58%,#087f8c 100%);
+  box-shadow:0 5px 18px rgba(6,45,89,.16);
+}
+header h1{font-size:25px;letter-spacing:.1px}
+header p{font-size:14px;color:#e4f1ff}
+main{max-width:900px;padding:28px 16px 48px}
+.intro,.quotation-card,.notice,.guest-access{
+  border:1px solid #dce6f1;
+  border-radius:16px;
+  box-shadow:0 8px 24px rgba(22,48,79,.06);
+}
+.intro{padding:22px}
+.intro h2{font-size:22px;color:#102e50}
+.intro p{line-height:1.7}
+.guest-access{
+  padding:24px;
+  margin:0 0 20px;
+  border:1px solid #c8dced;
+  border-top:4px solid #087f8c;
+  background:linear-gradient(145deg,#fff 0%,#f5fbff 100%);
+}
+.guest-access h2{
+  margin:0 0 8px;
+  color:#10365e;
+  font-size:22px;
+  line-height:1.35;
+}
+.guest-access>p{font-size:14px;line-height:1.7;color:#53677f}
+.guest-access .field{margin:16px 0}
+.guest-access .field label{display:block;margin-bottom:7px;color:#243c58;font-weight:700}
+.guest-access input,.guest-decision-panel select,.guest-decision-panel textarea{
+  min-height:48px;
+  border:1px solid #c5d2e1;
+  border-radius:9px;
+  padding:12px 13px;
+  background:#fff;
+  color:#172b45;
+  font-size:15px;
+}
+.guest-access input:focus,.guest-decision-panel select:focus,.guest-decision-panel textarea:focus{
+  outline:3px solid rgba(7,89,184,.13);
+  border-color:#0759b8;
+}
+.guest-access .guest-actions{gap:12px}
+.guest-access .guest-actions button,.guest-decision-panel .guest-actions button{
+  min-height:48px;
+  border-radius:9px;
+  padding:13px 18px;
+}
+.guest-access .primary,.guest-decision-panel .primary,.order-payment-button{
+  background:linear-gradient(110deg,#0759b8,#087f8c);
+  color:#fff;
+}
+.guest-hint{
+  display:block;
+  margin-top:16px;
+  padding:12px 14px;
+  border-radius:9px;
+  background:#eef5fc;
+  color:#53677f;
+  font-size:12px;
+  line-height:1.65;
+}
+#guestOtpArea{
+  margin-top:18px;
+  padding-top:5px;
+  border-top:1px solid #e2eaf3;
+}
+#guestQuotationResult{margin-top:20px}
+.quotation-card{
+  padding:22px;
+  margin-bottom:20px;
+}
+.quotation-card h3{font-size:20px;color:#10365e}
+.guest-fee,.fee-panel,.guest-order-panel{
+  border-radius:12px;
+  padding:18px;
+}
+.guest-alternative-card{
+  border-radius:12px!important;
+  padding:18px!important;
+  margin:18px 0!important;
+  box-shadow:0 4px 14px rgba(22,48,79,.04);
+}
+.guest-alternative-card h3{color:#10365e}
+.detail-row{padding:10px 0}
+.message{border:1px solid #d6e5f7;border-radius:10px;line-height:1.6}
+button{transition:background .15s ease,transform .15s ease}
+button:active{transform:translateY(1px)}
+footer{padding:24px 14px;color:#718198}
+@media(max-width:600px){
+  header{padding:23px 16px}
+  header h1{font-size:21px}
+  main{padding:18px 12px 36px}
+  .intro,.guest-access,.quotation-card{padding:17px}
+  .guest-access h2{font-size:20px}
+  .guest-access .guest-actions button{width:100%;flex-basis:100%}
+  .detail-row{align-items:flex-start;gap:12px}
+  .detail-row span:first-child{max-width:45%}
+  .detail-row span:last-child{max-width:55%;overflow-wrap:anywhere}
+}
+
 </style>
 </head>
 
@@ -417,7 +535,7 @@ footer{
 <header>
  <div class="header-inner">
   <h1>FrostTech HVAC &amp; Refrigeration</h1>
-  <p>Customer and Guest Quotations</p>
+  <p>Secure Customer &amp; Guest Quotation Portal</p>
  </div>
 </header>
 
