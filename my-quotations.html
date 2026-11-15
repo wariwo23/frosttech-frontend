@@ -911,12 +911,34 @@ function renderUnlockedQuotation(q) {
     addText(card, "span", "Administration fee paid", "status status-paid");
   }
 
+  const versionLabel = q.version_number
+    ? "Quotation version: " + q.version_number
+    : "Quotation version: Historical";
+  addText(card, "div", versionLabel, "reference");
+  if (q.supersedes_quotation_id) {
+    addText(card, "div", "This version revises an earlier quotation. Earlier versions remain in your quotation history.", "muted");
+  }
+
   const details = document.createElement("div");
   details.className = "details";
 
-  addDetail(details, "Product / Service", q.product_description);
-  addDetail(details, "Quantity", q.quantity);
-  addDetail(details, "Unit price", money(q.unit_price));
+  const lineItems = Array.isArray(q.items) ? q.items : [];
+  if (lineItems.length) {
+    addText(details, "h4", "Approved quotation items");
+    for (const item of lineItems) {
+      const heading = (item.description || "Quotation item") +
+        " — " + (item.quantity ?? 1) + " " + (item.unit || "unit");
+      addDetail(details, heading, money(item.line_total));
+      if (item.specifications && Object.keys(item.specifications).length) {
+        addDetail(details, "Specifications", JSON.stringify(item.specifications));
+      }
+    }
+  } else {
+    addDetail(details, "Product / Service", q.product_description);
+    addDetail(details, "Quantity", q.quantity);
+    addDetail(details, "Unit price", money(q.unit_price));
+  }
+
   addDetail(details, "Subtotal", money(q.subtotal));
   addDetail(details, "Additional charges", money(q.additional_charges));
   addDetail(details, "Discount", money(q.discount));
