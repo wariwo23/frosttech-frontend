@@ -371,6 +371,41 @@ footer {
     <div id="myQuotesList">Loading quotations...</div>
   </div>
 
+  <div class="card hidden" id="alternativeProposalCard">
+    <h2>Suggest an Alternative to This Customer Request</h2>
+    <p class="muted">
+      Your alternative will remain separate from the customer's original request.
+      FrostTech's existing 15% supplier quotation markup is included in the customer-facing price.
+    </p>
+    <form id="alternativeProposalForm">
+      <input id="alternativeSupplierQuoteId" type="hidden">
+      <input id="alternativeRequestId" type="hidden">
+
+      <label for="alternativeTitle">Alternative product or equipment *</label>
+      <input id="alternativeTitle" type="text" maxlength="200" required
+        placeholder="Enter the alternative product or equipment">
+
+      <label for="alternativeDescription">Alternative specifications *</label>
+      <textarea id="alternativeDescription" rows="4" maxlength="2000" required
+        placeholder="Describe the model, capacity, features and differences"></textarea>
+
+      <label for="alternativeBrand">Brand</label>
+      <input id="alternativeBrand" type="text" maxlength="100"
+        placeholder="Enter the alternative brand, if applicable">
+
+      <label for="alternativeReason">Why are you suggesting this alternative? *</label>
+      <textarea id="alternativeReason" rows="3" maxlength="1000" required
+        placeholder="Explain why the exact customer request cannot be supplied or why this option is suitable"></textarea>
+
+      <button id="submitAlternativeButton" type="submit">
+        Submit Alternative Proposal
+      </button>
+      <button id="cancelAlternativeButton" class="secondary" type="button">
+        Cancel
+      </button>
+    </form>
+  </div>
+
 </section>
 
 </main>
@@ -389,6 +424,7 @@ let db = null;
 let currentUser = null;
 let currentSupplier = null;
 let requests = [];
+let supplierQuotesCache = [];
 let busy = false;
 
 const $ = id => document.getElementById(id);
@@ -516,6 +552,11 @@ const { error } = await db.auth.resetPasswordForEmail(email, {
   $("logoutButton").addEventListener("click", logoutSupplier);
   $("refreshButton").addEventListener("click", loadPortalData);
   $("quotationForm").addEventListener("submit", submitQuotation);
+  $("alternativeProposalForm").addEventListener("submit", submitAlternativeProposal);
+  $("cancelAlternativeButton").addEventListener("click", () => {
+    $("alternativeProposalCard").classList.add("hidden");
+    $("alternativeProposalForm").reset();
+  });
 
   ["requestSelect", "unitPrice", "deliveryCost"].forEach(id => {
     $(id).addEventListener("input", updateTotals);
@@ -936,13 +977,15 @@ async function loadMyQuotations() {
     const { data, error } = await db
       .from("supplier_quotes")
       .select(
-        "id,request_id,quantity,supplier_unit_price," +
-        "supplier_total,delivery_cost,notes,status,created_at"
+        "id,request_id,product_id,quantity,supplier_unit_price," +
+        "supplier_total,delivery_cost,customer_total,notes,status,created_at"
       )
       .eq("supplier_id", currentSupplier.id)
       .order("created_at", { ascending: false });
 
     if (error) throw error;
+
+    supplierQuotesCache = data || [];
 
     if (!data || data.length === 0) {
       container.textContent =
@@ -997,6 +1040,13 @@ async function loadMyQuotations() {
             ${safe(quote.status || "Submitted")}
           </p>
 
+          ${quote.status === "submitted" ? `
+            <button type="button" class="secondary"
+              data-propose-alternative="${safe(quote.id)}">
+              Suggest This as an Alternative
+            </button>
+          ` : ""}
+
           <p class="muted">
             Submitted:
             ${safe(
@@ -1008,6 +1058,24 @@ async function loadMyQuotations() {
         </div>
       `;
     }).join("");
+
+    container.querySelectorAll("[data-propose-alternative]").forEach(button => {
+      button.addEventListener("click", () => {
+        const quote = data.find(item => item.id === button.dataset.proposeAlternative);
+        if (!quote) return;
+
+        $("alternativeSupplierQuoteId").value = quote.id;
+        $("alternativeRequestId").value = quote.request_id;
+        $("alternativeTitle").value = "";
+        $("alternativeDescription").value = quote.notes || "";
+        $("alternativeBrand").value = "";
+        $("alternativeReason").value = "";
+
+        $("alternativeProposalCard").classList.remove("hidden");
+        $("alternativeProposalCard").scrollIntoView({ behavior: "smooth", block: "start" });
+        $("alternativeTitle").focus();
+      });
+    });
 
   } catch (error) {
     console.error("Quotation history error:", error);
@@ -1181,6 +1249,75 @@ async function submitQuotation(event) {
 
     button.disabled = false;
     button.textContent = "Submit Quotation";
+  }
+}
+
+/* ==========================================
+   SUBMIT A SEPARATE ALTERNATIVE PROPOSAL
+   ========================================== */
+
+async function submitAlternativeProposal(event) {
+  event.preventDefault();
+
+  const button = $("submitAlternativeButton");
+  const supplierQuoteId = $("alternativeSupplierQuoteId").value;
+  const requestId = $("alternativeRequestId").value;
+  const quote = supplierQuotesCache.find(item => item.id === supplierQuoteId);
+
+  if (!supplierQuoteId || !requestId || !quote) {
+    message("Select one of your submitted quotations before proposing an alternative.", "error");
+    return;
+  }
+
+  const title = $("alternativeTitle").value.trim();
+  const description = $("alternativeDescription").value.trim();
+  const brand = $("alternativeBrand").value.trim();
+  const reason = $("alternativeReason").value.trim();
+
+  if (!title || !description || reason.length < 5) {
+    message("Complete the alternative product, specifications and reason.", "error");
+    return;
+  }
+
+  button.disabled = true;
+  button.textContent = "Submitting alternative...";
+
+  try {
+    const payload = {
+      title,
+      description,
+      quantity: Number(quote.quantity),
+      preferred_brand: brand || null
+    };
+
+    if (quote.product_id) payload.product_id = quote.product_id;
+
+    const { data, error } = await db.rpc("frosttech_submit_supplier_alternative_v1", {
+      p_request_id: requestId,
+      p_supplier_quote_id: supplierQuoteId,
+      p_reason: reason,
+      p_proposed_payload: payload
+    });
+
+    if (error) throw error;
+
+    $("alternativeProposalForm").reset();
+    $("alternativeProposalCard").classList.add("hidden");
+
+    message(
+      "Your alternative proposal has been submitted separately. Reference: " +
+      String(data).substring(0, 8) +
+      ". The customer's original request remains unchanged.",
+      "success"
+    );
+
+    await loadMyQuotations();
+  } catch (error) {
+    console.error("Alternative proposal submission failed:", error);
+    message(error.message || "The alternative proposal could not be submitted.", "error");
+  } finally {
+    button.disabled = false;
+    button.textContent = "Submit Alternative Proposal";
   }
 }
 
