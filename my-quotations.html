@@ -1475,11 +1475,52 @@ function appendProposal(card, proposal, decision) {
   card.appendChild(panel);
 }
 
+function confirmAlternativeDecision(decision) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "ft-confirm-overlay";
+
+    const box = document.createElement("div");
+    box.className = "ft-confirm-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+
+    addText(box, "h3", "FrostTech HVAC and Refrigeration Marketplace", "ft-confirm-title");
+    addText(box, "p",
+      decision === "accepted" ? "Accept this alternative?" : "Reject this alternative?",
+      "ft-confirm-question");
+    addText(box, "p",
+      "Your original customer request will remain unchanged. This decision applies only to the separate alternative proposal.",
+      "ft-confirm-details");
+
+    const actions = document.createElement("div");
+    actions.className = "ft-confirm-actions";
+    const cancel = addText(actions, "button", "Cancel", "ft-confirm-cancel");
+    cancel.type = "button";
+    const confirm = addText(actions, "button",
+      decision === "accepted" ? "Yes, Accept Alternative" : "Yes, Reject Alternative",
+      "ft-confirm-ok");
+    confirm.type = "button";
+
+    const finish = answer => {
+      overlay.remove();
+      resolve(answer);
+    };
+    cancel.addEventListener("click", () => finish(false));
+    confirm.addEventListener("click", () => finish(true));
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) finish(false);
+    });
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    cancel.focus();
+  });
+}
+
 async function decideAlternative(proposalId, decision, button, otherButton) {
   if (decisionInProgress) return;
-  const confirmed = decision === "accepted"
-    ? await frosttechConfirm()
-    : window.confirm("Are you sure you want to reject this alternative proposal?");
+  const confirmed = await confirmAlternativeDecision(decision);
   if (!confirmed) return;
 
   decisionInProgress = true;
