@@ -2729,8 +2729,151 @@ function renderCustomerRequests() {
                 data-id="${escapeHtml(request.id)}">
                 Prepare Direct Quotation
             </button>
+
+            <button type="button"
+                class="propose-frosttech-alternative"
+                data-id="${escapeHtml(request.id)}">
+                Suggest a FrostTech Alternative
+            </button>
         </article>
     `).join("");
+}
+
+async function openFrostTechAlternativeForm(requestId) {
+    const request = currentQuoteRequests.find(item => item.id === requestId);
+    if (!request) return;
+
+    const { data: quotations, error } = await db
+        .from("admin_quotations")
+        .select("id,quotation_number,product_description,quantity,unit_price,delivery_cost,additional_charges,discount,total_amount,status,customer_decision")
+        .eq("request_id", requestId)
+        .eq("status", "submitted")
+        .is("customer_decision", null)
+        .order("created_at", { ascending: false });
+
+    if (error) {
+        showMessage("requestMessage", error.message || "Unable to load submitted FrostTech quotations.", "error");
+        return;
+    }
+
+    if (!quotations || !quotations.length) {
+        showMessage(
+            "requestMessage",
+            "Prepare and submit a FrostTech quotation for this exact request first. It will then be available to attach as an alternative.",
+            "info"
+        );
+        return;
+    }
+
+    const card = document.createElement("section");
+    card.className = "admin-card";
+    card.dataset.alternativeFormFor = requestId;
+
+    const heading = document.createElement("h3");
+    heading.textContent = "Suggest a FrostTech Alternative — " +
+        (request.request_number || request.id);
+    card.appendChild(heading);
+
+    const explanation = document.createElement("p");
+    explanation.textContent =
+        "This proposal will be shown separately from the customer's original request. The linked FrostTech quotation supplies the customer-facing price.";
+    card.appendChild(explanation);
+
+    const form = document.createElement("form");
+    form.innerHTML = `
+        <label>Submitted FrostTech quotation
+          <select name="quotation_id" required>
+            <option value="">Select a submitted quotation</option>
+            ${quotations.map(q => `
+              <option value="${escapeHtml(q.id)}">
+                ${escapeHtml(q.quotation_number || q.id)} — ${escapeHtml(q.product_description || "Alternative")} — ${escapeHtml(q.quantity)} unit(s) — ${escapeHtml(q.total_amount)}
+              </option>
+            `).join("")}
+          </select>
+        </label>
+        <label>Alternative item / model
+          <input name="title" maxlength="200" required placeholder="Enter proposed product or model">
+        </label>
+        <label>Alternative specifications
+          <textarea name="description" rows="4" maxlength="2000" required placeholder="Describe the proposed capacity, specifications, features and differences"></textarea>
+        </label>
+        <label>Brand
+          <input name="brand" maxlength="100" placeholder="Proposed brand, if applicable">
+        </label>
+        <label>Reason for suggesting this alternative
+          <textarea name="reason" rows="3" minlength="5" maxlength="1000" required placeholder="Explain why the original request cannot be met or why this option is suitable"></textarea>
+        </label>
+        <div class="button-row">
+          <button type="submit">Submit Alternative Proposal</button>
+          <button type="button" class="secondary cancel-frosttech-alternative">Cancel</button>
+        </div>
+    `;
+
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const submit = form.querySelector('button[type="submit"]');
+        const quotationId = form.elements.quotation_id.value;
+        const quotation = quotations.find(q => q.id === quotationId);
+        if (!quotation) {
+            showMessage("requestMessage", "Select a valid submitted quotation.", "error");
+            return;
+        }
+
+        const title = form.elements.title.value.trim();
+        const description = form.elements.description.value.trim();
+        const brand = form.elements.brand.value.trim();
+        const reason = form.elements.reason.value.trim();
+        if (!title || !description || reason.length < 5) {
+            showMessage("requestMessage", "Complete the alternative specifications and reason.", "error");
+            return;
+        }
+
+        submit.disabled = true;
+        submit.textContent = "Submitting alternative...";
+        try {
+            const payload = {
+                title,
+                description,
+                quantity: Number(quotation.quantity),
+                preferred_brand: brand || null
+            };
+
+            const { data, error: submitError } = await db.rpc(
+                "frosttech_submit_admin_quote_alternative_v1",
+                {
+                    p_request_id: requestId,
+                    p_quotation_id: quotationId,
+                    p_reason: reason,
+                    p_proposed_payload: payload
+                }
+            );
+            if (submitError) throw submitError;
+            if (!data) throw new Error("The alternative proposal was not confirmed.");
+
+            card.remove();
+            showMessage(
+                "FrostTech's alternative proposal has been submitted separately. The customer's original request remains unchanged.",
+                "success"
+            );
+        } catch (submitError) {
+            showMessage("Alternative proposal could not be submitted: " +
+                (submitError.message || "Please try again."), "error");
+        } finally {
+            submit.disabled = false;
+            submit.textContent = "Submit Alternative Proposal";
+        }
+    });
+
+    form.querySelector(".cancel-frosttech-alternative").addEventListener("click", () => card.remove());
+    card.appendChild(form);
+
+    const existing = $("quoteRequests").querySelector(
+        '[data-alternative-form-for="' + requestId + '"]'
+    );
+    if (existing) existing.remove();
+
+    $("quoteRequests").appendChild(card);
+    card.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 if ($("loadRequestsBtn")) {
@@ -2741,6 +2884,7 @@ if ($("quoteRequests")) {
     $("quoteRequests").addEventListener("click", async (event) => {
         const reviewingButton = event.target.closest(".mark-request-reviewing");
         const quotationButton = event.target.closest(".create-direct-quotation");
+        const alternativeButton = event.target.closest(".propose-frosttech-alternative");
 
         if (reviewingButton) {
             await markRequestReviewing(reviewingButton.dataset.id);
@@ -2748,6 +2892,10 @@ if ($("quoteRequests")) {
 
         if (quotationButton) {
             await openDirectQuotationForRequest(quotationButton.dataset.id);
+        }
+
+        if (alternativeButton) {
+            await openFrostTechAlternativeForm(alternativeButton.dataset.id);
         }
     });
 }
