@@ -4043,18 +4043,14 @@ async function loadDirectQuotes() {
 
         if (!container) return;
 
-        const drafts = (data || []).filter(
-            (quote) => quote.status === "draft"
-        );
+        const allQuotes = data || [];
+        const drafts = allQuotes.filter((quote) => quote.status === "draft");
+        const historical = allQuotes.filter((quote) => quote.status !== "draft");
         currentDirectQuotes = drafts;
 
-        if (!drafts.length) {
-            container.innerHTML = "<p>No quotation drafts found.</p>";
-            showMessage(
-                "directQuoteMessage",
-                "No saved quotation drafts were found.",
-                "info"
-            );
+        if (!allQuotes.length) {
+            container.innerHTML = "<p>No direct quotations found.</p>";
+            showMessage("directQuoteMessage", "No direct quotations were found.", "info");
             return;
         }
 
@@ -4091,8 +4087,8 @@ async function loadDirectQuotes() {
         `).join("");
 
         /* Compact table replaces the card display while retaining all draft actions. */
-        const directQuoteRows = drafts.map((quote) => `<tr>
-            <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation draft")}</td>
+        const draftRows = drafts.map((quote) => `<tr>
+            <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation draft")} <small>V${escapeHtml(quote.version_number || 1)}</small></td>
             <td>${escapeHtml(quote.quantity)}</td>
             <td>${money(quote.unit_price)}</td>
             <td>${money(quote.delivery_cost)}</td>
@@ -4100,7 +4096,26 @@ async function loadDirectQuotes() {
             <td>${badge(quote.status)}</td>
             <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}<button type="button" class="edit-direct-quotation" data-action="edit" data-id="${escapeHtml(quote.id)}">Edit Draft</button><button type="button" class="edit-direct-quotation" data-action="prepare" data-id="${escapeHtml(quote.id)}">Prepare Quote</button></div></td>
         </tr>`);
-        container.innerHTML = ftAdminTable(["Quotation", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status", "Actions"], directQuoteRows);
+        const historyRows = historical.map((quote) => {
+            const canRevise = quote.status === "rejected" || quote.status === "expired" ||
+                (quote.status === "submitted" && ["declined", "rejected"].includes(
+                    String(quote.customer_decision || "").toLowerCase()
+                ));
+            return `<tr>
+                <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation")} <small>V${escapeHtml(quote.version_number || 1)}</small></td>
+                <td>${escapeHtml(quote.quantity)}</td>
+                <td>${money(quote.unit_price)}</td>
+                <td>${money(quote.delivery_cost)}</td>
+                <td>${money(quote.additional_charges)}</td>
+                <td>${badge(quote.customer_decision || quote.status)}</td>
+                <td><div class="record-actions">${ftViewRecord("direct_quote", quote.id)}${canRevise ? `<button type="button" class="create-direct-revision" data-id="${escapeHtml(quote.id)}">Create New Version</button>` : ""}</div></td>
+            </tr>`;
+        });
+        const directQuoteRows = [...draftRows, ...historyRows];
+        container.innerHTML = ftAdminTable(
+            ["Quotation / Version", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status / Decision", "Actions"],
+            directQuoteRows
+        );
 
         showMessage(
             "directQuoteMessage",
@@ -4123,13 +4138,54 @@ if ($("loadDirectQuotesBtn")) {
 
 if ($("directQuoteList")) {
     $("directQuoteList").addEventListener("click", async (event) => {
-        const button = event.target.closest(".edit-direct-quotation");
+        const revisionButton = event.target.closest(".create-direct-revision");
+        if (revisionButton) {
+            await createDirectQuotationRevision(revisionButton.dataset.id, revisionButton);
+            return;
+        }
 
+        const button = event.target.closest(".edit-direct-quotation");
         if (button) {
             const action = button.dataset.action || "edit";
             await editDirectQuotation(button.dataset.id, action);
         }
     });
+}
+
+async function createDirectQuotationRevision(sourceQuotationId, button) {
+    if (!sourceQuotationId) return;
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Creating version...";
+    }
+
+    try {
+        await requireAdmin();
+        const { data, error } = await db.rpc(
+            "admin_create_direct_quotation_revision_v2",
+            { p_source_quotation_id: sourceQuotationId }
+        );
+        if (error) throw error;
+        if (!data?.success || !data.quotation_id) {
+            throw new Error("FrostTech could not confirm the new quotation version.");
+        }
+
+        await loadDirectQuotes();
+        await editDirectQuotation(data.quotation_id, "edit");
+        showMessage(
+            "directQuoteMessage",
+            "A new quotation draft has been created as version " +
+                data.version_number + ". The previous quotation remains in the history.",
+            "success"
+        );
+    } catch (error) {
+        showMessage("directQuoteMessage",
+            error.message || "Unable to create a new quotation version.", "error");
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Create New Version";
+        }
+    }
 }
 
 async function editDirectQuotation(id, action = "edit") {
