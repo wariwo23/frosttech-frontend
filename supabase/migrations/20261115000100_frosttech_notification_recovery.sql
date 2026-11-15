@@ -254,3 +254,7 @@ REVOKE ALL ON FUNCTION public.admin_finish_notification_recovery(uuid,uuid,text,
 GRANT EXECUTE ON FUNCTION public.admin_list_notification_events(integer,integer) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_begin_notification_recovery(uuid,text,boolean) TO authenticated;
 GRANT EXECUTE ON FUNCTION public.admin_finish_notification_recovery(uuid,uuid,text,text,text) TO authenticated;
+
+-- The notification sender is the only role permitted to claim ordinary events.
+REVOKE ALL ON FUNCTION public.claim_frosttech_email_event_v2(text,text,text,jsonb) FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_frosttech_email_event_v2(text,text,text,jsonb) TO service_role;
