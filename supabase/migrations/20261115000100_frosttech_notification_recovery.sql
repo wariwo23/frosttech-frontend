@@ -156,6 +156,16 @@ BEGIN
     v_error_json->>'http_status',
     v_error_json->>'statusCode'
   );
+  -- Older records predate HTTP-status capture. Recognize only the exact
+  -- known Resend test-domain rejection text; the Edge Function domain gate
+  -- still blocks every recovery until the user releases that hold.
+  IF v_provider_status IS NULL
+     AND (
+       pg_catalog.strpos(pg_catalog.lower(COALESCE(v_event.last_error,'')), 'verify a domain') > 0
+       OR pg_catalog.strpos(pg_catalog.lower(COALESCE(v_event.last_error,'')), 'testing emails') > 0
+     ) THEN
+    v_provider_status := '403';
+  END IF;
   IF v_provider_status NOT IN ('401','403') THEN
     RAISE EXCEPTION 'Recovery blocked: only a definitive provider authentication/authorization rejection can be reconsidered after configuration is corrected';
   END IF;
