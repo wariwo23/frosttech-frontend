@@ -126,6 +126,8 @@ AS $function$
 DECLARE
   v_event public.email_notification_events%ROWTYPE;
   v_token uuid;
+  v_provider_status text;
+  v_error_json jsonb;
 BEGIN
   IF auth.uid() IS NULL OR NOT public.is_super_admin() THEN
     RAISE EXCEPTION 'Super Administrator access required';
@@ -148,17 +150,119 @@ BEGIN
     RAISE EXCEPTION 'Only confirmed failed events may be recovered';
   END IF;
 
-  -- Known Resend test-mode / unverified-domain rejection must remain blocked.
-  IF pg_catalog.position('403' in COALESCE(v_event.last_error,'')) > 0
-     OR pg_catalog.position('verify a domain' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0
-     OR pg_catalog.position('testing emails' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0 THEN
+  -- Only a recorded, definitive non-transient provider 4xx rejection is retryable.
+  -- Network errors, missing provider responses, 5xx, 408, 409, 425 and 429
+  -- remain uncertain and must never be automatically resent.
+  BEGIN
+    v_error_json := v_event.last_error::jsonb;
+  EXCEPTION WHEN OTHERS THEN
+    v_error_json := NULL;
+  END;
+  v_provider_status := COALESCE(
+    v_error_json->>'http_status',
+    v_error_json->>'statusCode'
+  );
+
+  IF v_provider_status IS NULL OR v_provider_status !~ '^[0-9]{3}
+
+  INSERT INTO public.admin_activity_log(actor_user_id,action,target_user_id,details)
+  VALUES(
+    auth.uid(),
+    'notification_recovery_started',
+    NULL,
+    pg_catalog.jsonb_build_object(
+      'event_id',v_event.id,'event_type',v_event.event_type,
+      'previous_status',v_event.status,'attempt',v_event.attempts+1,
+      'reason',pg_catalog.btrim(p_reason),'started_at',pg_catalog.now()
+    )
+  );
+
+  RETURN pg_catalog.jsonb_build_object(
+    'event_id',v_event.id,'event_key',v_event.event_key,
+    'event_type',v_event.event_type,'recipient',v_event.recipient,
+    'payload',v_event.payload,'claim_token',v_token
+  );
+END;
+$function$;
+
+CREATE OR REPLACE FUNCTION public.admin_finish_notification_recovery(
+  p_event_id uuid,
+  p_claim_token uuid,
+  p_status text,
+  p_provider_message_id text DEFAULT NULL,
+  p_error text DEFAULT NULL
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path TO ''
+AS $function$
+DECLARE
+  v_event public.email_notification_events%ROWTYPE;
+BEGIN
+  IF auth.uid() IS NULL OR NOT public.is_super_admin() THEN
+    RAISE EXCEPTION 'Super Administrator access required';
+  END IF;
+  IF p_status NOT IN ('sent','failed') THEN
+    RAISE EXCEPTION 'Invalid recovery result';
+  END IF;
+
+  SELECT * INTO v_event
+  FROM public.email_notification_events
+  WHERE id=p_event_id AND claim_token=p_claim_token AND status='sending'
+  FOR UPDATE;
+
+  IF NOT FOUND THEN RAISE EXCEPTION 'Recovery claim expired or no longer belongs to this operation'; END IF;
+
+  UPDATE public.email_notification_events
+  SET status=p_status,
+      provider_message_id=CASE WHEN p_status='sent' THEN p_provider_message_id ELSE provider_message_id END,
+      sent_at=CASE WHEN p_status='sent' THEN pg_catalog.now() ELSE sent_at END,
+      last_error=CASE WHEN p_status='failed' THEN pg_catalog.left(COALESCE(p_error,'Recovery failed'),2000) ELSE NULL END,
+      claim_token=NULL,
+      updated_at=pg_catalog.now()
+  WHERE id=p_event_id;
+
+  INSERT INTO public.admin_activity_log(actor_user_id,action,target_user_id,details)
+  VALUES(
+    auth.uid(),
+    'notification_recovery_finished',
+    NULL,
+    pg_catalog.jsonb_build_object(
+      'event_id',v_event.id,'event_type',v_event.event_type,
+      'result_status',p_status,'provider_message_id',p_provider_message_id,
+      'error',CASE WHEN p_status='failed' THEN pg_catalog.left(COALESCE(p_error,''),1000) ELSE NULL END,
+      'finished_at',pg_catalog.now()
+    )
+  );
+  RETURN true;
+END;
+$function$;
+
+REVOKE ALL ON FUNCTION public.admin_list_notification_events(integer,integer) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_begin_notification_recovery(uuid,text,boolean) FROM PUBLIC, anon;
+REVOKE ALL ON FUNCTION public.admin_finish_notification_recovery(uuid,uuid,text,text,text) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.admin_list_notification_events(integer,integer) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_begin_notification_recovery(uuid,text,boolean) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.admin_finish_notification_recovery(uuid,uuid,text,text,text) TO authenticated;
+
+     OR v_provider_status::integer < 400 OR v_provider_status::integer >= 500
+     OR v_provider_status::integer IN (408,409,425,429) THEN
+    RAISE EXCEPTION 'Recovery blocked: provider outcome is not a confirmed retry-safe rejection';
+  END IF;
+
+  IF v_provider_status = '403'
+     AND (
+       pg_catalog.position('verify a domain' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0
+       OR pg_catalog.position('testing emails' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0
+     ) THEN
     RAISE EXCEPTION 'Recovery blocked: the sender-domain restriction must be resolved by the domain owner first';
   END IF;
 
   v_token := pg_catalog.gen_random_uuid();
   UPDATE public.email_notification_events
   SET status='sending', attempts=attempts+1, claim_token=v_token,
-      updated_at=pg_catalog.now(), last_error=NULL
+      updated_at=pg_catalog.now()
   WHERE id=v_event.id;
 
   INSERT INTO public.admin_activity_log(actor_user_id,action,target_user_id,details)
