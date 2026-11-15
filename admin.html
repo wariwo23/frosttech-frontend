@@ -2735,8 +2735,118 @@ function renderCustomerRequests() {
                 data-id="${escapeHtml(request.id)}">
                 Suggest a FrostTech Alternative
             </button>
+            <div class="request-alternative-review"
+                 data-request-alternatives="${escapeHtml(request.id)}">
+                <p>Loading alternative proposals...</p>
+            </div>
         </article>
     `).join("");
+
+    loadAlternativeProposalReviews();
+}
+
+async function loadAlternativeProposalReviews() {
+    const containers = Array.from(
+        $("quoteRequests").querySelectorAll("[data-request-alternatives]")
+    );
+    if (!containers.length) return;
+
+    const requestIds = containers.map(node => node.dataset.requestAlternatives);
+    try {
+        const { data: proposals, error } = await db
+            .from("alternative_proposals")
+            .select("id,request_id,proposer_type,supplier_id,version_number,reason,proposed_payload,commercial_terms,differences,submitted_at")
+            .in("request_id", requestIds)
+            .order("submitted_at", { ascending: false });
+        if (error) throw error;
+
+        const proposalIds = (proposals || []).map(item => item.id);
+        let decisions = [];
+        if (proposalIds.length) {
+            const { data, error: decisionError } = await db
+                .from("alternative_proposal_decisions")
+                .select("proposal_id,decision,decision_reason,decided_at")
+                .in("proposal_id", proposalIds);
+            if (decisionError) throw decisionError;
+            decisions = data || [];
+        }
+        const decisionByProposal = new Map(decisions.map(item => [item.proposal_id, item]));
+
+        containers.forEach(container => {
+            container.replaceChildren();
+            const matches = (proposals || []).filter(item =>
+                item.request_id === container.dataset.requestAlternatives
+            );
+            const heading = document.createElement("h4");
+            heading.textContent = "Alternative proposal review";
+            container.appendChild(heading);
+
+            if (!matches.length) {
+                const empty = document.createElement("p");
+                empty.textContent = "No alternative proposals have been submitted for this request.";
+                container.appendChild(empty);
+                return;
+            }
+
+            matches.forEach(proposal => {
+                const card = document.createElement("div");
+                card.className = "admin-card";
+                const title = document.createElement("strong");
+                title.textContent = (proposal.proposer_type === "supplier" ? "Supplier" : "FrostTech") +
+                    " alternative — version " + proposal.version_number;
+                card.appendChild(title);
+
+                const reason = document.createElement("p");
+                reason.textContent = "Reason: " + (proposal.reason || "Not supplied");
+                card.appendChild(reason);
+
+                const proposed = proposal.proposed_payload || {};
+                [
+                    ["Proposed item", "title"],
+                    ["Specifications", "description"],
+                    ["Quantity", "quantity"],
+                    ["Brand", "preferred_brand"]
+                ].forEach(([label,key]) => {
+                    if (proposed[key] !== undefined && proposed[key] !== null) {
+                        const p = document.createElement("p");
+                        p.textContent = label + ": " + String(proposed[key]);
+                        card.appendChild(p);
+                    }
+                });
+
+                const terms = proposal.commercial_terms || {};
+                if (terms.customer_total !== undefined) {
+                    const price = document.createElement("p");
+                    price.textContent = "Customer total: " + money(terms.customer_total);
+                    card.appendChild(price);
+                }
+
+                const decision = decisionByProposal.get(proposal.id);
+                const status = document.createElement("p");
+                status.textContent = decision
+                    ? "Customer decision: " + decision.decision.toUpperCase() +
+                      " (" + new Date(decision.decided_at).toLocaleString("en-NG") + ")"
+                    : "Awaiting customer decision";
+                card.appendChild(status);
+
+                const differences = proposal.differences || {};
+                Object.entries(differences).forEach(([key,value]) => {
+                    const p = document.createElement("p");
+                    p.textContent = "Difference — " + key.replaceAll("_"," ") +
+                        ": " + String(value?.original ?? "Not specified") +
+                        " → " + String(value?.proposed ?? "Not specified");
+                    card.appendChild(p);
+                });
+
+                container.appendChild(card);
+            });
+        });
+    } catch (error) {
+        containers.forEach(container => {
+            container.textContent = "Unable to load alternative proposals: " +
+                (error.message || "Please refresh and try again.");
+        });
+    }
 }
 
 async function openFrostTechAlternativeForm(requestId) {
