@@ -4338,6 +4338,44 @@ async function loadDirectQuotes() {
         if (!container) return;
 
         const allQuotes = data || [];
+        const requestIds = [...new Set(
+            allQuotes.map((quote) => quote.request_id).filter(Boolean)
+        )];
+        const requestContacts = new Map();
+
+        if (requestIds.length) {
+            const { data: contacts, error: contactsError } = await db
+                .from("quote_requests")
+                .select("id, customer_name, customer_email, customer_phone")
+                .in("id", requestIds);
+
+            if (contactsError) {
+                throw new Error(
+                    "Unable to load customer identity details for quotations: " +
+                    contactsError.message
+                );
+            }
+
+            (contacts || []).forEach((contact) => {
+                requestContacts.set(contact.id, contact);
+            });
+        }
+
+        const customerDetails = (quote) => {
+            const contact = requestContacts.get(quote.request_id);
+            if (!contact) {
+                return '<strong>Customer details unavailable</strong><br><small>Request link: ' +
+                    escapeHtml(quote.request_id || "Not linked") + '</small>';
+            }
+
+            return '<strong>' + escapeHtml(contact.customer_name || "Name not provided") +
+                '</strong><br><small>Email: ' +
+                escapeHtml(contact.customer_email || "Not provided") +
+                '<br>Phone: ' +
+                escapeHtml(contact.customer_phone || "Not provided") +
+                '</small>';
+        };
+
         const drafts = allQuotes.filter((quote) => quote.status === "draft");
         const historical = allQuotes.filter((quote) => quote.status !== "draft");
         currentDirectQuotes = drafts;
@@ -4382,6 +4420,7 @@ async function loadDirectQuotes() {
 
         /* Compact table replaces the card display while retaining all draft actions. */
         const draftRows = drafts.map((quote) => `<tr>
+            <td>${customerDetails(quote)}</td>
             <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation draft")} <small>V${escapeHtml(quote.version_number || 1)}</small></td>
             <td>${escapeHtml(quote.quantity)}</td>
             <td>${money(quote.unit_price)}</td>
@@ -4396,6 +4435,7 @@ async function loadDirectQuotes() {
                     String(quote.customer_decision || "").toLowerCase()
                 ));
             return `<tr>
+                <td>${customerDetails(quote)}</td>
                 <td>${escapeHtml(quote.quotation_number || quote.product_description || "Quotation")} <small>V${escapeHtml(quote.version_number || 1)}</small></td>
                 <td>${escapeHtml(quote.quantity)}</td>
                 <td>${money(quote.unit_price)}</td>
@@ -4407,7 +4447,7 @@ async function loadDirectQuotes() {
         });
         const directQuoteRows = [...draftRows, ...historyRows];
         container.innerHTML = ftAdminTable(
-            ["Quotation / Version", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status / Decision", "Actions"],
+            ["Customer Details", "Quotation / Version", "Quantity", "Unit Price", "Delivery", "Additional Charges", "Status / Decision", "Actions"],
             directQuoteRows
         );
 
