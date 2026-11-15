@@ -2751,44 +2751,28 @@ async function loadAlternativeProposalReviews() {
     );
     if (!containers.length) return;
 
-    const requestIds = containers.map(node => node.dataset.requestAlternatives);
-    try {
-        const { data: proposals, error } = await db
-            .from("alternative_proposals")
-            .select("id,request_id,proposer_type,supplier_id,version_number,reason,proposed_payload,commercial_terms,differences,submitted_at")
-            .in("request_id", requestIds)
-            .order("submitted_at", { ascending: false });
-        if (error) throw error;
-
-        const proposalIds = (proposals || []).map(item => item.id);
-        let decisions = [];
-        if (proposalIds.length) {
-            const { data, error: decisionError } = await db
-                .from("alternative_proposal_decisions")
-                .select("proposal_id,decision,decision_reason,decided_at")
-                .in("proposal_id", proposalIds);
-            if (decisionError) throw decisionError;
-            decisions = data || [];
-        }
-        const decisionByProposal = new Map(decisions.map(item => [item.proposal_id, item]));
-
-        containers.forEach(container => {
-            container.replaceChildren();
-            const matches = (proposals || []).filter(item =>
-                item.request_id === container.dataset.requestAlternatives
+    for (const container of containers) {
+        const requestId = container.dataset.requestAlternatives;
+        try {
+            const { data: proposals, error } = await db.rpc(
+                "frosttech_get_request_alternative_review_v1",
+                { p_request_id: requestId }
             );
+            if (error) throw error;
+
+            container.replaceChildren();
             const heading = document.createElement("h4");
             heading.textContent = "Alternative proposal review";
             container.appendChild(heading);
 
-            if (!matches.length) {
+            if (!Array.isArray(proposals) || !proposals.length) {
                 const empty = document.createElement("p");
                 empty.textContent = "No alternative proposals have been submitted for this request.";
                 container.appendChild(empty);
-                return;
+                continue;
             }
 
-            matches.forEach(proposal => {
+            proposals.forEach(proposal => {
                 const card = document.createElement("div");
                 card.className = "admin-card";
                 const title = document.createElement("strong");
@@ -2815,17 +2799,20 @@ async function loadAlternativeProposalReviews() {
                 });
 
                 const terms = proposal.commercial_terms || {};
-                if (terms.customer_total !== undefined) {
+                if (terms.pricing_locked === true) {
+                    const locked = document.createElement("p");
+                    locked.textContent = "Commercial pricing is restricted to authorised Finance users.";
+                    card.appendChild(locked);
+                } else if (terms.customer_total !== undefined) {
                     const price = document.createElement("p");
                     price.textContent = "Customer total: " + money(terms.customer_total);
                     card.appendChild(price);
                 }
 
-                const decision = decisionByProposal.get(proposal.id);
                 const status = document.createElement("p");
-                status.textContent = decision
-                    ? "Customer decision: " + decision.decision.toUpperCase() +
-                      " (" + new Date(decision.decided_at).toLocaleString("en-NG") + ")"
+                status.textContent = proposal.decision
+                    ? "Customer decision: " + proposal.decision.toUpperCase() +
+                      (proposal.decided_at ? " (" + new Date(proposal.decided_at).toLocaleString("en-NG") + ")" : "")
                     : "Awaiting customer decision";
                 card.appendChild(status);
 
@@ -2840,12 +2827,10 @@ async function loadAlternativeProposalReviews() {
 
                 container.appendChild(card);
             });
-        });
-    } catch (error) {
-        containers.forEach(container => {
+        } catch (error) {
             container.textContent = "Unable to load alternative proposals: " +
                 (error.message || "Please refresh and try again.");
-        });
+        }
     }
 }
 
@@ -2853,13 +2838,10 @@ async function openFrostTechAlternativeForm(requestId) {
     const request = currentQuoteRequests.find(item => item.id === requestId);
     if (!request) return;
 
-    const { data: quotations, error } = await db
-        .from("admin_quotations")
-        .select("id,quotation_number,product_description,quantity,unit_price,delivery_cost,additional_charges,discount,total_amount,status,customer_decision")
-        .eq("request_id", requestId)
-        .eq("status", "submitted")
-        .is("customer_decision", null)
-        .order("created_at", { ascending: false });
+    const { data: quotations, error } = await db.rpc(
+        "frosttech_list_alternative_source_quotes_v1",
+        { p_request_id: requestId }
+    );
 
     if (error) {
         showMessage("requestMessage", error.message || "Unable to load submitted FrostTech quotations.", "error");
@@ -2896,7 +2878,7 @@ async function openFrostTechAlternativeForm(requestId) {
             <option value="">Select a submitted quotation</option>
             ${quotations.map(q => `
               <option value="${escapeHtml(q.id)}">
-                ${escapeHtml(q.quotation_number || q.id)} — ${escapeHtml(q.product_description || "Alternative")} — ${escapeHtml(q.quantity)} unit(s) — ${escapeHtml(q.total_amount)}
+                ${escapeHtml(q.quotation_number || q.id)} — ${escapeHtml(q.product_description || "Alternative")} — ${escapeHtml(q.quantity)} unit(s)
               </option>
             `).join("")}
           </select>
