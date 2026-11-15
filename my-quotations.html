@@ -940,6 +940,52 @@ function renderUnlockedQuotation(q) {
     addDetail(details, "Unit price", money(q.unit_price));
   }
 
+  const submittedScope = q.submitted_scope_snapshot &&
+    typeof q.submitted_scope_snapshot === "object"
+      ? q.submitted_scope_snapshot
+      : null;
+
+  const originalRequest = submittedScope?.original_request_snapshot?.original_payload;
+  if (originalRequest && typeof originalRequest === "object") {
+    addText(details, "h4", "Your original request");
+    if (originalRequest.title) {
+      addDetail(details, "Original request", originalRequest.title);
+    }
+    if (originalRequest.description) {
+      addDetail(details, "Original specifications", originalRequest.description);
+    }
+    if (originalRequest.quantity !== undefined && originalRequest.quantity !== null) {
+      addDetail(details, "Original requested quantity", originalRequest.quantity);
+    }
+    if (originalRequest.preferred_brand) {
+      addDetail(details, "Preferred brand", originalRequest.preferred_brand);
+    }
+  }
+
+  const acceptedAlternative = submittedScope?.accepted_alternative;
+  if (acceptedAlternative && typeof acceptedAlternative === "object") {
+    const proposed = acceptedAlternative.proposed_payload || {};
+    addText(details, "h4", "Customer-approved alternative");
+    if (proposed.title) {
+      addDetail(details, "Alternative item", proposed.title);
+    }
+    if (proposed.description) {
+      addDetail(details, "Alternative specifications", proposed.description);
+    }
+    if (proposed.quantity !== undefined && proposed.quantity !== null) {
+      addDetail(details, "Alternative quantity", proposed.quantity);
+    }
+    if (acceptedAlternative.reason) {
+      addDetail(details, "Reason for alternative", acceptedAlternative.reason);
+    }
+    if (acceptedAlternative.proposer_type) {
+      addDetail(details, "Proposed by",
+        acceptedAlternative.proposer_type === "supplier"
+          ? "Supplier"
+          : "FrostTech");
+    }
+  }
+
   addDetail(details, "Subtotal", money(q.subtotal));
   addDetail(details, "Additional charges", money(q.additional_charges));
   addDetail(details, "Discount", money(q.discount));
