@@ -516,6 +516,44 @@ main{max-width:900px;padding:28px 16px 48px}
 button{transition:background .15s ease,transform .15s ease}
 button:active{transform:translateY(1px)}
 footer{padding:24px 14px;color:#718198}
+.ft-contact-footer{
+  margin-top:12px;
+  padding:28px 16px 20px;
+  background:#082f59;
+  color:#e7f1fc;
+  text-align:center;
+}
+.ft-contact-inner{max-width:900px;margin:0 auto}
+.ft-contact-inner h2{margin:0 0 7px;color:#fff;font-size:20px}
+.ft-contact-inner>p{margin:6px 0;color:#d5e5f6;line-height:1.6}
+.ft-contact-links{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  flex-wrap:wrap;
+  gap:12px 24px;
+  margin:17px 0;
+}
+.ft-contact-links a{
+  display:inline-block;
+  padding:10px 15px;
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:9px;
+  color:#fff;
+  font-weight:700;
+  text-decoration:none;
+}
+.ft-contact-links a:hover,.ft-contact-links a:focus{
+  background:rgba(255,255,255,.12);
+  text-decoration:underline;
+}
+.ft-contact-inner .ft-copyright{
+  margin-top:20px;
+  padding-top:14px;
+  border-top:1px solid rgba(255,255,255,.2);
+  color:#c2d4e8;
+  font-size:12px;
+}
 @media(max-width:600px){
   header{padding:23px 16px}
   header h1{font-size:21px}
@@ -585,8 +623,16 @@ footer{padding:24px 14px;color:#718198}
  </section>
 </main>
 
-<footer>
- &copy; <span id="currentYear"></span> FrostTech HVAC and Refrigeration. All rights reserved.
+<footer class="ft-contact-footer">
+ <div class="ft-contact-inner">
+  <h2>Contact FrostTech</h2>
+  <p>Need help with your quotation? Our team is available through the official FrostTech channels.</p>
+  <div class="ft-contact-links">
+   <a href="https://wa.me/2348032008635" target="_blank" rel="noopener noreferrer">WhatsApp: +234 803 200 8635</a>
+   <a href="https://frosttechonline.com" target="_blank" rel="noopener noreferrer">Website: frosttechonline.com</a>
+  </div>
+  <p class="ft-copyright">&copy; <span id="currentYear"></span> FrostTech HVAC &amp; Refrigeration. All rights reserved.</p>
+ </div>
 </footer>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
