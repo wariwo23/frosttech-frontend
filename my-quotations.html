@@ -930,6 +930,12 @@ function renderUnlockedQuotation(q) {
         " — " + (item.quantity ?? 1) + " " + (item.unit || "unit");
       addDetail(details, heading + " — unit price", money(item.unit_price));
       addDetail(details, "Line total", money(item.line_total));
+      if (item.source_proposal_id) {
+        addText(details, "div", "Customer-approved alternative", "status status-accepted");
+      }
+      if (item.replaces_item_id) {
+        addDetail(details, "Replaces", "An earlier item in the original quotation. Your original request remains preserved.");
+      }
       if (item.specifications && Object.keys(item.specifications).length) {
         addDetail(details, "Specifications", JSON.stringify(item.specifications));
       }
