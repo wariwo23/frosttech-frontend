@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
         headers: {
           Authorization: `Bearer ${RESEND_API_KEY}`,
           "Content-Type": "application/json",
-          "Idempotency-Key": `frosttech:${recovery.event_key}`,
+          "Idempotency-Key": `frosttech:${recovery.event_key}:recovery:${recovery.attempts}`,
         },
         body: JSON.stringify({ from: EMAIL_FROM, to: [recovery.recipient], subject, html }),
       });
