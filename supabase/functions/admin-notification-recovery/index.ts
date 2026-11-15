@@ -2,7 +2,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
-const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY") ?? "";
 const EMAIL_FROM = Deno.env.get("EMAIL_FROM") ?? "";
 const ALLOWED_ORIGIN = "https://wariwo23.github.io";
@@ -24,12 +24,6 @@ function respond(body: Record<string, unknown>, status = 200, origin: string | n
   });
 }
 
-function adminClient() {
-  return createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
-    auth: { persistSession: false, autoRefreshToken: false },
-  });
-}
-
 Deno.serve(async (req: Request) => {
   const origin = req.headers.get("origin");
   if (req.method === "OPTIONS") {
@@ -41,14 +35,16 @@ Deno.serve(async (req: Request) => {
 
   const authorization = req.headers.get("Authorization") ?? "";
   const match = authorization.match(/^Bearer\s+(.+)$/i);
-  if (!match || !SUPABASE_URL || !SUPABASE_ANON_KEY || !SERVICE_ROLE_KEY) {
+  if (!match || !SUPABASE_URL || !SUPABASE_ANON_KEY) {
     return respond({ error: "Authenticated Super Administrator session required" }, 401, origin);
   }
 
+  const accessToken = match[1].trim();
   const userClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: { persistSession: false, autoRefreshToken: false },
+    global: { headers: { Authorization: `Bearer ${accessToken}` } },
   });
-  const { data: { user }, error: authError } = await userClient.auth.getUser(match[1].trim());
+  const { data: { user }, error: authError } = await userClient.auth.getUser(accessToken);
   if (authError || !user) return respond({ error: "Invalid or expired session" }, 401, origin);
 
   let body: Record<string, unknown>;
@@ -62,12 +58,11 @@ Deno.serve(async (req: Request) => {
     return respond({ error: "Invalid request body" }, 400, origin);
   }
 
-  const admin = adminClient();
   const action = body.action;
 
   try {
     if (action === "list") {
-      const { data, error } = await admin.rpc("admin_list_notification_events", {
+      const { data, error } = await userClient.rpc("admin_list_notification_events", {
         p_limit: Math.min(100, Math.max(1, Number(body.limit) || 50)),
         p_offset: Math.max(0, Number(body.offset) || 0),
       });
