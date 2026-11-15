@@ -180,7 +180,7 @@ BEGIN
   RETURN pg_catalog.jsonb_build_object(
     'event_id',v_event.id,'event_key',v_event.event_key,
     'event_type',v_event.event_type,'recipient',v_event.recipient,
-    'payload',v_event.payload,'claim_token',v_token
+    'payload',v_event.payload,'attempts',v_event.attempts+1,'claim_token',v_token
   );
 END;
 $function$;
@@ -253,8 +253,8 @@ GRANT EXECUTE ON FUNCTION public.admin_finish_notification_recovery(uuid,uuid,te
 
   IF v_provider_status = '403'
      AND (
-       pg_catalog.position('verify a domain' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0
-       OR pg_catalog.position('testing emails' in pg_catalog.lower(COALESCE(v_event.last_error,''))) > 0
+       pg_catalog.strpos(pg_catalog.lower(COALESCE(v_event.last_error,'')), 'verify a domain') > 0
+       OR pg_catalog.strpos(pg_catalog.lower(COALESCE(v_event.last_error,'')), 'testing emails') > 0
      ) THEN
     RAISE EXCEPTION 'Recovery blocked: the sender-domain restriction must be resolved by the domain owner first';
   END IF;
