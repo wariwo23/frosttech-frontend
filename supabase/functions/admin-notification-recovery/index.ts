@@ -98,6 +98,48 @@ Deno.serve(async (req: Request) => {
 
     try {
       if (!RESEND_API_KEY || !EMAIL_FROM) throw new Error("Email provider is not configured");
+      const p = recovery.payload ?? {};
+      const esc = (value: unknown) => String(value ?? "")
+        .replaceAll("&", "&amp;").replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;").replaceAll('"', "&quot;")
+        .replaceAll("'", "&#39;");
+      let subject = "";
+      let html = "";
+
+      if (recovery.event_key.startsWith("quote_request_customer:")) {
+        subject = `FrostTech – Quotation Request Received – ${String(p.request_number ?? "")}`;
+        html = `<div style="font-family:Arial,sans-serif;color:#172333;max-width:600px;margin:0 auto;line-height:1.6">
+          <h2 style="color:#063b70">FrostTech HVAC and Refrigeration</h2>
+          <p>Hello ${esc(p.customer_name)},</p><p>Your quotation request has been received successfully.</p>
+          <p><strong>Request Number:</strong> ${esc(p.request_number)}</p>
+          <p>Our team will review your request and contact you.</p><p>Thank you for choosing FrostTech.</p></div>`;
+      } else if (recovery.event_key.startsWith("quote_request:")) {
+        subject = "New FrostTech Quotation Request";
+        html = `<div style="font-family:Arial,sans-serif;color:#172333;max-width:600px;margin:0 auto;line-height:1.6">
+          <h2 style="color:#063b70">FrostTech HVAC and Refrigeration</h2>
+          <p>A customer has submitted a new quotation request.</p>
+          <p><strong>Customer Name:</strong> ${esc(p.customer_name || "Not provided")}</p>
+          <p><strong>Customer Email:</strong> ${esc(p.customer_email || "Not provided")}</p>
+          <p><strong>Customer Phone:</strong> ${esc(p.customer_phone || "Not provided")}</p>
+          <p><strong>Request Number:</strong> ${esc(p.request_number)}</p>
+          <p>Please log in to the FrostTech Administration Dashboard to review the quotation.</p></div>`;
+      } else if (recovery.event_key.startsWith("advertiser_application_confirmation:")) {
+        subject = "FrostTech – Advertiser Application Received";
+        html = `<div style="font-family:Arial,sans-serif;color:#172333;max-width:600px;margin:0 auto;line-height:1.6">
+          <h2 style="color:#063b70">FrostTech HVAC and Refrigeration</h2>
+          <p>Your advertiser application has been received successfully.</p>
+          <p>Our team will review your submission and contact you regarding the next steps.</p>
+          <p>Thank you for your interest in FrostTech.</p></div>`;
+      } else if (recovery.event_key.startsWith("advertiser_application:")) {
+        subject = "New FrostTech Advertiser Application";
+        html = `<div style="font-family:Arial,sans-serif;color:#172333;max-width:600px;margin:0 auto;line-height:1.6">
+          <h2 style="color:#063b70">FrostTech HVAC and Refrigeration</h2>
+          <p>A new advertiser application has been submitted.</p>
+          <p>Please log in to the FrostTech Administration Dashboard to review the application.</p></div>`;
+      } else {
+        throw new Error("Unsupported notification event key; stopped before provider call");
+      }
+
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -105,14 +147,7 @@ Deno.serve(async (req: Request) => {
           "Content-Type": "application/json",
           "Idempotency-Key": `frosttech:${recovery.event_key}`,
         },
-        body: JSON.stringify({
-          from: EMAIL_FROM,
-          to: [recovery.recipient],
-          subject: recovery.event_type === "quote_request_submitted"
-            ? "FrostTech notification recovery"
-            : "FrostTech advertiser notification recovery",
-          html: "<p>This notification was retried by an authorized FrostTech administrator.</p>",
-        }),
+        body: JSON.stringify({ from: EMAIL_FROM, to: [recovery.recipient], subject, html }),
       });
       result = await response.json().catch(() => ({}));
       if (!response.ok) {
