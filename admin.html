@@ -1500,6 +1500,7 @@ footer {
         <div id="displayBracketsRow" class="quote-line hidden"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
         <div id="displayInstallationRow" class="quote-line hidden"><span>Installation</span><span id="displayInstallation">₦0.00</span></div>
         <div id="displayAccessoriesRow" class="quote-line hidden"><span>Accessories</span><span id="displayAccessories">₦0.00</span></div>
+        <div id="displayOtherItemsRow" class="quote-line hidden"><span>Other requested items</span><span id="displayOtherItems">₦0.00</span></div>
         <div class="quote-line"><span>Discount</span><span id="displayDiscount">₦0.00</span></div>
         <div class="quote-total">Total: <span id="directTotal">₦0.00</span></div>
     </div>
@@ -3532,33 +3533,38 @@ function calculateDirectQuotation() {
     const v = getDirectQuotationValues();
 
     const productCost = v.quantity * v.unitCost;
+    const markupFactor = 1 + v.markup / 100;
 
     const customerUnitPrice =
-        v.unitCost * (1 + v.markup / 100);
+        Number((v.unitCost * markupFactor).toFixed(2));
 
     const productSellingTotal =
         v.quantity * customerUnitPrice;
 
     const bracketsCost =
         v.bracketQuantity * v.bracketUnitCost;
-
+    const bracketCustomerUnitPrice =
+        Number((v.bracketUnitCost * markupFactor).toFixed(2));
     const bracketsSellingTotal =
-        bracketsCost * (1 + v.markup / 100);
+        v.bracketQuantity * bracketCustomerUnitPrice;
 
     const installationCost =
         v.quantity * v.installationPerAc;
-
+    const installationCustomerUnitPrice =
+        Number((v.installationPerAc * markupFactor).toFixed(2));
     const installationSellingTotal =
-        installationCost * (1 + v.markup / 100);
+        v.quantity * installationCustomerUnitPrice;
 
     const accessoriesCost =
         v.accessoryQuantity * v.accessoryUnitCost;
-
+    const accessoryCustomerUnitPrice =
+        Number((v.accessoryUnitCost * markupFactor).toFixed(2));
     const accessoriesSellingTotal =
-        accessoriesCost * (1 + v.markup / 100);
+        v.accessoryQuantity * accessoryCustomerUnitPrice;
 
     const otherItemsSellingTotal = v.otherItems.reduce(
-        (sum, item) => sum + item.quantity * item.unit_cost * (1 + v.markup / 100),
+        (sum, item) => sum + item.quantity *
+            Number((item.unit_cost * markupFactor).toFixed(2)),
         0
     );
 
@@ -3585,10 +3591,13 @@ function calculateDirectQuotation() {
         customerUnitPrice,
         productSellingTotal,
         bracketsCost,
+        bracketCustomerUnitPrice,
         bracketsSellingTotal,
         installationCost,
+        installationCustomerUnitPrice,
         installationSellingTotal,
         accessoriesCost,
+        accessoryCustomerUnitPrice,
         accessoriesSellingTotal,
         otherItemsSellingTotal,
         subtotal,
@@ -3883,7 +3892,7 @@ function buildDirectQuotationItems() {
             specifications: {},
             unit: "set",
             quantity: result.bracketQuantity,
-            unit_price: Number((result.bracketUnitCost * markupFactor).toFixed(2)),
+            unit_price: result.bracketCustomerUnitPrice,
             sort_order: sortOrder++,
             source_proposal_id: null,
             replaces_item_id: null
@@ -3898,7 +3907,7 @@ function buildDirectQuotationItems() {
             specifications: {},
             unit: "AC",
             quantity: result.quantity,
-            unit_price: Number((result.installationPerAc * markupFactor).toFixed(2)),
+            unit_price: result.installationCustomerUnitPrice,
             sort_order: sortOrder++,
             source_proposal_id: null,
             replaces_item_id: null
@@ -3913,7 +3922,7 @@ function buildDirectQuotationItems() {
             specifications: {},
             unit: result.accessoryUnit || "unit",
             quantity: result.accessoryQuantity,
-            unit_price: Number((result.accessoryUnitCost * markupFactor).toFixed(2)),
+            unit_price: result.accessoryCustomerUnitPrice,
             sort_order: sortOrder++,
             source_proposal_id: null,
             replaces_item_id: null
