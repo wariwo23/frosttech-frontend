@@ -3953,7 +3953,7 @@ function buildDirectQuotationItems() {
 }
 
 async function applyAcceptedAlternativeToDirectQuotation(
-    quotationId, requestId, itemPayload, quotationValues
+    quotationId, requestId, itemPayload
 ) {
     const { data: proposals, error: proposalError } = await db.rpc(
         "frosttech_get_request_alternative_review_v1",
@@ -3986,11 +3986,21 @@ async function applyAcceptedAlternativeToDirectQuotation(
     }
 
     const primary = itemPayload[primaryIndex];
-    const proposedTitle = String(payload.title || "").trim();
+    const proposedTitle = String(
+        proposal.differences?.title?.proposed || ""
+    ).trim();
     if (proposedTitle &&
         proposedTitle.toLowerCase() !== String(primary.description || "").trim().toLowerCase()) {
         throw new Error(
-            "A customer-approved alternative is recorded. Update the quotation's product description to the approved alternative title before saving."
+            "A customer-approved alternative changes the item title. Update the quotation's product description to the approved title before saving."
+        );
+    }
+
+    const proposedProductId = proposal.differences?.product_id?.proposed;
+    if (proposedProductId &&
+        String(primary.product_id || "") !== String(proposedProductId)) {
+        throw new Error(
+            "A customer-approved alternative changes the catalogue product. Select the approved product before saving this quotation."
         );
     }
 
@@ -4075,8 +4085,7 @@ async function saveDirectDraftRecord() {
     itemPayload = await applyAcceptedAlternativeToDirectQuotation(
         savedId,
         values.request_id,
-        itemPayload,
-        values
+        itemPayload
     );
     const { data: itemSaveResult, error: itemSaveError } = await db.rpc(
         "admin_replace_direct_quotation_items_v2",
