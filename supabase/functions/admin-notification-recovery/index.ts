@@ -75,7 +75,7 @@ Deno.serve(async (req: Request) => {
       return respond({ error: "Event and recovery reason are required" }, 400, origin);
     }
 
-    const { data: recovery, error: beginError } = await admin.rpc("admin_begin_notification_recovery", {
+    const { data: recovery, error: beginError } = await userClient.rpc("admin_begin_notification_recovery", {
       p_event_id: body.event_id,
       p_reason: body.reason,
       p_confirm: body.confirm === true,
@@ -155,7 +155,7 @@ Deno.serve(async (req: Request) => {
       errorText = String(error).slice(0, 2000);
     }
 
-    const { error: finishError } = await admin.rpc("admin_finish_notification_recovery", {
+    const { error: finishError } = await userClient.rpc("admin_finish_notification_recovery", {
       p_event_id: recovery.event_id,
       p_claim_token: recovery.claim_token,
       p_status: finalStatus,
