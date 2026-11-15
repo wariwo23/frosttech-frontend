@@ -1557,21 +1557,19 @@ async function loadOriginalRequests() {
   addText(requestsContainer, "div", "Loading your original requests...", "notice");
 
   try {
-    const { data: requests, error } = await db
-      .from("quote_requests")
-      .select("id,request_number,title,status,created_at")
-      .eq("customer_id", currentSession.user.id)
-      .order("created_at", { ascending: false });
+    const { data, error } = await db.rpc("frosttech_get_customer_request_integrity_v1");
     if (error) throw error;
+    const records = Array.isArray(data) ? data : [];
 
     requestsContainer.replaceChildren();
-    if (!requests || !requests.length) {
+    if (!records.length) {
       addText(requestsContainer, "div",
         "You have not submitted any customer requests yet.", "notice");
       return;
     }
 
-    for (const request of requests) {
+    for (const record of records) {
+      const request = record.request || {};
       const card = document.createElement("article");
       card.className = "request-integrity-card";
       addText(card, "h3", request.title || "Customer request");
@@ -1579,39 +1577,24 @@ async function loadOriginalRequests() {
       card.appendChild(requestField("Current processing status", request.status));
       card.appendChild(requestField("Submitted", displayDate(request.created_at)));
 
-      const { data: snapshot, error: snapshotError } = await db
-        .from("quote_request_original_snapshots")
-        .select("original_payload,capture_type")
-        .eq("request_id", request.id)
-        .maybeSingle();
-      if (snapshotError) throw snapshotError;
-
-      if (snapshot) {
-        appendOriginalRequest(card, snapshot.original_payload, snapshot.capture_type);
+      if (record.snapshot?.original_payload) {
+        appendOriginalRequest(card, record.snapshot.original_payload, record.snapshot.capture_type);
       } else {
         addText(card, "p",
           "The original request snapshot is not available. Please contact FrostTech before considering an alternative.",
           "request-integrity-note");
       }
 
-      const { data: proposals, error: proposalError } = await db
-        .from("alternative_proposals")
-        .select("id,proposer_type,version_number,reason,proposed_payload,commercial_terms,differences,submitted_at")
-        .eq("request_id", request.id)
-        .order("submitted_at", { ascending: false });
-      if (proposalError) throw proposalError;
-
-      if (!proposals || !proposals.length) {
+      const proposals = Array.isArray(record.proposals) ? record.proposals : [];
+      if (!proposals.length) {
         addText(card, "p", "No alternative proposals have been submitted for this request.", "request-integrity-note");
       } else {
+        const decisions = new Map(
+          (Array.isArray(record.decisions) ? record.decisions : [])
+            .map(item => [item.proposal_id, item])
+        );
         for (const proposal of proposals) {
-          const { data: decisions, error: decisionError } = await db
-            .from("alternative_proposal_decisions")
-            .select("decision,decision_reason,decided_at")
-            .eq("proposal_id", proposal.id)
-            .limit(1);
-          if (decisionError) throw decisionError;
-          appendProposal(card, proposal, decisions?.[0] || null);
+          appendProposal(card, proposal, decisions.get(proposal.id) || null);
         }
       }
 
