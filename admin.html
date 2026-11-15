@@ -1217,6 +1217,7 @@ footer {
     <button type="button" class="admin-nav-card workspace" data-admin-open="productManagement"><span class="ico" aria-hidden="true">▣</span><span class="workspace-copy"><strong>Product Management</strong><span>Catalogue, images, stock and visibility</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="directQuotationSection"><span class="ico" aria-hidden="true">✎</span><span class="workspace-copy"><strong>Admin-Direct Quotations</strong><span>Prepare and review customer quotations</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="customerRequestsPage"><span class="ico" aria-hidden="true">☷</span><span class="workspace-copy"><strong>Customer Quote Requests</strong><span>Review customer requirements</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="notificationRecoveryPage"><span class="ico" aria-hidden="true">✉</span><span class="workspace-copy"><strong>Notification Centre</strong><span>Review delivery status and controlled recovery</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierQuotationsPage"><span class="ico" aria-hidden="true">▤</span><span class="workspace-copy"><strong>Saved Supplier Quotations</strong><span>Review supplier pricing and decisions</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierManagement"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Supplier Management</strong><span>Applications, verification and account status</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="advertiserVerification"><span class="ico" aria-hidden="true">✓</span><span class="workspace-copy"><strong>Advertiser Verification</strong><span>Review advertiser applications and CAC status</span></span></button>
@@ -1616,6 +1617,32 @@ footer {
         </div>
     </div>
 </div>
+
+<section id="notificationRecoveryPage" class="admin-page-section hidden" data-admin-title="Notification Centre">
+  <h2>Notification Centre</h2>
+  <p>Review FrostTech email notification records. Recovery is restricted to the Super Administrator and requires a documented reason.</p>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin:12px 0">
+    <button type="button" id="ftRefreshNotifications">Refresh Notification Records</button>
+    <span id="ftNotificationStatus" role="status" aria-live="polite"></span>
+  </div>
+  <div id="ftNotificationRows"><p>Select Refresh to load notification records.</p></div>
+  <div id="ftRecoveryPanel" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecoveryTitle">
+    <div class="ft-modal-content">
+      <h3 id="ftRecoveryTitle">FrostTech Notification Recovery</h3>
+      <p id="ftRecoveryDescription">Review the selected failed notification before authorizing recovery.</p>
+      <label for="ftRecoveryReason">Reason for recovery</label>
+      <textarea id="ftRecoveryReason" rows="4" maxlength="1000" placeholder="Explain why this notification should be retried."></textarea>
+      <label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0">
+        <input type="checkbox" id="ftRecoveryConfirm">
+        <span>I authorize one controlled recovery attempt for this failed notification.</span>
+      </label>
+      <div class="record-actions">
+        <button type="button" class="neutral" id="ftCancelRecovery">Cancel</button>
+        <button type="button" id="ftConfirmRecovery">Authorize Recovery</button>
+      </div>
+    </div>
+  </div>
+</section>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -5953,6 +5980,111 @@ button{padding:11px 16px;border:0;border-radius:7px;background:#596579;color:#ff
 <p>Please keep this page open. The approved record will appear here after the database confirms the print authorization.</p>
 <p>If verification fails, this page will explain what happened. No print copy is available until verification succeeds.</p>
 </div>
+<script>
+/* FrostTech Notification Centre — gated by server-side Super Admin RPCs. */
+(function () {
+  const rows = document.getElementById("ftNotificationRows");
+  const status = document.getElementById("ftNotificationStatus");
+  const panel = document.getElementById("ftRecoveryPanel");
+  const reason = document.getElementById("ftRecoveryReason");
+  const confirmBox = document.getElementById("ftRecoveryConfirm");
+  let selectedEventId = null;
+
+  function setStatus(message) { if (status) status.textContent = message; }
+  function closeRecovery() {
+    panel?.classList.add("hidden");
+    selectedEventId = null;
+    if (reason) reason.value = "";
+    if (confirmBox) confirmBox.checked = false;
+  }
+  function safe(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+    }[c]));
+  }
+  function date(value) {
+    if (!value) return "—";
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? "—" : d.toLocaleString("en-NG");
+  }
+  async function invoke(action, payload = {}) {
+    const result = await db.functions.invoke("admin-notification-recovery", {
+      body: { action, ...payload }
+    });
+    if (result.error) throw result.error;
+    if (result.data?.error) throw new Error(result.data.error);
+    return result.data;
+  }
+  async function refresh() {
+    if (!rows) return;
+    rows.innerHTML = "<p>Loading notification records…</p>";
+    setStatus("Checking administrator permissions…");
+    try {
+      const data = await invoke("list", { limit: 100, offset: 0 });
+      const events = Array.isArray(data.events) ? data.events : [];
+      if (!events.length) {
+        rows.innerHTML = "<p>No notification records found.</p>";
+      } else {
+        const body = events.map(e => {
+          const recover = e.status === "failed"
+            ? '<button type="button" class="ft-open-recovery" data-id="' + safe(e.id) + '">Review Recovery</button>'
+            : "";
+          return '<tr><td>' + safe(e.event_type) + '</td><td>' + safe(e.recipient) +
+            '</td><td>' + safe(e.status) + '</td><td>' + safe(e.attempts) +
+            '</td><td>' + safe(date(e.updated_at)) + '</td><td>' +
+            safe(e.last_error || "—") + '</td><td>' + recover + '</td></tr>';
+        }).join("");
+        rows.innerHTML = '<div style="overflow-x:auto"><table><thead><tr><th>Event</th><th>Recipient</th><th>Status</th><th>Attempts</th><th>Updated</th><th>Last Error</th><th>Action</th></tr></thead><tbody>' + body + '</tbody></table></div>';
+      }
+      setStatus("Records loaded. Server authorization verified.");
+    } catch (error) {
+      rows.innerHTML = "<p>Notification records could not be loaded.</p>";
+      setStatus(error?.message || "Super Administrator access is required.");
+    }
+  }
+
+  document.getElementById("ftRefreshNotifications")?.addEventListener("click", refresh);
+  document.getElementById("ftCancelRecovery")?.addEventListener("click", closeRecovery);
+  panel?.addEventListener("click", event => {
+    if (event.target === panel) closeRecovery();
+  });
+  rows?.addEventListener("click", event => {
+    const button = event.target.closest(".ft-open-recovery");
+    if (!button) return;
+    selectedEventId = button.dataset.id;
+    document.getElementById("ftRecoveryDescription").textContent =
+      "Only failed events can be considered. Known sender-domain 403 failures remain blocked until the domain restriction is resolved.";
+    panel.classList.remove("hidden");
+    reason.focus();
+  });
+  document.getElementById("ftConfirmRecovery")?.addEventListener("click", async () => {
+    if (!selectedEventId || !confirmBox.checked || reason.value.trim().length < 12) {
+      setStatus("Tick the authorization box and enter a reason of at least 12 characters.");
+      return;
+    }
+    const button = document.getElementById("ftConfirmRecovery");
+    button.disabled = true;
+    setStatus("Submitting authorized recovery…");
+    try {
+      const data = await invoke("recover", {
+        event_id: selectedEventId,
+        reason: reason.value.trim(),
+        confirm: true
+      });
+      closeRecovery();
+      setStatus(data.status === "sent"
+        ? "Provider accepted the recovery request. Check the recorded status."
+        : (data.error || "Recovery did not complete."));
+      await refresh();
+    } catch (error) {
+      setStatus(error?.message || "Recovery was not authorized or could not be completed.");
+    } finally {
+      button.disabled = false;
+    }
+  });
+})();
+</script>
+
 </body>
 </html>`);
         printWindow.document.close();
