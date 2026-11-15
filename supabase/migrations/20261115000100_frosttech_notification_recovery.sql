@@ -145,6 +145,19 @@ BEGIN
     RAISE EXCEPTION 'Only failed events may be considered for recovery';
   END IF;
 
+  IF NOT (
+    (v_event.event_type='quote_request_submitted' AND (
+      pg_catalog.strpos(v_event.event_key,'quote_request:')=1 OR
+      pg_catalog.strpos(v_event.event_key,'quote_request_customer:')=1
+    )) OR
+    (v_event.event_type='advertiser_application_submitted' AND (
+      pg_catalog.strpos(v_event.event_key,'advertiser_application:')=1 OR
+      pg_catalog.strpos(v_event.event_key,'advertiser_application_confirmation:')=1
+    ))
+  ) THEN
+    RAISE EXCEPTION 'Unsupported notification event key';
+  END IF;
+
   -- Only confirmed authentication/authorization rejection is reconsiderable.
   -- Unknown network outcomes and other provider responses must not be retried.
   BEGIN
