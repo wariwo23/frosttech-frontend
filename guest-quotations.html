@@ -1557,11 +1557,63 @@ function renderGuestUnlocked(q) {
   addText(card, "h3", q.quotation_number || "FrostTech Quotation");
   addText(card, "div", "Guest quotation — email verified", "reference");
   addText(card, "span", "Administration fee paid and verified", "status status-paid");
+  if (q.version_number != null) addDetail(card, "Quotation version", "V" + q.version_number);
+  if (q.supersedes_quotation_id) addText(card, "p", "This is a revised quotation. It replaces an earlier quotation version; please review this version before deciding.", "guest-alternative-note");
+
+  const originalPayload = q.original_request_snapshot?.original_payload;
+  if (originalPayload && typeof originalPayload === "object") {
+    const originalPanel = document.createElement("section");
+    originalPanel.className = "guest-alternative-card";
+    addText(originalPanel, "h3", "Your Original Customer Request");
+    if (q.original_request_snapshot.capture_type === "rollout_baseline_unverified") {
+      addText(originalPanel, "p", "Historical baseline: the current record is preserved, but FrostTech cannot independently certify that it exactly matches the original submission.", "guest-alternative-note");
+    }
+    [["Requested item","title"],["Original specifications","description"],["Quantity","quantity"],["Preferred brand","preferred_brand"],["Budget","budget"],["Delivery address","delivery_address"],["Installation service","installation_service"]].forEach(([label,key]) => {
+      if (Object.prototype.hasOwnProperty.call(originalPayload,key)) appendGuestField(originalPanel,label,originalPayload[key]);
+    });
+    card.appendChild(originalPanel);
+  }
+
+  if (q.accepted_alternative) {
+    const alt = q.accepted_alternative;
+    const altPanel = document.createElement("section");
+    altPanel.className = "guest-alternative-card";
+    addText(altPanel, "h3", "Customer-Approved Alternative");
+    appendGuestField(altPanel, "Suggested by", alt.proposer_type === "supplier" ? "Approved supplier" : "FrostTech");
+    appendGuestField(altPanel, "Reason", alt.reason);
+    const proposed = alt.proposed_payload || {};
+    [["Alternative item","title"],["Alternative specifications","description"],["Quantity","quantity"],["Preferred brand","preferred_brand"]].forEach(([label,key]) => {
+      if (Object.prototype.hasOwnProperty.call(proposed,key)) appendGuestField(altPanel,label,proposed[key]);
+    });
+    addText(altPanel, "p", "Your original request remains preserved. This alternative was separately approved by you.", "guest-alternative-note");
+    card.appendChild(altPanel);
+  }
+
   const details = document.createElement("div");
   details.className = "details";
-  addDetail(details, "Product / Service", q.product_description);
-  addDetail(details, "Quantity", q.quantity);
-  addDetail(details, "Unit price", money(q.unit_price));
+  if (Array.isArray(q.items) && q.items.length) {
+    addText(details, "h4", "Quotation line items");
+    q.items.forEach((item,index) => {
+      const block = document.createElement("section");
+      block.className = "guest-alternative-item";
+      addText(block, "h4", item.description || ("Quotation item " + (index + 1)));
+      if (item.item_type) appendGuestField(block, "Item type", item.item_type);
+      if (item.specifications && Object.keys(item.specifications).length) {
+        appendGuestField(block, "Specifications", Object.entries(item.specifications).map(([k,v]) => k.replaceAll("_"," ") + ": " + String(v)).join("; "));
+      }
+      appendGuestField(block, "Quantity", item.quantity);
+      if (item.unit) appendGuestField(block, "Unit", item.unit);
+      appendGuestField(block, "Unit price", money(item.unit_price));
+      appendGuestField(block, "Line total", money(item.line_total));
+      if (item.source_proposal_id) addText(block, "p", "Customer-approved alternative item", "guest-alternative-note");
+      if (item.replaces_item_id) addText(block, "p", "This item replaces a specified line item; the original request remains preserved.", "guest-alternative-note");
+      details.appendChild(block);
+    });
+  } else {
+    addDetail(details, "Product / Service", q.product_description);
+    addDetail(details, "Quantity", q.quantity);
+    addDetail(details, "Unit price", money(q.unit_price));
+  }
   addDetail(details, "Subtotal", money(q.subtotal));
   addDetail(details, "Additional charges", money(q.additional_charges));
   addDetail(details, "Discount", money(q.discount));
