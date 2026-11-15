@@ -1270,9 +1270,10 @@ async function submitAlternativeProposal(event) {
   }
 
   const title = $("alternativeTitle").value.trim();
-  const description = $("alternativeDescription").value.trim();
+  const alternativeDescription = $("alternativeDescription").value.trim();
   const brand = $("alternativeBrand").value.trim();
   const reason = $("alternativeReason").value.trim();
+  const originalRequest = requests.find(item => item.id === requestId);
 
   if (!title || !description || reason.length < 5) {
     message("Complete the alternative product, specifications and reason.", "error");
@@ -1285,12 +1286,14 @@ async function submitAlternativeProposal(event) {
   try {
     const payload = {
       title,
-      description,
+      description:
+        "Original customer requirements (preserved):\n" +
+        (originalRequest?.description || "Original request description unavailable.") +
+        "\n\nAlternative proposal details:\n" + alternativeDescription,
       quantity: Number(quote.quantity),
-      preferred_brand: brand || null
+      preferred_brand: brand || originalRequest?.preferred_brand || null,
+      product_id: quote.product_id || null
     };
-
-    if (quote.product_id) payload.product_id = quote.product_id;
 
     const { data, error } = await db.rpc("frosttech_submit_supplier_alternative_v1", {
       p_request_id: requestId,
