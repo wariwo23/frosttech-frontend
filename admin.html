@@ -3953,7 +3953,7 @@ function buildDirectQuotationItems() {
 }
 
 async function applyAcceptedAlternativeToDirectQuotation(
-    quotationId, requestId, itemPayload
+    requestId, itemPayload
 ) {
     const { data: proposals, error: proposalError } = await db.rpc(
         "frosttech_get_request_alternative_review_v1",
@@ -4087,7 +4087,6 @@ async function saveDirectDraftRecord() {
 
     let itemPayload = buildDirectQuotationItems();
     itemPayload = await applyAcceptedAlternativeToDirectQuotation(
-        savedId,
         values.request_id,
         itemPayload
     );
