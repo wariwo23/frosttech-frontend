@@ -1,0 +1,2077 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Guest Quotations | FrostTech</title>
+<meta name="description" content="Securely access FrostTech guest quotations and review alternative proposals.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+<style>
+:root{
+  --blue:#0759b8;
+  --dark:#063d7a;
+  --light:#eaf3ff;
+  --red:#b42318;
+  --text:#172033;
+  --muted:#64748b;
+  --border:#dce4ee;
+  --bg:#f4f7fb;
+}
+
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.6 Inter,Arial,sans-serif;
+}
+
+header{
+  background:var(--dark);
+  color:#fff;
+  padding:20px 16px;
+}
+
+.header-inner,main{
+  max-width:1000px;
+  margin:auto;
+}
+
+header h1{
+  margin:0;
+  font-size:23px;
+  font-weight:800;
+}
+
+header p{
+  margin:5px 0 0;
+  color:#d8e9ff;
+}
+
+main{padding:24px 14px 40px}
+
+.intro,.quotation-card,.notice{
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:18px;
+  margin-bottom:16px;
+}
+
+.intro h2{
+  margin:0 0 6px;
+  font-size:20px;
+}
+
+.intro p{margin:0;color:var(--muted)}
+
+.toolbar,.actions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  margin-top:16px;
+}
+
+button{
+  border:0;
+  border-radius:8px;
+  padding:12px 16px;
+  font:700 14px Inter,Arial,sans-serif;
+  text-align:center;
+  cursor:pointer;
+}
+
+.primary{background:var(--blue);color:#fff}
+.primary:hover{background:var(--dark)}
+.secondary{background:#e8eef6;color:var(--text)}
+.danger{background:var(--red);color:#fff}
+button:disabled{opacity:.6;cursor:not-allowed}
+
+.quotation-card h3{
+  margin:0 0 5px;
+  font-size:17px;
+  overflow-wrap:anywhere;
+}
+
+.reference{
+  color:var(--muted);
+  font-size:12px;
+  overflow-wrap:anywhere;
+}
+
+.status{
+  display:inline-block;
+  padding:5px 9px;
+  margin:10px 0;
+  border-radius:20px;
+  font-size:12px;
+  font-weight:700;
+  background:#fff2cc;
+  color:#805500;
+}
+
+.status-paid,.status-accepted{
+  background:#d9f7e5;
+  color:#11613a;
+}
+
+.status-declined,.status-error{
+  background:#fee4e2;
+  color:var(--red);
+}
+
+.fee-panel{
+  margin-top:15px;
+  padding:15px;
+  border-radius:10px;
+  background:var(--light);
+  border:1px solid #c8ddff;
+}
+
+.fee-panel p{margin:5px 0}
+
+.fee-amount{
+  font-size:22px;
+  font-weight:800;
+  color:var(--dark);
+}
+
+.details{
+  margin-top:16px;
+  padding-top:12px;
+  border-top:1px solid var(--border);
+}
+
+.detail-row{
+  display:flex;
+  justify-content:space-between;
+  gap:16px;
+  padding:8px 0;
+  border-bottom:1px solid #edf1f6;
+}
+
+.detail-row span:first-child{color:var(--muted)}
+
+.detail-row span:last-child{
+  text-align:right;
+  font-weight:600;
+  overflow-wrap:anywhere;
+}
+
+.total-row{
+  font-size:17px;
+  font-weight:800;
+  border-bottom:0;
+}
+
+.message{
+  padding:13px;
+  border-radius:8px;
+  background:#eaf3ff;
+  color:var(--dark);
+  margin-bottom:15px;
+  overflow-wrap:anywhere;
+}
+
+.message.error{background:#fee4e2;color:var(--red)}
+.message.success{background:#d9f7e5;color:#11613a}
+.hidden{display:none!important}
+.muted{color:var(--muted)}
+
+.decision-panel{
+  margin-top:18px;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fafcff;
+}
+
+.decision-panel h4{
+  margin:0 0 8px;
+  font-size:16px;
+}
+
+.terms{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin:14px 0;
+  line-height:1.6;
+}
+
+.terms input{
+  margin-top:5px;
+  min-width:18px;
+  min-height:18px;
+  cursor:pointer;
+}
+
+label{font-weight:500}
+
+textarea,select{
+  width:100%;
+  padding:11px;
+  border:1px solid #b9c7d8;
+  border-radius:8px;
+  font:14px Inter,Arial,sans-serif;
+  background:#fff;
+  margin-top:6px;
+}
+
+.field{margin:12px 0}
+.field label{display:block}
+
+/* Separate Terms and payment layout */
+
+.order-payment-panel{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:14px;
+  width:100%;
+  margin-top:18px;
+  padding:15px;
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:#fafcff;
+}
+
+.order-terms-checkbox{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  width:100%;
+  margin:0;
+  line-height:1.6;
+}
+
+.order-terms-checkbox input{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  min-width:18px;
+  min-height:18px;
+  margin:4px 0 0;
+  cursor:pointer;
+}
+
+.order-terms-link{
+  display:block;
+  width:100%;
+  padding:10px 0;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  color:var(--blue);
+  font-weight:700;
+  text-decoration:underline;
+  overflow-wrap:anywhere;
+}
+
+.order-payment-button{
+  display:block;
+  width:100%;
+  min-height:48px;
+  margin:0;
+  white-space:normal;
+}
+
+/* Customer quotation print control */
+.print-quotation-button{
+  margin-top:16px;
+  background:#0759b8;
+  color:#fff;
+}
+.print-quotation-button:hover{background:#063d7a}
+
+footer{
+  text-align:center;
+  padding:20px 14px;
+  color:var(--muted);
+  font-size:12px;
+}
+
+.ft-confirm-overlay{
+  position:fixed;
+  inset:0;
+  z-index:99999;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  background:rgba(0,0,0,.6);
+}
+
+.ft-confirm-box{
+  width:100%;
+  max-width:390px;
+  padding:23px;
+  border-radius:14px;
+  background:#fff;
+  box-shadow:0 10px 35px rgba(0,0,0,.3);
+  text-align:center;
+}
+
+.ft-confirm-title{
+  margin:0 0 18px;
+  color:var(--blue);
+  font-size:18px;
+  line-height:1.4;
+}
+
+.ft-confirm-question{
+  margin:0 0 12px;
+  color:#222;
+  font-size:18px;
+  font-weight:800;
+}
+
+.ft-confirm-details{
+  margin:0 0 22px;
+  color:#555;
+  font-size:14px;
+}
+
+.ft-confirm-actions{
+  display:flex;
+  justify-content:center;
+  gap:12px;
+}
+
+.ft-confirm-cancel{
+  background:#eee;
+  color:#222;
+  border:1px solid #ccc;
+}
+
+.ft-confirm-ok{
+  background:var(--blue);
+  color:#fff;
+}
+
+.ft-confirm-ok:hover{background:var(--dark)}
+
+@media(max-width:480px){
+  header h1{font-size:21px}
+
+  .quotation-card,.intro,.notice{padding:14px}
+
+  .detail-row{gap:10px}
+
+  .detail-row span:last-child{max-width:60%}
+
+  .toolbar button,.actions button{flex:1}
+
+  .order-payment-panel{padding:13px}
+
+  .order-payment-button{width:100%}
+
+  .ft-confirm-box{padding:20px}
+}
+
+/* Guest quotation access */
+.guest-access{background:#fff;border:1px solid var(--border);border-radius:12px;padding:18px;margin-bottom:16px}
+.guest-access h2{margin:0 0 6px;font-size:20px}
+.guest-access p{color:var(--muted);margin:5px 0 12px}
+.guest-access .field{margin:12px 0}
+.guest-access input{width:100%;min-height:46px;padding:11px;border:1px solid #b9c7d8;border-radius:8px;font:14px Inter,Arial,sans-serif}
+.guest-access .guest-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.guest-access .guest-actions button{flex:1}
+.guest-access .guest-alternative-card{
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:16px;
+  margin:16px 0;
+  background:#fff;
+}
+.guest-alternative-card h3{margin:0 0 8px;font-size:18px}
+.guest-alternative-item{border:1px solid #cbdcf1;border-radius:10px;padding:13px;margin-top:12px}
+.guest-alternative-item h4{margin:0 0 8px}
+.guest-alternative-item p{margin:6px 0;overflow-wrap:anywhere}
+.guest-alternative-note{font-size:13px;color:var(--muted)}
+.guest-alternative-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.guest-alternative-actions button{flex:1;min-width:130px}
+.guest-hint{font-size:12px;color:var(--muted)}
+.guest-access .guest-fee{margin-top:14px;padding:15px;background:var(--light);border:1px solid #c8ddff;border-radius:10px}
+.guest-access .guest-fee strong{display:block}
+.guest-access .guest-fee .fee-amount{font-size:22px;font-weight:800;color:var(--dark)}
+.guest-access .guest-terms{display:flex;align-items:flex-start;gap:10px;margin:14px 0}
+.guest-access .guest-terms input{width:18px;min-width:18px;height:18px;min-height:18px;margin-top:4px}
+.guest-access a{color:var(--blue);font-weight:700}
+.guest-decision-panel{margin-top:18px;padding:15px;border:1px solid var(--border);border-radius:10px;background:#fafcff}
+.guest-decision-panel select,.guest-decision-panel textarea{width:100%;padding:11px;border:1px solid #b9c7d8;border-radius:8px;font:14px Inter,Arial,sans-serif;background:#fff}
+.guest-decision-panel .guest-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+.guest-decision-panel .guest-actions button{flex:1;min-height:46px}
+.guest-order-terms{display:flex;align-items:flex-start;gap:10px;line-height:1.6}
+.guest-order-terms input{width:18px;min-width:18px;height:18px;min-height:18px;margin-top:4px}
+.guest-order-panel{margin-top:16px;padding:15px;border:1px solid #c8ddff;border-radius:10px;background:var(--light)}
+.guest-order-panel a{display:block;margin:10px 0;color:var(--blue);font-weight:700}
+@media(max-width:480px){.guest-access{padding:14px}.guest-access .guest-actions button{width:100%;flex-basis:100%}.guest-decision-panel .guest-actions button{width:100%;flex-basis:100%}}
+
+</style>
+</head>
+
+<body>
+<header>
+ <div class="header-inner">
+  <h1>FrostTech HVAC &amp; Refrigeration</h1>
+  <p>My Quotations</p>
+ </div>
+</header>
+
+<main>
+ <section class="intro">
+  <h2>Your Quotations</h2>
+  <p>Review your quotations, check their payment status, and respond to offers from FrostTech.</p>
+  <div class="toolbar">
+   <button id="refreshButton" class="primary" type="button">Refresh Quotations</button>
+   <button id="signOutButton" class="secondary" type="button">Sign Out</button>
+  </div>
+ </section>
+
+
+ <section id="guestAccessPanel" class="guest-access hidden">
+  <h2>Access a Guest Quotation</h2>
+  <p>You can review a quotation without creating an account. Enter the quotation reference and the email address originally supplied with your request.</p>
+  <div class="field">
+   <label for="guestQuotationNumber">Quotation reference</label>
+   <input id="guestQuotationNumber" type="text" maxlength="80" autocomplete="off" placeholder="e.g. FT-Q-..." required>
+  </div>
+  <div class="field">
+   <label for="guestEmail">Email address used for the quotation request</label>
+   <input id="guestEmail" type="email" maxlength="254" autocomplete="email" placeholder="you@example.com" required>
+  </div>
+  <div class="guest-actions">
+   <button id="guestSendCode" class="primary" type="button">Send Verification Code</button>
+  </div>
+  <div id="guestOtpArea" class="hidden">
+   <div class="field">
+    <label for="guestOtp">Six-digit email verification code</label>
+    <input id="guestOtp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="Enter verification code">
+   </div>
+   <div class="guest-actions">
+    <button id="guestVerifyCode" class="primary" type="button">Verify Email and Continue</button>
+    <button id="guestNewCode" class="secondary" type="button">Send Another Code</button>
+   </div>
+  </div>
+  <div id="guestQuotationResult" class="hidden"></div>
+  <p class="guest-hint">For security, the verification code expires after 10 minutes. Your quotation prices remain hidden until the administration fee is successfully verified.</p>
+ </section>
+
+ <div id="message" class="message hidden" role="status" aria-live="polite"></div>
+
+ <section id="quotationsContainer" aria-live="polite">
+  <div class="notice">Loading your quotations...</div>
+ </section>
+</main>
+
+<footer>
+ &copy; <span id="currentYear"></span> FrostTech HVAC and Refrigeration. All rights reserved.
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="supabase.js"></script>
+
+<script>
+(() => {
+"use strict";
+
+const db = window.supabaseClient;
+const container = document.getElementById("quotationsContainer");
+const messageBox = document.getElementById("message");
+const refreshButton = document.getElementById("refreshButton");
+const signOutButton = document.getElementById("signOutButton");
+const guestPanel = document.getElementById("guestAccessPanel");
+const guestResult = document.getElementById("guestQuotationResult");
+
+document.getElementById("currentYear").textContent = new Date().getFullYear();
+
+let currentSession = null;
+let paymentInProgress = false;
+let decisionInProgress = false;
+let cachedCustomerRecordId = null;
+let guestAccessToken = sessionStorage.getItem("ft_guest_quote_token") || "";
+let guestQuotationNumber = sessionStorage.getItem("ft_guest_quote_number") || "";
+let guestPaymentReference = sessionStorage.getItem("ft_guest_fee_reference") || "";
+let guestOrderPaymentReference = sessionStorage.getItem("ft_guest_order_reference") || "";
+
+/* General helpers */
+
+function showMessage(text, type = "info") {
+  messageBox.textContent = text;
+  messageBox.className = "message";
+  if (type === "error") messageBox.classList.add("error");
+  if (type === "success") messageBox.classList.add("success");
+}
+
+function hideMessage() {
+  messageBox.textContent = "";
+  messageBox.className = "message hidden";
+}
+
+function money(value) {
+  const n = Number(value);
+  if (value === null || value === undefined || value === "" || !Number.isFinite(n)) {
+    return "Amount unavailable";
+  }
+  return new Intl.NumberFormat("en-NG", {
+    style: "currency",
+    currency: "NGN",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2
+  }).format(n);
+}
+
+function displayDate(value) {
+  if (!value) return "Not specified";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return String(value);
+  return d.toLocaleDateString("en-NG", {
+    day: "numeric",
+    month: "short",
+    year: "numeric"
+  });
+}
+
+function addText(parent, tag, text, className = "") {
+  const element = document.createElement(tag);
+  element.textContent =
+    text === null || text === undefined || text === ""
+      ? "Not specified"
+      : String(text);
+  if (className) element.className = className;
+  parent.appendChild(element);
+  return element;
+}
+
+function addDetail(parent, label, value, total = false) {
+  const row = document.createElement("div");
+  row.className = "detail-row" + (total ? " total-row" : "");
+  addText(row, "span", label);
+  addText(row, "span", value);
+  parent.appendChild(row);
+}
+
+function withTimeout(promise, milliseconds, message) {
+  let timer;
+  const timeout = new Promise((resolve, reject) => {
+    timer = setTimeout(() => reject(new Error(message)), milliseconds);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
+/* Authentication */
+
+async function getSession() {
+  if (!db) {
+    throw new Error("Could not connect to Supabase. Check supabase.js.");
+  }
+
+  const { data, error } = await db.auth.getSession();
+  if (error) throw error;
+
+  if (!data.session) {
+    currentSession = null;
+    return null;
+  }
+
+  currentSession = data.session;
+  return currentSession;
+}
+
+/* Call an authenticated Edge Function */
+
+async function invokeFunction(name, body) {
+  if (!currentSession?.access_token) {
+    throw new Error("Your session has expired. Please sign in again.");
+  }
+
+  const { data, error } = await db.functions.invoke(name, {
+    body,
+    headers: {
+      Authorization: "Bearer " + currentSession.access_token
+    }
+  });
+
+  if (error) {
+    console.error(name + " failed:", error, data);
+
+    let errorMessage = data?.error || "";
+
+    if (!errorMessage && error.context instanceof Response) {
+      try {
+        const response = await error.context.clone().json();
+        errorMessage = response?.error || response?.message || "";
+      } catch (_) {
+        /* The response may not contain readable JSON. */
+      }
+    }
+
+    throw new Error(
+      errorMessage || "Supabase returned an error. Please try again."
+    );
+  }
+
+  if (!data || data.error || data.success === false) {
+    throw new Error(
+      data?.error || data?.message || "Unexpected service response."
+    );
+  }
+
+  return data;
+}
+
+/*
+ * orders.customer_id references customers.id, not auth.users.id.
+ * If the customer row cannot be accessed, stop safely rather than
+ * querying an order without the customer ownership filter.
+ */
+async function getCustomerRecordId() {
+  if (!currentSession?.user?.id) {
+    throw new Error("Please sign in again.");
+  }
+
+  if (cachedCustomerRecordId) return cachedCustomerRecordId;
+
+  const { data, error } = await withTimeout(
+    db.from("customers")
+      .select("id")
+      .eq("user_id", currentSession.user.id)
+      .maybeSingle(),
+    20000,
+    "Checking your customer record took too long. Please refresh and try again."
+  );
+
+  if (error) throw error;
+
+  if (!data?.id) {
+    throw new Error(
+      "Your FrostTech customer record could not be found or accessed. Please contact FrostTech support."
+    );
+  }
+
+  cachedCustomerRecordId = data.id;
+  return cachedCustomerRecordId;
+}
+
+/* FrostTech-branded accept confirmation */
+
+function frosttechConfirm() {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "ft-confirm-overlay";
+
+    const box = document.createElement("div");
+    box.className = "ft-confirm-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+
+    addText(box, "h3",
+      "FrostTech HVAC and Refrigeration Marketplace",
+      "ft-confirm-title");
+    addText(box, "p", "Accept offer?", "ft-confirm-question");
+    addText(box, "p",
+      "Do you agree to the quotation and its terms?",
+      "ft-confirm-details");
+
+    const buttons = document.createElement("div");
+    buttons.className = "ft-confirm-actions";
+
+    const cancel = addText(buttons, "button", "Cancel", "ft-confirm-cancel");
+    cancel.type = "button";
+
+    const confirm = addText(buttons, "button", "OK", "ft-confirm-ok");
+    confirm.type = "button";
+
+    let finished = false;
+
+    function finish(answer) {
+      if (finished) return;
+      finished = true;
+      document.removeEventListener("keydown", handleKeydown);
+      overlay.remove();
+      resolve(answer);
+    }
+
+    function handleKeydown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        finish(false);
+      }
+    }
+
+    cancel.addEventListener("click", () => finish(false));
+    confirm.addEventListener("click", () => finish(true));
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) finish(false);
+    });
+
+    box.appendChild(buttons);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    document.addEventListener("keydown", handleKeydown);
+    cancel.focus();
+  });
+}
+
+/* FrostTech-branded decline confirmation */
+
+function showDeclineConfirmation() {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "ft-confirm-overlay";
+
+    const dialog = document.createElement("div");
+    dialog.className = "ft-confirm-box";
+    dialog.setAttribute("role", "dialog");
+    dialog.setAttribute("aria-modal", "true");
+
+    addText(dialog, "h3",
+      "FrostTech HVAC & Refrigeration Marketplace",
+      "ft-confirm-title");
+    addText(dialog, "p",
+      "Are you sure you want to decline this offer?",
+      "ft-confirm-question");
+
+    const buttons = document.createElement("div");
+    buttons.className = "ft-confirm-actions";
+
+    const cancel = addText(buttons, "button", "Cancel", "ft-confirm-cancel");
+    cancel.type = "button";
+
+    const confirm = addText(
+      buttons, "button", "Yes, Decline Offer", "ft-confirm-ok"
+    );
+    confirm.type = "button";
+
+    let finished = false;
+
+    function finish(result) {
+      if (finished) return;
+      finished = true;
+      overlay.remove();
+      resolve(result);
+    }
+
+    cancel.addEventListener("click", () => finish(false));
+    confirm.addEventListener("click", () => finish(true));
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) finish(false);
+    });
+
+    dialog.appendChild(buttons);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+    cancel.focus();
+  });
+}
+
+/*
+ * Reading the Terms page is optional.
+ * Acceptance is taken directly from the customer's checkbox on this page.
+ * This function deliberately does not require a Terms-page visit.
+ */
+function readTermsAcceptance(purpose, reference) {
+  return false;
+}
+
+/* Verify Paystack returns; a redirect is not proof of payment */
+
+async function handlePaystackReturn() {
+  const params = new URLSearchParams(window.location.search);
+  const reference = params.get("reference") || params.get("trxref");
+
+  if (!reference) return;
+
+  window.history.replaceState({}, document.title, window.location.pathname);
+  showMessage("Checking your Paystack payment. Please wait.");
+
+  try {
+    const result = await invokeFunction(
+      "verify-paystack-payment",
+      { reference }
+    );
+
+    if (
+      result.success === true &&
+      (
+        result.payment_status === "success" ||
+        result.payment_status === "paid" ||
+        result.status === "paid"
+      )
+    ) {
+      showMessage(
+        "Payment verified successfully. Refreshing your quotation details.",
+        "success"
+      );
+    } else {
+      showMessage(
+        "A successful payment has not been confirmed. Your quotation remains locked until verification succeeds.",
+        "error"
+      );
+    }
+  } catch (error) {
+    console.error("Payment verification error:", error);
+    showMessage(
+      "We could not verify this payment yet. Your quotation remains locked. If you were charged, please contact FrostTech.",
+      "error"
+    );
+  }
+}
+
+/* Quotation awaiting administration-fee payment */
+
+function renderLockedQuotation(q) {
+  const card = document.createElement("article");
+  card.className = "quotation-card";
+
+  addText(card, "h3", q.quotation_number || "FrostTech Quotation");
+  addText(card, "div", "Quotation reference: " + q.id, "reference");
+  addText(card, "span", "Administration fee payment required", "status");
+  addDetail(card, "Quotation status", q.status || "Available");
+  addDetail(card, "Date issued", displayDate(q.created_at));
+  addDetail(card, "Valid until", displayDate(q.validity_date));
+
+  const panel = document.createElement("div");
+  panel.className = "fee-panel";
+  addText(panel, "strong", "Administration fee");
+  addText(panel, "p", money(q.administration_fee), "fee-amount");
+  addText(panel, "p",
+    "Agree to FrostTech’s pre-payment Terms and Conditions and complete the administration fee payment to unlock your full quotation for review and consideration.");
+
+  const termsLabel = document.createElement("label");
+  termsLabel.className = "terms";
+
+  const terms = document.createElement("input");
+  terms.type = "checkbox";
+  terms.checked = false;
+  terms.disabled = false;
+
+  const termsText = document.createElement("span");
+  termsText.textContent = "I agree to the Terms and Conditions?";
+
+  termsLabel.append(terms, termsText);
+  panel.appendChild(termsLabel);
+
+  const termsLink = document.createElement("a");
+  termsLink.href =
+    "terms.html?return=my-quotations.html&purpose=admin_fee&reference=" +
+    encodeURIComponent(q.id);
+  termsLink.textContent = "Read General Terms and Conditions";
+  panel.appendChild(termsLink);
+
+  const button = addText(panel, "button", "Pay Administration Fee", "primary");
+  button.type = "button";
+
+  button.addEventListener("click", async () => {
+    if (paymentInProgress) return;
+
+    if (!terms.checked) {
+      showMessage(
+        "Please agree to the Terms and Conditions before proceeding.",
+        "error"
+      );
+      terms.focus();
+      return;
+    }
+
+    paymentInProgress = true;
+    button.disabled = true;
+    button.textContent = "Recording acceptance...";
+
+    try {
+      await withTimeout(
+        getSession(),
+        25000,
+        "Checking your sign-in took too long. Please try again."
+      );
+
+      if (!currentSession) throw new Error("Please sign in again.");
+
+      const recorded = await withTimeout(
+        invokeFunction("record-prepayment-terms", {
+          quotation_id: q.id,
+          terms_accepted: true
+        }),
+        30000,
+        "Recording Terms acceptance timed out. Please refresh before trying again."
+      );
+
+      if (recorded.success === false) {
+        throw new Error(
+          recorded.error || "Terms acceptance could not be confirmed."
+        );
+      }
+
+      button.textContent = "Preparing secure payment...";
+
+      const result = await withTimeout(
+        invokeFunction("initialize-paystack-payment", {
+          quotation_id: q.id
+        }),
+        30000,
+        "Payment initialization timed out. Check your payment status before trying again."
+      );
+
+      if (result.success !== true || !result.authorization_url) {
+        throw new Error(
+          result.error || "Paystack could not initialize the payment."
+        );
+      }
+
+      window.location.assign(result.authorization_url);
+    } catch (error) {
+      console.error("Administration-fee payment initialization failed:", error);
+      showMessage(
+        error.message ||
+        "Unable to start the administration-fee payment. Please try again.",
+        "error"
+      );
+      button.disabled = false;
+      button.textContent = "Pay Administration Fee";
+      paymentInProgress = false;
+    }
+  });
+
+  panel.appendChild(button);
+  card.appendChild(panel);
+  return card;
+}
+
+/* Build a separate, printable customer quotation from server-returned values. */
+function escapePrintHtml(value) {
+  return String(value === null || value === undefined ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function printCustomerQuotation(q) {
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    showMessage("Allow pop-ups for this page, then select Print Quotation again.", "error");
+    return;
+  }
+
+  const rows = [
+    ["Product / Service", q.product_description],
+    ["Quantity", q.quantity],
+    ["Unit price", money(q.unit_price)],
+    ["Subtotal", money(q.subtotal)],
+    ["Additional charges", money(q.additional_charges)],
+    ["Discount", money(q.discount)],
+    ["Delivery", money(q.delivery_cost)]
+  ];
+
+  const rowHtml = rows.map(([label, value]) =>
+    "<tr><th>" + escapePrintHtml(label) + "</th><td>" +
+    escapePrintHtml(value === null || value === undefined || value === "" ? "Not specified" : value) +
+    "</td></tr>"
+  ).join("");
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech Quotation - ${escapePrintHtml(q.quotation_number || q.id)}</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:32px;color:#172033;font:14px/1.6 Arial,sans-serif;background:#f3f6fa}
+.sheet{max-width:850px;margin:0 auto;background:#fff;padding:42px;border:1px solid #dce4ee}
+.brand{background:#063d7a;color:#fff;padding:22px 26px}
+.brand h1{margin:0;font-size:24px;letter-spacing:.2px}
+.brand p{margin:4px 0 0;color:#d8e9ff}
+.heading{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;margin:28px 0 20px}
+.heading h2{margin:0;color:#063d7a;font-size:24px}
+.meta{text-align:right;color:#526176;font-size:12px;overflow-wrap:anywhere}
+table{width:100%;border-collapse:collapse;margin-top:18px}
+th,td{padding:12px;border-bottom:1px solid #e5eaf1;text-align:left;vertical-align:top}
+th{width:42%;color:#526176;font-weight:600}
+td{text-align:right;font-weight:600;overflow-wrap:anywhere}
+.total{margin-top:18px;padding:18px;background:#eaf3ff;border:1px solid #c8ddff;display:flex;justify-content:space-between;gap:12px;font-size:20px;font-weight:800;color:#063d7a}
+.validity{margin-top:20px;padding:14px;background:#f7f9fc;color:#526176}
+.footer{margin-top:34px;padding-top:14px;border-top:1px solid #dce4ee;color:#64748b;font-size:12px;text-align:center}
+.actions{max-width:850px;margin:16px auto;display:flex;gap:10px}
+button{border:0;border-radius:7px;padding:12px 18px;background:#0759b8;color:#fff;font-weight:700}
+@media(max-width:600px){body{padding:0}.sheet{padding:20px;border:0}.heading{display:block}.meta{text-align:left;margin-top:10px}.total{font-size:17px}}
+@media print{body{padding:0;background:#fff}.sheet{max-width:none;border:0;padding:18mm}.actions{display:none}}
+</style>
+</head>
+<body>
+<div class="sheet">
+  <div class="brand"><h1>FrostTech HVAC &amp; Refrigeration</h1><p>Professional HVAC and refrigeration solutions</p></div>
+  <div class="heading">
+    <div><h2>QUOTATION</h2><div>Customer quotation</div></div>
+    <div class="meta"><strong>Quotation No:</strong> ${escapePrintHtml(q.quotation_number || "Not specified")}<br><strong>Reference:</strong> ${escapePrintHtml(q.id || "Not specified")}<br><strong>Date issued:</strong> ${escapePrintHtml(displayDate(q.created_at))}</div>
+  </div>
+  <table><tbody>${rowHtml}</tbody></table>
+  <div class="total"><span>Total quotation amount</span><span>${escapePrintHtml(money(q.total_amount))}</span></div>
+  <div class="validity"><strong>Quotation validity:</strong> ${escapePrintHtml(displayDate(q.validity_date))}<br>Administration fee status: Paid</div>
+  <div class="footer">FrostTech HVAC and Refrigeration<br>This document reflects the quotation details issued by FrostTech. Please contact FrostTech if you require clarification.</div>
+</div>
+<div class="actions"><button type="button" onclick="window.print()">Print / Save as PDF</button><button type="button" onclick="window.close()">Close</button></div>
+</body>
+</html>`;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+/* Full quotation after administration fee payment */
+
+function renderUnlockedQuotation(q) {
+  const card = document.createElement("article");
+  card.className = "quotation-card";
+
+  addText(card, "h3", q.quotation_number || "FrostTech Quotation");
+  addText(card, "div", "Quotation reference: " + q.id, "reference");
+
+  const decision = String(q.customer_decision || "").toLowerCase();
+
+  if (decision === "accepted") {
+    addText(card, "span", "Offer accepted", "status status-accepted");
+    addText(card, "p",
+      "You accepted this offer. Any order payment is handled separately.",
+      "muted");
+  } else if (decision === "declined") {
+    addText(card, "span", "Offer declined", "status status-declined");
+    addText(card, "p",
+      "You declined this offer. Contact FrostTech if you need to discuss another offer.",
+      "muted");
+  } else {
+    addText(card, "span", "Administration fee paid", "status status-paid");
+  }
+
+  const details = document.createElement("div");
+  details.className = "details";
+
+  addDetail(details, "Product / Service", q.product_description);
+  addDetail(details, "Quantity", q.quantity);
+  addDetail(details, "Unit price", money(q.unit_price));
+  addDetail(details, "Subtotal", money(q.subtotal));
+  addDetail(details, "Additional charges", money(q.additional_charges));
+  addDetail(details, "Discount", money(q.discount));
+  addDetail(details, "Delivery", money(q.delivery_cost));
+  addDetail(details, "Total quotation amount", money(q.total_amount), true);
+  addDetail(details, "Valid until", displayDate(q.validity_date));
+  addDetail(details, "Date issued", displayDate(q.created_at));
+  addDetail(details, "Administration fee paid", money(q.administration_fee));
+  card.appendChild(details);
+
+  const printButton = addText(card, "button", "Print / Save Quotation as PDF", "print-quotation-button");
+  printButton.type = "button";
+  printButton.addEventListener("click", () => printCustomerQuotation(q));
+
+  if (decision === "accepted" || decision === "declined") {
+    if (q.customer_decision_at) {
+      addDetail(details, "Decision recorded", displayDate(q.customer_decision_at));
+    }
+
+    if (decision === "accepted") {
+      /* Separate Terms and payment controls */
+
+      const paymentPanel = document.createElement("section");
+      paymentPanel.className = "order-payment-panel";
+
+      const termsLabel = document.createElement("label");
+      termsLabel.className = "order-terms-checkbox";
+
+      const terms = document.createElement("input");
+      terms.type = "checkbox";
+      terms.checked = false;
+      terms.disabled = false;
+
+      const termsText = document.createElement("span");
+      termsText.textContent = "I agree to the Terms and Conditions?";
+
+      termsLabel.append(terms, termsText);
+      paymentPanel.appendChild(termsLabel);
+
+      const termsLink = document.createElement("a");
+      termsLink.className = "order-terms-link";
+      termsLink.href =
+        "terms.html?return=my-quotations.html&purpose=order_payment&reference=" +
+        encodeURIComponent(q.id);
+      termsLink.textContent = "Read General Terms and Conditions";
+      paymentPanel.appendChild(termsLink);
+
+      const payButton = addText(
+        paymentPanel,
+        "button",
+        "Order Payment",
+        "primary order-payment-button"
+      );
+      payButton.type = "button";
+
+      payButton.addEventListener("click", async () => {
+        if (paymentInProgress) return;
+
+        if (!terms.checked) {
+          showMessage(
+            "Please agree to the Terms and Conditions before proceeding to payment.",
+            "error"
+          );
+          terms.focus();
+          return;
+        }
+
+        paymentInProgress = true;
+        payButton.disabled = true;
+        payButton.textContent = "Recording Terms acceptance...";
+
+        try {
+          await withTimeout(
+            getSession(),
+            25000,
+            "Checking your sign-in took too long. Please try again."
+          );
+
+          if (!currentSession) throw new Error("Please sign in again.");
+
+          /*
+           * Get the actual customers.id. Never compare orders.customer_id
+           * with auth.users.id. If the customer row cannot be accessed,
+           * stop safely before proceeding.
+           */
+          const customerRecordId = await getCustomerRecordId();
+
+          const { data: order, error: orderError } = await withTimeout(
+            db.from("orders")
+              .select("id,status")
+              .eq("quotation_id", q.id)
+              .eq("customer_id", customerRecordId)
+              .maybeSingle(),
+            25000,
+            "Checking your order took too long. Refresh My Quotations before trying again."
+          );
+
+          if (orderError) throw orderError;
+
+          if (!order) {
+            throw new Error(
+              "The order could not be found or accessed. Please contact FrostTech support."
+            );
+          }
+
+          if (order.status !== "awaiting_payment") {
+            throw new Error("This order is not currently awaiting payment.");
+          }
+
+          /*
+           * First record the customer's explicit Terms acceptance.
+           * This function must not initialize or start a payment.
+           */
+          const recorded = await withTimeout(
+            invokeFunction("record-order-payment-terms", {
+              order_id: order.id,
+              terms_accepted: true
+            }),
+            30000,
+            "Recording Terms acceptance timed out. No payment was started. Refresh and check before trying again."
+          );
+
+          if (recorded.success !== true || recorded.recorded !== true) {
+            throw new Error(
+              recorded.error ||
+              recorded.message ||
+              "Terms acceptance could not be confirmed. No payment was started."
+            );
+          }
+
+          /* Only now request the existing payment initializer. */
+          payButton.textContent = "Preparing secure payment...";
+
+          const result = await withTimeout(
+            invokeFunction("initialize-paystack-payment", {
+              order_id: order.id,
+              order_payment_terms_accepted: true
+            }),
+            30000,
+            "Payment initialization timed out. Check My Quotations and your payment status before trying again."
+          );
+
+          if (!result.authorization_url) {
+            throw new Error(result.error || "Unable to start order payment.");
+          }
+
+          window.location.assign(result.authorization_url);
+        } catch (error) {
+          console.error("Order payment initialization failed:", error);
+          showMessage(
+            error.message ||
+            "Unable to start order payment. Check its status before retrying.",
+            "error"
+          );
+          payButton.disabled = false;
+          payButton.textContent = "Order Payment";
+          paymentInProgress = false;
+        }
+      });
+
+      card.appendChild(paymentPanel);
+    }
+
+    return card;
+  }
+
+  /* Offer response controls for a quotation awaiting a decision. */
+
+  if (String(q.status || "").toLowerCase() !== "submitted") {
+    addText(card, "p",
+      "This quotation is not currently open for a customer decision. Please contact FrostTech for assistance.",
+      "muted");
+    return card;
+  }
+
+  const panel = document.createElement("section");
+  panel.className = "decision-panel";
+  addText(panel, "h4", "Respond to this offer");
+  addText(panel, "p", "Review the quotation details above before making your decision.");
+
+  const termsLabel = document.createElement("label");
+  termsLabel.className = "terms";
+
+  const decisionTerms = document.createElement("input");
+  decisionTerms.type = "checkbox";
+
+  const termsText = document.createElement("span");
+  termsText.textContent =
+    "I have reviewed this quotation and agree to its quoted prices, stated validity period, applicable charges and delivery or installation terms. I understand that accepting the offer records my agreement to proceed but does not itself make payment or guarantee that an order payment has been completed.";
+
+  termsLabel.append(decisionTerms, termsText);
+  panel.appendChild(termsLabel);
+
+  const actions = document.createElement("div");
+  actions.className = "actions";
+
+  const accept = addText(actions, "button", "Accept Offer", "primary");
+  accept.type = "button";
+
+  const decline = addText(actions, "button", "Decline Offer", "danger");
+  decline.type = "button";
+
+  accept.addEventListener("click", async () => {
+    if (!decisionTerms.checked) {
+      showMessage(
+        "Please tick the terms and conditions checkbox before accepting this offer.",
+        "error"
+      );
+      decisionTerms.focus();
+      return;
+    }
+
+    if (decisionInProgress) return;
+    if (!(await frosttechConfirm())) return;
+
+    await submitDecision(
+      q.id, "accept", { terms_accepted: true }, accept, decline
+    );
+  });
+
+  const declinePanel = document.createElement("div");
+  declinePanel.className = "hidden";
+
+  const reasonField = document.createElement("div");
+  reasonField.className = "field";
+
+  const reasonLabel = addText(
+    reasonField, "label", "Reason for declining (required)"
+  );
+  reasonLabel.htmlFor = "declineReason";
+
+  const reason = document.createElement("select");
+  reason.id = "declineReason";
+
+  [
+    ["", "Select a reason"],
+    ["price", "Price is too high"],
+    ["delivery", "Delivery cost or timing"],
+    ["specification", "Product or service specification"],
+    ["validity", "Quotation validity or timing"],
+    ["other", "Other reason"]
+  ].forEach(([value, label]) => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = label;
+    reason.appendChild(option);
+  });
+
+  reasonField.appendChild(reason);
+
+  const commentsField = document.createElement("div");
+  commentsField.className = "field";
+
+  const commentsLabel = addText(
+    commentsField, "label", "Additional comments (optional)"
+  );
+  commentsLabel.htmlFor = "declineComments";
+
+  const comments = document.createElement("textarea");
+  comments.id = "declineComments";
+  comments.rows = 3;
+  comments.maxLength = 1000;
+  comments.placeholder = "Add any details you want FrostTech to know.";
+  commentsField.append(commentsLabel, comments);
+
+  const confirmDecline = addText(
+    document.createElement("div"), "button", "Confirm Decline", "danger"
+  );
+  confirmDecline.type = "button";
+
+  confirmDecline.addEventListener("click", async () => {
+    if (!reason.value) {
+      showMessage("Please select a reason for declining this offer.", "error");
+      reason.focus();
+      return;
+    }
+
+    if (!(await showDeclineConfirmation())) return;
+
+    await submitDecision(
+      q.id,
+      "decline",
+      {
+        decline_reason: reason.value,
+        decline_comments: comments.value.trim()
+      },
+      confirmDecline,
+      accept
+    );
+  });
+
+  const cancelDecline = addText(
+    document.createElement("button"), "button", "Cancel", "secondary"
+  );
+  cancelDecline.type = "button";
+  cancelDecline.addEventListener("click", () => {
+    declinePanel.classList.add("hidden");
+    decline.disabled = false;
+  });
+
+  const declineActions = document.createElement("div");
+  declineActions.className = "actions";
+  declineActions.append(confirmDecline, cancelDecline);
+
+  declinePanel.append(reasonField, commentsField, declineActions);
+  panel.appendChild(declinePanel);
+
+  decline.addEventListener("click", () => {
+    declinePanel.classList.remove("hidden");
+    decline.disabled = true;
+    reason.focus();
+  });
+
+  panel.appendChild(actions);
+  card.appendChild(panel);
+  return card;
+}
+
+/* Save customer acceptance or decline */
+
+async function submitDecision(
+  quotationId, decision, extra, button, otherButton
+) {
+  if (decisionInProgress) return;
+
+  decisionInProgress = true;
+  button.disabled = true;
+  if (otherButton) otherButton.disabled = true;
+
+  const originalText = button.textContent;
+  button.textContent = "Saving decision...";
+
+  try {
+    await getSession();
+    if (!currentSession) return;
+
+    const result = await invokeFunction("customer-quotation-decision", {
+      quotation_id: quotationId,
+      decision,
+      ...extra
+    });
+
+    showMessage(
+      result.message ||
+      (decision === "accept"
+        ? "Offer accepted successfully."
+        : "Offer declined successfully."),
+      "success"
+    );
+
+    await loadQuotations(true);
+  } catch (error) {
+    console.error("Saving quotation decision failed:", error);
+    showMessage(
+      error.message ||
+      "Your decision could not be saved. Please refresh and try again.",
+      "error"
+    );
+
+    button.disabled = false;
+    if (otherButton) otherButton.disabled = false;
+    button.textContent = originalText;
+  } finally {
+    decisionInProgress = false;
+  }
+}
+
+/* Guest quotation access — separate from registered-customer authentication */
+
+async function invokeGuestFunction(action, extra = {}, tokenOverride = guestAccessToken) {
+  const headers = tokenOverride ? { Authorization: "Bearer " + tokenOverride } : {};
+  const { data, error } = await db.functions.invoke("guest-quotation-access", {
+    body: { action, quotation_number: guestQuotationNumber || document.getElementById("guestQuotationNumber").value.trim(), ...extra },
+    headers
+  });
+  if (error) {
+    let detail = data?.error || "";
+    if (!detail && error.context instanceof Response) {
+      try { detail = (await error.context.clone().json())?.error || ""; } catch (_) {}
+    }
+    throw new Error(detail || "The guest quotation service could not complete the request.");
+  }
+  if (!data || data.error || data.success === false) throw new Error(data?.error || "Unexpected guest quotation response.");
+  return data;
+}
+
+function setGuestBusy(button, busy, label) {
+  if (!button) return;
+  button.disabled = busy;
+  if (label) button.textContent = label;
+}
+
+async function sendGuestCode() {
+  const number = document.getElementById("guestQuotationNumber").value.trim();
+  const email = document.getElementById("guestEmail").value.trim();
+  if (!number || !email) {
+    showMessage("Enter both the quotation reference and the original email address.", "error");
+    return;
+  }
+  guestQuotationNumber = number;
+  sessionStorage.setItem("ft_guest_quote_number", number);
+  const button = document.getElementById("guestSendCode");
+  setGuestBusy(button, true, "Sending...");
+  try {
+    const result = await invokeGuestFunction("send_otp", { email }, "");
+    document.getElementById("guestOtpArea").classList.remove("hidden");
+    showMessage(result.message || "If the quotation details match our records, a verification code will be sent.", "success");
+  } catch (error) {
+    showMessage(error.message || "Unable to send the verification code.", "error");
+  } finally {
+    setGuestBusy(button, false, "Send Verification Code");
+  }
+}
+
+async function verifyGuestCode() {
+  const number = document.getElementById("guestQuotationNumber").value.trim();
+  const otp = document.getElementById("guestOtp").value.trim();
+  if (!number || !/^\d{6}$/.test(otp)) {
+    showMessage("Enter the six-digit code sent to your email.", "error");
+    return;
+  }
+  guestQuotationNumber = number;
+  const button = document.getElementById("guestVerifyCode");
+  setGuestBusy(button, true, "Verifying...");
+  try {
+    const result = await invokeGuestFunction("verify_otp", { otp }, "");
+    if (!result.access_token) throw new Error("Secure guest access could not be established.");
+    guestAccessToken = result.access_token;
+    sessionStorage.setItem("ft_guest_quote_token", guestAccessToken);
+    sessionStorage.setItem("ft_guest_quote_number", guestQuotationNumber);
+    document.getElementById("guestOtpArea").classList.add("hidden");
+    await loadGuestQuotation();
+  } catch (error) {
+    showMessage(error.message || "Email verification failed.", "error");
+  } finally {
+    setGuestBusy(button, false, "Verify Email and Continue");
+  }
+}
+
+function renderGuestLocked(q) {
+  guestResult.replaceChildren();
+  guestResult.classList.remove("hidden");
+  const panel = document.createElement("div");
+  panel.className = "guest-fee";
+  addText(panel, "h3", "Quotation received");
+  addText(panel, "p", "Reference: " + q.quotation_number, "reference");
+  addDetail(panel, "Quotation status", q.status || "Submitted");
+  addDetail(panel, "Date issued", displayDate(q.created_at));
+  addText(panel, "strong", "Quotation Processing and Marketplace Administration Fee");
+  addText(panel, "p", money(q.admin_fee), "fee-amount");
+  addText(panel, "p", "Your full quotation details and prices will be available after this fee has been successfully paid and verified.");
+  const terms = document.createElement("label");
+  terms.className = "guest-terms";
+  const check = document.createElement("input");
+  check.type = "checkbox";
+  check.checked = !!q.prepayment_terms_accepted_at;
+  const span = document.createElement("span");
+  span.textContent = "I have read and agreed to the FrostTech General Terms and Conditions.";
+  terms.append(check, span);
+  panel.appendChild(terms);
+  const link = document.createElement("a");
+  link.href = "../terms.html";
+  link.target = "_blank";
+  link.rel = "noopener";
+  link.textContent = "Read General Terms and Conditions";
+  panel.appendChild(link);
+  const actions = document.createElement("div");
+  actions.className = "guest-actions";
+  const pay = addText(actions, "button", q.prepayment_terms_accepted_at ? "Pay Administration Fee" : "Accept Terms and Continue", "primary");
+  pay.type = "button";
+  pay.addEventListener("click", async () => {
+    if (!q.prepayment_terms_accepted_at && !check.checked) {
+      showMessage("Please accept the General Terms and Conditions before proceeding.", "error");
+      check.focus();
+      return;
+    }
+    setGuestBusy(pay, true, "Preparing secure payment...");
+    try {
+      if (!q.prepayment_terms_accepted_at) {
+        await invokeGuestFunction("accept_prepayment_terms", { terms_accepted: true });
+      }
+      const checkout = await invokeGuestFunction("initialize_fee_payment");
+      if (!checkout.authorization_url || !checkout.reference) throw new Error("Paystack did not return a valid checkout session.");
+      guestPaymentReference = checkout.reference;
+      sessionStorage.setItem("ft_guest_fee_reference", guestPaymentReference);
+      window.location.assign(checkout.authorization_url);
+    } catch (error) {
+      showMessage(error.message || "Unable to start administration-fee payment.", "error");
+      setGuestBusy(pay, false, q.prepayment_terms_accepted_at ? "Pay Administration Fee" : "Accept Terms and Continue");
+    }
+  });
+  panel.appendChild(actions);
+  guestResult.appendChild(panel);
+}
+
+function renderGuestUnlocked(q) {
+  guestResult.replaceChildren();
+  guestResult.classList.remove("hidden");
+  const card = document.createElement("article");
+  card.className = "quotation-card";
+  addText(card, "h3", q.quotation_number || "FrostTech Quotation");
+  addText(card, "div", "Guest quotation — email verified", "reference");
+  addText(card, "span", "Administration fee paid and verified", "status status-paid");
+  const details = document.createElement("div");
+  details.className = "details";
+  addDetail(details, "Product / Service", q.product_description);
+  addDetail(details, "Quantity", q.quantity);
+  addDetail(details, "Unit price", money(q.unit_price));
+  addDetail(details, "Subtotal", money(q.subtotal));
+  addDetail(details, "Additional charges", money(q.additional_charges));
+  addDetail(details, "Discount", money(q.discount));
+  addDetail(details, "Delivery", money(q.delivery_cost));
+  addDetail(details, "Total quotation amount", money(q.total_amount), true);
+  addDetail(details, "Valid until", displayDate(q.validity_date));
+  addDetail(details, "Date issued", displayDate(q.created_at));
+  addDetail(details, "Administration fee paid", money(q.admin_fee));
+  card.appendChild(details);
+  const print = addText(card, "button", "Print / Save Quotation as PDF", "print-quotation-button");
+  print.type = "button";
+  q.administration_fee = q.admin_fee;
+  print.addEventListener("click", () => printCustomerQuotation(q));
+
+  const decision = String(q.customer_decision || "").toLowerCase();
+  if (q.customer_decision_at) addDetail(details, "Decision recorded", displayDate(q.customer_decision_at));
+  if (decision === "declined") {
+    addText(card, "span", "Offer declined", "status status-declined");
+    addText(card, "p", "Your decision has been recorded. Contact FrostTech if you would like to discuss a revised offer.", "muted");
+  } else if (decision === "accepted") {
+    addText(card, "span", "Offer accepted", "status status-accepted");
+    const orderPanel = document.createElement("section");
+    orderPanel.className = "guest-order-panel";
+    addText(orderPanel, "h4", "Complete your order");
+    addText(orderPanel, "p", "Accept the General Terms and Conditions before proceeding to secure payment.");
+    const termsLabel = document.createElement("label");
+    termsLabel.className = "guest-order-terms";
+    const terms = document.createElement("input");
+    terms.type = "checkbox";
+    terms.checked = !!q.order_payment_terms_accepted_at;
+    const termsText = document.createElement("span");
+    termsText.textContent = "I have read and agreed to the FrostTech General Terms and Conditions for this order payment.";
+    termsLabel.append(terms, termsText);
+    orderPanel.appendChild(termsLabel);
+    const termsLink = document.createElement("a");
+    termsLink.href = "terms.html";
+    termsLink.target = "_blank";
+    termsLink.rel = "noopener";
+    termsLink.textContent = "Read General Terms and Conditions";
+    orderPanel.appendChild(termsLink);
+    const pay = addText(orderPanel, "button", "Proceed to Order Payment", "primary order-payment-button");
+    pay.type = "button";
+    pay.disabled = !!q.order_paid;
+    pay.addEventListener("click", async () => {
+      if (!terms.checked) {
+        showMessage("Please accept the General Terms and Conditions before proceeding to payment.", "error");
+        terms.focus();
+        return;
+      }
+      setGuestBusy(pay, true, "Preparing secure payment...");
+      try {
+        if (!q.order_payment_terms_accepted_at) await invokeGuestFunction("accept_order_terms", { terms_accepted: true });
+        const checkout = await invokeGuestFunction("initialize_order_payment");
+        if (!checkout.authorization_url || !checkout.reference) throw new Error("Paystack did not return a valid order payment session.");
+        guestOrderPaymentReference = checkout.reference;
+        sessionStorage.setItem("ft_guest_order_reference", guestOrderPaymentReference);
+        window.location.assign(checkout.authorization_url);
+      } catch (error) {
+        showMessage(error.message || "Unable to start order payment.", "error");
+        setGuestBusy(pay, false, "Proceed to Order Payment");
+      }
+    });
+    orderPanel.appendChild(pay);
+    if (q.order_paid) addText(orderPanel, "p", "Payment has been verified. FrostTech will review the guest order and arrange the next steps.", "muted");
+    card.appendChild(orderPanel);
+  } else {
+    const panel = document.createElement("section");
+    panel.className = "guest-decision-panel";
+    addText(panel, "h4", "Respond to this offer");
+    addText(panel, "p", "Please review the full quotation above before making your decision.");
+    const termsLabel = document.createElement("label");
+    termsLabel.className = "guest-order-terms";
+    const terms = document.createElement("input");
+    terms.type = "checkbox";
+    const termsText = document.createElement("span");
+    termsText.textContent = "I have reviewed this quotation and agree to its quoted prices, validity period, charges and delivery or installation terms.";
+    termsLabel.append(terms, termsText);
+    panel.appendChild(termsLabel);
+    const reason = document.createElement("select");
+    reason.innerHTML = '<option value="">Select a reason for declining</option><option value="price">Price is too high</option><option value="delivery">Delivery cost or timing</option><option value="specification">Product or service specification</option><option value="validity">Quotation validity or timing</option><option value="other">Other reason</option>';
+    reason.className = "hidden";
+    const comments = document.createElement("textarea");
+    comments.rows = 3;
+    comments.maxLength = 1000;
+    comments.placeholder = "Additional comments (optional)";
+    comments.className = "hidden";
+    const actions = document.createElement("div");
+    actions.className = "guest-actions";
+    const accept = addText(actions, "button", "Accept Offer", "primary");
+    accept.type = "button";
+    const decline = addText(actions, "button", "Decline Offer", "danger");
+    decline.type = "button";
+    const saveDecline = addText(panel, "button", "Confirm Decline", "danger");
+    saveDecline.type = "button";
+    saveDecline.classList.add("hidden");
+    const cancelDecline = addText(panel, "button", "Cancel", "secondary");
+    cancelDecline.type = "button";
+    cancelDecline.classList.add("hidden");
+    decline.addEventListener("click", () => {
+      reason.classList.remove("hidden"); comments.classList.remove("hidden");
+      saveDecline.classList.remove("hidden"); cancelDecline.classList.remove("hidden"); decline.disabled = true;
+    });
+    cancelDecline.addEventListener("click", () => {
+      reason.classList.add("hidden"); comments.classList.add("hidden");
+      saveDecline.classList.add("hidden"); cancelDecline.classList.add("hidden"); decline.disabled = false;
+    });
+    accept.addEventListener("click", async () => {
+      if (!terms.checked) { showMessage("Please confirm that you agree to the quotation and its terms.", "error"); terms.focus(); return; }
+      if (!(await frosttechConfirm())) return;
+      setGuestBusy(accept, true, "Recording acceptance..."); decline.disabled = true;
+      try {
+        await invokeGuestFunction("decide_offer", { decision: "accept", terms_accepted: true });
+        showMessage("Offer accepted. Your guest order is ready for payment.", "success");
+        await loadGuestQuotation();
+      } catch (error) {
+        showMessage(error.message || "Your acceptance could not be saved.", "error");
+        setGuestBusy(accept, false, "Accept Offer"); decline.disabled = false;
+      }
+    });
+    saveDecline.addEventListener("click", async () => {
+      if (!reason.value) { showMessage("Please select a reason for declining this offer.", "error"); reason.focus(); return; }
+      if (!(await showDeclineConfirmation())) return;
+      setGuestBusy(saveDecline, true, "Recording decision..."); accept.disabled = true;
+      try {
+        await invokeGuestFunction("decide_offer", { decision: "decline", decline_reason: reason.value, decline_comments: comments.value.trim() });
+        showMessage("Offer declined. Your reason has been recorded.", "success");
+        await loadGuestQuotation();
+      } catch (error) {
+        showMessage(error.message || "Your decline could not be saved.", "error");
+        setGuestBusy(saveDecline, false, "Confirm Decline"); accept.disabled = false;
+      }
+    });
+    panel.append(reason, comments, actions, saveDecline, cancelDecline);
+    card.appendChild(panel);
+  }
+  guestResult.appendChild(card);
+}
+
+async function guestAlternativeRequest(action, extra = {}) {
+  if (!guestAccessToken || !guestQuotationNumber) {
+    throw new Error("Verify your email before accessing alternative proposals.");
+  }
+
+  const { data, error } = await db.functions.invoke("guest-alternative-decision", {
+    body: {
+      action,
+      quotation_number: guestQuotationNumber,
+      ...extra
+    },
+    headers: { Authorization: "Bearer " + guestAccessToken }
+  });
+
+  if (error) {
+    let detail = data?.error || "";
+    if (!detail && error.context instanceof Response) {
+      try { detail = (await error.context.clone().json())?.error || ""; } catch (_) {}
+    }
+    throw new Error(detail || "The alternative proposal service could not complete the request.");
+  }
+  if (!data || data.error || data.success === false) {
+    throw new Error(data?.error || "The alternative proposal service returned an invalid response.");
+  }
+  return data;
+}
+
+function appendGuestField(parent, label, value) {
+  const p = document.createElement("p");
+  const strong = document.createElement("strong");
+  strong.textContent = label + ": ";
+  p.appendChild(strong);
+  p.appendChild(document.createTextNode(
+    value === null || value === undefined || value === "" ? "Not specified" : String(value)
+  ));
+  parent.appendChild(p);
+}
+
+function confirmGuestAlternativeDecision(decision) {
+  return new Promise(resolve => {
+    const overlay = document.createElement("div");
+    overlay.className = "ft-confirm-overlay";
+    const box = document.createElement("div");
+    box.className = "ft-confirm-box";
+    box.setAttribute("role", "dialog");
+    box.setAttribute("aria-modal", "true");
+    addText(box, "h3", "FrostTech HVAC and Refrigeration Marketplace", "ft-confirm-title");
+    addText(box, "p",
+      decision === "accepted" ? "Accept this alternative?" : "Reject this alternative?",
+      "ft-confirm-question");
+    addText(box, "p",
+      "Your original customer request remains unchanged. This decision applies only to this separate proposal.",
+      "ft-confirm-details");
+    const actions = document.createElement("div");
+    actions.className = "ft-confirm-actions";
+    const cancel = addText(actions, "button", "Cancel", "ft-confirm-cancel");
+    cancel.type = "button";
+    const confirm = addText(actions, "button",
+      decision === "accepted" ? "Yes, Accept Alternative" : "Yes, Reject Alternative",
+      "ft-confirm-ok");
+    confirm.type = "button";
+    const finish = value => { overlay.remove(); resolve(value); };
+    cancel.addEventListener("click", () => finish(false));
+    confirm.addEventListener("click", () => finish(true));
+    overlay.addEventListener("click", event => {
+      if (event.target === overlay) finish(false);
+    });
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+    cancel.focus();
+  });
+}
+
+async function decideGuestAlternative(proposalId, decision, button, otherButton) {
+  if (decisionInProgress) return;
+  if (!(await confirmGuestAlternativeDecision(decision))) return;
+
+  decisionInProgress = true;
+  setGuestBusy(button, true, "Recording decision...");
+  if (otherButton) otherButton.disabled = true;
+
+  try {
+    const result = await guestAlternativeRequest("decide", {
+      proposal_id: proposalId,
+      decision,
+      reason: ""
+    });
+    showMessage(result.message || "Your alternative decision has been recorded.", "success");
+    await loadGuestAlternatives();
+  } catch (error) {
+    showMessage(error.message || "Your decision could not be recorded.", "error");
+    setGuestBusy(button, false,
+      decision === "accepted" ? "Accept This Alternative" : "Reject Alternative");
+    if (otherButton) otherButton.disabled = false;
+  } finally {
+    decisionInProgress = false;
+  }
+}
+
+async function loadGuestAlternatives() {
+  const result = await guestAlternativeRequest("get_alternatives");
+  const panel = document.createElement("section");
+  panel.className = "guest-alternative-card";
+  addText(panel, "h3", "Your Original Request and Alternative Proposals");
+  addText(panel, "p",
+    "The original request below remains the reference. Any alternative is a separate suggestion and does not change what you originally asked for.",
+    "guest-alternative-note");
+
+  if (result.snapshot?.original_payload) {
+    const original = document.createElement("div");
+    original.className = "guest-original-request";
+    addText(original, "h4", "Your Original Customer Request");
+    if (result.snapshot.capture_type === "rollout_baseline_unverified") {
+      addText(original, "p",
+        "Historical baseline: the current record has been preserved, but FrostTech cannot independently certify that it is identical to the exact original submission.",
+        "guest-alternative-note");
+    }
+    const payload = result.snapshot.original_payload;
+    [
+      ["Requested item", "title"],
+      ["Original specifications", "description"],
+      ["Quantity", "quantity"],
+      ["Preferred brand", "preferred_brand"],
+      ["Budget", "budget"],
+      ["Delivery address", "delivery_address"],
+      ["Installation service", "installation_service"],
+      ["Installation kit quantity", "installation_kit_quantity"],
+      ["Outdoor bracket quantity", "outdoor_bracket_quantity"]
+    ].forEach(([label,key]) => {
+      if (Object.prototype.hasOwnProperty.call(payload, key)) {
+        appendGuestField(original, label, payload[key]);
+      }
+    });
+    panel.appendChild(original);
+  }
+
+  const decisions = new Map((result.decisions || []).map(item => [item.proposal_id, item]));
+  if (!result.proposals?.length) {
+    addText(panel, "p", "There are currently no alternative proposals for this request.", "guest-alternative-note");
+  } else {
+    for (const proposal of result.proposals) {
+      const item = document.createElement("article");
+      item.className = "guest-alternative-item";
+      addText(item, "h4",
+        "Alternative suggested by " +
+        (proposal.proposer_type === "supplier" ? "an approved supplier" : "FrostTech"));
+      appendGuestField(item, "Proposal version", proposal.version_number);
+      appendGuestField(item, "Reason", proposal.reason);
+
+      const payload = proposal.proposed_payload || {};
+      [
+        ["Proposed item", "title"],
+        ["Proposed specifications", "description"],
+        ["Proposed quantity", "quantity"],
+        ["Proposed brand", "preferred_brand"],
+        ["Installation service", "installation_service"],
+        ["Installation kit quantity", "installation_kit_quantity"],
+        ["Outdoor bracket quantity", "outdoor_bracket_quantity"]
+      ].forEach(([label,key]) => {
+        if (Object.prototype.hasOwnProperty.call(payload, key)) appendGuestField(item, label, payload[key]);
+      });
+
+      addText(item, "h4", "Differences from your original request");
+      const differences = proposal.differences || {};
+      const keys = Object.keys(differences);
+      if (!keys.length) {
+        addText(item, "p", "No specification differences were recorded.", "guest-alternative-note");
+      } else {
+        keys.forEach(key => {
+          const diff = differences[key] || {};
+          appendGuestField(item, key.replaceAll("_", " "),
+            String(diff.original ?? "Not specified") + " → " +
+            String(diff.proposed ?? "Not specified"));
+        });
+      }
+
+      const terms = proposal.commercial_terms || {};
+      addText(item, "h4", "Customer-facing price");
+      [
+        ["Unit price", "unit_price"],
+        ["Additional charges", "additional_charges"],
+        ["Discount", "discount"],
+        ["Delivery fee", "delivery_fee"],
+        ["Total customer price", "customer_total"]
+      ].forEach(([label,key]) => {
+        if (terms[key] !== undefined && terms[key] !== null) {
+          appendGuestField(item, label, money(terms[key]));
+        }
+      });
+      if (terms.availability) appendGuestField(item, "Availability", terms.availability);
+      if (terms.lead_time) appendGuestField(item, "Lead time", terms.lead_time);
+      if (terms.warranty) appendGuestField(item, "Warranty", terms.warranty);
+      if (terms.notes) appendGuestField(item, "Additional notes", terms.notes);
+
+      const savedDecision = decisions.get(proposal.id);
+      if (savedDecision) {
+        addText(item, "p",
+          "Your decision: " + savedDecision.decision.toUpperCase() +
+          " — " + displayDate(savedDecision.decided_at),
+          savedDecision.decision === "accepted" ? "status status-accepted" : "status status-declined");
+      } else {
+        addText(item, "p",
+          "You decide whether to accept or reject this alternative. The original request will not be overwritten.",
+          "guest-alternative-note");
+        const actions = document.createElement("div");
+        actions.className = "guest-alternative-actions";
+        const accept = addText(actions, "button", "Accept This Alternative", "primary");
+        accept.type = "button";
+        const reject = addText(actions, "button", "Reject Alternative", "secondary");
+        reject.type = "button";
+        accept.addEventListener("click", () =>
+          decideGuestAlternative(proposal.id, "accepted", accept, reject));
+        reject.addEventListener("click", () =>
+          decideGuestAlternative(proposal.id, "rejected", reject, accept));
+        item.appendChild(actions);
+      }
+
+      panel.appendChild(item);
+    }
+  }
+
+  const existing = guestResult.querySelector(".guest-alternative-card");
+  if (existing) existing.remove();
+  guestResult.appendChild(panel);
+}
+
+async function loadGuestQuotation() {
+  if (!guestAccessToken || !guestQuotationNumber) return;
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const returnedReference = params.get("reference") || params.get("trxref") || guestPaymentReference;
+    if (returnedReference && guestOrderPaymentReference && returnedReference === guestOrderPaymentReference) {
+      showMessage("Checking your guest order payment with Paystack...", "info");
+      await invokeGuestFunction("verify_order_payment", { reference: returnedReference });
+      sessionStorage.removeItem("ft_guest_order_reference");
+      guestOrderPaymentReference = "";
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    if (returnedReference && guestPaymentReference && returnedReference === guestPaymentReference) {
+      showMessage("Checking your guest administration-fee payment with Paystack...", "info");
+      await invokeGuestFunction("verify_fee_payment", { reference: returnedReference });
+      sessionStorage.removeItem("ft_guest_fee_reference");
+      guestPaymentReference = "";
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+    const result = await invokeGuestFunction("get_status");
+    if (!result.quotation) throw new Error("The guest quotation service returned an invalid response.");
+    const q = result.quotation;
+    if (q.details_unlocked === true || q.quotation_details_unlocked === true) {
+      // Guest order state is supplied by the token-protected server response.
+      // Do not query orders directly from the public browser session.
+      renderGuestUnlocked(q);
+      await loadGuestAlternatives();
+      showMessage("Your administration fee is verified. Your full quotation and any alternatives are now available.", "success");
+    } else {
+      renderGuestLocked(q);
+    }
+    container.replaceChildren();
+  } catch (error) {
+    console.error("Guest quotation load failed:", error);
+    showMessage(error.message || "Unable to load this guest quotation.", "error");
+    if (/expired|verify your email/i.test(error.message || "")) {
+      guestAccessToken = "";
+      sessionStorage.removeItem("ft_guest_quote_token");
+      guestResult.replaceChildren();
+      guestResult.classList.add("hidden");
+      document.getElementById("guestOtpArea").classList.remove("hidden");
+    }
+  }
+}
+
+document.getElementById("guestSendCode").addEventListener("click", sendGuestCode);
+document.getElementById("guestVerifyCode").addEventListener("click", verifyGuestCode);
+document.getElementById("guestNewCode").addEventListener("click", sendGuestCode);
+
+/* Load the customer's quotations */
+
+
+async function loadQuotations(keepMessage = false) {
+  if (!keepMessage) hideMessage();
+
+  refreshButton.disabled = true;
+  container.replaceChildren();
+  addText(container, "div", "Loading your quotations...", "notice");
+
+  try {
+    await getSession();
+    if (!currentSession) {
+      signOutButton.classList.add("hidden");
+      guestPanel.classList.remove("hidden");
+      refreshButton.textContent = "Refresh Quotations";
+      if (guestAccessToken && guestQuotationNumber) {
+        document.getElementById("guestQuotationNumber").value = guestQuotationNumber;
+        await loadGuestQuotation();
+      } else {
+        container.replaceChildren();
+        addText(container, "div", "Sign in to view registered-customer quotations, or use the guest access section above to retrieve a quotation without creating an account.", "notice");
+      }
+      return;
+    }
+
+    guestPanel.classList.add("hidden");
+    signOutButton.classList.remove("hidden");
+    await handlePaystackReturn();
+
+    const result = await invokeFunction("get-customer-quotations", {});
+
+    if (!Array.isArray(result.quotations)) {
+      throw new Error("The quotation service returned an invalid response.");
+    }
+
+    container.replaceChildren();
+
+    if (result.quotations.length === 0) {
+      addText(container, "div",
+        "You do not have any quotations available yet.", "notice");
+      return;
+    }
+
+    for (const q of result.quotations) {
+      /*
+       * Support both field names seen in the quotation response.
+       * The server's payment verification remains authoritative.
+       */
+      const unlocked =
+        q.quotation_details_unlocked === true ||
+        q.details_unlocked === true;
+
+      container.appendChild(
+        unlocked ? renderUnlockedQuotation(q) : renderLockedQuotation(q)
+      );
+    }
+  } catch (error) {
+    console.error("Loading quotations failed:", error);
+    container.replaceChildren();
+    addText(
+      container, "div",
+      error.message || "Unable to load your quotations.", "notice"
+    );
+    showMessage(
+      "We could not load your quotations. Please refresh the page or sign in again.",
+      "error"
+    );
+  } finally {
+    refreshButton.disabled = false;
+  }
+}
+
+/* Page controls */
+
+refreshButton.addEventListener("click", () => loadQuotations());
+
+signOutButton.addEventListener("click", async () => {
+  signOutButton.disabled = true;
+
+  try {
+    const { error } = await db.auth.signOut();
+    if (error) throw error;
+    window.location.href = "customer-login.html";
+  } catch (error) {
+    console.error("Sign out failed:", error);
+    showMessage("Unable to sign out. Please try again.", "error");
+    signOutButton.disabled = false;
+  }
+});
+
+/* Start the page */
+
+loadQuotations();
+
+})();
+</script>
+</body>
+</html>
