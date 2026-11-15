@@ -1461,6 +1461,10 @@ function appendProposal(card, proposal, decision) {
     status.textContent = "Your decision: " + decision.decision.toUpperCase() +
       " — " + displayDate(decision.decided_at);
     panel.appendChild(status);
+  } else if (terms.pricing_locked === true) {
+    addText(panel, "p",
+      "You can review the alternative specifications now. The price must be unlocked before you can accept or reject this proposal.",
+      "request-integrity-note");
   } else {
     addText(panel, "p",
       "This proposal does not replace your original request. Your choice is required before FrostTech treats it as accepted.",
