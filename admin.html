@@ -3952,6 +3952,96 @@ function buildDirectQuotationItems() {
     return items;
 }
 
+async function applyAcceptedAlternativeToDirectQuotation(quotationId, requestId) {
+    const { data: proposals, error: proposalError } = await db.rpc(
+        "frosttech_get_request_alternative_review_v1",
+        { p_request_id: requestId }
+    );
+    if (proposalError) throw proposalError;
+
+    const accepted = (Array.isArray(proposals) ? proposals : []).filter(
+        proposal => String(proposal.decision || "").toLowerCase() === "accepted"
+    );
+    if (!accepted.length) return;
+
+    const { data: existingItems, error: itemError } = await db
+        .from("admin_quotation_items")
+        .select("id,source_proposal_id")
+        .eq("quotation_id", quotationId);
+    if (itemError) throw itemError;
+
+    const linked = new Set((existingItems || [])
+        .map(item => item.source_proposal_id)
+        .filter(Boolean));
+
+    for (const proposal of accepted) {
+        if (linked.has(proposal.id)) continue;
+
+        const payload = proposal.proposed_payload || {};
+        const commercial = proposal.commercial_terms || {};
+        const quantity = Number(commercial.quantity ?? payload.quantity ?? 1);
+        const unitPrice = Number(
+            commercial.unit_price ??
+            commercial.customer_unit_price ??
+            commercial.selling_price ??
+            0
+        );
+        const description = String(
+            payload.title || payload.product_description ||
+            payload.description || "Customer-approved alternative"
+        ).trim();
+
+        if (!description || !Number.isFinite(quantity) || quantity <= 0 ||
+            !Number.isFinite(unitPrice) || unitPrice <= 0) {
+            throw new Error(
+                "A customer-approved alternative needs a verified item description, quantity and customer unit price before this quotation can be submitted."
+            );
+        }
+
+        const sourceItem = (existingItems || []).find(
+            item => !item.source_proposal_id
+        );
+
+        const itemPayload = {
+            item_type: "product",
+            product_id: null,
+            description,
+            specifications: {
+                proposal_reason: proposal.reason || null,
+                proposal_differences: proposal.differences || null,
+                preferred_brand: payload.preferred_brand || null,
+                original_request_preserved: true
+            },
+            unit: String(payload.unit || commercial.unit || "unit"),
+            quantity,
+            unit_price: Number(unitPrice.toFixed(2)),
+            sort_order: (existingItems || []).length,
+            source_proposal_id: proposal.id,
+            replaces_item_id: sourceItem?.id || null
+        };
+
+        const { data: saved, error: saveError } = await db.rpc(
+            "admin_replace_direct_quotation_items_v2",
+            {
+                p_quotation_id: quotationId,
+                p_items: [...(existingItems || []).map((item, index) => ({
+                    ...item,
+                    sort_order: index
+                })).filter(item => item.description), itemPayload]
+            }
+        );
+        if (saveError) throw saveError;
+        if (!saved?.success) {
+            throw new Error("FrostTech could not link the accepted alternative to the quotation.");
+        }
+        existingItems.push({
+            id: saved.items?.find(item => item.source_proposal_id === proposal.id)?.id || null,
+            source_proposal_id: proposal.id
+        });
+        linked.add(proposal.id);
+    }
+}
+
 async function saveDirectDraftRecord() {
     await requireAdmin();
 
@@ -3991,6 +4081,10 @@ async function saveDirectDraftRecord() {
     }
 
     const itemPayload = buildDirectQuotationItems();
+    await applyAcceptedAlternativeToDirectQuotation(
+        savedId,
+        values.request_id
+    );
     const { data: itemSaveResult, error: itemSaveError } = await db.rpc(
         "admin_replace_direct_quotation_items_v2",
         {
