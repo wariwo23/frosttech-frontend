@@ -14,7 +14,7 @@ This branch contains an implementation draft only. It has not been deployed and 
 - Public sender claim RPC may claim only pending, never-attempted events. Failed and stale-sending events cannot be reclaimed by the public workflow.
 - Recovery accepts only failed events, requires explicit confirmation and a reason, locks the event, preserves its event key/recipient/payload, and writes start/result audit entries to `admin_activity_log`.
 - Recovery is hard-disabled unless the server-side secret `FROSTTECH_EMAIL_RECOVERY_DOMAIN_READY=true` is explicitly configured after the user releases the sending-domain hold. No such secret has been set.
-- Only definitive provider 401/403 authorization failures are eligible after configuration is corrected; network/unknown outcomes and other status codes remain blocked.
+- Only definitive provider 401/403 authorization failures are eligible after configuration is corrected; network/unknown outcomes and other status codes remain blocked. Historical records are recognized only when their stored error contains the known Resend test-domain rejection wording.
 - Viewing records does not send email. A retry requires an explicit action from the Notification Centre.
 - The recovery function reconstructs the original event-specific subject and message from the saved event key/payload; it does not accept a replacement recipient or payload from the browser.
 - If provider acceptance cannot be recorded, the endpoint returns an uncertain outcome. Do not retry until reconciled.
