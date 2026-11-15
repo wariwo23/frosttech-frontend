@@ -203,7 +203,7 @@ BEGIN
   IF auth.uid() IS NULL OR NOT public.is_super_admin() THEN
     RAISE EXCEPTION 'Super Administrator access required';
   END IF;
-  IF p_status NOT IN ('sent','failed') THEN
+  IF p_status IS NULL OR p_status NOT IN ('sent','failed') THEN
     RAISE EXCEPTION 'Invalid recovery result';
   END IF;
 
