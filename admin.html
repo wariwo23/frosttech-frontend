@@ -1627,19 +1627,17 @@ footer {
   </div>
   <div id="ftNotificationRows"><p>Select Refresh to load notification records.</p></div>
   <div id="ftRecoveryPanel" class="ft-modal hidden" role="dialog" aria-modal="true" aria-labelledby="ftRecoveryTitle">
-    <div class="ft-modal-content">
-      <h3 id="ftRecoveryTitle">FrostTech Notification Recovery</h3>
-      <p id="ftRecoveryDescription">Review the selected failed notification before authorizing recovery.</p>
+    <div class="ft-modal-box">
+      <div class="ft-modal-header"><h2 id="ftRecoveryTitle">FrostTech Notification Recovery</h2></div>
+      <div class="ft-modal-body"><p id="ftRecoveryDescription">Review the selected failed notification before authorizing recovery.</p>
       <label for="ftRecoveryReason">Reason for recovery</label>
       <textarea id="ftRecoveryReason" rows="4" maxlength="1000" placeholder="Explain why this notification should be retried."></textarea>
       <label style="display:flex;gap:8px;align-items:flex-start;margin:12px 0">
         <input type="checkbox" id="ftRecoveryConfirm">
         <span>I authorize one controlled recovery attempt for this failed notification.</span>
       </label>
-      <div class="record-actions">
-        <button type="button" class="neutral" id="ftCancelRecovery">Cancel</button>
-        <button type="button" id="ftConfirmRecovery">Authorize Recovery</button>
       </div>
+      <div class="ft-modal-actions"><button type="button" class="ft-cancel" id="ftCancelRecovery">Cancel</button><button type="button" id="ftConfirmRecovery">Authorize Recovery</button></div>
     </div>
   </div>
 </section>
