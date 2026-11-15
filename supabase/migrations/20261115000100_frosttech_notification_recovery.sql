@@ -166,7 +166,7 @@ BEGIN
      ) THEN
     v_provider_status := '403';
   END IF;
-  IF v_provider_status NOT IN ('401','403') THEN
+  IF v_provider_status IS NULL OR v_provider_status NOT IN ('401','403') THEN
     RAISE EXCEPTION 'Recovery blocked: only a definitive provider authentication/authorization rejection can be reconsidered after configuration is corrected';
   END IF;
 
