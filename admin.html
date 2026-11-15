@@ -2943,9 +2943,13 @@ async function openFrostTechAlternativeForm(requestId) {
         try {
             const payload = {
                 title,
-                description,
+                description:
+                    "Original customer requirements (preserved):\n" +
+                    (request.description || "Original request description unavailable.") +
+                    "\n\nAlternative proposal details:\n" + description,
                 quantity: Number(quotation.quantity),
-                preferred_brand: brand || null
+                preferred_brand: brand || request.preferred_brand || null,
+                product_id: null
             };
 
             const { data, error: submitError } = await db.rpc(
