@@ -89,7 +89,7 @@ Deno.serve(async (req: Request) => {
       return respond({ error: beginError.message }, status, origin);
     }
 
-    // Do not change recipient, event key, or payload. Reuse the original stable idempotency key.
+    // Preserve recipient, event key, and payload; use a distinct idempotency key for each authorized recovery attempt.
     let result: Record<string, unknown> = {};
     let finalStatus: "sent" | "failed" = "failed";
     let errorText: string | null = null;
