@@ -1433,6 +1433,11 @@ function appendProposal(card, proposal, decision) {
 
   const terms = proposal.commercial_terms || {};
   addText(panel, "h4", "Price and commercial terms");
+  if (terms.pricing_locked === true) {
+    addText(panel, "p",
+      "Alternative pricing and commercial charges will be shown after the quotation processing and marketplace administration fee is verified.",
+      "request-integrity-note");
+  }
   const moneyKeys = [
     ["unit_price", "Unit price"],
     ["additional_charges", "Additional charges"],
