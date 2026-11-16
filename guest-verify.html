@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#063b70"><title>Verify Guest Email | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:20px;background:#f1f5f9;color:#183153;font-family:Arial,sans-serif}
+.card{max-width:500px;margin:50px auto;padding:30px;background:#fff;border-radius:16px;box-shadow:0 8px 30px #0b31531a;text-align:center}
+h1{color:#075985;margin-top:0}p{line-height:1.7;color:#64748b}
+#message{margin-top:18px;padding:14px;border-radius:8px;background:#eff6ff;color:#1e40af;overflow-wrap:anywhere}
+a{display:inline-block;margin-top:20px;color:#075985;font-weight:700}
+</style>
+</head>
+<body><main class="card"><h1>❄ FrostTech</h1><h2>Verifying Your Guest Email</h2><p id="message" role="status" aria-live="polite">Please wait while FrostTech verifies your email address...</p><a id="homeLink" href="index.html">Return to Homepage</a></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script>
+<script>
+"use strict";
+(async function(){
+const message=document.getElementById("message");
+const client=window.supabaseClient;
+function fail(text){message.textContent=text;}
+try{
+if(!client||!client.auth)throw new Error("The verification service could not load. Please reopen the confirmation link.");
+const {data,error}=await client.auth.getSession();
+if(error)throw error;
+if(!data.session)throw new Error("Your email confirmation link is invalid or has expired. Please register again or request a new confirmation email.");
+const {data:userData,error:userError}=await client.auth.getUser();
+if(userError||!userData.user)throw new Error("FrostTech could not verify this guest identity. Please try again.");
+if(!userData.user.email_confirmed_at)throw new Error("Your email address has not yet been confirmed. Please use the latest confirmation email.");
+if(userData.user.user_metadata?.account_type!=="guest")throw new Error("This confirmation is not for a FrostTech Guest registration.");
+const {error:activationError}=await client.functions.invoke("guest-activate");
+if(activationError)throw activationError;
+message.textContent="Email verified successfully. Opening your FrostTech quotation request...";
+window.location.replace("quote-form.html?mode=guest");
+}catch(error){
+console.error("FrostTech guest verification failed:",error);
+fail(error.message||"Verification could not be completed. Please contact FrostTech support if the problem continues.");
+}
+})();
+</script></body></html>
