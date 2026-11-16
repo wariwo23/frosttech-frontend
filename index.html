@@ -2411,92 +2411,31 @@
 
 
     /* ==========================================
-       CUSTOMER LOGIN / LOGOUT
+       PUBLIC HOMEPAGE ACCOUNT NAVIGATION
     ========================================== */
 
-    async function updateCustomerNavigation() {
-      const loginButtons =
-        document.querySelectorAll(".customer-login-btn");
-
-      const registerButtons =
-        document.querySelectorAll(".create-account-btn");
-
-      try {
-        const { data, error } =
-          await window.supabaseClient.auth.getSession();
-
-        if (error) {
-          console.error("Unable to check customer session:", error.message);
-          return;
-        }
-
-        const session = data.session;
-
-        if (session) {
-          loginButtons.forEach(function (button) {
-            button.textContent = "Sign Out";
-            button.href = "#sign-out";
-            button.setAttribute("aria-label", "Sign out of your account");
-          });
-
-          registerButtons.forEach(function (button) {
-            button.style.display = "none";
-          });
-        } else {
-          loginButtons.forEach(function (button) {
-            button.textContent = "Sign In";
-            button.href = "customer-login.html";
-            button.removeAttribute("aria-label");
-          });
-
-          registerButtons.forEach(function (button) {
-            button.style.display = "";
-          });
-        }
-
-      } catch (error) {
-        console.error("Customer navigation error:", error);
-      }
-    }
+    /*
+     * The public homepage is a neutral entry point.
+     * Always show the customer sign-in and registration links here.
+     *
+     * Do not infer that the current visitor should see "Sign Out"
+     * merely because this browser has a persisted Supabase session.
+     *
+     * This change does not clear, replace, or modify any auth session.
+     * Authenticated account pages retain responsibility for account
+     * identity and sign-out controls.
+     */
 
     document.querySelectorAll(".customer-login-btn").forEach(function (button) {
-      button.addEventListener("click", async function (event) {
-        if (button.getAttribute("href") !== "#sign-out") {
-          return;
-        }
-
-        event.preventDefault();
-        button.textContent = "Signing out...";
-
-        try {
-          const { error } =
-            await window.supabaseClient.auth.signOut();
-
-          if (error) {
-            console.error("Sign-out error:", error.message);
-            button.textContent = "Sign Out";
-            showFrostTechMessage(
-              "Unable to sign out. Please try again."
-            );
-            return;
-          }
-
-          window.location.href = "index.html";
-
-        } catch (error) {
-          console.error("Sign-out error:", error);
-          button.textContent = "Sign Out";
-          showFrostTechMessage(
-            "Unable to sign out. Please try again."
-          );
-        }
-      });
+      button.textContent = "Sign In";
+      button.href = "customer-login.html";
+      button.removeAttribute("aria-label");
     });
 
-    updateCustomerNavigation();
-
-    window.supabaseClient.auth.onAuthStateChange(function () {
-      updateCustomerNavigation();
+    document.querySelectorAll(".create-account-btn").forEach(function (button) {
+      button.textContent = "Create Account";
+      button.href = "customer-register.html";
+      button.style.display = "";
     });
 
 
