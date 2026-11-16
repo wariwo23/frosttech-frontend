@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#063b70">
+<title>Guest Registration | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:18px;background:#f1f5f9;color:#183153;font-family:Arial,sans-serif}
+.card{max-width:480px;margin:28px auto;padding:28px;background:#fff;border-radius:16px;box-shadow:0 8px 30px #0b31531a}
+.brand{text-align:center;margin-bottom:24px}.brand h1{margin:0;color:#075985;font-size:29px}.brand p{margin:7px 0 0;color:#64748b;font-size:14px}
+h2{margin:0 0 10px;font-size:23px}.intro{color:#64748b;line-height:1.65;font-size:14px}
+label{display:block;margin-top:16px;font-size:14px;font-weight:700}input{width:100%;margin-top:7px;padding:14px;border:1px solid #cbd5e1;border-radius:8px;font-size:16px}
+input:focus{outline:2px solid #bae6fd;border-color:#075985}
+button,.link-button{display:block;width:100%;margin-top:22px;padding:15px;border:0;border-radius:8px;background:#075985;color:#fff;font-size:16px;font-weight:700;text-align:center;text-decoration:none;cursor:pointer}
+button:disabled{opacity:.6;cursor:not-allowed}.secondary{margin-top:12px;background:#e2e8f0;color:#183153}
+#message{display:none;margin-top:18px;padding:13px;border-radius:8px;font-size:14px;line-height:1.6;overflow-wrap:anywhere}
+#message.success{display:block;background:#dcfce7;color:#166534}#message.error{display:block;background:#fee2e2;color:#991b1b}#message.info{display:block;background:#eff6ff;color:#1e40af}
+.links{text-align:center;margin-top:22px;font-size:14px;line-height:2.2}.links a{color:#075985;font-weight:700}
+.note{margin-top:16px;color:#64748b;font-size:12px;line-height:1.6}
+</style>
+</head>
+<body>
+<main class="card">
+<header class="brand"><h1>❄ FrostTech</h1><p>HVAC and Refrigeration Marketplace</p></header>
+<h2>Continue as a Guest</h2>
+<p class="intro">Create a separate guest identity to verify your email and submit a quotation request. This is not a FrostTech customer account and does not create access to customer account features.</p>
+<form id="guestForm">
+<label for="fullName">Full name *</label><input id="fullName" name="fullName" type="text" maxlength="150" autocomplete="name" required>
+<label for="phone">Phone / WhatsApp number *</label><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" required>
+<label for="email">Email address *</label><input id="email" name="email" type="email" maxlength="254" autocomplete="email" required>
+<label for="password">Create a password *</label><input id="password" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required>
+<button id="submitButton" type="submit">Verify Email and Continue</button>
+</form>
+<div id="message" role="status" aria-live="polite"></div>
+<p class="note">Your password is managed securely by Supabase Authentication. FrostTech will not store your password in the quotation record. You must verify your email before submitting your request.</p>
+<div class="links"><p>Already have a customer account? <a href="customer-login.html">Sign In</a></p><p><a href="customer-register.html">Create a Customer Account</a></p><p><a href="index.html">Return to Homepage</a></p></div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+"use strict";
+(function(){
+const form=document.getElementById("guestForm");
+const button=document.getElementById("submitButton");
+const message=document.getElementById("message");
+function show(text,type){message.textContent=text;message.className=type;message.style.display="block";}
+form.addEventListener("submit",async function(event){
+event.preventDefault();
+const client=window.supabaseClient;
+if(!client||!client.auth){show("FrostTech could not connect to the guest registration service. Please refresh and try again.","error");return;}
+const fullName=document.getElementById("fullName").value.trim();
+const phone=document.getElementById("phone").value.trim();
+const email=document.getElementById("email").value.trim().toLowerCase();
+const password=document.getElementById("password").value;
+if(!fullName||!phone||!email){show("Please complete your name, phone number and email address.","error");return;}
+if(password.length<8){show("Your password must contain at least 8 characters.","error");return;}
+button.disabled=true;button.textContent="Creating Guest Identity...";
+try{
+const redirect=new URL("guest-verify.html",window.location.href);
+const {data:intent,error:intentError}=await client.functions.invoke("guest-registration-intent",{body:{full_name:fullName,phone:phone,email:email}});
+if(intentError||!intent?.ok||!intent?.registration_token){
+throw new Error(intentError?.message||"FrostTech could not prepare your Guest registration. Please try again.");
+}
+const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:redirect.href,data:{account_type:"guest",full_name:fullName,phone:phone,guest_registration_token:intent.registration_token}}});
+if(error)throw error;
+if(data&&data.session){
+const activated=await client.functions.invoke("guest-activate");
+if(activated.error)throw activated.error;
+show("Your guest identity is verified. Opening the quotation form...","success");
+window.location.replace("quote-form.html?mode=guest");
+return;
+}
+show("Guest registration started. Please open the verification email sent to "+email+". After you confirm your email, FrostTech will open your quotation form. If you do not see the email, check your spam folder.","success");
+form.reset();
+}catch(error){
+console.error("FrostTech guest registration failed:",error);
+show(error.message||"We could not create your guest identity. Please try again.","error");
+}finally{
+button.disabled=false;button.textContent="Verify Email and Continue";
+}
+});
+})();
+</script>
+</body>
+</html>

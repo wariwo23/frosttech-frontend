@@ -1430,7 +1430,17 @@ async function getOptionalCustomer() {
     );
   }
 
-  if (!session) return null;
+  const guestMode =
+    new URLSearchParams(window.location.search).get("mode") === "guest";
+
+  if (!session) {
+    if (guestMode) {
+      throw new Error(
+        "Please complete Guest registration and verify your email before submitting a quotation."
+      );
+    }
+    return null;
+  }
 
   const {
     data: { user },
@@ -1439,7 +1449,32 @@ async function getOptionalCustomer() {
 
   if (authError || !user) {
     throw new Error(
-      "We could not verify your customer login. Please sign in again."
+      "We could not verify your login. Please sign in again."
+    );
+  }
+
+  if (guestMode) {
+    if (
+      user.app_metadata?.account_type !== "guest" ||
+      !user.email_confirmed_at
+    ) {
+      throw new Error(
+        "This is not an activated FrostTech Guest session. Please verify your Guest email first."
+      );
+    }
+
+    customerNameInput.value =
+      String(user.user_metadata?.full_name || "");
+    customerPhoneInput.value =
+      String(user.user_metadata?.phone || "");
+    customerEmailInput.value = user.email || "";
+
+    return user;
+  }
+
+  if (user.app_metadata?.account_type === "guest") {
+    throw new Error(
+      "This is a Guest identity. Please use the Guest quotation journey."
     );
   }
 
@@ -1627,49 +1662,90 @@ async function handleQuoteSubmit(event) {
       requestData.product_id = selectedProduct.id;
     }
 
-    const { error } = await client
-      .from("quote_requests")
-      .insert(requestData);
+    const guestMode =
+      new URLSearchParams(window.location.search).get("mode") === "guest";
 
-    if (error) {
-      console.error("FrostTech submission error:", error);
-      throw new Error(
-        "Your request could not be saved. " + error.message
-      );
-    }
+    let savedRequestNumber = requestNumber;
 
-    /* Notification failure does not invalidate a saved request. */
-    try {
-      const { error: notificationError } =
+    if (guestMode) {
+      const { data: guestResult, error: guestError } =
         await client.functions.invoke(
-          "send-frosttech-notification",
-          {
-            body: {
-              event_type: "quote_request_submitted",
-              request_number: requestNumber
-            }
-          }
+          "guest-submit-quote-request",
+          { body: { request: requestData } }
         );
 
-      if (notificationError) {
+      if (guestError) {
+        throw new Error(
+          guestError.message ||
+          "Your Guest quotation could not be submitted. Please verify your email and try again."
+        );
+      }
+
+      if (!guestResult || !guestResult.ok || !guestResult.request_number) {
+        throw new Error(
+          "FrostTech could not confirm that your Guest quotation was saved. Please try again."
+        );
+      }
+
+      savedRequestNumber = guestResult.request_number;
+    } else {
+      const { error } = await client
+        .from("quote_requests")
+        .insert(requestData);
+
+      if (error) {
+        console.error("FrostTech submission error:", error);
+        throw new Error(
+          "Your request could not be saved. " + error.message
+        );
+      }
+
+      /* Notification failure does not invalidate a saved request. */
+      try {
+        const { error: notificationError } =
+          await client.functions.invoke(
+            "send-frosttech-notification",
+            {
+              body: {
+                event_type: "quote_request_submitted",
+                request_number: requestNumber
+              }
+            }
+          );
+
+        if (notificationError) {
+          console.warn(
+            "Quotation email notification failed:",
+            notificationError
+          );
+        }
+      } catch (notificationError) {
         console.warn(
-          "Quotation email notification failed:",
+          "Quotation email notification error:",
           notificationError
         );
       }
-    } catch (notificationError) {
-      console.warn(
-        "Quotation email notification error:",
-        notificationError
-      );
     }
 
     showMessage(
       "Your quote request was submitted successfully. Reference: " +
-      requestNumber +
+      savedRequestNumber +
       ". FrostTech will review your request.",
       "success"
     );
+
+    if (guestMode) {
+      const homeLink = document.createElement("a");
+      homeLink.href = "index.html";
+      homeLink.textContent = "Return to Homepage";
+      homeLink.className = "quote-home-link";
+      homeLink.style.display = "inline-block";
+      homeLink.style.marginTop = "12px";
+      homeLink.style.fontWeight = "700";
+      homeLink.style.color = "#063b70";
+      formMessage.appendChild(document.createElement("br"));
+      formMessage.appendChild(homeLink);
+    }
 
     form.reset();
 
@@ -1705,6 +1781,48 @@ async function handleQuoteSubmit(event) {
 }
 
 form.addEventListener("submit", handleQuoteSubmit);
+
+/* Prepare the verified Guest journey before browser form validation. */
+async function prepareGuestForm() {
+  const guestMode =
+    new URLSearchParams(window.location.search).get("mode") === "guest";
+
+  if (!guestMode) return;
+
+  try {
+    if (!client) client = getClient();
+
+    const {
+      data: { user },
+      error
+    } = await client.auth.getUser();
+
+    if (error || !user) {
+      throw new Error("Please register as a Guest and verify your email before continuing.");
+    }
+
+    if (
+      user.app_metadata?.account_type !== "guest" ||
+      !user.email_confirmed_at
+    ) {
+      throw new Error("This is not an activated FrostTech Guest session. Please verify your email first.");
+    }
+
+    customerNameInput.value =
+      String(user.user_metadata?.full_name || "");
+    customerPhoneInput.value =
+      String(user.user_metadata?.phone || "");
+    customerEmailInput.value = user.email || "";
+  } catch (error) {
+    showMessage(
+      error.message || "Guest verification could not be completed.",
+      "error"
+    );
+    submitButton.disabled = true;
+  }
+}
+
+prepareGuestForm();
 
 /* Start catalogue loading. */
 loadProducts();

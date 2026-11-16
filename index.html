@@ -1379,6 +1379,9 @@
     .whatsapp-float:hover { transform: translateY(-3px); }
     .whatsapp-float span { font-size: 19px; }
 
+    /* Customer entry shortcuts are kept in the mobile menu on compact screens. */
+    .nav-links > a.mobile-account-link { display:none; }
+
     /* RESPONSIVE */
 
     @media (max-width:1050px) {
@@ -1421,6 +1424,10 @@
         padding: 13px 4px;
         border-bottom: 1px solid #eef2f7;
         font-size: 13px;
+      }
+
+      .nav-links > a.mobile-account-link {
+        display: block;
       }
 
       .nav-actions { margin-left: auto; }
@@ -1787,9 +1794,16 @@
         <a href="catalog.html">Products</a>
         <a href="quote.html">Request a Quote</a>
         <a href="supplier.html">Supplier Portal</a>
+        <a class="mobile-account-link" href="guest-register.html">Guest</a>
+        <a class="mobile-account-link" href="customer-login.html">Sign In</a>
+        <a class="mobile-account-link" href="customer-register.html">Create Account</a>
       </nav>
 
       <div class="nav-actions" id="accountActions">
+        <a class="btn btn-outline guest-entry-btn"
+           href="guest-register.html">
+          Guest
+        </a>
         <a class="btn btn-outline customer-login-btn"
            href="customer-login.html">
           Sign In

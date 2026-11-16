@@ -596,8 +596,19 @@
         }
 
         if (data.session && data.session.user) {
+          const signedInUser = data.session.user;
+
+          if (signedInUser.app_metadata?.account_type === "guest") {
+            showSection(loginSection);
+            showMessage(
+              "You are signed in with a FrostTech Guest identity. Guest identities cannot access customer accounts. Continue through the Guest option on the homepage.",
+              "info"
+            );
+            return;
+          }
+
           activeSessionEmail.textContent =
-            "Signed in as: " + (data.session.user.email || "Customer account");
+            "Signed in as: " + (signedInUser.email || "Customer account");
           showSection(activeSessionSection);
           return;
         }
@@ -742,6 +753,15 @@
 
             if (result.error) {
               throw result.error;
+            }
+
+            if (result.data?.user?.app_metadata?.account_type === "guest") {
+              await db.auth.signOut({ scope: "local" });
+              showMessage(
+                "This email belongs to a FrostTech Guest identity, not a customer account. Please use the Guest option on the homepage to continue with a quotation.",
+                "error"
+              );
+              return;
             }
 
             showMessage("Login successful. Opening your account...", "success");
