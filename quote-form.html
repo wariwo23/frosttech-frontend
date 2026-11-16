@@ -786,7 +786,16 @@ footer p {
     width: 100%;
 }
   
-/* Guest journey: keep the existing quotation workflow; add a clear cancel path. */.cancel-quote{display:block;width:100%;margin:13px auto 0;padding:13px 18px;border:1px solid #cbd8e5;border-radius:9px;background:#fff;color:#29445e;text-align:center;text-decoration:none;font-weight:800}.cancel-quote:hover{background:#f1f6fb;color:#063b70}.footer-content{justify-content:center!important;text-align:center!important}footer{text-align:center}</style>
+/* Guest journey presentation: retain all existing quote submission logic. */
+.cancel-quote{display:block;width:100%;margin:13px auto 0;padding:13px 18px;border:1px solid #cbd8e5;border-radius:9px;background:#fff;color:#29445e;text-align:center;text-decoration:none;font-weight:800}
+.cancel-quote:hover{background:#f1f6fb;color:#063b70}
+.footer-content{justify-content:center!important;text-align:center!important}
+footer{text-align:center}
+@media(max-width:600px){
+  .topbar-inner{grid-template-columns:minmax(0,1fr);justify-items:center;text-align:center}
+  .topbar nav{justify-content:center}
+  .logo{text-align:center;font-size:clamp(18px,5vw,23px)}
+}</style>
 </head>
 
 <body>
