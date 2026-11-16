@@ -6,97 +6,59 @@
 <meta name="theme-color" content="#082f55">
 <title>Guest Registration | FrostTech</title>
 <style>
-:root{--navy:#082f55;--blue:#075985;--ink:#17324d;--muted:#64748b;--line:#dbe5ef}
+:root{--blue:#0756a5;--deep:#063b70;--ink:#17324d;--muted:#64748b;--line:#dbe5ef}
 *{box-sizing:border-box}
 html,body{margin:0;min-height:100%;width:100%}
-body{min-height:100vh;padding:0;background:radial-gradient(ellipse at 15% 10%,#d9f0ff 0,transparent 35%),linear-gradient(135deg,#edf5fb,#f7f9fc 55%,#e8f1f8);color:var(--ink);font-family:Inter,Arial,sans-serif}
-.page{width:100%;max-width:none;min-height:100vh;margin:0;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:auto 1fr auto;background:transparent;border:0;border-radius:0;overflow:hidden;box-shadow:none}
-.site-brand{grid-column:1/-1;width:100%;min-height:150px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 18px;background:linear-gradient(115deg,#06264a 0%,#075985 58%,#087eaa 100%);border-bottom:1px solid #0b4770;color:#fff}
-.site-brand .brand-mark{width:62px;height:62px;display:grid;place-items:center;border-radius:18px;background:#ffffff20;border:1px solid #ffffff55;color:#fff;font-size:29px}
-.site-brand .brand-name{margin-top:10px;color:#fff;font-size:32px;font-weight:900;letter-spacing:.2px}
-.site-brand .brand-sub{margin-top:5px;color:#e0f2fe;font-size:12px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}
-.visual{position:relative;display:flex;flex-direction:column;justify-content:space-between;width:100%;max-width:650px;min-height:620px;justify-self:center;padding:42px;background:linear-gradient(150deg,#082f55,#075985 62%,#087eaa);color:#fff;overflow:hidden}
-.visual:before,.visual:after{content:"";position:absolute;border:1px solid #ffffff20;border-radius:50%;pointer-events:none}
-.visual:before{width:430px;height:430px;right:-210px;top:70px}.visual:after{width:300px;height:300px;right:-145px;top:135px}
-.brand{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
-.brand-mark{width:58px;height:58px;display:grid;place-items:center;border-radius:17px;background:#ffffff1c;border:1px solid #ffffff35;font-size:25px}
-.brand-name{font-size:29px;font-weight:900;letter-spacing:.3px}.brand-sub{margin-top:5px;color:#d4eaf8;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
-.visual-copy{position:relative;z-index:1;margin:60px 0}.eyebrow{display:inline-flex;padding:8px 12px;border:1px solid #ffffff38;border-radius:99px;background:#ffffff12;color:#e5f6ff;font-size:12px;font-weight:700;letter-spacing:.5px}
-.visual h1{max-width:390px;margin:22px 0 14px;font-size:clamp(32px,4vw,46px);line-height:1.12;letter-spacing:-1.3px}
-.visual-copy>p{max-width:390px;margin:0;color:#d8eaf6;font-size:15px;line-height:1.8}
-.benefits{position:relative;z-index:1;display:grid;gap:17px;margin-top:30px}
-.benefit{display:flex;align-items:center;gap:12px;color:#f0f8fd;font-size:13px}
-.check{width:25px;height:25px;flex:0 0 25px;display:grid;place-items:center;border-radius:50%;background:#ffffff20;color:#a5e5ff;font-weight:800}
-.visual-foot{position:relative;z-index:1;color:#c7e1f1;font-size:12px}
-.form-side{display:flex;align-items:center;justify-content:center;width:100%;max-width:650px;justify-self:center;padding:48px 54px}
-.form-wrap{width:100%;max-width:430px}
-.page-contact{grid-column:1/-1;width:100%;padding:22px 24px;text-align:center;background:#061f3b;color:#fff;border-top:1px solid #ffffff20;font-size:14px;line-height:1.8}
-.page-contact strong{font-weight:900;letter-spacing:.2px}
-.page-contact a{color:#fff;font-weight:900;text-decoration:none}
-.page-contact a:hover{text-decoration:underline}
-.mobile-brand{display:none}
-.form-heading{margin-bottom:27px}.step{display:inline-block;margin-bottom:13px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase}
-h2{margin:0 0 10px;color:#102d49;font-size:29px;letter-spacing:-.7px}
+body{min-height:100vh;background:#f1f6fb;color:var(--ink);font-family:Inter,Arial,sans-serif}
+.page{width:100%;min-height:100vh;display:flex;flex-direction:column}
+.site-brand{width:100%;min-height:112px;display:flex;align-items:center;justify-content:center;text-align:center;padding:24px 18px;background:linear-gradient(110deg,#063b70,#0756a5 65%,#087eaa);color:#fff}
+.site-brand .brand-name{margin:0;color:#fff;font-size:clamp(21px,4vw,30px);font-weight:850;letter-spacing:.1px;line-height:1.3}
+.form-side{width:100%;flex:1;display:flex;align-items:center;justify-content:center;padding:42px 20px}
+.form-wrap{width:100%;max-width:520px;margin:0 auto;padding:34px 36px;background:#fff;border:1px solid #e0e9f2;border-radius:18px;box-shadow:0 12px 36px #12385a12}
+.form-heading{text-align:center;margin-bottom:26px}
+.step{display:inline-block;margin-bottom:12px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase}
+h2{margin:0 0 10px;color:#102d49;font-size:29px;letter-spacing:-.6px}
 .intro{margin:0;color:var(--muted);font-size:14px;line-height:1.75}
-.field{margin-top:17px}label{display:block;margin-bottom:7px;color:#29445e;font-size:13px;font-weight:700}
-input{display:block;width:100%;min-height:49px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:#fbfdff;color:#142f49;font-size:15px;transition:border-color .18s,box-shadow .18s}
-input::placeholder{color:#9aaabd}input:focus{outline:none;border-color:#1685b7;box-shadow:0 0 0 3px #38bdf822;background:#fff}
-button{width:100%;min-height:52px;margin-top:25px;padding:14px 18px;border:0;border-radius:11px;background:linear-gradient(100deg,#075985,#087eaa);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px #07598526}
-button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}button:disabled{opacity:.65;cursor:not-allowed;transform:none}
+.field{margin-top:18px}
+label{display:block;margin-bottom:8px;color:#29445e;font-size:13px;font-weight:750}
+input{display:block;width:100%;min-height:51px;padding:13px 15px;border:1px solid #cfdae6;border-radius:10px;background:#fbfdff;color:#142f49;font-size:15px;transition:border-color .18s,box-shadow .18s}
+input::placeholder{color:#9aaabd}
+input:focus{outline:none;border-color:#1685b7;box-shadow:0 0 0 3px #38bdf822;background:#fff}
+button{width:100%;min-height:53px;margin-top:25px;padding:14px 18px;border:0;border-radius:11px;background:linear-gradient(100deg,#0756a5,#087eaa);color:#fff;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 8px 18px #07598526}
+button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}
+button:disabled{opacity:.65;cursor:not-allowed;transform:none}
 #message{display:none;margin-top:18px;padding:14px 15px;border-radius:10px;font-size:13px;line-height:1.65;overflow-wrap:anywhere}
 #message.success{display:block;background:#ecfdf3;border:1px solid #bbf7d0;color:#166534}
 #message.error{display:block;background:#fff1f2;border:1px solid #fecdd3;color:#9f1239}
 #message.info{display:block;background:#eff6ff;border:1px solid #bfdbfe;color:#1e40af}
 .security{display:flex;gap:11px;margin-top:22px;padding:14px;border:1px solid #e3edf5;border-radius:12px;background:#f7fafc}
-.security-icon{flex:0 0 28px;font-size:19px}.security p{margin:0;color:#60758a;font-size:12px;line-height:1.65}
-.home-link{display:block;margin-top:23px;text-align:center;color:var(--blue);font-size:13px;font-weight:700;text-decoration:none}.home-link:hover{text-decoration:underline}
-@media(max-width:760px){
-body{padding:0;background:#f2f7fb}
-.page{display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:auto 1fr auto;min-height:100vh}
-.site-brand{min-height:132px;padding:20px 14px}
-.site-brand .brand-mark{width:52px;height:52px;font-size:25px;border-radius:15px}
-.site-brand .brand-name{font-size:27px}
-.site-brand .brand-sub{font-size:10px;letter-spacing:1.1px}
-.visual{display:none}
-.form-side{min-height:auto;align-items:flex-start;padding:30px 20px 38px}
-.form-wrap{max-width:480px;margin:0 auto}
-.form-heading{margin-bottom:25px}
-h2{font-size:27px}
-.page-contact{padding:19px 14px;font-size:13px}
-}
-@media(min-width:761px) and (max-width:1050px){.visual{padding:34px}.form-side{padding:38px 30px}.visual h1{font-size:35px}}
+.security-icon{flex:0 0 28px;font-size:19px}
+.security p{margin:0;color:#60758a;font-size:12px;line-height:1.65}
+.home-link{display:block;margin-top:22px;text-align:center;color:var(--blue);font-size:13px;font-weight:700;text-decoration:none}
+.home-link:hover{text-decoration:underline}
+.page-contact{width:100%;padding:23px 18px;text-align:center;background:linear-gradient(110deg,#063b70,#0756a5 65%,#087eaa);color:#fff;font-size:14px;line-height:1.8}
+.page-contact strong{font-weight:900;letter-spacing:.5px}
+.page-contact a{color:#fff;font-weight:850;text-decoration:none}
+.page-contact a:hover{text-decoration:underline}
+@media(max-width:600px){.site-brand{min-height:96px;padding:20px 14px}.form-side{align-items:flex-start;padding:25px 14px 30px}.form-wrap{padding:27px 20px;border-radius:15px}h2{font-size:26px}.page-contact{padding:19px 14px;font-size:13px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
 </head>
 <body>
 <main class="page">
-<header class="site-brand"><div class="brand-mark" aria-hidden="true">❄</div><div class="brand-name">FrostTech</div><div class="brand-sub">HVAC &amp; Refrigeration Marketplace</div></header>
-<section class="visual" aria-label="FrostTech guest registration information">
-
-<div class="visual-copy">
-<span class="eyebrow">YOUR REQUEST STARTS HERE</span>
-<h1>Find the right solution for your cooling needs.</h1>
-<p>Tell us what you need. Our marketplace helps connect your requirements with relevant HVAC and refrigeration products and services.</p>
-<div class="benefits">
-<div class="benefit"><span class="check">✓</span><span>Submit a quotation request as a Guest</span></div>
-<div class="benefit"><span class="check">✓</span><span>Keep your exact product requirements clear</span></div>
-<div class="benefit"><span class="check">✓</span><span>Verify your email before proceeding</span></div>
-</div></div>
-<div class="visual-foot">FrostTech HVAC and Refrigeration Marketplace</div>
-</section>
+<header class="site-brand"><div class="brand-name">FrostTech HVAC &amp; Refrigeration Marketplace</div></header>
 <section class="form-side"><div class="form-wrap">
-
 <div class="form-heading"><span class="step">Guest access · Step 1 of 2</span><h2>Continue as a Guest</h2><p class="intro">Create your separate Guest identity to verify your email and submit a quotation request. This is not a FrostTech customer account and does not provide access to customer account features.</p></div>
 <form id="guestForm">
 <div class="field"><label for="fullName">Full name *</label><input id="fullName" name="fullName" type="text" maxlength="150" autocomplete="name" placeholder="Enter your full name" required></div>
 <div class="field"><label for="phone">Phone / WhatsApp number *</label><input id="phone" name="phone" type="tel" maxlength="30" autocomplete="tel" placeholder="Enter your contact number" required></div>
 <div class="field"><label for="email">Email address *</label><input id="email" name="email" type="email" maxlength="254" autocomplete="email" placeholder="Enter your email address" required></div>
 <div class="field"><label for="password">Create a password *</label><input id="password" name="password" type="password" minlength="8" autocomplete="new-password" placeholder="At least 8 characters" required></div>
-<button id="submitButton" type="submit">Verify Email and Continue <span aria-hidden="true">→</span></button>
+<button id="submitButton" type="submit">Save Details &amp; Verify Email</button>
 </form>
 <div id="message" role="status" aria-live="polite"></div>
 <div class="security"><span class="security-icon" aria-hidden="true">🔒</span><p>Your password is managed securely by Supabase Authentication. FrostTech will not store your password in the quotation record. You must verify your email before submitting your request.</p></div>
-<a class="home-link" href="index.html">← Return to Homepage</a>
+<a class="home-link" href="index.html">Cancel · Return to Homepage</a>
 </div></section>
 <footer class="page-contact"><strong>CONTACT FROSTTECH</strong><br>WhatsApp: <a href="https://wa.me/2348032008635" target="_blank" rel="noopener">+234 803 200 8635</a></footer>
 </main>
@@ -119,7 +81,7 @@ const email=document.getElementById("email").value.trim().toLowerCase();
 const password=document.getElementById("password").value;
 if(!fullName||!phone||!email){show("Please complete your name, phone number and email address.","error");return;}
 if(password.length<8){show("Your password must contain at least 8 characters.","error");return;}
-button.disabled=true;button.textContent="Creating Guest Identity...";
+button.disabled=true;button.textContent="Saving Details...";
 try{
 const redirect=new URL("guest-verify.html",window.location.href);
 const {data:intent,error:intentError}=await client.functions.invoke("guest-registration-intent",{body:{full_name:fullName,phone:phone,email:email}});
@@ -135,7 +97,7 @@ window.location.replace("quote-form.html?mode=guest");return;
 show("Guest registration started. Please open the verification email sent to "+email+". After you confirm your email, FrostTech will open your quotation form. If you do not see the email, check your spam folder.","success");
 form.reset();
 }catch(error){console.error("FrostTech guest registration failed:",error);show(error.message||"We could not create your guest identity. Please try again.","error");}
-finally{button.disabled=false;button.textContent="Verify Email and Continue";}
+finally{button.disabled=false;button.textContent="Save Details & Verify Email";}
 });
 })();
 </script>
