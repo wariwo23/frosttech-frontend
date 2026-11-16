@@ -50,7 +50,7 @@ Deno.serve(async (req: Request) => {
     if (profile) return response({ error: "This identity already has a customer profile. Please use Customer Sign In." }, 403, origin);
 
     const tokenHash = await sha256(token);
-    const { data: intent, error: intentError } = await admin.schema("private")
+    const { data: intent, error: intentError } = await admin
       .from("guest_registration_intents")
       .select("id, email, full_name, phone")
       .eq("registration_token_hash", tokenHash)
@@ -67,7 +67,7 @@ Deno.serve(async (req: Request) => {
     });
     if (updateError) throw updateError;
 
-    const { data: consumed, error: consumeError } = await admin.schema("private")
+    const { data: consumed, error: consumeError } = await admin
       .from("guest_registration_intents")
       .update({ used_at: new Date().toISOString(), auth_user_id: user.id })
       .eq("id", intent.id)
