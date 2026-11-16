@@ -13,9 +13,9 @@ body{margin:0;min-height:100vh;padding:28px 18px;background:radial-gradient(elli
 .visual{position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:42px;background:linear-gradient(150deg,#082f55,#075985 62%,#087eaa);color:#fff;overflow:hidden}
 .visual:before,.visual:after{content:"";position:absolute;border:1px solid #ffffff20;border-radius:50%;pointer-events:none}
 .visual:before{width:430px;height:430px;right:-210px;top:70px}.visual:after{width:300px;height:300px;right:-145px;top:135px}
-.brand{position:relative;z-index:1;display:flex;align-items:center;gap:12px}
-.brand-mark{width:44px;height:44px;display:grid;place-items:center;border-radius:14px;background:#ffffff1c;border:1px solid #ffffff35;font-size:25px}
-.brand-name{font-size:21px;font-weight:800}.brand-sub{margin-top:3px;color:#d4eaf8;font-size:11px;letter-spacing:1.5px;text-transform:uppercase}
+.brand{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;text-align:center}
+.brand-mark{width:58px;height:58px;display:grid;place-items:center;border-radius:17px;background:#ffffff1c;border:1px solid #ffffff35;font-size:25px}
+.brand-name{font-size:29px;font-weight:900;letter-spacing:.3px}.brand-sub{margin-top:5px;color:#d4eaf8;font-size:11px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;text-align:center}
 .visual-copy{position:relative;z-index:1;margin:60px 0}.eyebrow{display:inline-flex;padding:8px 12px;border:1px solid #ffffff38;border-radius:99px;background:#ffffff12;color:#e5f6ff;font-size:12px;font-weight:700;letter-spacing:.5px}
 .visual h1{max-width:390px;margin:22px 0 14px;font-size:clamp(32px,4vw,46px);line-height:1.12;letter-spacing:-1.3px}
 .visual-copy>p{max-width:390px;margin:0;color:#d8eaf6;font-size:15px;line-height:1.8}
@@ -24,7 +24,7 @@ body{margin:0;min-height:100vh;padding:28px 18px;background:radial-gradient(elli
 .check{width:25px;height:25px;flex:0 0 25px;display:grid;place-items:center;border-radius:50%;background:#ffffff20;color:#a5e5ff;font-weight:800}
 .visual-foot{position:relative;z-index:1;color:#c7e1f1;font-size:12px}
 .form-side{display:flex;align-items:center;justify-content:center;padding:48px 54px}
-.form-wrap{width:100%;max-width:430px}
+.form-wrap{width:100%;max-width:430px}\n.page-contact{grid-column:1/-1;padding:20px 24px;text-align:center;background:#061f3b;color:#fff;border-top:1px solid #ffffff20;font-size:14px;line-height:1.8}\n.page-contact strong{font-weight:900;letter-spacing:.2px}\n.page-contact a{color:#fff;font-weight:900;text-decoration:none}\n.page-contact a:hover{text-decoration:underline}
 .mobile-brand{display:none}
 .form-heading{margin-bottom:27px}.step{display:inline-block;margin-bottom:13px;color:var(--blue);font-size:11px;font-weight:800;letter-spacing:1.3px;text-transform:uppercase}
 h2{margin:0 0 10px;color:#102d49;font-size:29px;letter-spacing:-.7px}
@@ -41,7 +41,7 @@ button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}button:
 .security{display:flex;gap:11px;margin-top:22px;padding:14px;border:1px solid #e3edf5;border-radius:12px;background:#f7fafc}
 .security-icon{flex:0 0 28px;font-size:19px}.security p{margin:0;color:#60758a;font-size:12px;line-height:1.65}
 .home-link{display:block;margin-top:23px;text-align:center;color:var(--blue);font-size:13px;font-weight:700;text-decoration:none}.home-link:hover{text-decoration:underline}
-@media(max-width:760px){body{padding:0;background:#f2f7fb}.page{display:block;min-height:100vh;border:0;border-radius:0;box-shadow:none}.visual{display:none}.form-side{min-height:100vh;align-items:flex-start;padding:28px 22px 36px}.form-wrap{max-width:480px;margin:0 auto}.mobile-brand{display:flex;align-items:center;gap:10px;margin:0 0 38px}.mobile-brand .brand-mark{background:linear-gradient(145deg,#082f55,#087eaa);color:#fff}.mobile-brand .brand-name{color:#082f55}.mobile-brand .brand-sub{color:#71869a}.form-heading{margin-bottom:25px}h2{font-size:27px}}
+@media(max-width:760px){body{padding:0;background:#f2f7fb}.page{display:block;min-height:100vh;border:0;border-radius:0;box-shadow:none}.visual{display:none}.form-side{min-height:100vh;align-items:flex-start;padding:28px 22px 36px}.form-wrap{max-width:480px;margin:0 auto}.mobile-brand{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;margin:0 0 34px;text-align:center}\n.mobile-brand .brand-mark{width:58px;height:58px}\n.mobile-brand .brand-name{font-size:29px}\n.mobile-brand .brand-sub{text-align:center}.mobile-brand .brand-mark{background:linear-gradient(145deg,#082f55,#087eaa);color:#fff}.mobile-brand .brand-name{color:#082f55}.mobile-brand .brand-sub{color:#71869a}.form-heading{margin-bottom:25px}h2{font-size:27px}}
 @media(min-width:761px) and (max-width:900px){.visual{padding:34px}.form-side{padding:38px 32px}.visual h1{font-size:35px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
