@@ -76,8 +76,17 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     if (consumeError) throw consumeError;
     if (!consumed) {
-      const { data: refreshed, error: refreshError } = await admin.auth.admin.getUserById(user.id);
-      if (refreshError || refreshed.user?.app_metadata?.account_type !== "guest") return response({ error: "Guest registration proof has already been used. Please contact FrostTech support." }, 403, origin);
+      const { data: existingIntent, error: existingIntentError } = await admin
+        .from("guest_registration_intents")
+        .select("auth_user_id")
+        .eq("id", intent.id)
+        .maybeSingle();
+      if (
+        existingIntentError ||
+        existingIntent?.auth_user_id !== user.id
+      ) {
+        return response({ error: "Guest registration proof has already been used. Please register again." }, 403, origin);
+      }
     }
     return response({ ok: true, identity: "guest" }, 200, origin);
   } catch (error) {
