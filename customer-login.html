@@ -344,6 +344,18 @@
 
     <div id="pageMessage" class="message" role="status" aria-live="polite"></div>
 
+    <!-- ACTIVE CUSTOMER SESSION: PREVENT PASSWORD FORM FROM APPEARING FOR A SIGNED-IN USER -->
+    <section id="activeSessionSection" class="hidden" aria-labelledby="activeSessionHeading">
+      <h2 id="activeSessionHeading">Customer Already Signed In</h2>
+      <p class="help-text">
+        An active FrostTech customer session is open in this browser.
+      </p>
+      <p id="activeSessionEmail" class="help-text"></p>
+      <button type="button" id="signOutButton" class="primary-button">
+        Sign Out
+      </button>
+    </section>
+
     <!-- CUSTOMER LOGIN -->
     <section id="loginSection">
       <h2>Customer Login</h2>
@@ -533,6 +545,9 @@
 
       const pageMessage = document.getElementById("pageMessage");
       const loginSection = document.getElementById("loginSection");
+      const activeSessionSection = document.getElementById("activeSessionSection");
+      const activeSessionEmail = document.getElementById("activeSessionEmail");
+      const signOutButton = document.getElementById("signOutButton");
       const resetSection = document.getElementById("resetSection");
       const newPasswordSection =
         document.getElementById("newPasswordSection");
@@ -551,6 +566,7 @@
 
       function showSection(section) {
         loginSection.classList.add("hidden");
+        activeSessionSection.classList.add("hidden");
         resetSection.classList.add("hidden");
         newPasswordSection.classList.add("hidden");
 
@@ -642,6 +658,31 @@
 
           window.location.href = destination;
         });
+
+      signOutButton.addEventListener("click", async function () {
+        if (!db || !db.auth) {
+          showMessage("The sign-out service is unavailable. Please refresh and try again.", "error");
+          return;
+        }
+
+        setButtonLoading(signOutButton, true, "Signing Out...", "Sign Out");
+
+        try {
+          const { error } = await db.auth.signOut({ scope: "local" });
+
+          if (error) {
+            throw error;
+          }
+
+          showSection(loginSection);
+          showMessage("You have signed out successfully. You can now sign in with another customer account.", "success");
+          document.getElementById("loginForm").reset();
+        } catch (error) {
+          showMessage(error.message || "Unable to sign out. Please try again.", "error");
+        } finally {
+          setButtonLoading(signOutButton, false, "Signing Out...", "Sign Out");
+        }
+      });
 
       document.getElementById("loginForm")
         .addEventListener("submit", async function (event) {
@@ -877,6 +918,25 @@
         }
 
         showSection(newPasswordSection);
+        return;
+    }
+
+    const { data: sessionData, error: sessionError } = await db.auth.getSession();
+
+    if (sessionError) {
+        showSection(loginSection);
+        showMessage(
+            "We could not verify your current customer session. Please refresh and try again.",
+            "error"
+        );
+        return;
+    }
+
+    if (sessionData.session && sessionData.session.user) {
+        activeSessionEmail.textContent =
+            "Signed in as: " + (sessionData.session.user.email || "Customer account");
+
+        showSection(activeSessionSection);
         return;
     }
 
