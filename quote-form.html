@@ -1782,6 +1782,48 @@ async function handleQuoteSubmit(event) {
 
 form.addEventListener("submit", handleQuoteSubmit);
 
+/* Prepare the verified Guest journey before browser form validation. */
+async function prepareGuestForm() {
+  const guestMode =
+    new URLSearchParams(window.location.search).get("mode") === "guest";
+
+  if (!guestMode) return;
+
+  try {
+    if (!client) client = getClient();
+
+    const {
+      data: { user },
+      error
+    } = await client.auth.getUser();
+
+    if (error || !user) {
+      throw new Error("Please register as a Guest and verify your email before continuing.");
+    }
+
+    if (
+      user.app_metadata?.account_type !== "guest" ||
+      !user.email_confirmed_at
+    ) {
+      throw new Error("This is not an activated FrostTech Guest session. Please verify your email first.");
+    }
+
+    customerNameInput.value =
+      String(user.user_metadata?.full_name || "");
+    customerPhoneInput.value =
+      String(user.user_metadata?.phone || "");
+    customerEmailInput.value = user.email || "";
+  } catch (error) {
+    showMessage(
+      error.message || "Guest verification could not be completed.",
+      "error"
+    );
+    submitButton.disabled = true;
+  }
+}
+
+prepareGuestForm();
+
 /* Start catalogue loading. */
 loadProducts();
 </script>
