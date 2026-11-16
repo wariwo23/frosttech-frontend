@@ -574,6 +574,37 @@
         clearMessage();
       }
 
+      async function showLoginOrActiveSession() {
+        if (!db || !db.auth) {
+          showSection(loginSection);
+          showMessage(
+            "The login service did not load. Please refresh and try again.",
+            "error"
+          );
+          return;
+        }
+
+        const { data, error } = await db.auth.getSession();
+
+        if (error) {
+          showSection(loginSection);
+          showMessage(
+            "We could not verify your current customer session. Please refresh and try again.",
+            "error"
+          );
+          return;
+        }
+
+        if (data.session && data.session.user) {
+          activeSessionEmail.textContent =
+            "Signed in as: " + (data.session.user.email || "Customer account");
+          showSection(activeSessionSection);
+          return;
+        }
+
+        showSection(loginSection);
+      }
+
       function getReturnUrl() {
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("return");
@@ -641,7 +672,7 @@
       document.querySelectorAll(".backToLoginButton")
         .forEach(function (button) {
           button.addEventListener("click", function () {
-            showSection(loginSection);
+            showLoginOrActiveSession();
           });
         });
 
@@ -846,7 +877,7 @@
             document.getElementById("newPasswordForm").reset();
 
             setTimeout(function () {
-              showSection(loginSection);
+              showLoginOrActiveSession();
             }, 1800);
           } catch (error) {
             showMessage(
