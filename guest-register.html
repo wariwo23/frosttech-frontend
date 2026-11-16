@@ -58,7 +58,11 @@ if(password.length<8){show("Your password must contain at least 8 characters.","
 button.disabled=true;button.textContent="Creating Guest Identity...";
 try{
 const redirect=new URL("guest-verify.html",window.location.href);
-const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:redirect.href,data:{account_type:"guest",full_name:fullName,phone:phone}}});
+const {data:intent,error:intentError}=await client.functions.invoke("guest-registration-intent",{body:{full_name:fullName,phone:phone,email:email}});
+if(intentError||!intent?.ok||!intent?.registration_token){
+throw new Error(intentError?.message||"FrostTech could not prepare your Guest registration. Please try again.");
+}
+const {data,error}=await client.auth.signUp({email,password,options:{emailRedirectTo:redirect.href,data:{account_type:"guest",full_name:fullName,phone:phone,guest_registration_token:intent.registration_token}}});
 if(error)throw error;
 if(data&&data.session){
 const activated=await client.functions.invoke("guest-activate");
