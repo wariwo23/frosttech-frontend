@@ -46,7 +46,7 @@ Deno.serve(async (req: Request) => {
     const token = crypto.randomUUID() + "." + crypto.randomUUID();
     const tokenHash = await sha256(token);
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
-    const { error } = await admin.schema("private").from("guest_registration_intents").insert({
+    const { error } = await admin.from("guest_registration_intents").insert({
       email, full_name: fullName, phone, registration_token_hash: tokenHash, expires_at: expiresAt,
     });
     if (error) throw error;
