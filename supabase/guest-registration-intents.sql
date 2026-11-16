@@ -1,7 +1,7 @@
 -- FrostTech Guest Registration Intent
 -- Review and apply only as part of the separate Guest journey deployment.
 -- This table stores only a short-lived registration proof; never store passwords here.
-create table if not exists private.guest_registration_intents (
+create table if not exists public.guest_registration_intents (
   id uuid primary key default gen_random_uuid(),
   email text not null,
   full_name text not null,
@@ -13,9 +13,9 @@ create table if not exists private.guest_registration_intents (
   created_at timestamptz not null default now()
 );
 create index if not exists guest_registration_intents_email_created_idx
-  on private.guest_registration_intents (lower(email), created_at desc);
-alter table private.guest_registration_intents enable row level security;
-revoke all on table private.guest_registration_intents from public, anon, authenticated;
-grant all on table private.guest_registration_intents to service_role;
-comment on table private.guest_registration_intents is
+  on public.guest_registration_intents (lower(email), created_at desc);
+alter table public.guest_registration_intents enable row level security;
+revoke all on table public.guest_registration_intents from public, anon, authenticated;
+grant all on table public.guest_registration_intents to service_role;
+comment on table public.guest_registration_intents is
   'Private short-lived proof that a FrostTech Guest registration was initiated through the dedicated guest registration flow. Never exposes password data.';
