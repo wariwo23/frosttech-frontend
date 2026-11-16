@@ -9,7 +9,7 @@
 :root{--navy:#082f55;--blue:#075985;--ink:#17324d;--muted:#64748b;--line:#dbe5ef}
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;padding:28px 18px;background:radial-gradient(ellipse at 15% 10%,#d9f0ff 0,transparent 35%),linear-gradient(135deg,#edf5fb,#f7f9fc 55%,#e8f1f8);color:var(--ink);font-family:Inter,Arial,sans-serif}
-.page{width:100%;max-width:1050px;min-height:650px;margin:0 auto;display:grid;grid-template-columns:.92fr 1.08fr;background:#fff;border:1px solid #e3ebf2;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px #0b31531a}
+.page{width:100%;max-width:1050px;min-height:650px;margin:0 auto;display:grid;grid-template-columns:.92fr 1.08fr;background:#fff;border:1px solid #e3ebf2;border-radius:24px;overflow:hidden;box-shadow:0 24px 70px #0b31531a}\n.site-brand{grid-column:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:26px 18px 22px;background:#fff;border-bottom:1px solid #e6edf4}\n.site-brand .brand-mark{width:62px;height:62px;border-radius:18px;background:linear-gradient(135deg,#075985,#38bdf8);color:#fff;font-size:29px}\n.site-brand .brand-name{margin-top:10px;color:#082f55;font-size:32px;font-weight:900;letter-spacing:.2px}\n.site-brand .brand-sub{margin-top:5px;color:#61788e;font-size:11px;font-weight:800;letter-spacing:1.6px;text-transform:uppercase}\n
 .visual{position:relative;display:flex;flex-direction:column;justify-content:space-between;padding:42px;background:linear-gradient(150deg,#082f55,#075985 62%,#087eaa);color:#fff;overflow:hidden}
 .visual:before,.visual:after{content:"";position:absolute;border:1px solid #ffffff20;border-radius:50%;pointer-events:none}
 .visual:before{width:430px;height:430px;right:-210px;top:70px}.visual:after{width:300px;height:300px;right:-145px;top:135px}
@@ -48,8 +48,9 @@ button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}button:
 </head>
 <body>
 <main class="page">
+<header class="site-brand"><div class="brand-mark" aria-hidden="true">❄</div><div class="brand-name">FrostTech</div><div class="brand-sub">HVAC &amp; Refrigeration Marketplace</div></header>
 <section class="visual" aria-label="FrostTech guest registration information">
-<header class="brand"><div class="brand-mark" aria-hidden="true">❄</div><div><div class="brand-name">FrostTech</div><div class="brand-sub">HVAC &amp; Refrigeration Marketplace</div></div></header>
+
 <div class="visual-copy">
 <span class="eyebrow">YOUR REQUEST STARTS HERE</span>
 <h1>Find the right solution for your cooling needs.</h1>
@@ -62,7 +63,7 @@ button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}button:
 <div class="visual-foot">FrostTech HVAC and Refrigeration Marketplace</div>
 </section>
 <section class="form-side"><div class="form-wrap">
-<header class="mobile-brand"><div class="brand-mark" aria-hidden="true">❄</div><div><div class="brand-name">FrostTech</div><div class="brand-sub">HVAC &amp; Refrigeration Marketplace</div></div></header>
+
 <div class="form-heading"><span class="step">Guest access · Step 1 of 2</span><h2>Continue as a Guest</h2><p class="intro">Create your separate Guest identity to verify your email and submit a quotation request. This is not a FrostTech customer account and does not provide access to customer account features.</p></div>
 <form id="guestForm">
 <div class="field"><label for="fullName">Full name *</label><input id="fullName" name="fullName" type="text" maxlength="150" autocomplete="name" placeholder="Enter your full name" required></div>
@@ -75,7 +76,6 @@ button:hover{transform:translateY(-1px);box-shadow:0 11px 22px #07598530}button:
 <div class="security"><span class="security-icon" aria-hidden="true">🔒</span><p>Your password is managed securely by Supabase Authentication. FrostTech will not store your password in the quotation record. You must verify your email before submitting your request.</p></div>
 <a class="home-link" href="index.html">← Return to Homepage</a>
 </div></section>
-</section>
 <footer class="page-contact"><strong>CONTACT FROSTTECH</strong><br>WhatsApp: <a href="https://wa.me/2348032008635" target="_blank" rel="noopener">+234 803 200 8635</a></footer>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
