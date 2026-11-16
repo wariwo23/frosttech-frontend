@@ -43,6 +43,17 @@ Deno.serve(async (req: Request) => {
   if (!fullName || !phone || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return json({ error: "Please provide a valid name, phone number and email address." }, 400, origin);
   const admin = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
   try {
+    // Limit repeated registration-proof creation for the same email address.
+    const { count, error: rateError } = await admin
+      .from("guest_registration_intents")
+      .select("id", { count: "exact", head: true })
+      .eq("email", email)
+      .gte("created_at", new Date(Date.now() - 30 * 60 * 1000).toISOString());
+    if (rateError) throw rateError;
+    if ((count ?? 0) >= 3) {
+      return json({ error: "Too many Guest registration attempts for this email. Please wait 30 minutes and try again." }, 429, origin);
+    }
+
     const token = crypto.randomUUID() + "." + crypto.randomUUID();
     const tokenHash = await sha256(token);
     const expiresAt = new Date(Date.now() + 30 * 60 * 1000).toISOString();
