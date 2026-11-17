@@ -1737,6 +1737,20 @@
         transition: none !important;
       }
     }
+   
+/* Paid placements are fetched from FrostTech's public, production-only advertising feed. */
+.ft-ad-band{padding:22px 0;background:#f1f7fc}
+.ft-ad-container{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.ft-ad-card{display:flex;gap:14px;align-items:center;background:#fff;border:1px solid #dce7f0;border-radius:13px;padding:14px;box-shadow:0 4px 16px rgba(8,35,65,.05);min-width:0}
+.ft-ad-card img{width:112px;height:92px;object-fit:cover;border-radius:9px;background:#edf4fa;flex:0 0 112px}
+.ft-ad-copy{min-width:0}
+.ft-ad-label{display:inline-block;font-size:10px;letter-spacing:.7px;font-weight:900;text-transform:uppercase;color:#075b94;background:#e8f4fc;padding:4px 8px;border-radius:20px;margin-bottom:6px}
+.ft-ad-card h3{margin:0 0 5px;color:#082f55;font-size:16px}
+.ft-ad-card p{margin:0;color:#53677c;font-size:13px;line-height:1.45;overflow-wrap:anywhere}
+.ft-ad-price{margin-top:7px;color:#075b94;font-weight:800}
+.ft-ad-hidden{display:none!important}
+@media(max-width:560px){.ft-ad-card{align-items:flex-start}.ft-ad-card img{width:88px;height:82px;flex-basis:88px}}
+
   </style>
 </head>
 
@@ -1928,6 +1942,10 @@
       </div>
     </section>
 
+    <section class="ft-ad-band ft-ad-hidden" id="ftHomepagePremiumAds" aria-label="Sponsored homepage advertisements">
+      <div class="container ft-ad-container"></div>
+    </section>
+
     <!-- BENEFITS -->
 
     <section class="benefit-strip" aria-label="Marketplace benefits">
@@ -2029,6 +2047,8 @@
           </a>
 
         </div>
+
+        <div id="ftCategoryBannerAds" class="ft-ad-container" style="margin-top:18px" aria-label="Sponsored category advertisements"></div>
 
         <!-- SEARCH -->
 
@@ -2136,13 +2156,7 @@
 
         </div>
 
-        <div class="advertising-empty">
-          <strong>Featured advertisements will appear here.</strong>
-          There are currently no advertisements available for display.
-          Advertisements will be shown when they have been submitted,
-          reviewed, approved and activated under FrostTech's advertising
-          process.
-        </div>
+        <div class="advertising-empty" id="advertisingEmpty"><strong>Paid placements are clearly labelled.</strong> Advertisements appear only after payment verification, FrostTech approval and activation.</div>
 
       </div>
     </section>
@@ -2758,10 +2772,71 @@
 
 
     /* ==========================================
+       APPROVED PAID ADVERTISEMENTS
+       Public feed returns production campaigns only.
+    ========================================== */
+    async function loadFrostTechAdvertisements() {
+      const premium = document.getElementById("ftHomepagePremiumAds");
+      const categoryHost = document.getElementById("ftCategoryBannerAds");
+      if (!premium || !categoryHost || !window.supabaseClient) return;
+      try {
+        const { data, error } = await window.supabaseClient.rpc("get_frosttech_active_advertisements");
+        if (error) throw error;
+        const ads = Array.isArray(data) ? data : [];
+        const makeCard = function(ad, label) {
+          const card = document.createElement("article");
+          card.className = "ft-ad-card";
+          const paths = Array.isArray(ad.image_paths) ? ad.image_paths : [];
+          const imagePath = paths.find(function(path) {
+            try { return new URL(path).protocol === "https:"; } catch { return false; }
+          });
+          if (imagePath) {
+            const image = document.createElement("img");
+            image.src = imagePath;
+            image.alt = ad.advertisement_title || "Sponsored advertisement";
+            image.loading = "lazy";
+            image.referrerPolicy = "no-referrer";
+            image.onerror = function(){ image.remove(); };
+            card.appendChild(image);
+          }
+          const copy = document.createElement("div");
+          copy.className = "ft-ad-copy";
+          const badge = document.createElement("span");
+          badge.className = "ft-ad-label";
+          badge.textContent = label;
+          const title = document.createElement("h3");
+          title.textContent = ad.advertisement_title || "Sponsored";
+          const description = document.createElement("p");
+          description.textContent = ad.description || "";
+          copy.append(badge,title,description);
+          if (ad.advertised_price !== null && ad.advertised_price !== undefined) {
+            const price = document.createElement("div");
+            price.className = "ft-ad-price";
+            price.textContent = "₦" + Number(ad.advertised_price).toLocaleString("en-NG");
+            copy.appendChild(price);
+          }
+          card.appendChild(copy);
+          return card;
+        };
+        const premiumAds = ads.filter(function(ad){return ad.placement_type === "homepage_banner";});
+        if (premiumAds.length) {
+          const host = premium.querySelector(".ft-ad-container");
+          premiumAds.forEach(function(ad){host.appendChild(makeCard(ad,"Sponsored"));});
+          premium.classList.remove("ft-ad-hidden");
+        }
+        const categoryAds = ads.filter(function(ad){return ad.placement_type === "category_banner";});
+        categoryAds.forEach(function(ad){categoryHost.appendChild(makeCard(ad,"Advertisement · "+(ad.category||"Category")));});
+      } catch (error) {
+        console.warn("FrostTech advertising feed unavailable:", error);
+      }
+    }
+
+    /* ==========================================
        START HOMEPAGE
     ========================================== */
 
     loadFeaturedProducts();
+    loadFrostTechAdvertisements();
   </script>
 
 </body>
