@@ -943,25 +943,8 @@
       gap: 12px;
     }
 
-    .product-price-label {
-      color: var(--muted);
-      font-size: 9px;
-    }
-
-    .product-price {
-      margin-top: 4px;
-      color: var(--navy);
-      font-size: 17px;
-      font-weight: 900;
-      letter-spacing: -.5px;
-    }
-
-    .product-price.request-price {
-      font-size: 12px;
-      letter-spacing: 0;
-    }
-
     .product-action {
+      width: 100%;
       min-height: 39px;
       padding: 9px 12px;
       border-radius: 9px;
@@ -1970,8 +1953,8 @@
         <div class="benefit">
           <div class="benefit-icon">₦</div>
           <div>
-            <strong>Clear Product Pricing</strong>
-            <p>View listed prices where available</p>
+            <strong>Product Price Transparency</strong>
+            <p>View selling prices on product details pages</p>
           </div>
         </div>
 
@@ -2088,8 +2071,8 @@
             <span class="section-kicker">Featured selection</span>
             <h2>Popular HVAC products</h2>
             <p>
-              Explore available products and check their listed prices.
-              Need a complete supply or installation package? Request a quote.
+              Explore products, review their details and specifications, and
+              view the selling price before requesting a quotation.
             </p>
           </div>
 
@@ -2182,7 +2165,7 @@
             <div class="step-icon">⌕</div>
             <h3>Explore products</h3>
             <p>
-              Browse available equipment, check listed prices and identify
+              Browse available equipment, review product details and identify
               the products or services you need.
             </p>
           </article>
@@ -2542,12 +2525,6 @@
 
     let featuredProducts = [];
 
-    function formatNaira(amount) {
-      return "₦" + Number(amount).toLocaleString("en-NG", {
-        maximumFractionDigits: 2
-      });
-    }
-
     function escapeHTML(value) {
       return String(value ?? "").replace(/[&<>"']/g, function (character) {
         const replacements = {
@@ -2605,21 +2582,8 @@
           "Contact FrostTech for product details and availability."
         );
 
-        const price = Number(product.selling_price);
-
-        const hasPrice =
-          product.selling_price !== null &&
-          product.selling_price !== undefined &&
-          product.selling_price !== "" &&
-          Number.isFinite(price) &&
-          price > 0;
-
         const productUrl =
           "product.html?id=" + encodeURIComponent(product.id);
-
-        const priceMarkup = hasPrice
-          ? `<div class="product-price">${formatNaira(price)}</div>`
-          : `<div class="product-price request-price">Request pricing</div>`;
 
         const card = document.createElement("article");
         card.className = "product-card";
@@ -2654,14 +2618,9 @@
             <div class="product-divider"></div>
 
             <div class="product-bottom">
-              <div>
-                <div class="product-price-label">Listed price</div>
-                ${priceMarkup}
-              </div>
-
               <a class="btn btn-primary product-action"
                  href="${productUrl}">
-                View Product →
+                See Details →
               </a>
             </div>
           </div>
@@ -2697,7 +2656,7 @@
         const { data, error } = await window.supabaseClient
           .from("products")
           .select(
-            "id, name, category, brand, model, description, selling_price, image_url"
+            "id, name, category, brand, model, description, image_url"
           )
           .eq("is_active", true)
           .order("created_at", { ascending: false })
