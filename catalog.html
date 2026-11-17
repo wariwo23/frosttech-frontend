@@ -317,20 +317,6 @@
       overflow: hidden;
     }
 
-    .catalogue-price {
-      font-size: 21px;
-      font-weight: 800;
-      color: var(--ft-primary);
-      margin: auto 0 3px;
-      overflow-wrap: anywhere;
-    }
-
-    .catalogue-price-note {
-      font-size: 12px;
-      color: var(--ft-muted);
-      margin: 0 0 15px;
-    }
-
     .catalogue-actions {
       display: grid;
       grid-template-columns: 1fr;
@@ -357,15 +343,6 @@
 
     .view-product-btn:hover {
       background: var(--ft-dark);
-    }
-
-    .request-quote-btn {
-      background: white;
-      color: var(--ft-primary);
-    }
-
-    .request-quote-btn:hover {
-      background: var(--ft-light);
     }
 
     .catalogue-status,
@@ -518,14 +495,6 @@
         font-size: 12px;
       }
 
-      .catalogue-price {
-        font-size: 17px;
-      }
-
-      .catalogue-price-note {
-        font-size: 11px;
-      }
-
       .catalogue-actions a {
         padding: 10px 5px;
         font-size: 12px;
@@ -567,9 +536,6 @@
         font-size: 17px;
       }
 
-      .catalogue-price {
-        font-size: 20px;
-      }
     }
   
 /* Approved paid advertising placements — production campaigns only */
@@ -671,8 +637,6 @@
         <select id="catalogue-sort" aria-label="Sort products">
           <option value="newest">Newest first</option>
           <option value="name-asc">Name: A to Z</option>
-          <option value="price-asc">Price: Low to high</option>
-          <option value="price-desc">Price: High to low</option>
         </select>
       </div>
     </section>
@@ -892,7 +856,7 @@
         const { data, error } = await supabaseClient
           .from("products")
           .select(
-            "id, name, category, brand, model, description, selling_price, image_url, created_at"
+            "id, name, category, brand, model, description, image_url, created_at"
           )
           .eq("is_active", true)
           .order("created_at", { ascending: false });
@@ -946,23 +910,6 @@
       if (categories.includes(previousValue)) {
         categorySelect.value = previousValue;
       }
-    }
-
-    function formatPrice(value) {
-      if (value === null || value === undefined || value === "") {
-        return null;
-      }
-
-      const amount = Number(value);
-
-      if (!Number.isFinite(amount) || amount <= 0) {
-        return null;
-      }
-
-      return "₦" + amount.toLocaleString("en-NG", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
     }
 
     function makeImage(product) {
@@ -1047,35 +994,16 @@
       description.className = "catalogue-description";
       description.textContent = product.description || "";
 
-      const price = document.createElement("div");
-      price.className = "catalogue-price";
-
-      const formattedPrice = formatPrice(product.selling_price);
-      price.textContent = formattedPrice || "Price on request";
-
-      const priceNote = document.createElement("p");
-      priceNote.className = "catalogue-price-note";
-      priceNote.textContent = formattedPrice
-        ? "Request a quotation for delivery, installation or additional requirements."
-        : "Contact FrostTech for current pricing.";
-
       const actions = document.createElement("div");
       actions.className = "catalogue-actions";
 
       const viewLink = createLink(
         "view-product-btn",
         "product.html?id=" + encodeURIComponent(product.id),
-        "View Product"
+        "See Details"
       );
 
-      const quoteLink = createLink(
-        "request-quote-btn",
-        "quote_requests.html?product_id=" +
-          encodeURIComponent(product.id),
-        "Request a Quote"
-      );
-
-      actions.append(viewLink, quoteLink);
+      actions.appendChild(viewLink);
       info.append(category, name);
 
       if (details.textContent) {
@@ -1086,7 +1014,7 @@
         info.appendChild(description);
       }
 
-      info.append(price, priceNote, actions);
+      info.appendChild(actions);
       card.append(image, info);
 
       return card;
@@ -1100,30 +1028,6 @@
         sorted.sort((a, b) =>
           String(a.name || "").localeCompare(String(b.name || ""))
         );
-      } else if (sortBy === "price-asc") {
-        sorted.sort((a, b) => {
-          const pa = Number(a.selling_price);
-          const pb = Number(b.selling_price);
-          const validA = Number.isFinite(pa) && pa > 0;
-          const validB = Number.isFinite(pb) && pb > 0;
-
-          if (validA && validB) return pa - pb;
-          if (validA) return -1;
-          if (validB) return 1;
-          return String(a.name || "").localeCompare(String(b.name || ""));
-        });
-      } else if (sortBy === "price-desc") {
-        sorted.sort((a, b) => {
-          const pa = Number(a.selling_price);
-          const pb = Number(b.selling_price);
-          const validA = Number.isFinite(pa) && pa > 0;
-          const validB = Number.isFinite(pb) && pb > 0;
-
-          if (validA && validB) return pb - pa;
-          if (validA) return -1;
-          if (validB) return 1;
-          return String(a.name || "").localeCompare(String(b.name || ""));
-        });
       } else {
         sorted.sort((a, b) =>
           String(b.created_at || "").localeCompare(String(a.created_at || ""))
