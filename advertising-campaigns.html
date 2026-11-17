@@ -22,6 +22,15 @@ button:disabled{opacity:.55}
 .message{display:none;padding:13px;border-radius:9px;margin-bottom:14px;overflow-wrap:anywhere}.message.show{display:block}.error{background:#ffeded;color:#992525}.success{background:#e6f7eb;color:#176532}.info{background:#eaf4fc;color:#17466f}
 .terms{display:flex;align-items:flex-start;gap:10px;margin-top:16px}.terms input{width:19px;min-height:19px;margin-top:3px}.terms label{margin:0;font-weight:500}
 a{color:#0757a5;font-weight:700}
+.history-list{display:grid;gap:12px;margin-top:15px}.campaign-row{border:1px solid var(--line);border-radius:11px;padding:15px;background:#fbfdff}
+.campaign-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.campaign-row h3{margin:0;color:var(--navy);font-size:16px}
+.status-pill{display:inline-block;border-radius:30px;padding:5px 10px;font-size:12px;font-weight:800;background:#eaf4fc;color:#17466f}
+.status-pill.good{background:#e6f7eb;color:#176532}.status-pill.bad{background:#ffeded;color:#992525}.status-pill.wait{background:#fff4df;color:#8a5200}
+.history-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:8px;margin-top:12px}
+.history-meta div{background:#f1f6fb;padding:9px;border-radius:7px;font-size:13px;overflow-wrap:anywhere}
+.history-empty{padding:15px;border:1px dashed #cbd8e5;border-radius:9px;color:var(--muted)}
+#refreshCampaigns{width:auto;min-width:170px}
 @media(max-width:540px){header{padding:16px}main{padding:14px 10px 30px}.card{padding:16px}}
 </style>
 </head>
@@ -50,7 +59,7 @@ a{color:#0757a5;font-weight:700}
 </form>
 <div class="note">Payment is processed in Development/Test Mode. A successful payment is recorded as paid, but the campaign remains unpublished until FrostTech approves the advertisement. The campaign duration starts on approval and activation.</div>
 </section>
-<section class="card"><h2>Campaign status</h2><p class="muted">After returning from Paystack, this page will verify your payment and show whether the campaign is awaiting administrator review.</p><p><a href="advertiser-portal.html">Return to Advertiser Workspace</a></p></section>
+<section class="card" id="myCampaigns"><h2>My Advertising Campaigns</h2><p class="muted">A live record of your campaign payments, FrostTech review decisions and activation dates. Only campaigns belonging to your signed-in advertiser account are shown.</p><button type="button" id="refreshCampaigns">Refresh Campaign History</button><div id="campaignHistory" class="history-list"><div class="history-empty">Sign in to load your campaign history.</div></div><p style="margin-top:16px"><a href="advertiser-portal.html">Return to Advertiser Workspace</a></p></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script>
 <script>
@@ -81,15 +90,73 @@ async function loadPackages(){
   const opt=document.createElement("option");opt.value=p.id;opt.textContent=p.package_name+" — "+money(p.price);select.appendChild(opt);
  });
 }
+function displayDate(value){if(!value)return "Not started";const d=new Date(value);return Number.isNaN(d.getTime())?"Not available":d.toLocaleString("en-NG",{dateStyle:"medium",timeStyle:"short"});}
+function setHistoryMessage(t){const host=document.getElementById("campaignHistory");host.innerHTML="";const p=document.createElement("div");p.className="history-empty";p.textContent=t;host.appendChild(p);}
+function addMeta(host,label,value){const d=document.createElement("div"),b=document.createElement("strong");b.textContent=label+": ";d.append(b,document.createTextNode(String(value===null||value===undefined?"—":value)));host.appendChild(d);}
+function campaignState(ad,item,order,payment){
+ const now=Date.now(),end=item&&item.expires_at?new Date(item.expires_at).getTime():null;
+ if(order.status==="refunded")return ["Refunded","bad"];
+ if(order.status==="cancelled")return ["Order Cancelled","bad"];
+ if(payment&&payment.status==="failed"&&order.status!=="paid")return ["Payment Failed","bad"];
+ if(order.status!=="paid")return ["Awaiting Payment","wait"];
+ if(ad.status==="rejected")return ["Rejected","bad"];
+ if(ad.status==="suspended")return ["Suspended","bad"];
+ if(ad.status==="expired"||(end!==null&&end<=now)||item.status==="expired")return ["Expired","wait"];
+ if(ad.status==="approved"&&item.status==="active"&&item.starts_at&&item.expires_at)return ["Active","good"];
+ if(ad.status==="approved")return ["Approved — Activation Pending","wait"];
+ if(ad.status==="submitted")return ["Awaiting FrostTech Review","wait"];
+ return ["Paid — Awaiting Submission","wait"];
+}
+async function loadCampaignHistory(){
+ const host=document.getElementById("campaignHistory");host.textContent="Loading your campaigns…";
+ const {data:{user},error:userError}=await db.auth.getUser();
+ if(userError||!user){setHistoryMessage("Please sign in through the Advertiser Workspace to view your campaigns.");return;}
+ const {data:advertiser,error:advertiserError}=await db.from("advertisers").select("id").eq("user_id",user.id).maybeSingle();
+ if(advertiserError)throw advertiserError;
+ if(!advertiser){setHistoryMessage("No advertiser profile is linked to this account yet.");return;}
+ const {data:ads,error:adsError}=await db.from("advertisement_submissions").select("id,advertisement_title,category,status,rejection_reason,created_at").eq("advertiser_id",advertiser.id).order("created_at",{ascending:false});
+ if(adsError)throw adsError;
+ if(!ads||!ads.length){setHistoryMessage("You have not submitted any advertising campaigns yet.");return;}
+ const records=[];
+ for(const ad of ads){
+  const {data:items,error:itemError}=await db.from("advertising_order_items").select("id,advertising_order_id,package_name_snapshot,duration_days_snapshot,status,starts_at,expires_at").eq("advertisement_id",ad.id);
+  if(itemError)throw itemError;
+  for(const item of (items||[])){
+   const {data:order,error:orderError}=await db.from("advertising_orders").select("id,order_number,amount,currency,status,environment,paid_at,created_at").eq("id",item.advertising_order_id).eq("advertiser_id",advertiser.id).maybeSingle();
+   if(orderError)throw orderError;
+   if(!order)continue;
+   const {data:payments,error:paymentError}=await db.from("advertising_payments").select("payment_reference,status,amount,currency,verified_at,created_at").eq("advertising_order_id",order.id).eq("advertiser_id",advertiser.id).order("created_at",{ascending:false}).limit(1);
+   if(paymentError)throw paymentError;
+   records.push({ad,item,order,payment:payments&&payments[0]?payments[0]:null});
+  }
+ }
+ host.innerHTML="";
+ if(!records.length){setHistoryMessage("No advertising orders are linked to your submitted advertisements yet.");return;}
+ records.sort((a,b)=>new Date(b.order.created_at||0)-new Date(a.order.created_at||0));
+ records.forEach(({ad,item,order,payment})=>{
+  const card=document.createElement("article");card.className="campaign-row";
+  const top=document.createElement("div");top.className="campaign-top";
+  const title=document.createElement("h3");title.textContent=ad.advertisement_title;
+  const state=campaignState(ad,item,order,payment),pill=document.createElement("span");pill.className="status-pill "+state[1];pill.textContent=state[0];top.append(title,pill);card.appendChild(top);
+  const meta=document.createElement("div");meta.className="history-meta";
+  addMeta(meta,"Order",order.order_number);addMeta(meta,"Package",item.package_name_snapshot);addMeta(meta,"Amount","₦"+Number(order.amount).toLocaleString("en-NG"));addMeta(meta,"Payment",order.status==="paid"?"Successful":(payment?payment.status:"Not recorded"));addMeta(meta,"Duration",item.duration_days_snapshot+" days");addMeta(meta,"Campaign starts",displayDate(item.starts_at));addMeta(meta,"Campaign expires",displayDate(item.expires_at));addMeta(meta,"Submitted",displayDate(ad.created_at));if(payment&&payment.payment_reference)addMeta(meta,"Payment reference",payment.payment_reference);
+  card.appendChild(meta);
+  if(ad.rejection_reason){const note=document.createElement("p");note.className="muted";note.textContent="FrostTech review note: "+ad.rejection_reason;card.appendChild(note);}
+  if(ad.status==="approved"&&item.status==="active"){const note=document.createElement("p");note.className="muted";note.textContent="Your approved campaign is activated. Its purchased duration is counted from the campaign start date above.";card.appendChild(note);}
+  host.appendChild(card);
+ });
+}
 async function verifyReturn(){
  const params=new URLSearchParams(location.search),ref=params.get("reference");
- if(!ref)return;
- say("Checking your Paystack Test Mode payment…","info");
- const {data,error}=await db.functions.invoke("verify-advertising-payment",{body:{reference:ref}});
- if(error)throw error;
- if(!data?.success)throw new Error(data?.error||"Payment verification could not be completed.");
- say(data.message||"Payment verified. Your advertisement is awaiting FrostTech review.","success");
- history.replaceState({},document.title,location.pathname);
+ if(ref){
+  say("Checking your Paystack Test Mode payment…","info");
+  const {data,error}=await db.functions.invoke("verify-advertising-payment",{body:{reference:ref}});
+  if(error)throw error;
+  if(!data?.success)throw new Error(data?.error||"Payment verification could not be completed.");
+  say(data.message||"Payment verified. Your advertisement is awaiting FrostTech review.","success");
+  history.replaceState({},document.title,location.pathname+"#myCampaigns");
+ }
+ await loadCampaignHistory();
 }
 form.addEventListener("submit",async e=>{
  e.preventDefault();msg.className="message";btn.disabled=true;btn.textContent="Creating advertising order…";
@@ -110,7 +177,8 @@ form.addEventListener("submit",async e=>{
   location.href=payment.authorization_url;
  }catch(err){say(err.message||"Unable to continue. Please try again.","error");btn.disabled=false;btn.textContent="Create Order and Continue to Test Payment";}
 });
-(async()=>{try{if(!db)throw new Error("FrostTech connection unavailable.");await loadPackages();const {data:{user}}=await db.auth.getUser();if(!user){say("Advertising packages are available. Sign in through the Advertiser Workspace using your approved advertiser account to submit a campaign.","info");return;}const ready=await checkTestReadiness();if(ready)await verifyReturn();}catch(e){say(e.message||"Unable to load advertising campaigns.","error");}})();
+document.getElementById("refreshCampaigns").onclick=()=>loadCampaignHistory().catch(e=>say(e.message||"Unable to refresh campaign history.","error"));
+(async()=>{try{if(!db)throw new Error("FrostTech connection unavailable.");await loadPackages();const {data:{user}}=await db.auth.getUser();if(!user){say("Advertising packages are available. Sign in through the Advertiser Workspace using your approved advertiser account to submit a campaign.","info");setHistoryMessage("Please sign in to view your campaign history.");return;}const ready=await checkTestReadiness();if(ready)await verifyReturn();else await loadCampaignHistory();}catch(e){say(e.message||"Unable to load advertising campaigns.","error");try{await loadCampaignHistory();}catch(historyError){setHistoryMessage("Campaign history could not be loaded. Please refresh and try again.");}}})();
 })();
 </script>
 </body></html>
