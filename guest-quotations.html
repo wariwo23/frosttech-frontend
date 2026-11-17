@@ -1610,6 +1610,43 @@ function setGuestBusy(button, busy, label) {
   if (label) button.textContent = label;
 }
 
+/* Keep the guest OTP resend cooldown visible and consistent across reloads. */
+const guestResendCooldownKey = "ft_guest_otp_resend_after";
+let guestResendTimer = null;
+
+function updateGuestResendCountdown() {
+  const sendButton = document.getElementById("guestSendCode");
+  const resendButton = document.getElementById("guestNewCode");
+  const deadline = Number(sessionStorage.getItem(guestResendCooldownKey) || 0);
+  const seconds = Math.max(0, Math.ceil((deadline - Date.now()) / 1000));
+
+  [sendButton, resendButton].forEach(button => {
+    if (!button) return;
+    if (seconds > 0) {
+      button.disabled = true;
+      button.textContent = "Resend available in " + seconds + "s";
+    } else {
+      button.disabled = false;
+      button.textContent = button === sendButton
+        ? "Send Verification Code"
+        : "Send Another Code";
+    }
+  });
+
+  if (seconds === 0 && guestResendTimer !== null) {
+    clearInterval(guestResendTimer);
+    guestResendTimer = null;
+    sessionStorage.removeItem(guestResendCooldownKey);
+  }
+}
+
+function startGuestResendCountdown() {
+  sessionStorage.setItem(guestResendCooldownKey, String(Date.now() + 60_000));
+  updateGuestResendCountdown();
+  if (guestResendTimer !== null) clearInterval(guestResendTimer);
+  guestResendTimer = setInterval(updateGuestResendCountdown, 1000);
+}
+
 async function sendGuestCode() {
   const number = document.getElementById("guestQuotationNumber").value.trim();
   const email = document.getElementById("guestEmail").value.trim();
@@ -1617,9 +1654,17 @@ async function sendGuestCode() {
     showMessage("Enter both the quotation reference and the original email address.", "error");
     return;
   }
+
+  const deadline = Number(sessionStorage.getItem(guestResendCooldownKey) || 0);
+  if (deadline > Date.now()) {
+    updateGuestResendCountdown();
+    return;
+  }
+
   guestQuotationNumber = number;
   sessionStorage.setItem("ft_guest_quote_number", number);
   const button = document.getElementById("guestSendCode");
+  startGuestResendCountdown();
   setGuestBusy(button, true, "Sending...");
   try {
     const result = await invokeGuestFunction("send_otp", { email }, "");
@@ -1628,7 +1673,7 @@ async function sendGuestCode() {
   } catch (error) {
     showMessage(error.message || "Unable to send the verification code.", "error");
   } finally {
-    setGuestBusy(button, false, "Send Verification Code");
+    updateGuestResendCountdown();
   }
 }
 
@@ -2191,6 +2236,7 @@ async function loadGuestQuotation() {
 document.getElementById("guestSendCode").addEventListener("click", sendGuestCode);
 document.getElementById("guestVerifyCode").addEventListener("click", verifyGuestCode);
 document.getElementById("guestNewCode").addEventListener("click", sendGuestCode);
+updateGuestResendCountdown();
 
 /* Load the customer's quotations */
 
