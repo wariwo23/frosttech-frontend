@@ -7,6 +7,16 @@
 <title>Request a Quote | FrostTech HVAC and Refrigeration</title>
 <meta name="description" content="Request quotations for HVAC products, refrigeration equipment, accessories and services from FrostTech.">
 <meta name="theme-color" content="#063b70">
+<script>
+(function(){
+  const params=new URLSearchParams(window.location.search);
+  if(params.get("guest")!=="1"||params.get("mode")==="guest")return;
+  const guestUrl=new URL("guest-register.html",window.location.href);
+  const productId=params.get("product_id");
+  if(productId)guestUrl.searchParams.set("product_id",productId);
+  window.location.replace(guestUrl.href);
+})();
+</script>
 
 <style>
 :root {
