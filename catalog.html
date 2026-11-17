@@ -571,6 +571,20 @@
         font-size: 20px;
       }
     }
+  
+/* Approved paid advertising placements — production campaigns only */
+.ft-sponsored-section{margin:18px 0 26px}
+.ft-sponsored-heading{font-size:18px;color:#073b70;margin:0 0 12px}
+.ft-sponsored-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.ft-sponsored-card{display:flex;gap:12px;align-items:flex-start;min-width:0;padding:13px;border:1px solid #dce5ee;border-radius:11px;background:#fff;box-shadow:0 3px 12px rgba(15,40,70,.04)}
+.ft-sponsored-card img{width:94px;height:90px;flex:0 0 94px;object-fit:cover;border-radius:8px;background:#edf4fa}
+.ft-sponsored-copy{min-width:0}
+.ft-sponsored-tag{display:inline-block;background:#e8f3fb;color:#075b94;border-radius:20px;padding:4px 8px;font-size:10px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.ft-sponsored-copy h3{font-size:15px;color:#073b70;margin:0 0 5px}
+.ft-sponsored-copy p{font-size:12px;color:#526174;margin:0;overflow-wrap:anywhere}
+.ft-sponsored-price{font-weight:800;color:#075b94;margin-top:6px;font-size:13px}
+.ft-sponsored-section[hidden]{display:none!important}
+
   </style>
 </head>
 
@@ -628,6 +642,16 @@
         <span class="category-symbol" aria-hidden="true">🛠</span>
         HVAC Services
       </button>
+    </section>
+
+    <section id="ftCategoryBannerSection" class="ft-sponsored-section" hidden aria-label="Sponsored category advertisements">
+      <h2 class="ft-sponsored-heading">Sponsored category placements</h2>
+      <div id="ftCategoryBannerGrid" class="ft-sponsored-grid"></div>
+    </section>
+
+    <section id="ftSponsoredListingSection" class="ft-sponsored-section" hidden aria-label="Sponsored product listings">
+      <h2 class="ft-sponsored-heading">Sponsored product listings</h2>
+      <div id="ftSponsoredListingGrid" class="ft-sponsored-grid"></div>
     </section>
 
     <h2 class="catalogue-section-title">Browse Products</h2>
@@ -755,6 +779,83 @@
       grid.appendChild(box);
     }
 
+    let activeAdvertisements = [];
+
+    function createSponsoredCard(ad, label) {
+      const card = document.createElement("article");
+      card.className = "ft-sponsored-card";
+      const paths = Array.isArray(ad.image_paths) ? ad.image_paths : [];
+      const imagePath = paths.find(path => {
+        try { return new URL(path).protocol === "https:"; } catch { return false; }
+      });
+      if (imagePath) {
+        const image = document.createElement("img");
+        image.src = imagePath;
+        image.alt = ad.advertisement_title || "Sponsored advertisement";
+        image.loading = "lazy";
+        image.referrerPolicy = "no-referrer";
+        image.onerror = () => image.remove();
+        card.appendChild(image);
+      }
+      const copy = document.createElement("div");
+      copy.className = "ft-sponsored-copy";
+      const tag = document.createElement("span");
+      tag.className = "ft-sponsored-tag";
+      tag.textContent = label;
+      const title = document.createElement("h3");
+      title.textContent = ad.advertisement_title || "Sponsored";
+      const description = document.createElement("p");
+      description.textContent = ad.description || "";
+      copy.append(tag,title,description);
+      if (ad.advertised_price !== null && ad.advertised_price !== undefined) {
+        const price = document.createElement("div");
+        price.className = "ft-sponsored-price";
+        price.textContent = "₦" + Number(ad.advertised_price).toLocaleString("en-NG");
+        copy.appendChild(price);
+      }
+      card.appendChild(copy);
+      return card;
+    }
+
+    function renderSponsoredAdvertisements() {
+      const categorySection = document.getElementById("ftCategoryBannerSection");
+      const categoryGrid = document.getElementById("ftCategoryBannerGrid");
+      const listingSection = document.getElementById("ftSponsoredListingSection");
+      const listingGrid = document.getElementById("ftSponsoredListingGrid");
+      if (!categorySection || !categoryGrid || !listingSection || !listingGrid) return;
+      categoryGrid.replaceChildren();
+      listingGrid.replaceChildren();
+      const selected = normalize(categorySelect.value);
+      const categoryAds = activeAdvertisements.filter(ad =>
+        ad.placement_type === "category_banner" &&
+        (!selected || normalize(ad.category) === selected)
+      );
+      categoryAds.forEach(ad => categoryGrid.appendChild(
+        createSponsoredCard(ad, "Advertisement · " + (ad.category || "Category"))
+      ));
+      categorySection.hidden = categoryAds.length === 0;
+      const listingAds = activeAdvertisements.filter(ad =>
+        ad.placement_type === "sponsored_product_listing"
+      );
+      listingAds.forEach(ad => listingGrid.appendChild(
+        createSponsoredCard(ad, "Sponsored")
+      ));
+      listingSection.hidden = listingAds.length === 0;
+    }
+
+    async function loadActiveAdvertisements() {
+      try {
+        const { data, error } = await supabaseClient.rpc("get_frosttech_active_advertisements");
+        if (error) throw error;
+        activeAdvertisements = Array.isArray(data) ? data : [];
+        renderSponsoredAdvertisements();
+      } catch (error) {
+        activeAdvertisements = [];
+        renderSponsoredAdvertisements();
+        console.warn("FrostTech advertising feed unavailable:", error);
+      }
+    }
+
     async function loadCatalogue() {
       countDisplay.textContent = "Loading products...";
       grid.replaceChildren();
@@ -785,6 +886,8 @@
             SUPABASE_PUBLISHABLE_KEY
           );
         }
+
+        await loadActiveAdvertisements();
 
         const { data, error } = await supabaseClient
           .from("products")
@@ -1113,6 +1216,7 @@
       );
 
       updateCategoryShortcuts();
+      renderSponsoredAdvertisements();
       displayCatalogue(sortProducts(filtered));
     }
 
