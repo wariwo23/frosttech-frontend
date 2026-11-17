@@ -31,7 +31,11 @@ if(userData.user.user_metadata?.account_type!=="guest")throw new Error("This con
 const {error:activationError}=await client.functions.invoke("guest-activate");
 if(activationError)throw activationError;
 message.textContent="Email verified successfully. Opening your FrostTech quotation request...";
-window.location.replace("quote-form.html?mode=guest");
+const quoteUrl=new URL("quote-form.html",window.location.href);
+quoteUrl.searchParams.set("mode","guest");
+const requestedProductId=new URLSearchParams(window.location.search).get("product_id");
+if(requestedProductId)quoteUrl.searchParams.set("product_id",requestedProductId);
+window.location.replace(quoteUrl.href);
 }catch(error){
 console.error("FrostTech guest verification failed:",error);
 fail(error.message||"Verification could not be completed. Please contact FrostTech support if the problem continues.");
