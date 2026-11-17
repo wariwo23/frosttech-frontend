@@ -60,6 +60,12 @@ const db=window.supabaseClient,msg=document.getElementById("message"),select=doc
 let packages=[];
 function say(t,k){msg.textContent=t;msg.className="message show "+k;}
 function money(v){return "₦"+Number(v).toLocaleString("en-NG",{maximumFractionDigits:2});}
+async function checkTestReadiness(){
+ const {data,error}=await db.functions.invoke("advertising-test-preflight",{body:{}});
+ if(error)throw error;
+ if(!data?.ready)throw new Error(data?.message||data?.error||"Advertising Test Mode is not ready.");
+ say("Advertising Test Mode is configured. No payment has been initiated. You may proceed when ready.","success");
+}
 async function loadPackages(){
  const {data,error}=await db.from("advertising_packages").select("id,package_name,placement_type,duration_days,price,currency").eq("is_active",true).order("price");
  if(error)throw error;packages=data||[];
@@ -103,7 +109,7 @@ form.addEventListener("submit",async e=>{
   location.href=payment.authorization_url;
  }catch(err){say(err.message||"Unable to continue. Please try again.","error");btn.disabled=false;btn.textContent="Create Order and Continue to Test Payment";}
 });
-(async()=>{try{if(!db)throw new Error("FrostTech connection unavailable.");const {data:{user}}=await db.auth.getUser();if(!user)throw new Error("Please sign in through the Advertiser Workspace first.");await loadPackages();await verifyReturn();}catch(e){say(e.message||"Unable to load advertising campaigns.","error");}})();
+(async()=>{try{if(!db)throw new Error("FrostTech connection unavailable.");const {data:{user}}=await db.auth.getUser();if(!user)throw new Error("Please sign in through the Advertiser Workspace first.");await checkTestReadiness();await loadPackages();await verifyReturn();}catch(e){say(e.message||"Unable to load advertising campaigns.","error");}})();
 })();
 </script>
 </body></html>
