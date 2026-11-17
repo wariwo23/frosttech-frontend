@@ -100,7 +100,7 @@
       overflow-wrap: anywhere;
     }
 
-    .product-decision {
+    .quote-panel {
       margin-top: 28px;
       padding: 22px;
       border: 1px solid #d8e6f1;
@@ -108,25 +108,18 @@
       background: #f7fbff;
     }
 
-    .product-price-label {
-      color: #64748b;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .product-price {
-      margin: 6px 0 8px;
+    .quote-panel-title {
+      margin: 0 0 8px;
       color: #075985;
-      font-size: 27px;
-      font-weight: 800;
-      overflow-wrap: anywhere;
+      font-size: 19px;
+      line-height: 1.4;
     }
 
-    .price-note {
+    .quote-panel-note {
       margin: 0;
       color: #64748b;
-      font-size: 13px;
-      line-height: 1.6;
+      font-size: 14px;
+      line-height: 1.7;
     }
 
     .product-actions {
@@ -269,12 +262,8 @@
         font-size: 25px;
       }
 
-      .product-decision {
+      .quote-panel {
         padding: 17px;
-      }
-
-      .product-price {
-        font-size: 24px;
       }
 
       .product-actions {
@@ -348,15 +337,13 @@
 
         <p id="product-description" class="product-description"></p>
 
-        <section class="product-decision"
-                 aria-label="Product price and quotation options">
-          <div class="product-price-label">FrostTech Selling Price</div>
+        <section class="quote-panel" aria-label="Quotation options">
+          <h2 class="quote-panel-title">Ready to request a quotation?</h2>
 
-          <div id="product-price" class="product-price"></div>
-
-          <p class="price-note">
-            Final quotation details, including delivery and any additional
-            requirements, will be confirmed through the quotation process.
+          <p class="quote-panel-note">
+            Send FrostTech your request for this product. We will confirm
+            availability, delivery, and any additional requirements through
+            the quotation process.
           </p>
 
           <div class="product-actions">
@@ -435,27 +422,6 @@ function showMessage(message, isError = false) {
   }
 }
 
-function formatPrice(value) {
-  if (
-    value === null ||
-    value === undefined ||
-    value === ""
-  ) {
-    return "Price on request";
-  }
-
-  const amount = Number(value);
-
-  if (!Number.isFinite(amount) || amount <= 0) {
-    return "Price on request";
-  }
-
-  return "₦" + amount.toLocaleString("en-NG", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
-  });
-}
-
 function displayProductImage(product) {
   const imageBox = document.getElementById("product-image-box");
 
@@ -521,7 +487,7 @@ async function loadProduct() {
     const { data: product, error } = await supabaseClient
       .from("products")
       .select(
-        "id, name, category, brand, model, description, selling_price, image_url"
+        "id, name, category, brand, model, description, image_url"
       )
       .eq("id", productId)
       .eq("is_active", true)
@@ -563,9 +529,6 @@ async function loadProduct() {
 
     document.getElementById("product-details").textContent =
       details.join(" | ");
-
-    document.getElementById("product-price").textContent =
-      formatPrice(product.selling_price);
 
     document.getElementById("product-description").textContent =
       product.description ||
