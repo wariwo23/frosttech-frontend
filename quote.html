@@ -93,7 +93,7 @@
     </a>
 
     <a class="choice-button guest" id="guestLink"
-       href="quote-form.html?guest=1">
+       href="guest-register.html">
       Continue as Guest
     </a>
 
@@ -118,14 +118,12 @@
   const params = new URLSearchParams(window.location.search);
   const productId = params.get("product_id");
 
-  if (!productId) return;
-
-  const formUrl = new URL("quote-form.html", window.location.href);
-  formUrl.searchParams.set("product_id", productId);
-  formUrl.searchParams.set("guest", "1");
-
+  const guestUrl = new URL("guest-register.html", window.location.href);
+  if (productId) guestUrl.searchParams.set("product_id", productId);
   document.getElementById("guestLink").href =
-    formUrl.pathname.split("/").pop() + formUrl.search;
+    guestUrl.pathname.split("/").pop() + guestUrl.search;
+
+  if (!productId) return;
 
   const returnUrl = new URL("quote-form.html", window.location.href);
   returnUrl.searchParams.set("product_id", productId);
