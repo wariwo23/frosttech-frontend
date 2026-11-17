@@ -1,9 +1,40 @@
 <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#082f55"><title>Advertising Review | FrostTech Admin</title><style>
-*{box-sizing:border-box}body{margin:0;background:#f2f6fa;color:#18324b;font:14px/1.55 Arial,sans-serif}header{background:linear-gradient(115deg,#062746,#0b4778);color:#fff;padding:20px}header h1{margin:0;font-size:22px}main{max-width:1100px;margin:auto;padding:18px 12px}.panel{background:#fff;border:1px solid #dce6ef;border-radius:12px;padding:17px;margin-bottom:14px}h2{margin:0 0 8px;color:#082f55}.muted{color:#64748b}.message{padding:12px;border-radius:8px;margin:12px 0}.error{background:#ffeded;color:#992525}.success{background:#e7f7eb;color:#176532}.item{border:1px solid #dce6ef;border-radius:10px;padding:15px;margin:12px 0;background:#fbfdff}.item h3{margin:0 0 6px;color:#082f55}.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}.meta div{background:#f2f7fb;padding:9px;border-radius:7px;overflow-wrap:anywhere}label{display:block;font-weight:700;margin:10px 0 5px}textarea{width:100%;min-height:70px;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{border:0;border-radius:7px;padding:11px 14px;margin:7px 7px 0 0;background:#0879c9;color:#fff;font-weight:700;min-height:40px}.reject{background:#a72d2d}.hidden{display:none}@media(max-width:560px){.panel{padding:13px}.item{padding:12px}button{width:100%;margin:7px 0 0}}
-</style></head><body><header><h1>FrostTech — Advertising Review</h1><div>Paid campaigns awaiting administrator decision</div></header><main><div id="message" class="message hidden"></div><section class="panel"><h2>Campaign approval queue</h2><p class="muted">Only paid Development/Test campaigns are shown. Approving activates the campaign and starts its purchased duration. Rejecting does not issue an automatic refund.</p><button id="refresh">Refresh review queue</button><div id="queue">Loading…</div></section><p><a href="admin.html">Return to Administration Dashboard</a></p></main>
+*{box-sizing:border-box}body{margin:0;background:#f2f6fa;color:#18324b;font:14px/1.55 Arial,sans-serif}header{background:linear-gradient(115deg,#062746,#0b4778);color:#fff;padding:20px}header h1{margin:0;font-size:22px}main{max-width:1100px;margin:auto;padding:18px 12px}.panel{background:#fff;border:1px solid #dce6ef;border-radius:12px;padding:17px;margin-bottom:14px}h2{margin:0 0 8px;color:#082f55}.muted{color:#64748b}.message{padding:12px;border-radius:8px;margin:12px 0}.error{background:#ffeded;color:#992525}.success{background:#e7f7eb;color:#176532}.item{border:1px solid #dce6ef;border-radius:10px;padding:15px;margin:12px 0;background:#fbfdff}.item h3{margin:0 0 6px;color:#082f55}.meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}.meta div{background:#f2f7fb;padding:9px;border-radius:7px;overflow-wrap:anywhere}label{display:block;font-weight:700;margin:10px 0 5px}textarea{width:100%;min-height:70px;padding:10px;border:1px solid #cbd5e1;border-radius:7px}button{border:0;border-radius:7px;padding:11px 14px;margin:7px 7px 0 0;background:#0879c9;color:#fff;font-weight:700;min-height:40px}.reject{background:#a72d2d}.hidden{display:none}
+.modal-backdrop{position:fixed;inset:0;background:rgba(3,18,35,.68);display:none;align-items:center;justify-content:center;padding:18px;z-index:1000}
+.modal-backdrop.open{display:flex}.modal{width:min(100%,440px);background:#fff;border-radius:14px;padding:21px;box-shadow:0 18px 55px #00152b55}
+.modal h2{margin:0 0 8px}.modal p{color:#52677d}.modal-actions{display:flex;gap:10px;margin-top:18px}
+.modal-actions button{flex:1;margin:0}.cancel{background:#e8eef5;color:#173650}
+button:focus-visible,textarea:focus-visible{outline:3px solid #75c8ff;outline-offset:2px}@media(max-width:560px){.panel{padding:13px}.item{padding:12px}button{width:100%;margin:7px 0 0}}
+</style></head><body><header><h1>FrostTech — Advertising Review</h1><div>Paid campaigns awaiting administrator decision</div></header><main><div id="message" class="message hidden"></div><section class="panel"><h2>Campaign approval queue</h2><p class="muted">Only paid Development/Test campaigns are shown. Approving activates the campaign and starts its purchased duration. Rejecting does not issue an automatic refund.</p><button id="refresh">Refresh review queue</button><div id="queue">Loading…</div></section><p><a href="admin.html">Return to Administration Dashboard</a></p>
+<div id="reviewModal" class="modal-backdrop" role="presentation">
+<section class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalText">
+<h2 id="modalTitle">Confirm advertisement decision</h2><p id="modalText">Please confirm this action.</p>
+<div class="modal-actions"><button type="button" id="cancelReview" class="cancel">Cancel</button><button type="button" id="confirmReview">Confirm</button></div>
+</section></div></main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script><script>
 (function(){"use strict";const db=window.supabaseClient,queue=document.getElementById("queue"),msg=document.getElementById("message");
 function say(t,k){msg.textContent=t;msg.className="message "+k;}
+const modal=document.getElementById("reviewModal"),modalTitle=document.getElementById("modalTitle"),modalText=document.getElementById("modalText"),confirmBtn=document.getElementById("confirmReview");
+let pendingReview=null;
+function openReview(id,action,reason){
+ if(action==="reject"&&reason.trim().length<5){say("Please enter a clear rejection reason of at least 5 characters before continuing.","error");return;}
+ pendingReview={id,action,reason};
+ modalTitle.textContent=action==="approve"?"Approve and activate advertisement?":"Confirm advertisement rejection";
+ modalText.textContent=action==="approve"?"Are you sure you want to approve this advertisement? Its paid campaign duration will begin immediately after activation is confirmed.":"Are you sure you want to reject this advertisement? The rejection reason will be recorded. No automatic refund will be issued.";
+ confirmBtn.textContent=action==="approve"?"Yes, Approve and Activate":"Yes, Reject Advertisement";
+ confirmBtn.className=action==="reject"?"reject":"";
+ modal.classList.add("open");confirmBtn.focus();
+}
+function closeReview(){modal.classList.remove("open");pendingReview=null;confirmBtn.disabled=false;}
+document.getElementById("cancelReview").onclick=closeReview;
+modal.addEventListener("click",e=>{if(e.target===modal)closeReview();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&modal.classList.contains("open"))closeReview();});
+confirmBtn.onclick=async()=>{
+ if(!pendingReview)return;
+ const p=pendingReview;confirmBtn.disabled=true;confirmBtn.textContent="Processing…";
+ const ok=await review(p.id,p.action,p.reason);
+ if(ok)closeReview();else{confirmBtn.disabled=false;confirmBtn.textContent=p.action==="approve"?"Yes, Approve and Activate":"Yes, Reject Advertisement";}
+};
 async function load(){queue.textContent="Loading paid submissions…";const {data:{user},error:uerr}=await db.auth.getUser();if(uerr||!user)throw new Error("Administrator sign-in required.");
 const {data:admin,error:aerr}=await db.rpc("is_admin");if(aerr||admin!==true)throw new Error("Administrator authorization failed.");
 const {data:ads,error}=await db.from("advertisement_submissions").select("id,advertiser_id,advertisement_title,category,description,image_paths,advertised_price,status,created_at").eq("status","submitted").order("created_at",{ascending:true});if(error)throw error;
@@ -17,11 +48,11 @@ paid.forEach(x=>{const box=document.createElement("article");box.className="item
 box.append(h,desc,meta);
 if(Array.isArray(x.ad.image_paths)&&x.ad.image_paths.length){x.ad.image_paths.forEach(u=>{const a=document.createElement("a");a.href=u;a.target="_blank";a.rel="noopener";a.textContent="View submitted creative";box.appendChild(a);});}
 const reason=document.createElement("textarea");reason.placeholder="Rejection reason (required if rejecting)";reason.setAttribute("aria-label","Rejection reason");box.appendChild(reason);
-const approve=document.createElement("button");approve.textContent="Approve and Activate";approve.onclick=()=>review(x.ad.id,"approve","");
-const reject=document.createElement("button");reject.className="reject";reject.textContent="Reject Advertisement";reject.onclick=()=>review(x.ad.id,"reject",reason.value);
+const approve=document.createElement("button");approve.textContent="Approve and Activate";approve.onclick=()=>openReview(x.ad.id,"approve","");
+const reject=document.createElement("button");reject.className="reject";reject.textContent="Reject Advertisement";reject.onclick=()=>openReview(x.ad.id,"reject",reason.value);
 box.append(approve,reject);queue.appendChild(box);});
 }
-async function review(id,action,reason){try{const {data,error}=await db.functions.invoke("review-advertisement",{body:{advertisement_id:id,action,reason}});if(error)throw error;if(!data?.success)throw new Error(data?.error||"Review action failed.");say(data.message,"success");await load();}catch(e){say(e.message||"Unable to process review","error");}}
+async function review(id,action,reason){try{const {data,error}=await db.functions.invoke("review-advertisement",{body:{advertisement_id:id,action,reason}});if(error)throw error;if(!data?.success)throw new Error(data?.error||"Review action failed.");say(data.message,"success");load().catch(e=>say("Decision recorded. The review queue could not refresh: "+(e.message||"Please refresh manually."),"success"));return true;}catch(e){say(e.message||"Unable to process review","error");return false;}}
 document.getElementById("refresh").onclick=()=>load().catch(e=>say(e.message,"error"));
 load().catch(e=>say(e.message,"error"));
 })();
