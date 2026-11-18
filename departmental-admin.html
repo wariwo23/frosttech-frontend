@@ -42,6 +42,11 @@ main { max-width:1100px; margin:auto; padding:16px; }
 }
 .error { background:#ffebee; color:#a11919; }
 .success-message { background:#e7f6ec; color:#176534; }
+.super-admin-workspaces { margin-top:14px; padding:14px; border:1px solid var(--border); border-radius:8px; background:#f7fafc; }
+.super-admin-workspaces h3 { margin:0 0 8px; color:var(--primary); }
+.workspace-links { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+.workspace-links a { display:inline-block; padding:10px 13px; border-radius:6px; background:var(--secondary); color:#fff; text-decoration:none; font-weight:bold; }
+.workspace-links a:focus-visible { outline:3px solid #f0b429; outline-offset:2px; }
 .preview-notice {
     background:#fff4d6;
     color:#704b00;
@@ -198,6 +203,17 @@ th { background:#edf3f8; }
                 This is a read-only preview. Departmental actions are disabled.
                 No employee appointment or role change is being made.
             </p>
+        </div>
+
+        <div id="superAdminWorkspaces" class="super-admin-workspaces hidden">
+            <h3>All Departmental Workspaces</h3>
+            <p>Super Administrator access is available independently of departmental appointments. Opening a workspace does not appoint an operator or change anyone's role.</p>
+            <nav class="workspace-links" aria-label="Departmental workspaces">
+                <a href="departmental-admin.html">Operations</a>
+                <a href="finance-admin.html">Finance</a>
+                <a href="supplier-admin.html">Supplier Administration</a>
+                <a href="catalogue-admin.html">Catalogue</a>
+            </nav>
         </div>
 
         <button id="refreshAllButton" type="button">
@@ -1317,6 +1333,8 @@ async function start() {
 
         if (previewMode) {
             document.getElementById("previewNotice")
+                .classList.remove("hidden");
+            document.getElementById("superAdminWorkspaces")
                 .classList.remove("hidden");
         }
 
