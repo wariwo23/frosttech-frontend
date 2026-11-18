@@ -5708,7 +5708,19 @@ async function loadEmployeeManagement(){
   }
   admins.replaceChildren();const at=document.createElement("table"),ah=document.createElement("tr");
   ["Email","Profile role","Administrator role","Account status"].forEach(v=>{const th=document.createElement("th");th.textContent=v;ah.append(th);});at.append(ah);
-  for(const a of accounts||[]){const tr=document.createElement("tr");[a.email,a.profile_role,a.administrator_role,(a.administrator_active?"Admin active":"Admin inactive")+" · "+(a.profile_active?"Profile active":"Profile inactive")].forEach(v=>{const td=document.createElement("td");td.textContent=v??"—";tr.append(td);});at.append(tr);}admins.append(at);
+  const ahActions=document.createElement("th");ahActions.textContent="Actions";ah.append(ahActions);
+  for(const a of accounts||[]){
+   const tr=document.createElement("tr");
+   [a.email,a.profile_role,a.administrator_role,(a.administrator_active?"Admin active":"Admin inactive")+" · "+(a.profile_active?"Profile active":"Profile inactive")].forEach(v=>{const td=document.createElement("td");td.textContent=v??"—";tr.append(td);});
+   const actions=document.createElement("td");
+   if(a.administrator_role!=="super_admin"){
+    const toggle=document.createElement("button");toggle.type="button";toggle.textContent=a.administrator_active?"Suspend":"Reactivate";
+    toggle.addEventListener("click",async()=>{const next=!a.administrator_active;if(!await employeeConfirm((next?"Reactivate":"Suspend")+" departmental administrator access for "+a.email+"?",next?"Reactivate Access":"Suspend Access"))return;toggle.disabled=true;try{const {error}=await db.rpc("admin_set_departmental_admin_status",{p_user_id:a.user_id,p_is_active:next});if(error)throw error;msg.textContent="Administrator access updated for "+a.email+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Administrator status could not be changed.";toggle.disabled=false;}});actions.append(toggle);
+    const remove=document.createElement("button");remove.type="button";remove.className="danger";remove.textContent="Remove Role";
+    remove.addEventListener("click",async()=>{if(!await employeeConfirm("Remove departmental administrator access for "+a.email+"? The employee profile and records will be retained.","Remove Administrator Role"))return;remove.disabled=true;try{const {error}=await db.rpc("admin_remove_departmental_admin",{p_user_id:a.user_id});if(error)throw error;msg.textContent="Departmental administrator role removed for "+a.email+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Administrator role could not be removed.";remove.disabled=false;}});actions.append(remove);
+   }else{actions.textContent="Protected permanent account";}
+   tr.append(actions);at.append(tr);
+  }admins.append(at);
  }catch(err){msg.textContent=err.message||"Could not load employee records.";table.textContent="Employee records unavailable.";admins.textContent="Administrator accounts unavailable.";}
 }
 $("employeeRefreshButton")?.addEventListener("click",loadEmployeeManagement);
