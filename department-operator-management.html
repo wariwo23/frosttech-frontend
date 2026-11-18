@@ -49,8 +49,8 @@ function node(tag,value,cls=""){const n=document.createElement(tag);n.textConten
 function confirmAction(message,fn){$("confirmText").textContent=message;pending=fn;$("confirm").classList.remove("hidden");}
 function closeConfirm(){$("confirm").classList.add("hidden");pending=null;}
 $("cancel").addEventListener("click",closeConfirm);
-$("accept").addEventListener("click",async()=>{if(!pending)return;const fn=pending;$("accept").disabled=true;try{await fn();}finally{$("accept").disabled=false;closeConfirm();}});
-function actionButton(parent,label,cls,fn){const b=node("button",label,cls);b.type="button";b.addEventListener("click",fn);parent.append(b);}
+$("accept").addEventListener("click",async()=>{if(!pending)return;const fn=pending;$("accept").disabled=true;try{await fn();}catch(e){msg("adminStatus",e.message||"The requested administrator change failed.","error");}finally{$("accept").disabled=false;closeConfirm();}});
+function actionButton(parent,label,cls,fn){const b=node("button",label,cls);b.type="button";b.addEventListener("click",async()=>{try{await fn();}catch(e){msg("adminStatus",e.message||"The administrator update failed.","error");}});parent.append(b);}
 async function loadEmployees(){
  $("refresh").disabled=true;msg("employeeStatus","Loading employee and department records…");$("employees").replaceChildren();
  try{const [{data:staff,error:se},{data:admins,error:ae}]=await Promise.all([db.rpc("admin_list_frosttech_employee_management"),db.rpc("admin_list_administrator_accounts")]);if(se)throw se;if(ae)throw ae;
