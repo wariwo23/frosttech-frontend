@@ -270,10 +270,10 @@ th { background:#edf3f8; }
 
 <section id="otherDepartmentMessage" class="card hidden">
     <h2>Departmental access verified</h2>
-    <p>
-        Your account is recognised. The tools for this department
-        will be connected in its implementation stage.
+    <p id="departmentPortalDescription">
+        Open your authorised departmental workspace below.
     </p>
+    <p><a id="departmentPortalLink" href="#" style="font-weight:bold;color:#0879c9;">Open Department Portal</a></p>
 </section>
 </main>
 
@@ -1326,6 +1326,23 @@ async function start() {
 
             await refreshAll();
         } else {
+            const portalLink = document.getElementById("departmentPortalLink");
+            const portalDescription = document.getElementById("departmentPortalDescription");
+
+            if (role==="catalogue_admin") {
+                portalLink.href = "catalogue-admin.html";
+                portalLink.textContent = "Open Catalogue Administration";
+                portalDescription.textContent = "Manage approved product details, selling prices, stock levels and catalogue status. Supplier-cost fields are not available in this portal.";
+            } else if (role==="supplier_admin") {
+                portalLink.href = "supplier-admin.html";
+                portalLink.textContent = "Open Supplier Administration";
+                portalDescription.textContent = "Review submitted supplier quotations, select a quotation for FrostTech review, or reject a quotation.";
+            } else if (role==="finance_admin") {
+                portalLink.removeAttribute("href");
+                portalLink.textContent = "Finance workspace is being connected";
+                portalDescription.textContent = "Your Finance role is recognised. Financial reporting remains protected by the current Super Administrator-only report controls; this portal will not bypass that restriction.";
+            }
+
             document.getElementById("otherDepartmentMessage")
                 .classList.remove("hidden");
         }
