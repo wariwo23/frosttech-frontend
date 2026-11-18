@@ -26,23 +26,21 @@ function renderCostSubmissionForms(quotes){
  }
  const wrap=node("div","");
  wrap.append(node("h3","","Submit quotation cost for review"));
- wrap.append(node("p","muted","Enter the internal actual-cost figures for the selected quotation. Super Administrator approval creates an immutable internal cost snapshot for audit and reporting only. It does not change the customer-facing quoted price, existing discount, delivery charge or payment record. Enter a discount only when a separate authorised discount is intended; the existing quotation discount is not added again."));
+ wrap.append(node("p","muted","Record actual costs only. No markup or discount is applied here. The original customer quotation price, any separately authorised discount, delivery charge and payment record remain unchanged. Super Administrator approval creates an immutable internal cost snapshot for audit and reporting only."));
  const eligible=quotes.filter(q=>["draft","submitted"].includes(q.status));
  if(!eligible.length){wrap.append(node("p","muted","No draft or submitted quotations are available for cost submission in this period."));root.append(wrap);return;}
  eligible.forEach(q=>{
   const card=node("div","record");card.append(node("h3","",q.quotation_number||"Quotation"));
   card.append(node("p","muted",(q.product_description||"")+" · "+q.status));
   const grid=node("div","grid");
-  const make=(label,type,required=true,step="0.01")=>{const box=node("div","");const l=node("label","",label);const i=document.createElement("input");i.type="number";i.min="0";i.step=step;i.required=required;box.append(l,i);grid.append(box);return i;};
-  const cost=make("Actual product cost subtotal (NGN)", "number");
-  const markup=make("Markup rate (%)","number");
-  const discount=make("Authorised discount amount (NGN) — enter 0 if none","number");discount.value="0";
-  const deliveryCharge=make("Customer delivery charge (NGN)","number");deliveryCharge.value=String(q.delivery_cost??0);
-  const deliveryCost=make("Actual delivery cost (NGN)","number",false);
+  const make=(label,required=true)=>{const box=node("div","");const l=node("label","",label);const i=document.createElement("input");i.type="number";i.min="0";i.step="0.01";i.required=required;box.append(l,i);grid.append(box);return i;};
+  card.append(node("p","muted","Existing quoted total: "+naira(q.total_amount)+" · Existing discount: "+naira(q.discount)+" · Existing delivery: "+naira(q.delivery_cost)));
+  const cost=make("Actual product cost subtotal (NGN)");
+  const deliveryCost=make("Actual delivery cost (NGN)",false);
   card.append(grid);
   const notesBox=node("div","");const notesLabel=node("label","","Cost submission notes");const notes=document.createElement("textarea");notes.rows=3;notes.style.width="100%";notes.style.padding="10px";notes.style.border="1px solid #bdc9d5";notes.style.borderRadius="6px";notesBox.append(notesLabel,notes);card.append(notesBox);
   const send=node("button","","Submit for Super Admin Review");
-  send.onclick=async()=>{if(!cost.value||!markup.value||!discount.value||!deliveryCharge.value){status("Complete the required cost, markup, discount and delivery fields.","error");return;}if(Number(cost.value)<=0||Number(markup.value)<0||Number(discount.value)<0||Number(deliveryCharge.value)<0||(deliveryCost.value!==""&&Number(deliveryCost.value)<0)){status("Enter valid non-negative amounts; actual product cost must be greater than zero.","error");return;}if(!(await ftConfirm("Submit these quotation cost figures for Super Administrator review? The original customer quotation price will remain unchanged.","Submit for Review",false)))return;send.disabled=true;try{const {error}=await db.rpc("submit_quotation_cost",{p_quotation_id:q.id,p_actual_cost_subtotal:Number(cost.value),p_markup_rate:Number(markup.value),p_discount_amount:Number(discount.value),p_delivery_customer_charge:Number(deliveryCharge.value),p_actual_delivery_cost:deliveryCost.value===""?null:Number(deliveryCost.value),p_breakdown:{},p_notes:notes.value||null});if(error)throw error;status("Cost submission received and is awaiting Super Administrator review.","success");await load();}catch(e){status(e.message||"Cost submission failed.","error");send.disabled=false;}};
+  send.onclick=async()=>{if(!cost.value){status("Enter the actual product cost subtotal.","error");return;}if(Number(cost.value)<=0||(deliveryCost.value!==""&&Number(deliveryCost.value)<0)){status("Enter a valid actual product cost and a non-negative actual delivery cost.","error");return;}if(!(await ftConfirm("Submit actual cost figures for Super Administrator review? No markup or discount will be applied, and the customer quotation will remain unchanged.","Submit for Review",false)))return;send.disabled=true;try{const {error}=await db.rpc("submit_quotation_cost",{p_quotation_id:q.id,p_actual_cost_subtotal:Number(cost.value),p_markup_rate:0,p_discount_amount:0,p_delivery_customer_charge:Number(q.delivery_cost??0),p_actual_delivery_cost:deliveryCost.value===""?null:Number(deliveryCost.value),p_breakdown:{},p_notes:notes.value||null});if(error)throw error;status("Cost submission received and is awaiting Super Administrator review.","success");await load();}catch(e){status(e.message||"Cost submission failed.","error");send.disabled=false;}};
   card.append(send);wrap.append(card);
  });
  root.append(wrap);
