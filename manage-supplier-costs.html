@@ -161,7 +161,7 @@
 
       <div id="pricePreview" class="price">Estimated selling price: —</div>
       <p class="muted">
-        Selling price = supplier cost × 1.15. Delivery and other charges are separate.
+        Supplier cost is recorded separately. Selecting a supplier does not change the customer selling price. Delivery and other charges are separate.
       </p>
       <button id="saveCostButton" type="button">Save Supplier Cost</button>
     </section>
@@ -259,9 +259,9 @@
     const cost = Number(raw);
     $("pricePreview").textContent =
       raw !== "" && Number.isFinite(cost) && cost > 0
-        ? "Estimated selling price: " +
-          money(Math.round(cost * 1.15 * 100) / 100)
-        : "Estimated selling price: —";
+        ? "Recorded supplier cost: " + money(cost) +
+          " | Existing customer selling price remains unchanged."
+        : "Existing customer selling price remains unchanged.";
   }
 
   async function loadSuppliers() {
@@ -373,9 +373,7 @@
       costCell.textContent = money(cost.supplier_cost);
 
       const priceCell = document.createElement("td");
-      priceCell.textContent = money(
-        Math.round(Number(cost.supplier_cost) * 1.15 * 100) / 100
-      );
+      priceCell.textContent = money(product?.selling_price);
 
       const statusCell = document.createElement("td");
       statusCell.textContent = cost.is_selected ? "Selected" : "Alternative";
@@ -480,7 +478,7 @@
 
       closeSupplierConfirmation();
       await loadProducts();
-      notify("Supplier selected. Calculated selling price: " + money(data) + ".", "success");
+      notify("Supplier selected. The existing customer selling price was preserved: " + money(data) + ".", "success");
     } catch (error) {
       closeSupplierConfirmation();
       notify("Could not select supplier: " + error.message, "error");
