@@ -1353,7 +1353,10 @@ document.getElementById("operationsSuperAdminLogin").addEventListener("submit",a
         });
         if(error) throw error;
         const {data:role,error:roleError}=await db.rpc("admin_get_my_role");
-        if(roleError) throw roleError;
+        if(roleError) {
+            await db.auth.signOut();
+            throw roleError;
+        }
         if(role!=="super_admin") {
             await db.auth.signOut();
             throw new Error("Only the Super Administrator account can open this preview.");
