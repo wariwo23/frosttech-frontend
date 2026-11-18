@@ -73,18 +73,20 @@ function renderEmployees(){
  card.append(node("p","Employment: "+(e.employment_status||"Unknown")));
  const departmentSelect=node("select","");
  departmentSelect.setAttribute("aria-label","Assign department for "+(e.full_name||"employee"));
+ const unassigned=node("option","Select a department");unassigned.value="";departmentSelect.append(unassigned);
  Object.entries(departments).forEach(([value,label])=>{const option=node("option",label);option.value=value;departmentSelect.append(option);});
  departmentSelect.value=e.department||"";
  card.append(node("label","Assign employee to department"));
  card.append(departmentSelect);
  const moveButton=node("button","Save Department Assignment","secondary");
  moveButton.type="button";
- moveButton.disabled=!e.employee_id||!e.department;
- moveButton.addEventListener("click",()=>confirmAction("Assign "+(e.full_name||"this employee")+" to "+departments[departmentSelect.value]+"? If this employee is already a departmental administrator, their administrator role will move with the department.",async()=>{
+ moveButton.disabled=!e.employee_id||!departmentSelect.value;
+ departmentSelect.addEventListener("change",()=>{moveButton.disabled=!e.employee_id||!departmentSelect.value;});
+ moveButton.addEventListener("click",()=>{if(!departmentSelect.value){msg("employeeStatus","Select a department before saving the assignment.","error");return;}confirmAction("Assign "+(e.full_name||"this employee")+" to "+departments[departmentSelect.value]+"? If this employee is already a departmental administrator, their administrator role will move with the department.",async()=>{
  moveButton.disabled=true;
  try{const {error}=await db.rpc("admin_reassign_frosttech_employee_department",{p_employee_id:e.employee_id,p_department:departmentSelect.value});if(error)throw error;msg("employeeStatus","Department assignment updated for "+(e.full_name||"employee")+".","success");await loadEmployees();await loadAdmins();}
  catch(err){msg("employeeStatus",err.message||"Department reassignment failed.","error");moveButton.disabled=false;}
- }));
+ });}); 
  card.append(moveButton);
  const account=accounts.find(a=>a.user_id===e.auth_user_id);
  const current=account?.administrator_role||e.administrator_role||null;
