@@ -6491,6 +6491,7 @@ window.renderPayments = function renderPayments(payments) {
       history.pushState({ adminPage: id }, "", "#" + id);
     }
     renderPage(id);
+    if (id === "employeeManagementPage" && typeof loadEmployeeManagement === "function") loadEmployeeManagement();
   }
 
   function goBack() {
