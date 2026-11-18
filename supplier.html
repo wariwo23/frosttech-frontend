@@ -978,7 +978,7 @@ async function loadMyQuotations() {
       .from("supplier_quotes")
       .select(
         "id,request_id,product_id,quantity,supplier_unit_price," +
-        "supplier_total,delivery_cost,customer_total,notes,status,created_at"
+        "supplier_total,delivery_cost,notes,status,created_at"
       )
       .eq("supplier_id", currentSupplier.id)
       .order("created_at", { ascending: false });
