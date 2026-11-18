@@ -1246,7 +1246,7 @@ footer {
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierManagement"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Supplier Management</strong><span>Applications, verification and account status</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="advertiserVerification"><span class="ico" aria-hidden="true">✓</span><span class="workspace-copy"><strong>Advertiser Verification</strong><span>Review advertiser applications and CAC status</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="paymentRecordsPage"><span class="ico" aria-hidden="true">▧</span><span class="workspace-copy"><strong>Payment Records</strong><span>Read-only payment history and references</span></span></button>
-    <button type="button" class="admin-nav-card workspace" data-admin-open="employeeManagementPage"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Department Operator Management</strong><span>Super Admin only: assign operators to Operations, Finance, Supplier or Catalogue</span></span></button>
+    <button type="button" id="departmentOperatorManagementNav" class="admin-nav-card workspace" data-admin-open="employeeManagementPage"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Department Operator Management</strong><span>Super Admin only: assign operators to Operations, Finance, Supplier or Catalogue</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierMaintenancePage"><span class="ico" aria-hidden="true">⚙</span><span class="workspace-copy"><strong>Supplier Account Maintenance</strong><span>Administrative supplier account actions</span></span></button>
 </section>
 </div>
@@ -2064,6 +2064,13 @@ async function refreshAdminSession() {
         if (access.redirected) return false;
 
         const { user, profile } = access;
+
+        const { data: isSuperAdmin, error: superAdminCheckError } = await db.rpc("is_super_admin");
+        if (superAdminCheckError) throw superAdminCheckError;
+        const operatorManagementNav = $("departmentOperatorManagementNav");
+        if (operatorManagementNav) {
+            operatorManagementNav.classList.toggle("hidden", isSuperAdmin !== true);
+        }
 
         if ($("loggedUser")) {
             $("loggedUser").textContent =
@@ -5432,7 +5439,7 @@ async function loadEmployeeManagement(){
      b.addEventListener("click",async()=>{if(!await employeeConfirm("Activate employment for "+e.full_name+"?","Activate Employee"))return;b.disabled=true;try{const {error}=await db.rpc("admin_activate_frosttech_employee",{p_employee_id:e.employee_id});if(error)throw error;msg.textContent="Employment activated for "+e.full_name+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Activation failed.";b.disabled=false;}});actions.append(b);
     }
     if(e.employment_status==="active"&&e.account_setup_completed_at){
-     const b=document.createElement("button");b.type="button";b.textContent=e.administrator_role?"Update Department Access":"Assign Department Operator";
+     const b=document.createElement("button");b.type="button";b.textContent=e.administrator_role?"Update Department Role":"Assign Department Operator";
      b.addEventListener("click",async()=>{const roles={operations:"operations_admin",supplier_management:"supplier_admin",finance:"finance_admin",catalogue:"catalogue_admin"},target=roles[e.department];if(!target){msg.textContent="No administrator role is mapped to this department.";return;}if(!await employeeConfirm("Assign "+e.full_name+" to the "+e.department.replace("_"," ")+" department?","Assign Operator"))return;b.disabled=true;try{const {error}=await db.rpc("admin_appoint_departmental_admin",{p_user_id:e.auth_user_id,p_role:target});if(error)throw error;msg.textContent="Department operator access assigned to "+e.full_name+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Role assignment failed.";b.disabled=false;}});actions.append(b);
     }
     tr.append(who,dept,st,role,actions);t.append(tr);
