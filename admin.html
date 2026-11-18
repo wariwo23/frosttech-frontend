@@ -1306,7 +1306,7 @@ footer {
 
         <h3>Recognised Orders — Actual Production Performance</h3>
         <p><small>These figures relate only to fully paid, production orders that pass the report's reconciliation checks. Quotation estimates and stock valuation are not included here.</small></p>
-        <p class="stat"><strong>Cost-data validation caution</strong><small>The installed V2 SQL checks do not explicitly classify NULL supplier unit costs or NULL item sales values as invalid. Until that SQL validation is separately reviewed and corrected, treat any returned realised gross profit and operating result as provisional if production order items may contain missing values. This dashboard update does not change the installed SQL function.</small></p>
+        <p class="stat"><strong>Cost-data validation safeguard</strong><small>Production order items with missing or invalid quantities, supplier unit costs or sales values are treated as exceptions. Realised gross profit and operating result are withheld when the required cost data is incomplete; review reconciliation exceptions before relying on financial results.</small></p>
         <div class="grid">
             <div class="stat">Fully paid production orders<strong id="finFullyPaidOrders">—</strong></div>
             <div class="stat">Reconciled orders<strong id="finReconciledOrders">—</strong></div>
