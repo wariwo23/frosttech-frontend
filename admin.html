@@ -445,6 +445,19 @@ footer {
     color: #0879c9;
     overflow-wrap: anywhere;
 }
+#superAdminDepartmentWorkspaces .button-link {
+    display:inline-block;
+    padding:10px 14px;
+    border-radius:7px;
+    background:#0879c9;
+    color:#fff;
+    text-decoration:none;
+    font-weight:700;
+}
+#superAdminDepartmentWorkspaces .button-link:focus-visible {
+    outline:3px solid #f0b429;
+    outline-offset:2px;
+}
 
 @media (max-width: 600px) {
     #systemStatus {
@@ -1194,6 +1207,17 @@ footer {
         <button id="logoutBtn" type="button" class="logout">Logout</button>
     </div>
     <div id="message" role="status"></div>
+</section>
+
+<section class="card" id="superAdminDepartmentWorkspaces">
+    <h2>Departmental Workspaces</h2>
+    <p>Super Administrator access to every department is available even when a departmental operator has not yet been appointed. Opening a workspace does not create an employee account or change departmental assignments.</p>
+    <div class="action-row actions">
+        <a class="button-link" href="departmental-admin.html">Operations</a>
+        <a class="button-link" href="finance-admin.html">Finance</a>
+        <a class="button-link" href="supplier-admin.html">Supplier Administration</a>
+        <a class="button-link" href="catalogue-admin.html">Catalogue</a>
+    </div>
 </section>
 
 <div class="heading">
