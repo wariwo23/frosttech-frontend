@@ -1151,7 +1151,7 @@ footer {
     #adminHomeOverview .actions button { width: 100%; }
 }
 
-</style>
+.ft-modal-backdrop{position:fixed;inset:0;background:rgba(4,20,38,.65);z-index:10000;display:flex;align-items:center;justify-content:center;padding:18px}.ft-modal-backdrop.hidden{display:none}.ft-modal{width:min(100%,440px);background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28)}.ft-modal h3{color:#123b63;margin-top:0}.ft-modal-actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:18px}#employeeRecordsTable,#administratorAccountsTable{overflow-x:auto;margin-top:14px}#employeeRecordsTable table,#administratorAccountsTable table{width:100%;border-collapse:collapse;min-width:680px}#employeeRecordsTable th,#employeeRecordsTable td,#administratorAccountsTable th,#administratorAccountsTable td{padding:9px;border-bottom:1px solid #dbe3eb;text-align:left;vertical-align:top}#employeeRecordsTable td button{margin:3px}</style>
 </head>
 
 <body>
@@ -1222,9 +1222,31 @@ footer {
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierManagement"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Supplier Management</strong><span>Applications, verification and account status</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="advertiserVerification"><span class="ico" aria-hidden="true">✓</span><span class="workspace-copy"><strong>Advertiser Verification</strong><span>Review advertiser applications and CAC status</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="paymentRecordsPage"><span class="ico" aria-hidden="true">▧</span><span class="workspace-copy"><strong>Payment Records</strong><span>Read-only payment history and references</span></span></button>
+    <button type="button" class="admin-nav-card workspace" data-admin-open="employeeManagementPage"><span class="ico" aria-hidden="true">♙</span><span class="workspace-copy"><strong>Employee &amp; Administrator Management</strong><span>Employee records, invitations and departmental access</span></span></button>
     <button type="button" class="admin-nav-card workspace" data-admin-open="supplierMaintenancePage"><span class="ico" aria-hidden="true">⚙</span><span class="workspace-copy"><strong>Supplier Account Maintenance</strong><span>Administrative supplier account actions</span></span></button>
 </section>
 </div>
+
+<section class="card admin-page-section hidden" id="employeeManagementPage" data-admin-title="Employee & Administrator Management">
+<h2>Employee &amp; Administrator Management</h2>
+<p>Super Administrator workspace for employee records, onboarding and departmental administrator access.</p>
+<div id="employeeManagementMessage" role="status" class="status-message"></div>
+<div class="card">
+<h3>Register a FrostTech Employee</h3>
+<form id="employeeCreateForm">
+<div class="grid">
+<label>Full name<input id="employeeFullName" required maxlength="160"></label>
+<label>Email address<input id="employeeEmail" type="email" required maxlength="254"></label>
+<label>Job title<input id="employeeJobTitle" required maxlength="120"></label>
+<label>Department<select id="employeeDepartment" required><option value="">Select department</option><option value="operations">Operations</option><option value="supplier_management">Supplier Management</option><option value="finance">Finance</option><option value="catalogue">Catalogue</option></select></label>
+</div><button type="submit" id="employeeCreateButton">Create Employee Record</button>
+</form>
+<p><small>Creating a record does not send an invitation or grant administrator access.</small></p>
+</div>
+<div class="card"><h3>Employee Records and Onboarding</h3><button type="button" id="employeeRefreshButton" class="secondary">Refresh Employee Records</button><div id="employeeRecordsTable"></div></div>
+<div class="card"><h3>Administrator Accounts</h3><div id="administratorAccountsTable"></div><p><small>The permanent Super Administrator account is protected. Departmental access is assigned only after verified account setup and employment activation.</small></p></div>
+<div id="employeeConfirmBackdrop" class="ft-modal-backdrop hidden" aria-hidden="true"><div class="ft-modal" role="dialog" aria-modal="true"><h3 id="employeeConfirmTitle">FrostTech HVAC and Refrigeration Marketplace</h3><p id="employeeConfirmText"></p><div class="ft-modal-actions"><button type="button" id="employeeConfirmCancel" class="secondary">Cancel</button><button type="button" id="employeeConfirmAccept">Continue</button></div></div></div>
+</section>
 
 <div id="adminPageToolbar" class="admin-page-toolbar hidden">
     <button type="button" id="backToAdminDashboard" class="neutral">← Back to Previous Page</button>
@@ -5646,6 +5668,55 @@ if ($("refreshBtn")) {
     $("refreshBtn").addEventListener("click", refreshAllDashboardSections);
 }
 
+
+function employeeConfirm(message,label="Continue"){
+ return new Promise(resolve=>{
+  const back=$("employeeConfirmBackdrop"),yes=$("employeeConfirmAccept"),no=$("employeeConfirmCancel");
+  $("employeeConfirmText").textContent=message;yes.textContent=label;back.classList.remove("hidden");back.setAttribute("aria-hidden","false");
+  const finish=value=>{back.classList.add("hidden");back.setAttribute("aria-hidden","true");yes.removeEventListener("click",accept);no.removeEventListener("click",cancel);resolve(value);};
+  const accept=()=>finish(true),cancel=()=>finish(false);yes.addEventListener("click",accept);no.addEventListener("click",cancel);no.focus();
+ });
+}
+async function loadEmployeeManagement(){
+ const msg=$("employeeManagementMessage"),table=$("employeeRecordsTable"),admins=$("administratorAccountsTable");
+ msg.textContent="";table.textContent="Loading employee records...";admins.textContent="Loading administrator accounts...";
+ try{
+  const [{data:employees,error:ee},{data:accounts,error:ae}]=await Promise.all([db.rpc("admin_list_frosttech_employee_management"),db.rpc("admin_list_administrator_accounts")]);
+  if(ee)throw ee;if(ae)throw ae;
+  table.replaceChildren();
+  if(!employees?.length)table.textContent="No employee records have been created yet.";
+  else{
+   const t=document.createElement("table"),head=document.createElement("tr");
+   ["Employee","Department","Employment status","Administrator role","Actions"].forEach(v=>{const th=document.createElement("th");th.textContent=v;head.append(th);});t.append(head);
+   for(const e of employees){
+    const tr=document.createElement("tr"),who=document.createElement("td"),dept=document.createElement("td"),st=document.createElement("td"),role=document.createElement("td"),actions=document.createElement("td");
+    who.textContent=e.full_name+"\n"+e.email+"\n"+e.job_title;dept.textContent=e.department;st.textContent=e.employment_status+(e.account_setup_completed_at?" · account setup complete":"");role.textContent=e.administrator_role||"Not appointed";
+    if(e.employment_status==="planned"){
+     const b=document.createElement("button");b.type="button";b.textContent="Send Invitation";
+     b.addEventListener("click",async()=>{if(!await employeeConfirm("Send an employee account invitation to "+e.email+"?","Send Invitation"))return;b.disabled=true;try{const {data,error}=await db.functions.invoke("invite-frosttech-employee",{body:{employee_id:e.employee_id}});if(error)throw error;if(data?.error)throw new Error(data.error);msg.textContent="Invitation sent to "+e.email+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Invitation could not be sent.";b.disabled=false;}});actions.append(b);
+    }
+    if(e.employment_status==="invited"&&e.account_setup_completed_at){
+     const b=document.createElement("button");b.type="button";b.textContent="Activate Employment";
+     b.addEventListener("click",async()=>{if(!await employeeConfirm("Activate employment for "+e.full_name+"?","Activate Employee"))return;b.disabled=true;try{const {error}=await db.rpc("admin_activate_frosttech_employee",{p_employee_id:e.employee_id});if(error)throw error;msg.textContent="Employment activated for "+e.full_name+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Activation failed.";b.disabled=false;}});actions.append(b);
+    }
+    if(e.employment_status==="active"&&e.account_setup_completed_at){
+     const b=document.createElement("button");b.type="button";b.textContent=e.administrator_role?"Reassign Role":"Appoint Department Admin";
+     b.addEventListener("click",async()=>{const roles={operations:"operations_admin",supplier_management:"supplier_admin",finance:"finance_admin",catalogue:"catalogue_admin"},target=roles[e.department];if(!target){msg.textContent="No administrator role is mapped to this department.";return;}if(!await employeeConfirm("Assign "+target.replace("_"," ")+" to "+e.full_name+"?","Assign Role"))return;b.disabled=true;try{const {error}=await db.rpc("admin_appoint_departmental_admin",{p_user_id:e.auth_user_id,p_role:target});if(error)throw error;msg.textContent="Departmental role assigned to "+e.full_name+".";await loadEmployeeManagement();}catch(err){msg.textContent=err.message||"Role assignment failed.";b.disabled=false;}});actions.append(b);
+    }
+    tr.append(who,dept,st,role,actions);t.append(tr);
+   }table.append(t);
+  }
+  admins.replaceChildren();const at=document.createElement("table"),ah=document.createElement("tr");
+  ["Email","Profile role","Administrator role","Account status"].forEach(v=>{const th=document.createElement("th");th.textContent=v;ah.append(th);});at.append(ah);
+  for(const a of accounts||[]){const tr=document.createElement("tr");[a.email,a.profile_role,a.administrator_role,(a.administrator_active?"Admin active":"Admin inactive")+" · "+(a.profile_active?"Profile active":"Profile inactive")].forEach(v=>{const td=document.createElement("td");td.textContent=v??"—";tr.append(td);});at.append(tr);}admins.append(at);
+ }catch(err){msg.textContent=err.message||"Could not load employee records.";table.textContent="Employee records unavailable.";admins.textContent="Administrator accounts unavailable.";}
+}
+$("employeeRefreshButton")?.addEventListener("click",loadEmployeeManagement);
+$("employeeCreateForm")?.addEventListener("submit",async event=>{
+ event.preventDefault();const button=$("employeeCreateButton");button.disabled=true;
+ try{const {error}=await db.rpc("admin_create_frosttech_employee",{p_full_name:$("employeeFullName").value.trim(),p_email:$("employeeEmail").value.trim(),p_job_title:$("employeeJobTitle").value.trim(),p_department:$("employeeDepartment").value});if(error)throw error;$("employeeCreateForm").reset();$("employeeManagementMessage").textContent="Employee record created. Send the invitation from the employee records table when ready.";await loadEmployeeManagement();}
+ catch(err){$("employeeManagementMessage").textContent=err.message||"Employee record could not be created.";}finally{button.disabled=false;}
+});
 (async function initialiseAdminPortal() {
     try {
         const {
