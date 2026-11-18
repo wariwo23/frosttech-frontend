@@ -1454,7 +1454,7 @@ footer {
 <form id="directQuoteForm" class="hidden">
     <h3 id="directQuoteFormTitle">Prepare Direct Quotation</h3>
     <div class="message info">
-        Enter the exact customer-facing prices FrostTech intends to quote. No automatic markup or price adjustment is applied. Any discount must be entered separately as a deliberate decision. Add only additional items specifically requested by the customer.
+        This is FrostTech's quotation preparation page. The customer supplies the requested product or service and quantity. The administrator enters the applicable product cost and markup, sets delivery cost, and applies any appropriate discount. Add only additional items specifically requested by the customer.
     </div>
     <input type="hidden" id="directQuoteId">
     <input type="hidden" id="directRequestId">
@@ -1465,10 +1465,13 @@ footer {
     <label for="directQuantity">Quantity *</label>
     <input id="directQuantity" type="number" min="1" step="1" required value="1">
 
-    <label for="directUnitPrice">Product Unit Price (₦) *</label>
-    <input id="directUnitPrice" type="number" min="0" step="0.01" required>
+    <label for="directUnitCost">Product Unit Cost (₦) *</label>
+    <input id="directUnitCost" type="number" min="0" step="0.01" required>
 
-    <div class="message info">Enter the price exactly as it should appear on the customer's quotation. The system will not add a markup.</div>
+    <label for="directMarkup">Markup (%)</label>
+    <input id="directMarkup" type="number" min="0" step="0.01" value="15" required>
+
+    <div class="message info">Markup applies to the product and permitted additional items. Delivery is excluded.</div>
 
     <label for="directDeliveryCost">Delivery Cost — Set by Administrator (₦)</label>
     <input id="directDeliveryCost" type="number" min="0" step="0.01" value="0" required>
@@ -1477,13 +1480,13 @@ footer {
         <label for="directBracketQuantity">Outdoor Brackets Quantity (sets)</label>
         <input id="directBracketQuantity" type="number" min="0" step="1" value="0" required>
 
-        <label for="directBracketUnitPrice">Customer Price per Bracket Set (₦)</label>
-        <input id="directBracketUnitPrice" type="number" min="0" step="0.01" value="0" required>
+        <label for="directBracketUnitCost">Cost per Bracket Set (₦)</label>
+        <input id="directBracketUnitCost" type="number" min="0" step="0.01" value="0" required>
     </div>
 
     <div id="directInstallationFields" class="hidden">
-        <label for="directInstallationUnitPrice">Customer Installation Price per AC (₦)</label>
-        <input id="directInstallationUnitPrice" type="number" min="0" step="0.01" value="0" required>
+        <label for="directInstallationPerAc">Installation Cost per AC (₦)</label>
+        <input id="directInstallationPerAc" type="number" min="0" step="0.01" value="0" required>
     </div>
 
     <div id="directAccessoriesFields" class="hidden">
@@ -1496,8 +1499,8 @@ footer {
         <label for="directAccessoryQuantity">Accessories Quantity</label>
         <input id="directAccessoryQuantity" type="number" min="0" step="1" value="0" required>
 
-        <label for="directAccessoryUnitPrice">Customer Accessory Price per Unit / Pack (₦)</label>
-        <input id="directAccessoryUnitPrice" type="number" min="0" step="0.01" value="0" required>
+        <label for="directAccessoryUnitCost">Accessory Cost per Unit / Pack (₦)</label>
+        <input id="directAccessoryUnitCost" type="number" min="0" step="0.01" value="0" required>
     </div>
 
     <div class="direct-other-items">
@@ -1512,7 +1515,9 @@ footer {
 
     <div class="quote-breakdown">
         <h3>Quotation Calculation</h3>
-        <div class="quote-line"><span>Customer unit price</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
+        <div class="quote-line"><span>Product cost per unit</span><span id="displayUnitCost">₦0.00</span></div>
+        <div class="quote-line"><span>Markup percentage</span><span id="displayMarkup">15%</span></div>
+        <div class="quote-line"><span>Customer unit price after markup</span><span id="displayCustomerUnitPrice">₦0.00</span></div>
         <div class="quote-line"><span>Product subtotal</span><span id="directSubtotal">₦0.00</span></div>
         <div class="quote-line"><span>Delivery</span><span id="displayDelivery">₦0.00</span></div>
         <div id="displayBracketsRow" class="quote-line hidden"><span>Outdoor brackets</span><span id="displayBrackets">₦0.00</span></div>
@@ -3221,6 +3226,28 @@ async function notifyCustomerFeeRequired(request, quote, fee) {
    DIRECT QUOTATION FORM
    ========================================================= */
 
+function setDirectQuotationDraftPriceMode(isDraftPriceMode) {
+    const labels = {
+        directUnitCost: isDraftPriceMode
+            ? "Product Customer Unit Price (₦) *"
+            : "Product Unit Cost (₦) *",
+        directBracketUnitCost: isDraftPriceMode
+            ? "Customer Price per Bracket Set (₦)"
+            : "Cost per Bracket Set (₦)",
+        directInstallationPerAc: isDraftPriceMode
+            ? "Customer Installation Price per AC (₦)"
+            : "Installation Cost per AC (₦)",
+        directAccessoryUnitCost: isDraftPriceMode
+            ? "Customer Accessory Price per Unit / Pack (₦)"
+            : "Accessory Cost per Unit / Pack (₦)"
+    };
+
+    for (const [fieldId, labelText] of Object.entries(labels)) {
+        const label = document.querySelector(`label[for="${fieldId}"]`);
+        if (label) label.textContent = labelText;
+    }
+}
+
 function getDirectQuotationRequestOptions() {
     const items = getCustomerRequestedItems(currentDirectQuoteRequest);
 
@@ -3282,16 +3309,16 @@ function applyDirectQuotationRequestRules(clearUnrequested = false) {
     if (clearUnrequested) {
         if (!requested.outdoor_brackets) {
             $("directBracketQuantity").value = "0";
-            $("directBracketUnitPrice").value = "0";
+            $("directBracketUnitCost").value = "0";
         }
         if (!requested.installation) {
-            $("directInstallationUnitPrice").value = "0";
+            $("directInstallationPerAc").value = "0";
         }
         if (!requested.accessories) {
             $("directAccessoryDescription").value = "";
             $("directAccessoryUnit").value = "";
             $("directAccessoryQuantity").value = "0";
-            $("directAccessoryUnitPrice").value = "0";
+            $("directAccessoryUnitCost").value = "0";
         }
     }
 }
@@ -3303,6 +3330,8 @@ function resetDirectQuotationForm() {
         form.reset();
         form.classList.add("hidden");
     }
+    $("directMarkup").disabled = false;
+    setDirectQuotationDraftPriceMode(false);
 
     clearDirectOtherItems();
 
@@ -3353,7 +3382,7 @@ function readRequestedItems(quotation) {
             !parsed ||
             typeof parsed !== "object" ||
             Array.isArray(parsed) ||
-            ![1, 2].includes(parsed.version)
+            parsed.version !== 1
         ) {
             return null;
         }
@@ -3410,12 +3439,13 @@ async function openDirectQuotationForRequest(requestId) {
 function readDirectOtherItemsFromForm() {
     const container = $("directOtherItemsContainer");
     if (!container) return [];
+
     return Array.from(container.querySelectorAll(".direct-other-item-row")).map(row => ({
         item_type: row.querySelector('[data-field="type"]').value,
         description: row.querySelector('[data-field="description"]').value.trim(),
         unit: row.querySelector('[data-field="unit"]').value.trim(),
         quantity: Number(row.querySelector('[data-field="quantity"]').value || 0),
-        unit_price: Number(row.querySelector('[data-field="unit_price"]').value || 0)
+        unit_cost: Number(row.querySelector('[data-field="unit_cost"]').value || 0)
     }));
 }
 
@@ -3427,34 +3457,66 @@ function clearDirectOtherItems() {
 function addDirectOtherItemRow(values = {}) {
     const container = $("directOtherItemsContainer");
     if (!container) return;
+
     const row = document.createElement("div");
     row.className = "direct-other-item-row";
+
     const type = document.createElement("select");
     type.dataset.field = "type";
-    [["product","Additional product"],["service","Service"],["accessory","Accessory"],["installation","Installation"],["other","Other requested item"]].forEach(([value,label]) => {
+    [
+        ["product","Additional product"],
+        ["service","Service"],
+        ["accessory","Accessory"],
+        ["installation","Installation"],
+        ["other","Other requested item"]
+    ].forEach(([value,label]) => {
         const option = document.createElement("option");
-        option.value = value; option.textContent = label; type.appendChild(option);
+        option.value = value;
+        option.textContent = label;
+        type.appendChild(option);
     });
     type.value = values.item_type || "product";
+
     const description = document.createElement("input");
-    description.type = "text"; description.dataset.field = "description";
-    description.placeholder = "Item description / specification"; description.value = values.description || "";
+    description.type = "text";
+    description.dataset.field = "description";
+    description.placeholder = "Item description / specification";
+    description.value = values.description || "";
+
     const unit = document.createElement("input");
-    unit.type = "text"; unit.dataset.field = "unit";
-    unit.placeholder = "Unit (e.g. piece, metre, roll, service)"; unit.value = values.unit || "unit";
+    unit.type = "text";
+    unit.dataset.field = "unit";
+    unit.placeholder = "Unit (e.g. piece, metre, roll, service)";
+    unit.value = values.unit || "unit";
+
     const quantity = document.createElement("input");
-    quantity.type = "number"; quantity.min = "0.001"; quantity.step = "0.001";
-    quantity.dataset.field = "quantity"; quantity.placeholder = "Quantity"; quantity.value = values.quantity ?? 1;
-    const unitPrice = document.createElement("input");
-    unitPrice.type = "number"; unitPrice.min = "0"; unitPrice.step = "0.01";
-    unitPrice.dataset.field = "unit_price"; unitPrice.placeholder = "Customer unit price (₦)";
-    unitPrice.value = values.unit_price ?? 0;
+    quantity.type = "number";
+    quantity.min = "0.001";
+    quantity.step = "0.001";
+    quantity.dataset.field = "quantity";
+    quantity.placeholder = "Quantity";
+    quantity.value = values.quantity ?? 1;
+
+    const unitCost = document.createElement("input");
+    unitCost.type = "number";
+    unitCost.min = "0";
+    unitCost.step = "0.01";
+    unitCost.dataset.field = "unit_cost";
+    unitCost.placeholder = "Unit cost (₦)";
+    unitCost.value = values.unit_cost ?? 0;
+
     const remove = document.createElement("button");
-    remove.type = "button"; remove.className = "neutral direct-other-remove";
+    remove.type = "button";
+    remove.className = "neutral direct-other-remove";
     remove.textContent = "Remove Item";
-    remove.addEventListener("click", () => { row.remove(); updateDirectQuotationPreview(); });
-    row.append(type,description,unit,quantity,unitPrice,remove);
-    container.appendChild(row); updateDirectQuotationPreview();
+    remove.addEventListener("click", () => {
+        row.remove();
+        updateDirectQuotationPreview();
+    });
+
+    row.append(type,description,unit,quantity,unitCost,remove);
+    container.appendChild(row);
+    updateDirectQuotationPreview();
 }
 
 if ($("addDirectOtherItemBtn")) {
@@ -3463,63 +3525,222 @@ if ($("addDirectOtherItemBtn")) {
 
 function getDirectQuotationValues() {
     const quantity = Number($("directQuantity").value || 0);
-    const unitPrice = Number($("directUnitPrice").value || 0);
+    const unitCost = Number($("directUnitCost").value || 0);
+    const markup = Number($("directMarkup").value || 0);
+
     const delivery = Number($("directDeliveryCost").value || 0);
+
     const requested = getDirectQuotationRequestOptions();
-    const bracketQuantity = requested.outdoor_brackets ? Number($("directBracketQuantity").value || 0) : 0;
-    const bracketUnitPrice = requested.outdoor_brackets ? Number($("directBracketUnitPrice").value || 0) : 0;
-    const installationUnitPrice = requested.installation ? Number($("directInstallationUnitPrice").value || 0) : 0;
-    const accessoryDescription = requested.accessories ? $("directAccessoryDescription").value.trim() : "";
-    const accessoryUnit = requested.accessories ? $("directAccessoryUnit").value.trim() : "";
-    const accessoryQuantity = requested.accessories ? Number($("directAccessoryQuantity").value || 0) : 0;
-    const accessoryUnitPrice = requested.accessories ? Number($("directAccessoryUnitPrice").value || 0) : 0;
-    const discount = Number($("directDiscount").value || 0);
-    return { quantity, unitPrice, delivery, bracketQuantity, bracketUnitPrice,
-        installationUnitPrice, accessoryDescription, accessoryUnit,
-        accessoryQuantity, accessoryUnitPrice, otherItems: readDirectOtherItemsFromForm(), discount };
+
+    const bracketQuantity = requested.outdoor_brackets
+        ? Number($("directBracketQuantity").value || 0)
+        : 0;
+
+    const bracketUnitCost = requested.outdoor_brackets
+        ? Number($("directBracketUnitCost").value || 0)
+        : 0;
+
+    const installationPerAc = requested.installation
+        ? Number($("directInstallationPerAc").value || 0)
+        : 0;
+
+    const accessoryDescription = requested.accessories
+        ? $("directAccessoryDescription").value.trim()
+        : "";
+
+    const accessoryUnit = requested.accessories
+        ? $("directAccessoryUnit").value.trim()
+        : "";
+
+    const accessoryQuantity = requested.accessories
+        ? Number($("directAccessoryQuantity").value || 0)
+        : 0;
+
+    const accessoryUnitCost = requested.accessories
+        ? Number($("directAccessoryUnitCost").value || 0)
+        : 0;
+
+    const discount = Number(
+        $("directDiscount").value || 0
+    );
+
+    return {
+        quantity,
+        unitCost,
+        markup,
+        delivery,
+        bracketQuantity,
+        bracketUnitCost,
+        installationPerAc,
+        accessoryDescription,
+        accessoryUnit,
+        accessoryQuantity,
+        accessoryUnitCost,
+        otherItems: readDirectOtherItemsFromForm(),
+        discount
+    };
 }
 
 function calculateDirectQuotation() {
     const v = getDirectQuotationValues();
-    const customerUnitPrice = v.unitPrice;
-    const productSellingTotal = v.quantity * customerUnitPrice;
-    const bracketCustomerUnitPrice = v.bracketUnitPrice;
-    const bracketsSellingTotal = v.bracketQuantity * bracketCustomerUnitPrice;
-    const installationCustomerUnitPrice = v.installationUnitPrice;
-    const installationSellingTotal = v.quantity * installationCustomerUnitPrice;
-    const accessoryCustomerUnitPrice = v.accessoryUnitPrice;
-    const accessoriesSellingTotal = v.accessoryQuantity * accessoryCustomerUnitPrice;
+
+    const productCost = v.quantity * v.unitCost;
+    const markupFactor = 1 + v.markup / 100;
+
+    const customerUnitPrice =
+        Number((v.unitCost * markupFactor).toFixed(2));
+
+    const productSellingTotal =
+        v.quantity * customerUnitPrice;
+
+    const bracketsCost =
+        v.bracketQuantity * v.bracketUnitCost;
+    const bracketCustomerUnitPrice =
+        Number((v.bracketUnitCost * markupFactor).toFixed(2));
+    const bracketsSellingTotal =
+        v.bracketQuantity * bracketCustomerUnitPrice;
+
+    const installationCost =
+        v.quantity * v.installationPerAc;
+    const installationCustomerUnitPrice =
+        Number((v.installationPerAc * markupFactor).toFixed(2));
+    const installationSellingTotal =
+        v.quantity * installationCustomerUnitPrice;
+
+    const accessoriesCost =
+        v.accessoryQuantity * v.accessoryUnitCost;
+    const accessoryCustomerUnitPrice =
+        Number((v.accessoryUnitCost * markupFactor).toFixed(2));
+    const accessoriesSellingTotal =
+        v.accessoryQuantity * accessoryCustomerUnitPrice;
+
     const otherItemsSellingTotal = v.otherItems.reduce(
-        (sum,item) => sum + Number((item.quantity * item.unit_price).toFixed(2)), 0
+        (sum, item) => {
+            const customerUnitPrice =
+                Number((item.unit_cost * markupFactor).toFixed(2));
+            const lineTotal =
+                Number((item.quantity * customerUnitPrice).toFixed(2));
+            return sum + lineTotal;
+        },
+        0
     );
+
+    /*
+     * Keep the product subtotal separate from additional items.
+     * This matches the quotation breakdown, database fields, and
+     * approved total/fee formulas without counting extras twice.
+     */
     const subtotal = productSellingTotal;
-    const additionalCharges = bracketsSellingTotal + installationSellingTotal +
-        accessoriesSellingTotal + otherItemsSellingTotal;
-    const total = Math.max(0, subtotal + additionalCharges - v.discount) + v.delivery;
-    return { ...v, customerUnitPrice, productSellingTotal, bracketCustomerUnitPrice,
-        bracketsSellingTotal, installationCustomerUnitPrice, installationSellingTotal,
-        accessoryCustomerUnitPrice, accessoriesSellingTotal, otherItemsSellingTotal,
-        subtotal, additionalCharges, total };
+
+    const additionalCharges =
+        bracketsSellingTotal +
+        installationSellingTotal +
+        accessoriesSellingTotal +
+        otherItemsSellingTotal;
+
+    const total =
+        Math.max(0, subtotal + additionalCharges - v.discount) +
+        v.delivery;
+
+    return {
+        ...v,
+        productCost,
+        customerUnitPrice,
+        productSellingTotal,
+        bracketsCost,
+        bracketCustomerUnitPrice,
+        bracketsSellingTotal,
+        installationCost,
+        installationCustomerUnitPrice,
+        installationSellingTotal,
+        accessoriesCost,
+        accessoryCustomerUnitPrice,
+        accessoriesSellingTotal,
+        otherItemsSellingTotal,
+        subtotal,
+        additionalCharges,
+        total
+    };
 }
 
 function updateDirectQuotationPreview() {
     if (!$("directQuoteForm")) return;
+
     const v = getDirectQuotationValues();
-    const values = [v.quantity,v.unitPrice,v.delivery,v.bracketQuantity,v.bracketUnitPrice,
-        v.installationUnitPrice,v.accessoryQuantity,v.accessoryUnitPrice,v.discount,
-        ...v.otherItems.flatMap(item => [item.quantity,item.unit_price])];
-    if (values.some(value => !Number.isFinite(value))) return;
+
+    const values = [
+        v.quantity,
+        v.unitCost,
+        v.markup,
+        v.delivery,
+        v.bracketQuantity,
+        v.bracketUnitCost,
+        v.installationPerAc,
+        v.accessoryQuantity,
+        v.accessoryUnitCost,
+        v.discount,
+        ...v.otherItems.flatMap(item => [item.quantity, item.unit_cost])
+    ];
+
+    if (values.some((value) => !Number.isFinite(value))) {
+        return;
+    }
+
     const result = calculateDirectQuotation();
-    if ($("displayCustomerUnitPrice")) $("displayCustomerUnitPrice").textContent = money(result.customerUnitPrice);
-    if ($("directSubtotal")) $("directSubtotal").textContent = money(result.subtotal);
-    if ($("displayDelivery")) $("displayDelivery").textContent = money(result.delivery);
-    if ($("displayBrackets")) $("displayBrackets").textContent = money(result.bracketsSellingTotal);
-    if ($("displayInstallation")) $("displayInstallation").textContent = money(result.installationSellingTotal);
-    if ($("displayAccessories")) $("displayAccessories").textContent = money(result.accessoriesSellingTotal);
-    if ($("displayOtherItems")) $("displayOtherItems").textContent = money(result.otherItemsSellingTotal);
-    if ($("displayOtherItemsRow")) $("displayOtherItemsRow").classList.toggle("hidden",result.otherItems.length === 0);
-    if ($("displayDiscount")) $("displayDiscount").textContent = money(result.discount);
-    if ($("directTotal")) $("directTotal").textContent = money(result.total);
+
+    if ($("displayUnitCost")) {
+        $("displayUnitCost").textContent = money(result.unitCost);
+    }
+
+    if ($("displayMarkup")) {
+        $("displayMarkup").textContent = `${result.markup}%`;
+    }
+
+    if ($("displayCustomerUnitPrice")) {
+        $("displayCustomerUnitPrice").textContent =
+            money(result.customerUnitPrice);
+    }
+
+    if ($("directSubtotal")) {
+        $("directSubtotal").textContent = money(result.subtotal);
+    }
+
+    if ($("displayDelivery")) {
+        $("displayDelivery").textContent = money(result.delivery);
+    }
+
+    if ($("displayBrackets")) {
+        $("displayBrackets").textContent =
+            money(result.bracketsSellingTotal);
+    }
+
+    if ($("displayInstallation")) {
+        $("displayInstallation").textContent =
+            money(result.installationSellingTotal);
+    }
+
+    if ($("displayAccessories")) {
+        $("displayAccessories").textContent =
+            money(result.accessoriesSellingTotal);
+    }
+
+    if ($("displayOtherItems")) {
+        $("displayOtherItems").textContent = money(result.otherItemsSellingTotal);
+    }
+    if ($("displayOtherItemsRow")) {
+        $("displayOtherItemsRow").classList.toggle(
+            "hidden",
+            result.otherItems.length === 0
+        );
+    }
+
+    if ($("displayDiscount")) {
+        $("displayDiscount").textContent = money(result.discount);
+    }
+
+    if ($("directTotal")) {
+        $("directTotal").textContent = money(result.total);
+    }
 }
 
 if ($("directQuoteForm")) {
@@ -3557,105 +3778,229 @@ async function getSelectedProductSupplierCost(productId) {
 
 function getDirectQuotationRecord() {
     const result = calculateDirectQuotation();
+
     const description = $("directProductDescription").value.trim();
-    if (!description) throw new Error("Enter the product or service description.");
-    if (!Number.isInteger(result.quantity) || result.quantity < 1) throw new Error("Quantity must be a whole number greater than zero.");
-    if (result.unitPrice <= 0 || result.delivery < 0 || result.bracketQuantity < 0 ||
-        result.bracketUnitPrice < 0 || result.installationUnitPrice < 0 ||
-        result.accessoryQuantity < 0 || result.accessoryUnitPrice < 0 || result.discount < 0) {
-        throw new Error("Enter valid non-negative customer quotation prices.");
+
+    if (!description) {
+        throw new Error("Enter the product or service description.");
     }
-    if (result.accessoryQuantity > 0 && !result.accessoryDescription) throw new Error("Describe the accessory being quoted.");
+
+    if (
+        !Number.isInteger(result.quantity) ||
+        result.quantity < 1
+    ) {
+        throw new Error("Quantity must be a whole number greater than zero.");
+    }
+
+    if (
+        result.unitCost <= 0 ||
+        result.markup < 0 ||
+        result.delivery < 0 ||
+        result.bracketQuantity < 0 ||
+        result.bracketUnitCost < 0 ||
+        result.installationPerAc < 0 ||
+        result.accessoryQuantity < 0 ||
+        result.accessoryUnitCost < 0 ||
+        result.discount < 0
+    ) {
+        throw new Error("Enter valid non-negative quotation values.");
+    }
+
+    if (
+        result.accessoryQuantity > 0 &&
+        !result.accessoryDescription
+    ) {
+        throw new Error("Describe the accessory being quoted.");
+    }
+
     for (const [index,item] of result.otherItems.entries()) {
-        if (!item.description || !item.unit) throw new Error("Complete the description and unit for additional item " + (index + 1) + ".");
-        if (!Number.isFinite(item.quantity) || item.quantity <= 0 || !Number.isFinite(item.unit_price) || item.unit_price < 0) {
-            throw new Error("Enter a valid quantity and customer unit price for additional item " + (index + 1) + ".");
+        if (!item.description || !item.unit) {
+            throw new Error("Complete the description and unit for additional item " + (index + 1) + ".");
         }
-        if (!["product","service","accessory","installation","other"].includes(item.item_type)) throw new Error("Choose a valid type for additional item " + (index + 1) + ".");
+        if (!Number.isFinite(item.quantity) || item.quantity <= 0 ||
+            !Number.isFinite(item.unit_cost) || item.unit_cost < 0) {
+            throw new Error("Enter a valid quantity and non-negative unit cost for additional item " + (index + 1) + ".");
+        }
+        if (!["product","service","accessory","installation","other"].includes(item.item_type)) {
+            throw new Error("Choose a valid type for additional item " + (index + 1) + ".");
+        }
     }
-    if (result.discount > result.subtotal) throw new Error("Discount cannot exceed the quotation subtotal.");
+
+    if (
+        result.discount >
+        result.subtotal
+    ) {
+        throw new Error("Discount cannot exceed the quotation subtotal.");
+    }
+
+    /*
+     * Notes may be shown on the customer-facing quotation.
+     * Store only customer prices here, never supplier cost inputs.
+     * The edit screen restores these prices with zero markup.
+     */
+    const markupFactor = 1 + result.markup / 100;
     const requestedItems = {
-        version: 2, pricing_mode: "customer_prices_v2",
+        version: 1,
+        pricing_mode: "customer_prices_v1",
         items: {
-            product: { customer_unit_price: result.unitPrice },
-            installation: { customer_unit_price: result.installationUnitPrice, quantity: result.quantity },
-            outdoor_brackets: { quantity: result.bracketQuantity, customer_unit_price: result.bracketUnitPrice },
+            product: {
+                customer_unit_price: result.customerUnitPrice
+            },
+            installation: {
+                customer_unit_price: result.installationPerAc * markupFactor,
+                quantity: result.quantity
+            },
+            outdoor_brackets: {
+                quantity: result.bracketQuantity,
+                customer_unit_price: result.bracketUnitCost * markupFactor
+            },
             accessories: result.accessoryQuantity > 0 ? [{
-                description: result.accessoryDescription, unit: result.accessoryUnit || null,
-                quantity: result.accessoryQuantity, customer_unit_price: result.accessoryUnitPrice
+                description: result.accessoryDescription,
+                unit: result.accessoryUnit || null,
+                quantity: result.accessoryQuantity,
+                customer_unit_price: result.accessoryUnitCost * markupFactor
             }] : [],
-            other_items: result.otherItems.map(item => ({ item_type: item.item_type,
-                description: item.description, unit: item.unit, quantity: item.quantity,
-                customer_unit_price: item.unit_price }))
+            other_items: result.otherItems.map(item => ({
+                item_type: item.item_type,
+                description: item.description,
+                unit: item.unit,
+                quantity: item.quantity,
+                customer_unit_price: item.unit_cost * markupFactor
+            }))
         }
     };
+
     return {
         request_id: $("directRequestId").value || null,
         customer_id: currentDirectQuoteRequest?.customer_id || null,
-        product_description: description, quantity: result.quantity,
-        unit_price: result.unitPrice, delivery_cost: result.delivery,
-        additional_charges: result.additionalCharges, discount: result.discount,
+        product_description: description,
+        quantity: result.quantity,
+        unit_price: result.customerUnitPrice,
+        delivery_cost: result.delivery,
+        additional_charges: result.additionalCharges,
+        discount: result.discount,
         validity_date: $("directValidity").value || null,
-        notes: [$("directNotes").value.trim(),"","FROSTTECH_REQUESTED_ITEMS_V1:",JSON.stringify(requestedItems)].filter(Boolean).join("\n"),
+        notes: [
+            $("directNotes").value.trim(),
+            "",
+            "FROSTTECH_REQUESTED_ITEMS_V1:",
+            JSON.stringify(requestedItems)
+        ].filter(Boolean).join("\n"),
         status: "draft"
     };
 }
 
 function getDirectQuotationPricingSnapshot() {
     const result = calculateDirectQuotation();
+
     return {
-        version: 2, pricing_rule: "customer_prices_as_entered_no_automatic_markup",
+        version: 1,
         saved_at: new Date().toISOString(),
         inputs: {
-            customer_unit_price: result.unitPrice, quantity: result.quantity,
-            delivery: result.delivery, bracket_quantity: result.bracketQuantity,
-            bracket_unit_price: result.bracketUnitPrice,
-            installation_unit_price: result.installationUnitPrice,
+            unit_cost: result.unitCost,
+            markup_percent: result.markup,
+            quantity: result.quantity,
+            delivery: result.delivery,
+            bracket_quantity: result.bracketQuantity,
+            bracket_unit_cost: result.bracketUnitCost,
+            installation_per_unit_cost: result.installationPerAc,
             accessory_description: result.accessoryDescription,
-            accessory_unit: result.accessoryUnit, accessory_quantity: result.accessoryQuantity,
-            accessory_unit_price: result.accessoryUnitPrice,
-            other_items: result.otherItems, discount: result.discount
+            accessory_unit: result.accessoryUnit,
+            accessory_quantity: result.accessoryQuantity,
+            accessory_unit_cost: result.accessoryUnitCost,
+            other_items: result.otherItems,
+            discount: result.discount
         },
-        calculated: { customer_unit_price: result.customerUnitPrice,
-            product_subtotal: result.subtotal, additional_charges: result.additionalCharges,
-            total: result.total }
+        calculated: {
+            customer_unit_price: result.customerUnitPrice,
+            product_subtotal: result.subtotal,
+            additional_charges: result.additionalCharges,
+            total: result.total
+        }
     };
 }
 
 function buildDirectQuotationItems() {
     const result = calculateDirectQuotation();
     const description = $("directProductDescription").value.trim();
-    const items = [{
-        item_type: "product", product_id: currentDirectQuoteRequest?.product_id || null,
-        description, specifications: {}, unit: "unit", quantity: result.quantity,
-        unit_price: Number(result.customerUnitPrice.toFixed(2)),
-        sort_order: 0, source_proposal_id: null, replaces_item_id: null
-    }];
+    const markupFactor = 1 + result.markup / 100;
+    const items = [];
+
+    items.push({
+        item_type: "product",
+        product_id: currentDirectQuoteRequest?.product_id || null,
+        description,
+        specifications: {},
+        unit: "unit",
+        quantity: result.quantity,
+        unit_price: Number((result.customerUnitPrice).toFixed(2)),
+        sort_order: 0,
+        source_proposal_id: null,
+        replaces_item_id: null
+    });
+
     let sortOrder = 1;
-    if (result.bracketQuantity > 0) items.push({
-        item_type: "accessory", product_id: null, description: "Outdoor bracket set",
-        specifications: {}, unit: "set", quantity: result.bracketQuantity,
-        unit_price: result.bracketCustomerUnitPrice, sort_order: sortOrder++,
-        source_proposal_id: null, replaces_item_id: null
-    });
-    if (result.installationUnitPrice > 0 || currentDirectQuoteRequest?.installation_service === true) items.push({
-        item_type: "installation", product_id: null, description: "Installation service",
-        specifications: {}, unit: "AC", quantity: result.quantity,
-        unit_price: result.installationCustomerUnitPrice, sort_order: sortOrder++,
-        source_proposal_id: null, replaces_item_id: null
-    });
-    if (result.accessoryQuantity > 0) items.push({
-        item_type: "accessory", product_id: null, description: result.accessoryDescription,
-        specifications: {}, unit: result.accessoryUnit || "unit",
-        quantity: result.accessoryQuantity, unit_price: result.accessoryCustomerUnitPrice,
-        sort_order: sortOrder++, source_proposal_id: null, replaces_item_id: null
-    });
-    for (const item of result.otherItems) items.push({
-        item_type: item.item_type, product_id: null, description: item.description,
-        specifications: {}, unit: item.unit, quantity: item.quantity,
-        unit_price: Number(item.unit_price.toFixed(2)), sort_order: sortOrder++,
-        source_proposal_id: null, replaces_item_id: null
-    });
+
+    if (result.bracketQuantity > 0) {
+        items.push({
+            item_type: "accessory",
+            product_id: null,
+            description: "Outdoor bracket set",
+            specifications: {},
+            unit: "set",
+            quantity: result.bracketQuantity,
+            unit_price: result.bracketCustomerUnitPrice,
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    if (result.installationPerAc > 0 || currentDirectQuoteRequest?.installation_service === true) {
+        items.push({
+            item_type: "installation",
+            product_id: null,
+            description: "Installation service",
+            specifications: {},
+            unit: "AC",
+            quantity: result.quantity,
+            unit_price: result.installationCustomerUnitPrice,
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    if (result.accessoryQuantity > 0) {
+        items.push({
+            item_type: "accessory",
+            product_id: null,
+            description: result.accessoryDescription,
+            specifications: {},
+            unit: result.accessoryUnit || "unit",
+            quantity: result.accessoryQuantity,
+            unit_price: result.accessoryCustomerUnitPrice,
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
+    for (const item of result.otherItems) {
+        items.push({
+            item_type: item.item_type,
+            product_id: null,
+            description: item.description,
+            specifications: {},
+            unit: item.unit,
+            quantity: item.quantity,
+            unit_price: Number((item.unit_cost * markupFactor).toFixed(2)),
+            sort_order: sortOrder++,
+            source_proposal_id: null,
+            replaces_item_id: null
+        });
+    }
+
     return items;
 }
 
@@ -3720,7 +4065,7 @@ async function applyAcceptedAlternativeToDirectQuotation(
     if (expectedUnitPrice > 0 &&
         Math.round(Number(primary.unit_price) * 100) !== Math.round(expectedUnitPrice * 100)) {
         throw new Error(
-            "The quotation's customer unit price must match the accepted alternative's recorded price. Enter the accepted customer price exactly; no markup will be added automatically."
+            "The quotation's customer unit price must match the accepted alternative's recorded price. Review the supplier cost and markup; FrostTech will not invent or alter the supplier cost."
         );
     }
 
@@ -4288,29 +4633,31 @@ async function editDirectQuotation(id, action = "edit") {
 
         if (
             !savedInputs ||
-            pricingSnapshot.version !== 2
+            pricingSnapshot.version !== 1
         ) {
             throw new Error(
-                "This saved draft uses the retired cost-plus-markup pricing format. It has been preserved unchanged and cannot be edited under the current price-as-quoted rule. Prepare a new quotation draft using the exact customer prices instead."
+                "This older draft does not contain an original pricing snapshot. FrostTech will not guess or reconstruct its saved costs. Please prepare a new quotation draft to establish an exact snapshot."
             );
         }
 
-        $("directUnitPrice").value = savedInputs.customer_unit_price;
+        $("directUnitCost").value = savedInputs.unit_cost;
+        $("directMarkup").value = savedInputs.markup_percent;
+        $("directMarkup").disabled = false;
         $("directQuantity").value = savedInputs.quantity;
         $("directDeliveryCost").value = savedInputs.delivery;
         $("directDiscount").value = savedInputs.discount;
         $("directBracketQuantity").value = savedInputs.bracket_quantity;
-        $("directBracketUnitPrice").value = savedInputs.bracket_unit_price;
-        $("directInstallationUnitPrice").value =
-            savedInputs.installation_unit_price;
+        $("directBracketUnitCost").value = savedInputs.bracket_unit_cost;
+        $("directInstallationPerAc").value =
+            savedInputs.installation_per_unit_cost;
         $("directAccessoryDescription").value =
             savedInputs.accessory_description || "";
         $("directAccessoryUnit").value =
             savedInputs.accessory_unit || "";
         $("directAccessoryQuantity").value =
             savedInputs.accessory_quantity;
-        $("directAccessoryUnitPrice").value =
-            savedInputs.accessory_unit_price;
+        $("directAccessoryUnitCost").value =
+            savedInputs.accessory_unit_cost;
 
         clearDirectOtherItems();
         (Array.isArray(savedInputs.other_items) ? savedInputs.other_items : [])
@@ -4326,7 +4673,8 @@ async function editDirectQuotation(id, action = "edit") {
             ? noteText.slice(0, markerPosition).trim()
             : noteText;
 
-    
+        setDirectQuotationDraftPriceMode(false);
+
         let request = currentQuoteRequests.find(
             (item) => item.id === quote.request_id
         );
