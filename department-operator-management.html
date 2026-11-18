@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Department &amp; Operator Management | FrostTech</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--bg:#f3f6fa;--line:#dce3eb;--ink:#172333}
+*{box-sizing:border-box}body{margin:0;font-family:Arial,sans-serif;background:var(--bg);color:var(--ink)}
+header{background:var(--navy);color:#fff;padding:18px}header a{color:#fff}main{max-width:1100px;margin:auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;margin:14px 0}
+button{border:0;border-radius:6px;padding:10px 13px;background:var(--blue);color:#fff;font:inherit;cursor:pointer;margin:4px 4px 4px 0}
+button.secondary{background:#536579}button.danger{background:#a72c2c}button:disabled{opacity:.55;cursor:wait}
+input,select{width:100%;padding:11px;border:1px solid #bbc7d4;border-radius:6px;font:inherit;margin:6px 0 12px}
+label{font-weight:bold}.message{padding:11px;border-radius:6px;background:#e8f3ff;color:#06477c;line-height:1.45;overflow-wrap:anywhere}
+.message.error{background:#ffebee;color:#a11919}.message.success{background:#e8f5ed;color:#17633c}
+.hidden{display:none!important}.muted{color:#536579;font-size:14px;line-height:1.5}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.operator{border:1px solid var(--line);border-radius:8px;padding:13px;margin:10px 0;overflow-wrap:anywhere}
+.operator p{margin:6px 0}.tag{display:inline-block;padding:4px 8px;border-radius:5px;background:#edf3f8;font-size:12px;font-weight:bold}
+.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.modal{position:fixed;inset:0;background:#0008;display:flex;align-items:center;justify-content:center;padding:18px;z-index:5}
+.modal>section{background:#fff;border-radius:10px;padding:20px;max-width:440px;width:100%}
+@media(max-width:560px){.card{padding:13px}button{max-width:100%}}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Department &amp; Operator Management</p><p><a href="admin.html">Return to Super Admin Dashboard</a></p></header>
+<main>
+<section class="card"><h2 id="heading">Verifying Super Administrator access</h2><p id="status" class="message" role="status">Please wait…</p><div id="identity" class="hidden">Signed in as <strong id="email"></strong> · <strong>Super Administrator</strong></div></section>
+<div id="panel" class="hidden">
+<section class="card"><h2>Department assignments</h2><p class="muted">Only the Super Administrator can appoint, reassign, suspend, reactivate or remove departmental administrator access. Operators receive access only to their assigned department. These controls do not delete employee or customer accounts.</p><div class="grid">
+<div><label for="departmentFilter">Filter department</label><select id="departmentFilter"><option value="">All departments</option><option value="operations">Operations</option><option value="supplier_management">Supplier Management</option><option value="finance">Finance</option><option value="catalogue">Catalogue and Products</option></select></div>
+<div><label for="statusFilter">Employment status</label><select id="statusFilter"><option value="">All statuses</option><option value="active">Active</option><option value="invited">Invited</option><option value="planned">Planned</option><option value="suspended">Suspended</option><option value="terminated">Terminated</option></select></div>
+</div><button id="refresh" type="button">Refresh assignments</button><p id="employeeStatus" class="message">Employee records have not yet been loaded.</p><div id="employees"></div></section>
+<section class="card"><h2>Current Department Administrators</h2><p class="muted">Review the active and suspended departmental appointments. The permanent Super Administrator account is protected.</p><button id="refreshAdmins" type="button" class="secondary">Refresh administrator list</button><p id="adminStatus" class="message">Administrator records have not yet been loaded.</p><div id="admins"></div></section>
+<section class="card"><h2>Departmental sign-in</h2><p>Department administrators use the separate departmental sign-in page. Access is determined by the authenticated account's server-verified role, not by a department selected on the sign-in form.</p><p><a href="department-sign-in.html">Open Departmental Sign-in</a></p></section>
+</div></main>
+<div id="confirm" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="confirmTitle"><section><h2 id="confirmTitle">Confirm departmental change</h2><p id="confirmText"></p><div class="actions"><button id="cancel" class="secondary" type="button">Cancel</button><button id="accept" type="button">Confirm</button></div></section></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+const $=id=>document.getElementById(id);
+const departments={operations:"Operations",supplier_management:"Supplier Management",finance:"Finance",catalogue:"Catalogue and Products"};
+const roles={operations:"operations_admin",supplier_management:"supplier_admin",finance:"finance_admin",catalogue:"catalogue_admin"};
+const roleNames={super_admin:"Super Administrator",operations_admin:"Operations Administrator",supplier_admin:"Supplier Administrator",finance_admin:"Finance Administrator",catalogue_admin:"Catalogue Administrator"};
+let employees=[],accounts=[],pending=null;
+function msg(id,value,type=""){const n=$(id);n.textContent=value;n.className="message"+(type?" "+type:"");}
+function node(tag,value,cls=""){const n=document.createElement(tag);n.textContent=value??"";if(cls)n.className=cls;return n;}
+function confirmAction(message,fn){$("confirmText").textContent=message;pending=fn;$("confirm").classList.remove("hidden");}
+function closeConfirm(){$("confirm").classList.add("hidden");pending=null;}
+$("cancel").addEventListener("click",closeConfirm);
+$("accept").addEventListener("click",async()=>{if(!pending)return;const fn=pending;$("accept").disabled=true;try{await fn();}catch(e){msg("adminStatus",e.message||"The requested administrator change failed.","error");}finally{$("accept").disabled=false;closeConfirm();}});
+function actionButton(parent,label,cls,fn){const b=node("button",label,cls);b.type="button";b.addEventListener("click",async()=>{try{await fn();}catch(e){msg("adminStatus",e.message||"The administrator update failed.","error");}});parent.append(b);}
+async function loadEmployees(){
+ $("refresh").disabled=true;msg("employeeStatus","Loading employee and department records…");$("employees").replaceChildren();
+ try{const [{data:staff,error:se},{data:admins,error:ae}]=await Promise.all([db.rpc("admin_list_frosttech_employee_management"),db.rpc("admin_list_administrator_accounts")]);if(se)throw se;if(ae)throw ae;
+ employees=Array.isArray(staff)?staff:[];accounts=Array.isArray(admins)?admins:[];
+ const assigned=new Map(accounts.map(a=>[a.user_id,a]));
+ renderEmployees();msg("employeeStatus",employees.length+" employee record(s) loaded.","success");
+ }catch(e){msg("employeeStatus",e.message||"Could not load employee assignments.","error");}
+ finally{$("refresh").disabled=false;}
+}
+function renderEmployees(){
+ const root=$("employees");root.replaceChildren();
+ const dept=$("departmentFilter").value,st=$("statusFilter").value;
+ const rows=employees.filter(e=>(!dept||e.department===dept)&&(!st||e.employment_status===st));
+ if(!rows.length){root.append(node("p","No employees match these filters.","muted"));return;}
+ rows.forEach(e=>{
+ const card=node("article","","operator");card.append(node("h3",e.full_name||"Employee"));
+ card.append(node("p","Email: "+(e.email||"Not supplied")));
+ card.append(node("p","Job title: "+(e.job_title||"Not supplied")));
+ card.append(node("p","Current department: "+(departments[e.department]||e.department||"Not assigned")));
+ card.append(node("p","Employment: "+(e.employment_status||"Unknown")));
+ const departmentSelect=node("select","");
+ departmentSelect.setAttribute("aria-label","Assign department for "+(e.full_name||"employee"));
+ const unassigned=node("option","Select a department");unassigned.value="";departmentSelect.append(unassigned);
+ Object.entries(departments).forEach(([value,label])=>{const option=node("option",label);option.value=value;departmentSelect.append(option);});
+ departmentSelect.value=e.department||"";
+ card.append(node("label","Assign employee to department"));
+ card.append(departmentSelect);
+ const moveButton=node("button","Save Department Assignment","secondary");
+ moveButton.type="button";
+ moveButton.disabled=!e.employee_id||!departmentSelect.value;
+ departmentSelect.addEventListener("change",()=>{moveButton.disabled=!e.employee_id||!departmentSelect.value;});
+ moveButton.addEventListener("click",()=>{if(!departmentSelect.value){msg("employeeStatus","Select a department before saving the assignment.","error");return;}confirmAction("Assign "+(e.full_name||"this employee")+" to "+departments[departmentSelect.value]+"? If this employee is already a departmental administrator, their administrator role will move with the department.",async()=>{
+ moveButton.disabled=true;
+ try{const {error}=await db.rpc("admin_reassign_frosttech_employee_department",{p_employee_id:e.employee_id,p_department:departmentSelect.value});if(error)throw error;msg("employeeStatus","Department assignment updated for "+(e.full_name||"employee")+".","success");await loadEmployees();await loadAdmins();}
+ catch(err){msg("employeeStatus",err.message||"Department reassignment failed.","error");moveButton.disabled=false;}
+ });}); 
+ card.append(moveButton);
+ const account=accounts.find(a=>a.user_id===e.auth_user_id);
+ const current=account?.administrator_role||e.administrator_role||null;
+ card.append(node("p","Departmental role: "+(roleNames[current]||"Not appointed")));
+ const actions=node("div","","actions");
+ if(e.employment_status==="active"&&e.auth_user_id&&roles[e.department]){
+ const b=node("button",current?"Assign / Reassign Department":"Appoint Department Administrator");
+ b.type="button";b.addEventListener("click",()=>confirmAction((current?"Reassign":"Appoint")+" "+e.full_name+" as "+roleNames[roles[e.department]]+" in "+departments[e.department]+"?",async()=>{
+ b.disabled=true;try{const {error}=await db.rpc("admin_appoint_departmental_admin",{p_user_id:e.auth_user_id,p_role:roles[e.department]});if(error)throw error;msg("employeeStatus","Department assignment updated for "+e.full_name+".","success");await loadEmployees();await loadAdmins();}catch(err){msg("employeeStatus",err.message||"Department assignment failed.","error");b.disabled=false;}
+ }));actions.append(b);
+ }else{actions.append(node("span","Appointment requires an active employee, completed account setup and a mapped department.","muted"));}
+ card.append(actions);root.append(card);
+ });
+}
+async function loadAdmins(){
+ $("refreshAdmins").disabled=true;msg("adminStatus","Loading administrator accounts…");$("admins").replaceChildren();
+ try{const {data,error}=await db.rpc("admin_list_administrator_accounts");if(error)throw error;accounts=Array.isArray(data)?data:[];
+ if(!accounts.length){msg("adminStatus","No administrator accounts returned.");return;}
+ accounts.forEach(a=>{const role=a.administrator_role||"",superAdmin=role==="super_admin",active=a.administrator_active===true;
+ const card=node("article","","operator");card.append(node("h3",a.email||"Administrator"));card.append(node("p","Role: "+(roleNames[role]||role||"Not assigned")));card.append(node("p","Status: "+(active?"Active":"Suspended")));card.append(node("p","Account ID: "+(a.user_id||"")));
+ if(superAdmin){card.append(node("p","Protected permanent Super Administrator account. Role and status cannot be changed here.","muted"));}
+ else{const actions=node("div","","actions");
+ if(active)actionButton(actions,"Suspend","danger",()=>confirmAction("Suspend departmental administrator access? This does not suspend employment or delete the account.",async()=>{const {error}=await db.rpc("admin_set_departmental_admin_status",{p_user_id:a.user_id,p_is_active:false});if(error)throw error;await loadAdmins();await loadEmployees();}));
+ else actionButton(actions,"Reactivate","",()=>confirmAction("Reactivate this departmental administrator?",async()=>{const {error}=await db.rpc("admin_set_departmental_admin_status",{p_user_id:a.user_id,p_is_active:true});if(error)throw error;await loadAdmins();await loadEmployees();}));
+ actionButton(actions,"Remove Departmental Access","secondary",()=>confirmAction("Remove departmental administrator access? The FrostTech user and employee records will remain.",async()=>{const {error}=await db.rpc("admin_remove_departmental_admin",{p_user_id:a.user_id});if(error)throw error;await loadAdmins();await loadEmployees();}));
+ card.append(actions);}
+ $("admins").append(card);
+ });msg("adminStatus",accounts.length+" administrator account(s) loaded.","success");
+ }catch(e){msg("adminStatus",e.message||"Could not load administrator accounts.","error");}
+ finally{$("refreshAdmins").disabled=false;}
+}
+$("refresh").addEventListener("click",loadEmployees);$("refreshAdmins").addEventListener("click",loadAdmins);
+$("departmentFilter").addEventListener("change",renderEmployees);$("statusFilter").addEventListener("change",renderEmployees);
+async function start(){try{const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user)throw new Error("Please sign in through the FrostTech Super Administrator portal.");const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;if(role!=="super_admin")throw new Error("Only the Super Administrator can manage department appointments.");$("email").textContent=userData.user.email||"";$("identity").classList.remove("hidden");$("panel").classList.remove("hidden");$("heading").textContent="Department & Operator Management";await Promise.all([loadEmployees(),loadAdmins()]);}catch(e){$("heading").textContent="Access not available";msg("status",e.message||"Super Administrator verification failed.","error");}}
+start();
+</script></body></html>
