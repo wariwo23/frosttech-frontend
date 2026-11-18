@@ -1679,6 +1679,8 @@ window.supabaseClient = db;
 
 let currentAdmin = null;
 let currentAdvertisers = [];
+let currentAdvertiserDocuments = [];
+let isSuperAdminAdvertiserReviewer = false;
 let currentRequests = [];
 let currentSuppliers = [];
 let currentSupplierQuotes = [];
@@ -2248,92 +2250,177 @@ async function loadDashboardCounts() {
 
 async function loadAdvertisers() {
     await requireAdmin();
-
-    showMessage("advertiserMessage", "Loading advertiser applications...", "info");
-
+    showMessage("advertiserMessage", "Loading advertiser applications and private document records...", "info");
     try {
-        const { data, error } = await db
-            .from("advertisers")
-            .select("*")
-            .order("created_at", { ascending: false });
+        const [{ data: advertisers, error: advertiserError }, { data: superAdmin, error: roleError }] = await Promise.all([
+            db.from("advertisers")
+                .select("id,user_id,company_name,contact_person,email,phone,business_address,registration_number,verification_status,review_reason,created_at")
+                .order("created_at", { ascending: false }),
+            db.rpc("is_super_admin")
+        ]);
+        if (advertiserError) throw advertiserError;
+        if (roleError) throw roleError;
+        currentAdvertisers = advertisers || [];
+        currentAdvertiserDocuments = [];
+        isSuperAdminAdvertiserReviewer = superAdmin === true;
 
-        if (error) throw error;
+        const advertiserIds = currentAdvertisers.map(item => item.id).filter(Boolean);
+        if (advertiserIds.length) {
+            const { data: documents, error: documentError } = await db
+                .from("advertiser_documents")
+                .select("id,advertiser_id,document_type,storage_path,review_status,review_reason,created_at,removed_at")
+                .in("advertiser_id", advertiserIds)
+                .is("removed_at", null)
+                .order("created_at", { ascending: false });
+            if (documentError) throw documentError;
 
-        currentAdvertisers = data || [];
+            currentAdvertiserDocuments = await Promise.all((documents || []).map(async document => {
+                let signedUrl = null;
+                try {
+                    const { data, error } = await db.storage
+                        .from("advertiser-documents")
+                        .createSignedUrl(document.storage_path, 300);
+                    if (error) throw error;
+                    signedUrl = data?.signedUrl || null;
+                } catch (signError) {
+                    console.error("Private advertiser document link unavailable:", signError);
+                }
+                return { ...document, signed_url: signedUrl };
+            }));
+        }
 
         renderAdvertisers();
-
         showMessage(
             "advertiserMessage",
-            `${currentAdvertisers.length} advertiser application(s) loaded.`,
+            `${currentAdvertisers.length} advertiser application(s) and ${currentAdvertiserDocuments.length} active document record(s) loaded. Private document links expire after five minutes.`,
             "success"
         );
     } catch (error) {
-        showMessage(
-            "advertiserMessage",
-            error.message || "Unable to load advertiser applications.",
-            "error"
-        );
+        showMessage("advertiserMessage", error.message || "Unable to load advertiser applications.", "error");
     }
 }
 
 function renderAdvertisers() {
     const container = $("advertiserRows");
-
     if (!container) return;
-
     if (!currentAdvertisers.length) {
         container.innerHTML = "<p>No advertiser applications found.</p>";
         return;
     }
 
-    container.innerHTML = currentAdvertisers.map((advertiser) => `
-        <article class="admin-card">
+    const documentsFor = advertiserId =>
+        currentAdvertiserDocuments.filter(document => document.advertiser_id === advertiserId);
+
+    container.innerHTML = currentAdvertisers.map(advertiser => {
+        const docs = documentsFor(advertiser.id);
+        const canReviewApplication = isSuperAdminAdvertiserReviewer &&
+            ["pending", "rejected"].includes(String(advertiser.verification_status || "").toLowerCase());
+        const applicationActions = canReviewApplication ? `
+            <div class="admin-actions">
+                <button type="button" class="review-advertiser" data-id="${escapeHtml(advertiser.id)}" data-decision="approved">Approve Advertiser</button>
+                <button type="button" class="review-advertiser danger" data-id="${escapeHtml(advertiser.id)}" data-decision="rejected">Reject Application</button>
+            </div>` : "";
+
+        const documentMarkup = docs.length ? docs.map(document => `
+            <div class="admin-card advertiser-document">
+                <p><strong>Document:</strong> ${escapeHtml(document.document_type)}</p>
+                <p><strong>Status:</strong> ${badge(document.review_status)}</p>
+                <p><strong>Submitted:</strong> ${escapeHtml(document.created_at ? new Date(document.created_at).toLocaleString() : "Not recorded")}</p>
+                ${document.review_reason ? `<p><strong>Review note:</strong> ${escapeHtml(document.review_reason)}</p>` : ""}
+                ${document.signed_url ? `<a href="${escapeHtml(document.signed_url)}" target="_blank" rel="noopener noreferrer">Open private document (expires in 5 minutes)</a>` : "<small>Private document link unavailable. Refresh the records and try again.</small>"}
+                ${isSuperAdminAdvertiserReviewer && document.review_status === "pending" ? `
+                    <div class="admin-actions">
+                        <button type="button" class="review-advertiser-document" data-id="${escapeHtml(document.id)}" data-decision="accepted">Accept Document</button>
+                        <button type="button" class="review-advertiser-document danger" data-id="${escapeHtml(document.id)}" data-decision="rejected">Reject Document</button>
+                    </div>` : ""}
+            </div>`).join("") : "<p>No supporting documents have been registered.</p>";
+
+        return `
+        <article class="admin-card advertiser-application">
             <h3>${escapeHtml(advertiser.company_name || "Unnamed company")}</h3>
+            <p><strong>Contact:</strong> ${escapeHtml(advertiser.contact_person || "Not supplied")}</p>
+            <p><strong>Email:</strong> ${escapeHtml(advertiser.email || "")}</p>
+            <p><strong>Phone:</strong> ${escapeHtml(advertiser.phone || "")}</p>
+            <p><strong>Business address:</strong> ${escapeHtml(advertiser.business_address || "Not supplied")}</p>
+            <p><strong>CAC registration number:</strong> ${escapeHtml(advertiser.registration_number || "Not supplied")}</p>
+            <p><strong>Verification status:</strong> ${badge(advertiser.verification_status)}</p>
+            ${advertiser.review_reason ? `<p><strong>Previous review note:</strong> ${escapeHtml(advertiser.review_reason)}</p>` : ""}
+            ${applicationActions}
+            <h4>Supporting documents</h4>
+            ${documentMarkup}
+        </article>`;
+    }).join("");
+}
 
-            <p><strong>Contact:</strong>
-                ${escapeHtml(advertiser.contact_person || "Not supplied")}
-            </p>
+async function reviewAdvertiserDocument(documentId, decision) {
+    const result = await adminConfirm({
+        title: "FrostTech Advertiser Document Review",
+        message: decision === "accepted"
+            ? "Accept this document as valid supporting evidence? Confirm only after reviewing the private document."
+            : "Reject this document? The advertiser will need to submit a corrected document.",
+        confirmText: decision === "accepted" ? "Accept Document" : "Reject Document",
+        requireReason: decision === "rejected",
+        reasonPlaceholder: "Explain why this document is being rejected."
+    });
+    if (!result.confirmed) return;
+    try {
+        const { data, error } = await db.rpc("admin_review_advertiser_document", {
+            p_document_id: documentId,
+            p_decision: decision,
+            p_reason: result.reason || null
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error("The document review was not confirmed.");
+        showMessage("advertiserMessage", "Document review recorded successfully.", "success");
+        await loadAdvertisers();
+    } catch (error) {
+        showMessage("advertiserMessage", error.message || "Unable to record document review.", "error");
+    }
+}
 
-            <p><strong>Email:</strong>
-                ${escapeHtml(advertiser.email || "")}
-            </p>
-
-            <p><strong>Phone:</strong>
-                ${escapeHtml(advertiser.phone || "")}
-            </p>
-
-            <p><strong>Business address:</strong>
-                ${escapeHtml(advertiser.business_address || "Not supplied")}
-            </p>
-
-            <p><strong>CAC registration number:</strong>
-                ${escapeHtml(advertiser.registration_number || "Not supplied")}
-            </p>
-
-            <p><strong>Verification status:</strong>
-                ${badge(advertiser.verification_status)}
-            </p>
-
-            <button type="button" disabled
-                title="Private advertiser document access is not connected in this admin file.">
-                Document Review Not Connected
-            </button>
-            <small>Private CAC documents are not opened until the approved admin-only document retrieval workflow is connected.</small>
-        </article>
-    `).join("");
+async function reviewAdvertiserApplication(advertiserId, decision) {
+    const result = await adminConfirm({
+        title: "FrostTech Advertiser Verification",
+        message: decision === "approved"
+            ? "Approve this advertiser? Approval is permitted only when the CAC registration number is present and a CAC certificate has been accepted."
+            : "Reject this advertiser application? The reason will be recorded for the audit trail.",
+        confirmText: decision === "approved" ? "Approve Advertiser" : "Reject Application",
+        requireReason: decision === "rejected",
+        reasonPlaceholder: "Enter the reason for rejecting this advertiser application."
+    });
+    if (!result.confirmed) return;
+    try {
+        const { data, error } = await db.rpc("admin_review_advertiser", {
+            p_advertiser_id: advertiserId,
+            p_decision: decision,
+            p_reason: result.reason || null
+        });
+        if (error) throw error;
+        if (!data?.success) throw new Error("The advertiser review was not confirmed.");
+        showMessage("advertiserMessage", "Advertiser application review recorded successfully.", "success");
+        await loadAdvertisers();
+    } catch (error) {
+        showMessage("advertiserMessage", error.message || "Unable to record advertiser review.", "error");
+    }
 }
 
 if ($("loadAdvertisersBtn")) {
     $("loadAdvertisersBtn").addEventListener("click", loadAdvertisers);
 }
+if ($("advertiserRows")) {
+    $("advertiserRows").addEventListener("click", event => {
+        const documentButton = event.target.closest(".review-advertiser-document");
+        const advertiserButton = event.target.closest(".review-advertiser");
+        if (documentButton) {
+            reviewAdvertiserDocument(documentButton.dataset.id, documentButton.dataset.decision);
+        } else if (advertiserButton) {
+            reviewAdvertiserApplication(advertiserButton.dataset.id, advertiserButton.dataset.decision);
+        }
+    });
+}
 
-/*
- * Advertiser CAC documents are stored in a private bucket.
- * This page has no verified document-path field or admin-only
- * signed-URL function, so it must not construct public URLs or
- * guess storage paths. Document access remains intentionally disabled.
- */
+/* Private CAC evidence remains in the non-public advertiser-documents bucket.
+   The dashboard creates short-lived signed links only for authenticated admins. */
 
 /* =========================================================
    PRODUCT MANAGEMENT
