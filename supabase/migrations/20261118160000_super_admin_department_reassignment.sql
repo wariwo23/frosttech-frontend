@@ -71,6 +71,15 @@ begin
     if found and v_existing_role = 'super_admin' then
       raise exception 'The permanent Super Administrator account cannot be reassigned';
     end if;
+
+    if found and v_existing_role not in (
+      'operations_admin',
+      'supplier_admin',
+      'finance_admin',
+      'catalogue_admin'
+    ) then
+      raise exception 'This employee has an unexpected administrator role; resolve it before changing departments';
+    end if;
   end if;
 
   update public.frosttech_employees
