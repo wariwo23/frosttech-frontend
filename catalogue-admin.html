@@ -27,7 +27,26 @@ label{display:block;font-weight:bold;font-size:13px;margin:8px 0 5px}input,texta
 <button id="refresh">Refresh Products</button><button id="logout" class="secondary">Log Out</button></div>
 <p id="preview" class="message hidden">Super Administrator preview is read-only. No changes can be submitted in preview mode.</p>
 </section>
-<section id="catalogue" class="card hidden"><h2>Product Catalogue</h2><p class="muted">Supplier-cost fields are intentionally excluded from this departmental interface.</p><div id="products"></div></section>
+<section id="catalogue" class="card hidden"><h2>Product Catalogue</h2><p class="muted">Supplier-cost fields are intentionally excluded from this departmental interface.</p><section class="product" id="newProduct">
+<h3>Add a Catalogue Product</h3>
+<p class="muted">New products are created inactive and without supplier cost or selling price. Complete supplier pricing through the protected supplier-pricing process before activation.</p>
+<form id="createProductForm">
+<div class="grid">
+<div><label for="newName">Product name *</label><input id="newName" required maxlength="200"></div>
+<div><label for="newCategory">Category</label><select id="newCategory"><option value="">Select category</option><option>Air Conditioners</option><option>Refrigeration Parts</option><option>HVAC Accessories</option><option>HVAC Services</option></select></div>
+<div><label for="newBrand">Brand</label><input id="newBrand"></div>
+<div><label for="newModel">Model</label><input id="newModel"></div>
+<div><label for="newSku">SKU / Product code</label><input id="newSku"></div>
+<div><label for="newUnit">Unit</label><select id="newUnit"><option value="piece">Piece</option><option value="set">Set</option><option value="pack">Pack</option><option value="meter">Meter</option><option value="service">Service</option></select></div>
+<div><label for="newStock">Opening stock quantity</label><input id="newStock" type="number" min="0" step="1" value="0" required></div>
+<div><label for="newMinStock">Minimum stock level</label><input id="newMinStock" type="number" min="0" step="1" value="0" required></div>
+<div><label for="newImage">Product image URL (optional)</label><input id="newImage" type="url"></div>
+</div>
+<label for="newDescription">Description</label><textarea id="newDescription"></textarea>
+<button id="createProductBtn" type="submit">Create Product</button>
+</form>
+</section>
+<div id="products"></div></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -77,6 +96,30 @@ function render(){
   root.append(card);
  });
 }
+$("createProductForm").addEventListener("submit",async event=>{
+ event.preventDefault();
+ if(preview)return;
+ const btn=$("createProductBtn");btn.disabled=true;
+ try{
+  const {data,error}=await db.rpc("catalogue_create_product",{
+   p_name:$("newName").value.trim(),
+   p_category:$("newCategory").value,
+   p_brand:$("newBrand").value.trim(),
+   p_model:$("newModel").value.trim(),
+   p_description:$("newDescription").value.trim(),
+   p_sku:$("newSku").value.trim(),
+   p_unit:$("newUnit").value,
+   p_image_url:$("newImage").value.trim(),
+   p_stock_quantity:Number($("newStock").value),
+   p_min_stock_level:Number($("newMinStock").value)
+  });
+  if(error)throw error;
+  $("createProductForm").reset();$("newStock").value="0";$("newMinStock").value="0";
+  status("Product created as inactive. Supplier pricing must be completed before activation.","success");
+  await load();
+ }catch(e){status(e.message||"Could not create product.","error");}
+ finally{btn.disabled=false;}
+});
 async function start(){
  try{const {data:u,error:ue}=await db.auth.getUser();if(ue||!u.user){status("Please sign in through the FrostTech administrator login.","error");return;}
  const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;
