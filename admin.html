@@ -1952,20 +1952,47 @@ async function requireAdmin() {
         throw profileError;
     }
 
-    if (
-        !profile ||
-        profile.role !== "admin" ||
-        profile.is_active !== true
-    ) {
+    if (!profile || profile.is_active !== true) {
         await db.auth.signOut();
         throw new Error(
-            "This account is not authorised to access the admin portal."
+            "This account is not authorised to access the FrostTech administration portal."
+        );
+    }
+
+    /*
+     * Departmental administrators use the dedicated workspace.
+     * Their profiles retain the employee role; the authoritative
+     * departmental role is resolved by the protected database RPC.
+     */
+    if (profile.role === "employee") {
+        const { data: departmentalRole, error: roleError } =
+            await db.rpc("admin_get_my_role");
+
+        if (
+            !roleError &&
+            ["operations_admin", "supplier_admin", "finance_admin", "catalogue_admin"]
+                .includes(departmentalRole)
+        ) {
+            window.location.replace("departmental-admin.html");
+            return { user, profile, redirected: true };
+        }
+
+        await db.auth.signOut();
+        throw new Error(
+            "This employee account has not yet been activated for departmental administrator access. Please contact the Super Administrator."
+        );
+    }
+
+    if (profile.role !== "admin") {
+        await db.auth.signOut();
+        throw new Error(
+            "This account is not authorised to access the Super Administrator portal."
         );
     }
 
     currentAdmin = user;
 
-    return { user, profile };
+    return { user, profile, redirected: false };
 }
 
 
@@ -2008,7 +2035,11 @@ function showAdminDashboard() {
 /* Restore and verify an existing administrator session. */
 async function refreshAdminSession() {
     try {
-        const { user, profile } = await requireAdmin();
+        const access = await requireAdmin();
+
+        if (access.redirected) return false;
+
+        const { user, profile } = access;
 
         if ($("loggedUser")) {
             $("loggedUser").textContent =
