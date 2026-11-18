@@ -26,7 +26,7 @@ function renderCostSubmissionForms(quotes){
  }
  const wrap=node("div","");
  wrap.append(node("h3","","Submit quotation cost for review"));
- wrap.append(node("p","muted","Enter the actual figures for the selected quotation. Nothing is applied until the Super Administrator approves the submission. Do not enter a discount unless an authorised discount is intended; the existing quotation discount is not automatically added again."));
+ wrap.append(node("p","muted","Enter the internal actual-cost figures for the selected quotation. Super Administrator approval creates an immutable internal cost snapshot for audit and reporting only. It does not change the customer-facing quoted price, existing discount, delivery charge or payment record. Enter a discount only when a separate authorised discount is intended; the existing quotation discount is not added again."));
  const eligible=quotes.filter(q=>["draft","submitted"].includes(q.status));
  if(!eligible.length){wrap.append(node("p","muted","No draft or submitted quotations are available for cost submission in this period."));root.append(wrap);return;}
  eligible.forEach(q=>{
