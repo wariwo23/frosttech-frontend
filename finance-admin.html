@@ -18,6 +18,11 @@ status("Finance data refreshed. "+summary.reconciliation_status+".",summary.reco
 function renderCostSubmissionForms(quotes){
  const root=$("quotationRows");
  if(!root)return;
+ if(preview){
+  const note=node("p","muted","Super Administrator preview is read-only. Cost submission controls are disabled in preview mode.");
+  root.append(note);
+  return;
+ }
  const wrap=node("div","");
  wrap.append(node("h3","","Submit quotation cost for review"));
  wrap.append(node("p","muted","Enter the actual figures for the selected quotation. Nothing is applied until the Super Administrator approves the submission. Do not enter a discount unless an authorised discount is intended; the existing quotation discount is not automatically added again."));
