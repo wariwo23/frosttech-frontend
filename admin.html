@@ -4725,7 +4725,7 @@ async function loadSuppliers() {
     try {
         const { data, error } = await db
             .from("suppliers")
-            .select("*")
+            .select("id,user_id,business_name,contact_name,phone,email,address,city,state,is_verified,is_active,created_at,updated_at,review_status,review_reason,reviewed_by,reviewed_at")
             .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -4954,7 +4954,7 @@ async function loadPayments() {
     try {
         const { data, error } = await db
             .from("payments")
-            .select("*")
+            .select("id,order_id,amount,currency,payment_method,transaction_reference,status,paid_at,created_at,environment")
             .order("created_at", { ascending: false });
 
         if (error) throw error;
