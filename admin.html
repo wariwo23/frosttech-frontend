@@ -2352,7 +2352,7 @@ async function loadProducts() {
     try {
         const { data, error } = await db
             .from("products")
-            .select("*")
+            .select("id, name, category, brand, model, description, sku, unit, selling_price, stock_quantity, min_stock_level, image_url, is_active, supplier_id, created_at, updated_at")
             .order("created_at", { ascending: false });
 
         if (error) throw error;
@@ -2642,7 +2642,6 @@ async function saveProduct(event) {
              * through the supplier-pricing workflow.
              */
             values.is_active = false;
-            values.supplier_cost = null;
             values.selling_price = null;
             values.supplier_id = null;
 
