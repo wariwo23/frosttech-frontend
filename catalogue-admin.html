@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Catalogue Administration | FrostTech</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--bg:#f3f6fa;--line:#dce3eb}
+*{box-sizing:border-box}body{margin:0;font:15px Arial,sans-serif;background:var(--bg);color:#172333}
+header{background:var(--navy);color:#fff;padding:18px}header h1{margin:0 0 5px;font-size:22px}
+main{max-width:1100px;margin:auto;padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px;margin:14px 0}
+.message{padding:11px;background:#e8f3ff;color:#06477c;border-radius:6px;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}
+button{background:var(--blue);color:#fff;border:0;border-radius:6px;padding:10px 14px;font-weight:bold;cursor:pointer;margin:3px}button:disabled{opacity:.55}
+.secondary{background:#536779}.danger{background:#a72c2c}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+label{display:block;font-weight:bold;font-size:13px;margin:8px 0 5px}input,textarea,select{width:100%;padding:10px;border:1px solid #bdc9d5;border-radius:6px;font:inherit}textarea{min-height:70px}
+.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:780px;font-size:13px}th,td{border:1px solid var(--line);padding:9px;text-align:left}th{background:#edf3f8}
+.product{border:1px solid var(--line);border-radius:8px;padding:14px;margin:12px 0}.product h3{margin:0 0 8px;color:var(--navy)}.muted{color:#607284;font-size:13px}.actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><div>Catalogue Administration</div></header>
+<main>
+<section class="card">
+<h2 id="heading">Verifying administrator access</h2>
+<p id="status" class="message" role="status">Please wait…</p>
+<div id="session" class="hidden"><p>Signed in: <strong id="email"></strong> · Role: <strong id="role"></strong></p>
+<button id="refresh">Refresh Products</button><button id="logout" class="secondary">Log Out</button></div>
+<p id="preview" class="message hidden">Super Administrator preview is read-only. No changes can be submitted in preview mode.</p>
+</section>
+<section id="catalogue" class="card hidden"><h2>Product Catalogue</h2><p class="muted">Supplier-cost fields are intentionally excluded from this departmental interface.</p><div id="products"></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+const $=id=>document.getElementById(id);let preview=false,items=[];
+function status(msg,type=""){ $("status").textContent=msg;$("status").className="message "+type; }
+function el(tag,cls,txt){const n=document.createElement(tag);if(cls)n.className=cls;if(txt!==undefined)n.textContent=txt;return n;}
+function field(parent,label,value,type="text"){const wrap=el("div");const l=el("label","",label);const i=document.createElement(type==="textarea"?"textarea":"input");if(type!=="textarea")i.type=type;i.value=value??"";wrap.append(l,i);parent.append(wrap);return i;}
+function money(v){return v===null||v===undefined?"Not set":"₦"+Number(v).toLocaleString("en-NG");}
+async function load(){
+ status("Loading approved catalogue fields…");$("refresh").disabled=true;
+ try{const {data,error}=await db.rpc("catalogue_list_products");if(error)throw error;
+ items=Array.isArray(data)?data:[];render();status(items.length+" product(s) loaded.");
+ }catch(e){console.error(e);status(e.message||"Could not load products.","error");}
+ finally{$("refresh").disabled=false;}
+}
+function render(){
+ const root=$("products");root.replaceChildren();
+ if(!items.length){root.append(el("p","muted","No products found."));return;}
+ items.forEach(p=>{
+  const card=el("article","product");card.append(el("h3","",p.name||"Unnamed product"));
+  card.append(el("p","muted",(p.category||"Uncategorised")+" · "+(p.brand||"No brand")+" · "+(p.model||"No model")+" · "+(p.sku||"No SKU")));
+  const info=el("p","");info.textContent="Selling price: "+money(p.selling_price)+" · Stock: "+p.stock_quantity+" · Minimum stock: "+p.min_stock_level+" · Status: "+(p.is_active?"Active":"Inactive");card.append(info);
+  if(p.description)card.append(el("p","",p.description));
+  if(p.image_url){const a=document.createElement("a");a.href=p.image_url;a.target="_blank";a.rel="noopener noreferrer";a.textContent="View product image";card.append(a);}
+  if(!preview){
+   const details=el("div","grid");
+   const name=field(details,"Product name",p.name);
+   const category=field(details,"Category",p.category);
+   const brand=field(details,"Brand",p.brand);
+   const model=field(details,"Model",p.model);
+   const sku=field(details,"SKU",p.sku);
+   const unit=field(details,"Unit",p.unit);
+   const image=field(details,"Image URL",p.image_url);
+   const desc=field(details,"Description",p.description,"textarea");
+   card.append(el("h4","","Product details"));card.append(details);
+   const buttons=el("div","actions");
+   const save=el("button","","Save Details");save.onclick=async()=>{save.disabled=true;try{const {error}=await db.rpc("catalogue_update_product_details",{p_product_id:p.id,p_name:name.value,p_category:category.value,p_brand:brand.value,p_model:model.value,p_description:desc.value,p_sku:sku.value,p_unit:unit.value,p_image_url:image.value});if(error)throw error;status("Product details saved.","success");await load();}catch(e){status(e.message||"Could not save details.","error");}finally{save.disabled=false;}};buttons.append(save);
+   const price=field(details,"Selling price (NGN)",p.selling_price??"","number");price.min="0";price.step="0.01";
+   const stock=field(details,"Stock quantity",p.stock_quantity,"number");stock.min="0";stock.step="1";
+   const min=field(details,"Minimum stock level",p.min_stock_level,"number");min.min="0";min.step="1";
+   const savePrice=el("button","","Save Selling Price");savePrice.onclick=async()=>{savePrice.disabled=true;try{const {error}=await db.rpc("catalogue_update_selling_price",{p_product_id:p.id,p_selling_price:Number(price.value)});if(error)throw error;status("Selling price updated.","success");await load();}catch(e){status(e.message||"Price update failed.","error");}finally{savePrice.disabled=false;}};buttons.append(savePrice);
+   const saveStock=el("button","","Save Stock");saveStock.onclick=async()=>{saveStock.disabled=true;try{const {error}=await db.rpc("catalogue_update_stock",{p_product_id:p.id,p_stock_quantity:Number(stock.value),p_min_stock_level:Number(min.value)});if(error)throw error;status("Stock levels updated.","success");await load();}catch(e){status(e.message||"Stock update failed.","error");}finally{saveStock.disabled=false;}};buttons.append(saveStock);
+   const active=el("button",p.is_active?"danger":"",p.is_active?"Deactivate Product":"Activate Product");active.onclick=async()=>{if(!confirm(p.is_active?"Deactivate this product?":"Activate this product?"))return;active.disabled=true;try{const {error}=await db.rpc("catalogue_set_product_active",{p_product_id:p.id,p_is_active:!p.is_active});if(error)throw error;status("Product status updated.","success");await load();}catch(e){status(e.message||"Status update failed.","error");}finally{active.disabled=false;}};buttons.append(active);
+   card.append(buttons);
+  }else card.append(el("p","muted","Read-only preview."));
+  root.append(card);
+ });
+}
+async function start(){
+ try{const {data:u,error:ue}=await db.auth.getUser();if(ue||!u.user){status("Please sign in through the FrostTech administrator login.","error");return;}
+ const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;
+ if(role!=="catalogue_admin"&&role!=="super_admin"){status("This page is restricted to Catalogue Administrators and Super Administrator preview.","error");return;}
+ preview=role==="super_admin";$("heading").textContent=preview?"Catalogue Administration — Preview":"Catalogue Administration";
+ $("email").textContent=u.user.email||"Administrator";$("role").textContent=role;$("session").classList.remove("hidden");$("catalogue").classList.remove("hidden");
+ if(preview)$("preview").classList.remove("hidden");await load();
+ }catch(e){console.error(e);status(e.message||"Access verification failed.","error");}
+}
+$("refresh").addEventListener("click",load);
+$("logout").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){status(error.message,"error");return;}location.href="admin.html";});
+start();
+</script>
+</body></html>
