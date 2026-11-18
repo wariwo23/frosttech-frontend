@@ -6077,13 +6077,8 @@ function ftInstallWorkspacePrintActions() {
 }
 ftInstallWorkspacePrintActions();
 
-window.renderAdvertisers = function renderAdvertisers() {
-    const container = $("advertiserRows");
-    if (!container) return;
-    if (!currentAdvertisers.length) { container.innerHTML = "<p>No advertiser applications found.</p>"; return; }
-    const rows = currentAdvertisers.map((a) => `<tr><td>${escapeHtml(a.company_name || "Unnamed company")}</td><td>${escapeHtml(a.contact_person || "Not supplied")}</td><td>${escapeHtml(a.email || "")}</td><td>${badge(a.verification_status)}</td><td><div class="record-actions">${ftViewRecord("advertiser", a.id)}<button type="button" disabled title="Private CAC document retrieval is not connected.">CAC Review Unavailable</button></div></td></tr>`);
-    container.innerHTML = ftAdminTable(["Company", "Contact", "Email", "Verification", "Actions"], rows) + `<p><small>Private CAC documents remain protected. Document review stays unavailable until verified administrator-only retrieval is connected.</small></p>`;
-};
+/* Keep the secure advertiser document-review renderer defined above.
+   Do not override it with the retired read-only table renderer. */
 
 window.renderProducts = function renderProducts() {
     const container = $("productList");
