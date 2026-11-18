@@ -130,7 +130,7 @@ async function openCatalogueWorkspace(user,role){
 }
 $("catalogueSuperAdminLogin").addEventListener("submit",async event=>{
  event.preventDefault();const button=$("catalogueSuperAdminLoginButton"),message=$("catalogueSuperAdminLoginMessage");button.disabled=true;button.textContent="Verifying…";message.textContent="Verifying Super Administrator credentials…";message.className="message";
- try{const {data,error}=await db.auth.signInWithPassword({email:$("catalogueSuperAdminEmail").value.trim(),password:$("catalogueSuperAdminPassword").value});if(error)throw error;const {data:role,error:roleError}=await db.rpc("admin_get_my_role");if(roleError)throw roleError;if(role!=="super_admin"){await db.auth.signOut();throw new Error("Only the Super Administrator account can open this preview.");}$("catalogueSuperAdminLogin").classList.add("hidden");await openCatalogueWorkspace(data.user,role);}
+ try{const {data,error}=await db.auth.signInWithPassword({email:$("catalogueSuperAdminEmail").value.trim(),password:$("catalogueSuperAdminPassword").value});if(error)throw error;const {data:role,error:roleError}=await db.rpc("admin_get_my_role");if(roleError){await db.auth.signOut();throw roleError;}if(role!=="super_admin"){await db.auth.signOut();throw new Error("Only the Super Administrator account can open this preview.");}$("catalogueSuperAdminLogin").classList.add("hidden");await openCatalogueWorkspace(data.user,role);}
  catch(e){message.textContent=e.message||"Super Administrator sign-in failed.";message.className="message error";}
  finally{button.disabled=false;button.textContent="Sign In to Catalogue";}
 });
