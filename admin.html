@@ -4639,8 +4639,9 @@ async function selectSupplierQuote(id) {
     await requireAdmin();
 
     const confirmation = await adminConfirm({
+        title: "FrostTech Supplier Selection",
         message:
-            "Select this supplier quotation? This may update the selected supplier pricing for the product.",
+            "Select this supplier quotation for the product? Existing customer-facing prices and quotations will remain unchanged.",
         confirmText: "Yes, Select Quotation"
     });
 
@@ -6099,9 +6100,29 @@ window.renderCustomerRequests = function renderCustomerRequests() {
 window.renderSupplierQuotes = function renderSupplierQuotes() {
     const container = $("supplierQuotes");
     if (!container) return;
-    if (!currentSupplierQuotes.length) { container.innerHTML = "<p>No supplier quotations found.</p>"; return; }
-    const rows = currentSupplierQuotes.map((q) => `<tr><td>${escapeHtml(q.product_id || "Not linked")}</td><td>${escapeHtml(q.supplier_id || "Not linked")}</td><td>${escapeHtml(q.request_id || "Not linked")}</td><td>${escapeHtml(q.quantity ?? 1)}</td><td>${money(q.supplier_unit_price)}</td><td>${money(q.supplier_total)}</td><td>${money(q.delivery_cost)}</td><td>${escapeHtml(q.frosttech_margin_percent ?? 15)}%</td><td>${money(q.frosttech_margin_amount)}</td><td>${money(q.customer_total)}</td><td>${badge(q.status)}</td><td>${escapeHtml(q.valid_until || "Not specified")}</td><td><div class="record-actions">${ftViewRecord("supplier_quote", q.id)}<button type="button" class="select-supplier-quote" data-id="${escapeHtml(q.id)}">Select</button><button type="button" class="reject-supplier-quote" data-id="${escapeHtml(q.id)}">Reject</button></div></td></tr>`);
-    container.innerHTML = ftAdminTable(["Product ID", "Supplier ID", "Request ID", "Quantity", "Supplier Unit Cost", "Supplier Total", "Delivery", "Margin %", "Margin Amount", "Customer Total", "Status", "Valid Until", "Actions"], rows);
+    if (!currentSupplierQuotes.length) {
+        container.innerHTML = "<p>No supplier quotations found.</p>";
+        return;
+    }
+    const rows = currentSupplierQuotes.map((q) => `<tr>
+        <td>${escapeHtml(q.product_id || "Not linked")}</td>
+        <td>${escapeHtml(q.supplier_id || "Not linked")}</td>
+        <td>${escapeHtml(q.request_id || "Not linked")}</td>
+        <td>${escapeHtml(q.quantity ?? 1)}</td>
+        <td>${money(q.supplier_unit_price)}</td>
+        <td>${money(q.supplier_total)}</td>
+        <td>${money(q.delivery_cost)}</td>
+        <td>${badge(q.status)}</td>
+        <td>${escapeHtml(q.valid_until || "Not specified")}</td>
+        <td><div class="record-actions">
+          ${ftViewRecord("supplier_quote", q.id)}
+          ${q.status === "submitted" ? `<button type="button" class="select-supplier-quote" data-id="${escapeHtml(q.id)}">Select</button><button type="button" class="reject-supplier-quote" data-id="${escapeHtml(q.id)}">Reject</button>` : ""}
+        </div></td>
+    </tr>`);
+    container.innerHTML = ftAdminTable(
+        ["Product ID", "Supplier ID", "Request ID", "Quantity", "Supplier Unit Cost", "Supplier Total", "Supplier Delivery", "Status", "Valid Until", "Actions"],
+        rows
+    );
 };
 
 window.renderSuppliers = function renderSuppliers() {
