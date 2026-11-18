@@ -1338,9 +1338,9 @@ async function start() {
                 portalLink.textContent = "Open Supplier Administration";
                 portalDescription.textContent = "Review submitted supplier quotations, select a quotation for FrostTech review, or reject a quotation.";
             } else if (role==="finance_admin") {
-                portalLink.removeAttribute("href");
-                portalLink.textContent = "Finance workspace is being connected";
-                portalDescription.textContent = "Your Finance role is recognised. Financial reporting remains protected by the current Super Administrator-only report controls; this portal will not bypass that restriction.";
+                portalLink.href = "finance-admin.html";
+                portalLink.textContent = "Open Finance Administration";
+                portalDescription.textContent = "Review production payment reconciliation, financial quotations and your own cost submissions. Cost approval and expense-ledger access remain restricted to the Super Administrator.";
             }
 
             document.getElementById("otherDepartmentMessage")
