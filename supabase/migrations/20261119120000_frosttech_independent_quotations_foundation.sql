@@ -895,6 +895,7 @@ grant execute on function public.frosttech_claim_direct_quote_invitation(text, u
 create or replace function public.frosttech_record_direct_quote_fee_success(
     p_quote_id uuid,
     p_payment_id uuid,
+    p_actor uuid,
     p_reference text,
     p_provider_transaction_id text,
     p_verified_at timestamptz,
@@ -954,7 +955,7 @@ begin
     insert into public.admin_activity_log (
         actor_user_id,action,target_user_id,details
     ) values (
-        null,
+        p_actor,
         'direct_quotation_admin_fee_paid',
         null,
         jsonb_build_object(
@@ -970,7 +971,7 @@ begin
 end;
 $fee$;
 
-revoke all on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, text, text, timestamptz, jsonb)
+revoke all on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, uuid, text, text, timestamptz, jsonb)
     from public, anon, authenticated;
 grant execute on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, text, text, timestamptz, jsonb)
     to service_role;
