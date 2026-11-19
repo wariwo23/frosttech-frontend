@@ -161,7 +161,7 @@ Deno.serve(async(req:Request)=>{
     if(recordError||!recorded?.success){console.error("Direct order payment record failed:",recordError);return out({error:"Paystack confirmed payment, but FrostTech could not complete the order record. Contact support with reference "+ref+"."},500,origin);}
    }
    const {data:paidOrder,error:paidOrderError}=await db.from("orders")
-    .select("id,order_number,customer_id,customer_total,delivery_fee,delivery_address,status,environment")
+    .select("id,order_number,customer_id,customer_total,delivery_fee,delivery_address,status,environment,direct_quotation_id")
     .eq("id",order.id).maybeSingle();
    if(paidOrderError||!paidOrder||paidOrder.status!=="paid")return out({error:"Payment is recorded but order status needs FrostTech reconciliation."},500,origin);
 
