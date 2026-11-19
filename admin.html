@@ -1209,7 +1209,7 @@ footer {
     <div id="message" role="status"></div>
 </section>
 
-<section class="card" id="superAdminDepartmentWorkspaces">
+<section class="card hidden" id="superAdminDepartmentWorkspaces">
     <h2>Departmental Workspaces</h2>
     <p>Super Administrator access to every department is available even when a departmental operator has not yet been appointed. Opening a workspace does not create an employee account or change departmental assignments.</p>
     <div class="action-row actions">
@@ -2076,6 +2076,13 @@ async function refreshAdminSession() {
         }
 
         showAdminDashboard();
+
+        const { data: verifiedAdminRole, error: verifiedAdminRoleError } =
+            await db.rpc("admin_get_my_role");
+        $("superAdminDepartmentWorkspaces")?.classList.toggle(
+            "hidden",
+            Boolean(verifiedAdminRoleError) || verifiedAdminRole !== "super_admin"
+        );
 
         showMessage(
             "systemStatus",
