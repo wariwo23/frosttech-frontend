@@ -133,6 +133,13 @@ create table if not exists public.frosttech_direct_quotation_snapshots (
     unique (direct_quotation_id, version_number)
 );
 
+alter table public.frosttech_direct_quotations
+    add column if not exists prepayment_terms_accepted_at timestamptz,
+    add column if not exists prepayment_terms_version text;
+
+alter table public.frosttech_direct_quote_fee_payments
+    add column if not exists authorization_url text;
+
 -- Orders retain their existing request/quotation links. This nullable link is
 -- populated only by the new trusted direct-quotation acceptance path.
 alter table public.orders
@@ -881,6 +888,91 @@ $claim$;
 revoke all on function public.frosttech_claim_direct_quote_invitation(text, uuid)
     from public, anon, authenticated;
 grant execute on function public.frosttech_claim_direct_quote_invitation(text, uuid)
+    to service_role;
+
+
+-- Atomically record a verified Paystack administration-fee success.
+create or replace function public.frosttech_record_direct_quote_fee_success(
+    p_quote_id uuid,
+    p_payment_id uuid,
+    p_reference text,
+    p_provider_transaction_id text,
+    p_verified_at timestamptz,
+    p_verification_payload jsonb
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $fee$
+declare
+    v_quote public.frosttech_direct_quotations%rowtype;
+    v_payment public.frosttech_direct_quote_fee_payments%rowtype;
+begin
+    select * into v_quote
+    from public.frosttech_direct_quotations
+    where id=p_quote_id
+    for update;
+    if not found then raise exception 'Direct quotation not found'; end if;
+
+    select * into v_payment
+    from public.frosttech_direct_quote_fee_payments
+    where id=p_payment_id
+      and direct_quotation_id=p_quote_id
+      and provider_reference=p_reference
+    for update;
+    if not found then raise exception 'Fee payment attempt not found'; end if;
+
+    if v_payment.status='successful' then
+        if v_quote.fee_status <> 'paid' then
+            update public.frosttech_direct_quotations
+            set fee_status='paid',updated_at=now()
+            where id=p_quote_id;
+        end if;
+        return jsonb_build_object('success',true,'already_recorded',true);
+    end if;
+
+    if v_payment.status <> 'pending'
+       or v_payment.environment <> v_quote.environment
+       or v_payment.amount <> v_quote.administration_fee
+       or v_quote.fee_status <> 'pending' then
+        raise exception 'Fee payment no longer matches the quotation';
+    end if;
+
+    update public.frosttech_direct_quote_fee_payments
+    set status='successful',
+        provider_transaction_id=p_provider_transaction_id,
+        verified_at=coalesce(p_verified_at,now()),
+        verification_payload=coalesce(p_verification_payload,'{}'::jsonb),
+        updated_at=now()
+    where id=p_payment_id;
+
+    update public.frosttech_direct_quotations
+    set fee_status='paid',updated_at=now()
+    where id=p_quote_id;
+
+    insert into public.admin_activity_log (
+        actor_user_id,action,target_user_id,details
+    ) values (
+        null,
+        'direct_quotation_admin_fee_paid',
+        null,
+        jsonb_build_object(
+            'direct_quotation_id',p_quote_id,
+            'fee_payment_id',p_payment_id,
+            'provider_reference',p_reference,
+            'amount',v_payment.amount,
+            'environment',v_payment.environment
+        )
+    );
+
+    return jsonb_build_object('success',true,'already_recorded',false);
+end;
+$fee$;
+
+revoke all on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, text, text, timestamptz, jsonb)
+    from public, anon, authenticated;
+grant execute on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, text, text, timestamptz, jsonb)
     to service_role;
 
 comment on table public.frosttech_direct_quotations is
