@@ -107,10 +107,14 @@ async function load(){
  if(error){message("Your customer session could not be verified. Please sign in again.","error");authLinks();return;}
  if(!session?.user){message("Please sign in or create a FrostTech customer account using the email address this invitation was sent to.","notice");authLinks();return;}
  $("signOut").classList.remove("hidden");
+ $("authActions").innerHTML='<button type="button" id="switchAccount" class="secondary">Sign Out and Switch Customer Account</button>';
+ $("authActions").classList.remove("hidden");
+ $("switchAccount").addEventListener("click",async()=>{await db.auth.signOut({scope:"local"});location.reload();});
  message("Checking the invitation against your confirmed customer email…");
  const {data,error:callError}=await db.functions.invoke("direct-customer-quotation",{body:{token:invite}});
  if(callError||!data?.success){message(data?.error||callError?.message||"This invitation could not be verified. Make sure you are signed in with the invited email address.","error");return;}
  const q=data.quotation;
+ $("authActions").classList.add("hidden");
  currentQuoteId=q.quotation_id;
  currentOrderId=q.order_id||null;
  $("quotationCard").classList.remove("hidden");
