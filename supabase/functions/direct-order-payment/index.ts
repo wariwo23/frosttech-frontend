@@ -15,23 +15,23 @@ async function createReceipt(db:ReturnType<typeof createClient>,serviceKey:strin
   const {data:tax,error:taxError}=await db.from("frosttech_tax_settings").select("vat_enabled").eq("id",1).maybeSingle();
   if(taxError||!tax||tax.vat_enabled===true)throw new Error("Tax settings do not permit receipt issuance.");
   const {data:existing,error:existingError}=await db.from("payment_receipts")
-   .select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
+   .select("id,receipt_number,receipt_type,source_record_id,direct_quotation_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
    .eq("payment_reference",payment.transaction_reference).maybeSingle();
   if(existingError)throw existingError;
   let receipt=existing;
   if(receipt){
-   if(receipt.receipt_type!=="final_order_payment"||String(receipt.source_record_id)!==order.id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(payment.amount)||receipt.payment_status!=="successful"||receipt.environment!==order.environment)throw new Error("Existing receipt reference does not match this order payment.");
+   if(receipt.receipt_type!=="final_order_payment"||String(receipt.source_record_id)!==order.id||receipt.direct_quotation_id!==order.direct_quotation_id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(payment.amount)||receipt.payment_status!=="successful"||receipt.environment!==order.environment)throw new Error("Existing receipt reference does not match this order payment.");
   }else{
    const {data:bySource,error:sourceError}=await db.from("payment_receipts").select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment").eq("receipt_type","final_order_payment").eq("source_record_id",order.id).maybeSingle();
    if(sourceError)throw sourceError;
    if(bySource){
-    if(bySource.payment_reference!==payment.transaction_reference||bySource.customer_user_id!==user.id||Number(bySource.amount_received)!==Number(payment.amount)||bySource.payment_status!=="successful"||bySource.environment!==order.environment)throw new Error("Order already has a different receipt payment reference.");
+    if(bySource.payment_reference!==payment.transaction_reference||bySource.direct_quotation_id!==order.direct_quotation_id||bySource.customer_user_id!==user.id||Number(bySource.amount_received)!==Number(payment.amount)||bySource.payment_status!=="successful"||bySource.environment!==order.environment)throw new Error("Order already has a different receipt payment reference.");
     receipt=bySource;
    }else{
     const {data:inserted,error:insertError}=await db.from("payment_receipts").insert({
      receipt_type:"final_order_payment",environment:order.environment,customer_user_id:user.id,
      customer_name:safe(user.user_metadata?.full_name||user.user_metadata?.name||"Customer"),
-     customer_email:user.email||null,source_record_id:order.id,quote_request_id:null,order_id:order.id,
+     customer_email:user.email||null,source_record_id:order.id,quote_request_id:null,direct_quotation_id:order.direct_quotation_id,order_id:order.id,
      payment_reference:payment.transaction_reference,payment_method:"paystack",
      description:"Final payment for FrostTech direct quotation order "+order.order_number,
      amount_before_vat:payment.amount,vat_status:"disabled",vat_rate:null,vat_mode:null,vat_amount:0,
