@@ -66,9 +66,29 @@ The migration `supabase/migrations/20261118160000_super_admin_department_reassig
 4. After separate approval, conduct a controlled end-to-end test using a test employee only if no-cost test facilities are available; do not create invitations or records during this preparation.
 5. Keep deployment and production migration as separate, explicit approval steps.
 
+## Implementation prepared on the review branch
+
+The following frontend changes have now been prepared on `review/admin-interface-reconciliation`:
+
+- `admin.html` remains the canonical employee registration and onboarding workspace. It retains employee creation, invitation, account-setup visibility and employment activation. Departmental appointment and account-access controls have been moved out of this page; it now links to the dedicated department workspace.
+- `department-operator-management.html` remains the canonical departmental appointment and access-control workspace. An explicit Sign Out action and a link to the activity log were added.
+- Department reassignment is visibly disabled in this review build because its supporting migration is merged but has not been executed in Supabase. The UI explains that the feature remains unavailable until separately approved, executed and verified.
+- `admin-management.html` is now a read-only administrator activity-log page. Duplicate employee appointment and account-access mutation controls were removed. Hardcoded personal name and CEO title were removed; the signed-in identity is obtained from the authenticated session.
+- `employee-management.html` is retained as a legacy landing page with links to the canonical employee and department workspaces. It no longer provides a second employee registration/invitation interface.
+
+## Validation and known limits
+
+- The changes are isolated to this review branch and do not affect `main`.
+- No Supabase SQL, migration, employee record, invitation, role change, or production data was executed or changed.
+- No production deployment was performed.
+- No paid plans, branches, add-ons, or external services were used.
+- The branch has not been subjected to a live end-to-end test because that would require using authenticated production actions and could create or modify real records.
+- Before merge, review the full diff and perform static JavaScript/HTML checks. Any test involving employee creation, invitations, activation, role changes or access status must use a separately approved no-cost test environment.
+- Fresh password reauthentication before sensitive actions remains a recommended follow-up. It must be implemented with a verified session-safe approach; do not use a naive `signInWithPassword` call that could replace or disrupt the active session.
+- Confirm that the current deployed RPC signatures and Edge Function response shape match the retained frontend calls before merging.
+
 ## Current status
 
-- Review branch created from `main`: `review/admin-interface-reconciliation`.
-- This document records the read-only findings and safe consolidation plan.
-- No application source file has been changed in this preparation.
-- No database or production data has been changed.
+- Review branch: `review/admin-interface-reconciliation`.
+- Draft PR #12 contains the implementation changes for review.
+- Production `main`, Supabase schema/data and GitHub Pages deployment remain unchanged.
