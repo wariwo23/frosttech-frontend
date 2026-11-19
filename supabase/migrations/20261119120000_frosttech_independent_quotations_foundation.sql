@@ -530,6 +530,18 @@ begin
     end if;
     select * into v_quote from public.frosttech_direct_quotations where id=p_quote_id for update;
     if not found then raise exception 'Direct quotation not found'; end if;
+    if v_quote.status<>'submitted' or v_quote.prepayment_terms_accepted_at is null
+       or not exists(
+           select 1 from public.frosttech_direct_quotation_invites i
+           join auth.users u on u.id=p_actor
+           where i.direct_quotation_id=p_quote_id and i.claimed_by=p_actor
+             and i.revoked_at is null
+             and i.email_normalized=lower(btrim(v_quote.customer_email))
+             and lower(btrim(u.email))=lower(btrim(v_quote.customer_email))
+             and u.email_confirmed_at is not null
+       ) then
+        raise exception 'Customer invitation or prepayment Terms are not valid for this quotation';
+    end if;
     select * into v_payment from public.frosttech_direct_quote_fee_payments
     where id=p_payment_id and direct_quotation_id=p_quote_id and provider_reference=p_reference for update;
     if not found then raise exception 'Fee payment attempt not found'; end if;
@@ -541,6 +553,7 @@ begin
         return jsonb_build_object('success',true,'already_recorded',true);
     end if;
     if v_payment.status<>'pending' or v_payment.environment<>v_quote.environment
+       or v_payment.currency<>'NGN' or v_payment.provider<>'paystack'
        or v_payment.amount<>v_quote.administration_fee or v_quote.fee_status<>'pending' then
         raise exception 'Fee payment no longer matches the quotation';
     end if;
