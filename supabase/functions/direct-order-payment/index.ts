@@ -70,6 +70,10 @@ Deno.serve(async(req:Request)=>{
   if(!uuid.test(orderId)||rawToken.length<32||rawToken.length>128||!/^[A-Za-z0-9_-]+$/.test(rawToken))return out({error:"Invalid direct order payment request."},400,origin);
 
   const db=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
+  const {data:profile,error:profileError}=await db.from("profiles")
+    .select("id,role,is_active").eq("id",user.id).maybeSingle();
+  if(profileError||!profile||profile.role!=="customer"||profile.is_active!==true)
+    return out({error:"An active FrostTech customer account is required."},403,origin);
   const {data:invite,error:inviteError}=await db.from("frosttech_direct_quotation_invites")
    .select("id,claimed_by,token_hash,revoked_at,direct_quotation_id")
    .eq("token_hash",await hash(rawToken)).maybeSingle();
