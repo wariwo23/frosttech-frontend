@@ -132,6 +132,43 @@ $fk$;
 create unique index if not exists orders_one_per_direct_quotation_idx
     on public.orders(direct_quotation_id) where direct_quotation_id is not null;
 
+-- Add an explicit direct-quotation source for payment receipts while
+-- preserving the existing request-based receipt integrity path.
+alter table public.payment_receipts
+    add column if not exists direct_quotation_id uuid;
+do $receipt_fk$
+begin
+    if not exists (
+        select 1 from pg_constraint
+        where conrelid='public.payment_receipts'::regclass
+          and conname='payment_receipts_direct_quotation_id_fkey'
+    ) then
+        alter table public.payment_receipts
+            add constraint payment_receipts_direct_quotation_id_fkey
+            foreign key (direct_quotation_id)
+            references public.frosttech_direct_quotations(id) on delete restrict;
+    end if;
+end;
+$receipt_fk$;
+alter table public.payment_receipts
+    drop constraint if exists payment_receipts_source_integrity_check;
+alter table public.payment_receipts
+    add constraint payment_receipts_source_integrity_check check (
+        (
+            receipt_type='quotation_admin_fee'
+            and order_id is null
+            and (
+                (quote_request_id is not null and direct_quotation_id is null)
+                or (quote_request_id is null and direct_quotation_id is not null)
+            )
+        )
+        or
+        (receipt_type='final_order_payment' and order_id is not null)
+    );
+create index if not exists payment_receipts_direct_quotation_idx
+    on public.payment_receipts(direct_quotation_id)
+    where direct_quotation_id is not null;
+
 create table if not exists public.frosttech_direct_order_snapshots (
     id uuid primary key default gen_random_uuid(),
     order_id uuid not null unique references public.orders(id) on delete restrict,
