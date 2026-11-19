@@ -1,6 +1,6 @@
 # FrostTech Independent Quotations — Draft Implementation Contract
 
-**Status:** Review-only implementation stage 3. No migration has been executed and no production code has been deployed.
+**Status:** Review-only implementation stage 4. No migration has been executed and no production code has been deployed.
 
 ## Scope
 
