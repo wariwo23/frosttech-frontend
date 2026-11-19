@@ -613,6 +613,9 @@ declare
     v_quote public.frosttech_direct_quotations%rowtype;
     v_items jsonb;
     v_unlocked boolean;
+    v_order_id uuid;
+    v_order_number text;
+    v_order_status text;
 begin
     if p_actor is null or p_token_hash is null
        or length(p_token_hash) <> 64
@@ -847,7 +850,6 @@ commit;
     if not found
        or (v_invite.expires_at <= now() and v_invite.claimed_by is null)
        or v_invite.revoked_at is not null
-       or v_invite.used_at is not null
        or v_invite.email_normalized <> v_email then
         raise exception 'Invitation is invalid, expired, or does not match your confirmed email';
     end if;
@@ -876,6 +878,10 @@ commit;
     end if;
 
     v_unlocked := v_quote.fee_status in ('paid','waived');
+    if v_quote.status='accepted' then
+        select id,order_number,status into v_order_id,v_order_number,v_order_status
+        from public.orders where direct_quotation_id=v_quote.id;
+    end if;
 
     if v_unlocked then
         select coalesce(jsonb_agg(to_jsonb(i) order by i.line_number),'[]'::jsonb)
@@ -902,6 +908,9 @@ commit;
         'customer_message',case when v_unlocked then v_quote.customer_message else null end,
         'validity_expires_at',v_quote.validity_expires_at,
         'details_unlocked',v_unlocked,
+        'order_id',v_order_id,
+        'order_number',v_order_number,
+        'order_status',v_order_status,
         'items',v_items
     );
 end;
