@@ -10,8 +10,13 @@ on:
     paths:
       - "admin-independent-quotations.html"
       - "direct-quotation.html"
+      - "direct-order-sourcing.html"
+      - "finance-admin.html"
+      - "admin.html"
       - "supabase/functions/**"
       - "supabase/migrations/20261119120000_frosttech_independent_quotations_foundation.sql"
+      - "supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"
+      - "scripts/test-direct-quotation-security.mjs"
       - "scripts/validate-direct-quotation-html.mjs"
       - "scripts/validate-direct-quotation-sql.py"
       - ".github/workflows/direct-quotation-validation.yml"
