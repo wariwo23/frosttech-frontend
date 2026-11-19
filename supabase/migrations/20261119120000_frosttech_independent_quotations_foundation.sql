@@ -150,17 +150,25 @@ begin
     end if;
 end;
 $receipt_fk$;
+-- Preserve the original request-based receipt condition exactly:
+-- quotation_admin_fee requires quote_request_id and no order_id.
+-- Add a separate direct-quotation fee path without fabricating a request.
 alter table public.payment_receipts
     drop constraint if exists payment_receipts_source_integrity_check;
 alter table public.payment_receipts
     add constraint payment_receipts_source_integrity_check check (
         (
             receipt_type='quotation_admin_fee'
+            and quote_request_id is not null
             and order_id is null
-            and (
-                (quote_request_id is not null and direct_quotation_id is null)
-                or (quote_request_id is null and direct_quotation_id is not null)
-            )
+            and direct_quotation_id is null
+        )
+        or
+        (
+            receipt_type='quotation_admin_fee'
+            and quote_request_id is null
+            and order_id is null
+            and direct_quotation_id is not null
         )
         or
         receipt_type='final_order_payment'
@@ -829,6 +837,109 @@ $orderpay$;
 
 revoke all on function public.frosttech_record_direct_order_payment_success(uuid,uuid,uuid,text,text,timestamptz,jsonb) from public,anon,authenticated;
 grant execute on function public.frosttech_record_direct_order_payment_success(uuid,uuid,uuid,text,text,timestamptz,jsonb) to service_role;
+
+-- Reserve a direct-order payment under an order-row lock. This serializes
+-- simultaneous checkout requests and makes the pending attempt reusable.
+create or replace function public.frosttech_reserve_direct_order_payment(
+    p_order_id uuid,p_actor uuid,p_reference text
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path=''
+as $reserve$
+declare
+    v_order public.orders%rowtype;
+    v_quote public.frosttech_direct_quotations%rowtype;
+    v_customer_user uuid;
+    v_email text;
+    v_payment public.payments%rowtype;
+begin
+    if p_order_id is null or p_actor is null or p_reference is null
+       or length(p_reference)<12 or length(p_reference)>120 then
+        raise exception 'Invalid direct-order payment reservation';
+    end if;
+    if not exists(
+        select 1 from public.profiles p
+        where p.id=p_actor and p.role='customer' and p.is_active is true
+    ) then raise exception 'Active FrostTech customer account required'; end if;
+
+    select o.* into v_order
+    from public.orders o
+    where o.id=p_order_id and o.direct_quotation_id is not null
+    for update;
+    if not found then raise exception 'Direct quotation order not found'; end if;
+    if v_order.status<>'awaiting_payment' or v_order.environment<>'development'
+       or v_order.customer_total<=0 then
+        raise exception 'Direct quotation order is not eligible for Test Mode payment';
+    end if;
+
+    select c.user_id into v_customer_user
+    from public.customers c where c.id=v_order.customer_id;
+    if v_customer_user is distinct from p_actor then
+        raise exception 'Order does not belong to this customer';
+    end if;
+
+    select lower(btrim(u.email)) into v_email
+    from auth.users u where u.id=p_actor and u.email_confirmed_at is not null;
+    if v_email is null then raise exception 'Confirmed customer email required'; end if;
+
+    select q.* into v_quote
+    from public.frosttech_direct_quotations q
+    where q.id=v_order.direct_quotation_id
+    for update;
+    if not found or v_quote.status<>'accepted' or v_quote.accepted_by<>p_actor
+       or v_quote.fee_status not in ('paid','waived')
+       or v_quote.order_payment_terms_accepted_at is null
+       or v_quote.environment<>v_order.environment
+       or lower(btrim(v_quote.customer_email))<>v_email then
+        raise exception 'Accepted quotation is not eligible for final payment';
+    end if;
+
+    if exists(
+        select 1 from public.payments p
+        where p.order_id=v_order.id and p.status='successful'
+    ) then raise exception 'This order already has a successful payment'; end if;
+
+    select p.* into v_payment
+    from public.payments p
+    where p.order_id=v_order.id and p.status='pending'
+    order by p.created_at desc
+    limit 1
+    for update;
+
+    if found then
+        if v_payment.environment<>'development'
+           or v_payment.amount<>v_order.customer_total
+           or v_payment.currency<>'NGN'
+           or v_payment.payment_method<>'paystack' then
+            raise exception 'Existing pending payment requires administrator reconciliation';
+        end if;
+        return jsonb_build_object(
+            'success',true,'reused',true,'payment_id',v_payment.id,
+            'reference',v_payment.transaction_reference,'amount',v_payment.amount
+        );
+    end if;
+
+    insert into public.payments(
+        order_id,customer_id,amount,currency,payment_method,
+        transaction_reference,status,environment
+    ) values(
+        v_order.id,v_order.customer_id,v_order.customer_total,'NGN','paystack',
+        p_reference,'pending','development'
+    ) returning * into v_payment;
+
+    return jsonb_build_object(
+        'success',true,'reused',false,'payment_id',v_payment.id,
+        'reference',v_payment.transaction_reference,'amount',v_payment.amount
+    );
+end;
+$reserve$;
+
+revoke all on function public.frosttech_reserve_direct_order_payment(uuid,uuid,text)
+    from public,anon,authenticated;
+grant execute on function public.frosttech_reserve_direct_order_payment(uuid,uuid,text)
+    to service_role;
 
 comment on table public.frosttech_direct_quotations is
     'Independent FrostTech quotations that do not require a quote_requests or customer_requests record.';
