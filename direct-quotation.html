@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Your FrostTech Quotation</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}
+header{padding:24px 16px;background:#063b70;color:white;text-align:center}header h1{margin:0 0 6px;font-size:25px}header p{margin:0;color:#e4eff8}
+main{max-width:760px;margin:24px auto;padding:0 14px 40px}.card{background:#fff;border:1px solid #dce3eb;border-radius:12px;padding:19px;margin-bottom:16px}
+h2{color:#063b70;margin:0 0 14px;font-size:20px}.notice{padding:13px;border-radius:8px;background:#eef5fb;color:#17456c;line-height:1.55}.error{background:#fff0f0;color:#b42318}.success{background:#ecfdf3;color:#067647}
+button,.link{display:inline-block;padding:12px 16px;border:0;border-radius:7px;background:#0879c9;color:#fff;font-weight:700;text-decoration:none;cursor:pointer}.secondary{background:#eaf2f9;color:#063b70}
+table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-bottom:1px solid #e5eaf0;text-align:left}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.small{font-size:13px;color:#64748b;line-height:1.5}
+@media(max-width:540px){.card{padding:15px}td,th{font-size:13px}}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Independent Customer Quotation</p></header>
+<main>
+<section class="card"><div id="message" class="notice">Verifying your quotation invitation…</div><div class="row hidden" id="authActions"></div></section>
+<section class="card hidden" id="quotationCard">
+<h2 id="heading">Quotation</h2>
+<p id="customerGreeting"></p>
+<div id="feeNotice" class="notice"></div>
+<div id="quoteDetails" class="hidden">
+<p id="customerMessage"></p>
+<div style="overflow-x:auto"><table><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody id="items"></tbody></table></div>
+<div style="max-width:380px;margin:15px 0 0 auto">
+<p class="num">Subtotal: <strong id="subtotal"></strong></p>
+<p class="num">Additional charges: <strong id="additional"></strong></p>
+<p class="num">Discount: <strong id="discount"></strong></p>
+<p class="num">Delivery: <strong id="delivery"></strong></p>
+<p class="num" style="font-size:18px">Quotation total: <strong id="total"></strong></p>
+</div>
+<p id="validity" class="small"></p>
+<p class="small">To accept, you will be asked to review and agree to FrostTech's General Terms and Conditions.</p>
+</div>
+<div class="row"><a class="link secondary" href="index.html">FrostTech Homepage</a><button id="signOut" type="button" class="secondary hidden">Sign Out</button></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase.js"></script>
+<script>
+"use strict";
+(function(){
+const $=id=>document.getElementById(id);
+const params=new URLSearchParams(location.search);
+const invite=params.get("token")||"";
+const db=window.supabaseClient;
+const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+function message(t,type="notice"){const n=$("message");n.className="notice "+(type==="error"?"error":type==="success"?"success":"");n.textContent=t;}
+function authLinks(){
+ const returnPath="direct-quotation.html?token="+encodeURIComponent(invite);
+ const login=new URL("customer-login.html",location.href);login.searchParams.set("return",returnPath);
+ const register=new URL("customer-register.html",location.href);register.searchParams.set("return",returnPath);
+ $("authActions").innerHTML='<a class="link" href="'+login.href+'">Customer Login</a><a class="link secondary" href="'+register.href+'">Create Customer Account</a>';
+ $("authActions").classList.remove("hidden");
+}
+async function load(){
+ if(!invite){message("This quotation invitation link is incomplete. Please contact FrostTech for a new link.","error");return;}
+ if(!db?.auth){message("FrostTech could not connect to the customer service. Refresh and try again.","error");return;}
+ const {data:{session},error}=await db.auth.getSession();
+ if(error){message("Your customer session could not be verified. Please sign in again.","error");authLinks();return;}
+ if(!session?.user){message("Please sign in or create a FrostTech customer account using the email address this invitation was sent to.","notice");authLinks();return;}
+ $("signOut").classList.remove("hidden");
+ message("Checking the invitation against your confirmed customer email…");
+ const {data,error:callError}=await db.functions.invoke("direct-customer-quotation",{body:{token:invite}});
+ if(callError||!data?.success){message(data?.error||callError?.message||"This invitation could not be verified. Make sure you are signed in with the invited email address.","error");return;}
+ const q=data.quotation;
+ $("quotationCard").classList.remove("hidden");
+ $("heading").textContent="Quotation "+q.quotation_number;
+ $("customerGreeting").textContent="Hello "+(q.customer_name||"Customer")+", FrostTech has prepared this quotation for you.";
+ if(q.details_unlocked){
+  $("feeNotice").textContent="Quotation details are available. Your quotation processing fee has been recorded as paid or waived.";
+  $("quoteDetails").classList.remove("hidden");
+  $("customerMessage").textContent=q.customer_message||"";
+  $("items").innerHTML=(q.items||[]).map(i=>'<tr><td>'+escapeText(i.description)+'</td><td class="num">'+Number(i.quantity).toLocaleString("en-NG")+' '+escapeText(i.unit)+'</td><td class="num">'+money(i.unit_price)+'</td><td class="num">'+money(i.line_total)+'</td></tr>').join("");
+  $("subtotal").textContent=money(q.subtotal);$("additional").textContent=money(q.additional_charges);$("discount").textContent=money(q.discount);$("delivery").textContent=money(q.delivery_cost);$("total").textContent=money(q.total_amount);
+  $("validity").textContent=q.validity_expires_at?"Valid until "+new Date(q.validity_expires_at).toLocaleDateString("en-NG"):"No expiry date specified.";
+ }else{
+  $("feeNotice").textContent="Your invitation is verified. The quotation details are temporarily locked until the quotation processing and marketplace administration fee of "+money(q.administration_fee)+" is paid. FrostTech will provide the secure payment step.";
+ }
+ message("Your quotation invitation has been verified successfully.","success");
+}
+function escapeText(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("signOut").addEventListener("click",async()=>{await db.auth.signOut({scope:"local"});location.reload();});
+load();
+})();
+</script>
+</body>
+</html>
