@@ -27,7 +27,7 @@ async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:str
     throw new Error("Existing receipt reference does not match this direct quotation fee.");
   }else{
    const {data:bySource,error:sourceError}=await db.from("payment_receipts")
-    .select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
+    .select("id,receipt_number,receipt_type,source_record_id,direct_quotation_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
     .eq("receipt_type","quotation_admin_fee").eq("source_record_id",quote.id).maybeSingle();
    if(sourceError)throw sourceError;
    if(bySource){
