@@ -89,8 +89,27 @@ Deno.serve(async (req: Request) => {
     const raw = await req.text();
     if (raw.length > 64 * 1024) return reply({ error: "Request is too large." }, 413, origin);
     const body = JSON.parse(raw);
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    if (body.action === "list_drafts") {
+      const { data: drafts, error: listError } = await db
+        .from("frosttech_direct_quotations")
+        .select("id, quotation_number, customer_name, customer_email, subtotal, additional_charges, discount, delivery_cost, total_amount, status, created_at, validity_expires_at")
+        .eq("created_by", userData.user.id)
+        .eq("status", "draft")
+        .order("created_at", { ascending: false })
+        .limit(100);
+      if (listError) {
+        console.error("Direct quotation draft list failed:", listError);
+        return reply({ error: "Could not load your saved quotation drafts." }, 500, origin);
+      }
+      return reply({ success: true, drafts: drafts || [] }, 200, origin);
+    }
+
     if (body.action !== "create_draft") {
-      return reply({ error: "Unsupported action. Only draft creation is available in this implementation stage." }, 400, origin);
+      return reply({ error: "Unsupported action." }, 400, origin);
     }
 
     const customerName = text(body.customer_name, 160, "Customer name", true);
@@ -102,10 +121,6 @@ Deno.serve(async (req: Request) => {
     if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100) {
       return reply({ error: "Add between 1 and 100 quotation items." }, 400, origin);
     }
-
-    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
 
     let customerId: string | null = null;
     if (body.customer_id !== undefined && body.customer_id !== null && body.customer_id !== "") {
