@@ -23,7 +23,7 @@ label{font-weight:bold}.message{padding:11px;border-radius:6px;background:#e8f3f
 </style>
 </head>
 <body>
-<header><h1>FrostTech HVAC and Refrigeration</h1><p>Department &amp; Operator Management</p><p><a href="admin.html">Return to Super Admin Dashboard</a></p></header>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Department &amp; Operator Management</p><p><a href="admin.html">Return to Super Admin Dashboard</a> · <a href="admin-management.html">Administrator Activity Log</a></p><button id="signOut" type="button" class="secondary">Sign Out</button></header>
 <main>
 <section class="card"><h2 id="heading">Verifying Super Administrator access</h2><p id="status" class="message" role="status">Please wait…</p><div id="identity" class="hidden">Signed in as <strong id="email"></strong> · <strong>Super Administrator</strong></div></section>
 <div id="panel" class="hidden">
@@ -119,6 +119,11 @@ async function loadAdmins(){
  finally{$("refreshAdmins").disabled=false;}
 }
 $("refresh").addEventListener("click",loadEmployees);$("refreshAdmins").addEventListener("click",loadAdmins);
+$("signOut").addEventListener("click",async()=>{
+ const button=$("signOut");button.disabled=true;
+ try{const {error}=await db.auth.signOut();if(error)throw error;window.location.href="department-sign-in.html";}
+ catch(e){msg("status",e.message||"Sign out failed.","error");button.disabled=false;}
+});
 $("departmentFilter").addEventListener("change",renderEmployees);$("statusFilter").addEventListener("change",renderEmployees);
 async function start(){try{const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user)throw new Error("Please sign in through the FrostTech Super Administrator portal.");const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;if(role!=="super_admin")throw new Error("Only the Super Administrator can manage department appointments.");$("email").textContent=userData.user.email||"";$("identity").classList.remove("hidden");$("panel").classList.remove("hidden");$("heading").textContent="Department & Operator Management";await Promise.all([loadEmployees(),loadAdmins()]);}catch(e){$("heading").textContent="Access not available";msg("status",e.message||"Super Administrator verification failed.","error");}}
 start();
