@@ -75,6 +75,10 @@ Deno.serve(async(req:Request)=>{
   const rawToken=typeof body?.token==="string"?body.token:"";
   if(!uuid.test(quoteId)||rawToken.length<32||rawToken.length>128)return out({error:"Invalid quotation payment request."},400,origin);
   const db=createClient(URL,SERVICE,{auth:{persistSession:false,autoRefreshToken:false}});
+  const {data:profile,error:profileError}=await db.from("profiles")
+    .select("id,role,is_active").eq("id",user.id).maybeSingle();
+  if(profileError||!profile||profile.role!=="customer"||profile.is_active!==true)
+    return out({error:"An active FrostTech customer account is required."},403,origin);
   const tokenHash=await sha(rawToken);
   const {data:invite,error:inviteError}=await db.from("frosttech_direct_quotation_invites")
     .select("id,claimed_by,expires_at,revoked_at,used_at,direct_quotation_id,token_hash")
