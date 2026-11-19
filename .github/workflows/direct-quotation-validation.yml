@@ -15,6 +15,8 @@ on:
       - "admin.html"
       - "supabase/functions/**"
       - "supabase/migrations/20261119120000_frosttech_independent_quotations_foundation.sql"
+      - "supabase/migrations/20261119130000_frosttech_direct_quotation_draft_editing.sql"
+      - "supabase/migrations/20261119140000_frosttech_admin_direct_quotation_count_rpc.sql"
       - "supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"
       - "scripts/test-direct-quotation-security.mjs"
       - "scripts/validate-direct-quotation-html.mjs"
