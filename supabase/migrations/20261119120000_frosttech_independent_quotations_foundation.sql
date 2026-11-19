@@ -217,6 +217,7 @@ grant all on public.frosttech_direct_quotation_invites to service_role;
 grant all on public.frosttech_direct_quote_fee_payments to service_role;
 grant select, insert on public.frosttech_direct_quotation_snapshots to service_role;
 grant usage, select on sequence public.frosttech_direct_quote_number_seq to service_role;
+revoke all on function public.frosttech_reject_direct_quote_snapshot_mutation() from public, anon, authenticated;
 grant execute on function public.frosttech_reject_direct_quote_snapshot_mutation() to service_role;
 
 comment on table public.frosttech_direct_quotations is
