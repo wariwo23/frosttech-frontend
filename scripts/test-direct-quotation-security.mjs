@@ -54,9 +54,9 @@ test("checkout calls the reservation RPC and refuses uncertain duplicate initial
 });
 
 test("Paystack order verification checks reference, success, NGN and exact amount", () => {
-  has(payment, /tx\.reference!==ref/i);
-  has(payment, /String\(tx\.status\)\.toLowerCase\(\)!=="success"/i);
-  has(payment, /String\(tx\.currency\)\.toUpperCase\(\)!=="NGN"/i);
+  has(payment, /tx\.reference\s*!==\s*ref/i);
+  has(payment, /String\(tx\.status\)\.toLowerCase\(\)\s*!==\s*"success"/i);
+  has(payment, /String\(tx\.currency\)\.toUpperCase\(\)\s*!==\s*"NGN"/i);
   has(payment, /Number\(tx\.amount\)!==Math\.round\(Number\(payment\.amount\)\*100\)/i);
   has(payment, /rpc\("frosttech_record_direct_order_payment_success"/i);
 });
@@ -74,9 +74,9 @@ test("payment recording checks customer ownership and updates payment plus order
 test("processing-fee checkout remains Test Mode only and validates Paystack response", () => {
   has(fee, /PAYSTACK_TEST_SECRET_KEY/i);
   has(fee, /quote\.environment\s*!==\s*"development"/i);
-  has(fee, /tx\.reference!==ref/i);
-  has(fee, /String\(tx\.status\)\.toLowerCase\(\)!=="success"/i);
-  has(fee, /String\(tx\.currency\)\.toUpperCase\(\)!=="NGN"/i);
+  has(fee, /tx\.reference\s*!==\s*ref/i);
+  has(fee, /String\(tx\.status\)\.toLowerCase\(\)\s*!==\s*"success"/i);
+  has(fee, /String\(tx\.currency\)\.toUpperCase\(\)\s*!==\s*"NGN"/i);
 });
 
 test("receipt constraint keeps request-based fees and adds a separate direct-quotation fee path", () => {
