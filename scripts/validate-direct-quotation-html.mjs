@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { Script } from "node:vm";
 
-const files = ["admin-independent-quotations.html", "direct-quotation.html"];
+const files = ["admin-independent-quotations.html", "direct-quotation.html", "direct-order-sourcing.html"];
 let checked = 0;
 for (const file of files) {
   const html = readFileSync(file, "utf8");
