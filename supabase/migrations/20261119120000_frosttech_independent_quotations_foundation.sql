@@ -823,7 +823,7 @@ commit;
     for update;
 
     if not found
-       or v_invite.expires_at <= now()
+       or (v_invite.expires_at <= now() and v_invite.claimed_by is null)
        or v_invite.revoked_at is not null
        or v_invite.used_at is not null
        or v_invite.email_normalized <> v_email then
