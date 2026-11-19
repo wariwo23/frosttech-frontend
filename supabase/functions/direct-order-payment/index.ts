@@ -165,7 +165,7 @@ Deno.serve(async(req:Request)=>{
     .eq("id",order.id).maybeSingle();
    if(paidOrderError||!paidOrder||paidOrder.status!=="paid")return out({error:"Payment is recorded but order status needs FrostTech reconciliation."},500,origin);
 
-   let deliveryResult={deliveryCreated:false,existingDelivery:false,deliveryId:null,deliveryStatus:null,needsAdminReview:false,reviewReasons:[] as string[]};
+   let deliveryResult:any={deliveryCreated:false,existingDelivery:false,deliveryId:null,deliveryStatus:null,needsAdminReview:false,reviewReasons:[] as string[]};
    if(paidOrder.environment==="production"){
     const {data:items,error:itemsError}=await db.from("order_items").select("product_id").eq("order_id",order.id);
     if(itemsError){deliveryResult.needsAdminReview=true;deliveryResult.reviewReasons.push("Order product categories could not be checked.");}
