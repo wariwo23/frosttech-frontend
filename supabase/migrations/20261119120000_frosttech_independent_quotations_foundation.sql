@@ -910,6 +910,13 @@ declare
     v_quote public.frosttech_direct_quotations%rowtype;
     v_payment public.frosttech_direct_quote_fee_payments%rowtype;
 begin
+    if p_actor is null or not exists (
+        select 1 from public.profiles p
+        where p.id=p_actor and p.role='customer' and p.is_active is true
+    ) then
+        raise exception 'Active customer account required';
+    end if;
+
     select * into v_quote
     from public.frosttech_direct_quotations
     where id=p_quote_id
