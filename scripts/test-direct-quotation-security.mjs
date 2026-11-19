@@ -65,7 +65,7 @@ test("payment recording checks customer ownership and updates payment plus order
 test("processing-fee checkout remains Test Mode only and validates Paystack response", () => {
   has(fee, /PAYSTACK_TEST_SECRET_KEY/i);
   has(fee, /quote\.environment!=="development"/i);
-  has(fee, /tx\\.reference!==ref/i);
+  has(fee, /tx\.reference!==ref/i);
   has(fee, /String\(tx\.status\)\.toLowerCase\(\)!=="success"/i);
   has(fee, /String\(tx\.currency\)\.toUpperCase\(\)!=="NGN"/i);
 });
