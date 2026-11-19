@@ -10,7 +10,7 @@ async function hash(value:string){const d=await crypto.subtle.digest("SHA-256",n
 function makeReference(){const b=new Uint8Array(8);crypto.getRandomValues(b);return "FT-DQO-"+Date.now()+"-"+Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");}
 function safe(v:unknown){return String(v??"");}
 
-async function createReceipt(db:ReturnType<typeof createClient>,serviceKey:string,order:Record<string,any>,payment:Record<string,any>,user:any){
+async function createReceipt(db:any,serviceKey:string,order:Record<string,any>,payment:Record<string,any>,user:any){
  try{
   const {data:tax,error:taxError}=await db.from("frosttech_tax_settings").select("vat_enabled").eq("id",1).maybeSingle();
   if(taxError||!tax||tax.vat_enabled===true)throw new Error("Tax settings do not permit receipt issuance.");
@@ -41,6 +41,7 @@ async function createReceipt(db:ReturnType<typeof createClient>,serviceKey:strin
     receipt=inserted;
    }
   }
+  if(!receipt)throw new Error("Receipt record could not be retrieved.");
   const response=await fetch(URL+"/functions/v1/issue-payment-receipt",{
    method:"POST",headers:{Authorization:"Bearer "+serviceKey,apikey:serviceKey,"Content-Type":"application/json"},
    body:JSON.stringify({receipt_id:receipt.id})
