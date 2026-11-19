@@ -116,7 +116,42 @@ async function refreshDrafts(){
   box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
  }catch(e){box.textContent=e.message||"Could not load drafts.";}
 }
+let editingQuoteId=null;
 let pendingIssue=null;
+async function editDraft(id,button){
+ button.disabled=true;show("Loading saved quotation draft…","info","result");
+ try{
+  const {data,error}=await db.functions.invoke("create-direct-quotation",{body:{action:"get_draft",quotation_id:id}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Draft could not be loaded.");
+  const q=data.quotation;editingQuoteId=q.id;
+  $("customerName").value=q.customer_name||"";
+  $("customerEmail").value=q.customer_email||"";
+  $("customerPhone").value=q.customer_phone||"";
+  $("validUntil").value=q.validity_expires_at?new Date(q.validity_expires_at).toISOString().slice(0,10):"";
+  $("customerMessage").value=q.customer_message||"";
+  $("internalNote").value=q.internal_note||"";
+  $("additional").value=Number(q.additional_charges||0).toFixed(2);
+  $("discount").value=Number(q.discount||0).toFixed(2);
+  $("delivery").value=Number(q.delivery_cost||0).toFixed(2);
+  $("items").innerHTML="";
+  for(const item of data.items){
+   addItem();
+   const row=$("items").lastElementChild;
+   row.querySelector(".type").value=item.item_type;
+   row.querySelector(".type").dispatchEvent(new Event("change"));
+   if(item.product_id)row.querySelector(".product").value=item.product_id;
+   row.querySelector(".description").value=item.description||"";
+   row.querySelector(".quantity").value=String(item.quantity);
+   row.querySelector(".unit").value=item.unit||"unit";
+   row.querySelector(".price").value=Number(item.unit_price||0).toFixed(2);
+  }
+  renumber();renderTotals();
+  $("saveDraft").textContent="Save Draft Changes";
+  show("Editing "+q.quotation_number+". Changes remain private until you issue the quotation.","success","result");
+  $("workspace").scrollIntoView({behavior:"smooth",block:"start"});
+ }catch(e){show(e.message||"Could not load draft.","error","result");}
+ finally{button.disabled=false;}
+}
 function issueQuotation(id,button){
  pendingIssue={id,button};
  $("issueModal").classList.add("open");
