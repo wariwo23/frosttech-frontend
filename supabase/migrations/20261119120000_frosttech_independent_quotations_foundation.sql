@@ -1268,6 +1268,95 @@ revoke all on function public.frosttech_decide_direct_quotation(uuid, uuid, text
 grant execute on function public.frosttech_decide_direct_quotation(uuid, uuid, text, boolean, text, text, text)
     to service_role;
 
+
+create or replace function public.frosttech_record_direct_order_payment_success(
+    p_order_id uuid,
+    p_payment_id uuid,
+    p_actor uuid,
+    p_reference text,
+    p_provider_transaction_id text,
+    p_verified_at timestamptz,
+    p_verification_payload jsonb
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $orderpay$
+declare
+    v_order public.orders%rowtype;
+    v_payment public.payments%rowtype;
+    v_quote public.frosttech_direct_quotations%rowtype;
+    v_customer_user uuid;
+begin
+    if p_actor is null or not exists(
+        select 1 from public.profiles p
+        where p.id=p_actor and p.role='customer' and p.is_active is true
+    ) then raise exception 'Active customer account required'; end if;
+
+    select o.* into v_order
+    from public.orders o
+    where o.id=p_order_id and o.direct_quotation_id is not null
+    for update;
+    if not found then raise exception 'Direct quotation order not found'; end if;
+
+    select c.user_id into v_customer_user
+    from public.customers c
+    where c.id=v_order.customer_id;
+    if v_customer_user is distinct from p_actor then
+        raise exception 'Order does not belong to this customer';
+    end if;
+
+    select q.* into v_quote
+    from public.frosttech_direct_quotations q
+    where q.id=v_order.direct_quotation_id
+    for update;
+    if not found or v_quote.status<>'accepted' or v_quote.accepted_by<>p_actor
+       or v_quote.fee_status not in ('paid','waived')
+       or v_quote.order_payment_terms_accepted_at is null then
+        raise exception 'Direct quotation is not eligible for final payment';
+    end if;
+
+    select p.* into v_payment
+    from public.payments p
+    where p.id=p_payment_id
+      and p.order_id=p_order_id
+      and p.transaction_reference=p_reference
+    for update;
+    if not found then raise exception 'Order payment attempt not found'; end if;
+
+    if v_payment.status='successful' then
+        return jsonb_build_object('success',true,'already_recorded',true,'order_status',v_order.status);
+    end if;
+
+    if v_payment.status<>'pending'
+       or v_payment.environment<>v_order.environment
+       or round(v_payment.amount*100)<>round(v_order.customer_total*100)
+       or v_order.status not in ('awaiting_payment','pending') then
+        raise exception 'Payment attempt does not match the accepted order';
+    end if;
+
+    update public.payments
+    set status='successful',paid_at=coalesce(p_verified_at,now()),updated_at=now()
+    where id=p_payment_id and status='pending';
+
+    update public.orders
+    set status='paid',updated_at=now()
+    where id=p_order_id and status in ('awaiting_payment','pending');
+
+    insert into public.admin_activity_log(actor_user_id,action,target_user_id,details)
+    values(p_actor,'direct_quotation_order_payment_verified',null,
+        jsonb_build_object('order_id',p_order_id,'payment_id',p_payment_id,'reference',p_reference,'amount',v_payment.amount,'environment',v_payment.environment));
+
+    return jsonb_build_object('success',true,'already_recorded',false,'order_status','paid');
+end;
+$orderpay$;
+
+revoke all on function public.frosttech_record_direct_order_payment_success(uuid, uuid, uuid, text, text, timestamptz, jsonb)
+    from public,anon,authenticated;
+grant execute on function public.frosttech_record_direct_order_payment_success(uuid, uuid, uuid, text, text, timestamptz, jsonb)
+    to service_role;
+
 comment on table public.frosttech_direct_quotations is
     'Independent FrostTech quotations that do not require a quote_requests or customer_requests record.';
 comment on table public.frosttech_direct_quote_fee_payments is
