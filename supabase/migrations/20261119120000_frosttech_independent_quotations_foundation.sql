@@ -158,10 +158,6 @@ alter table public.frosttech_direct_order_snapshots enable row level security;
 revoke all on public.frosttech_direct_order_snapshots from anon, authenticated;
 grant select,insert on public.frosttech_direct_order_snapshots to service_role;
 
-create trigger frosttech_direct_order_snapshot_immutable
-    before update or delete on public.frosttech_direct_order_snapshots
-    for each row execute function public.frosttech_reject_direct_quote_snapshot_mutation();
-
 -- Orders retain their existing request/quotation links. This nullable link is
 -- populated only by the new trusted direct-quotation acceptance path.
 alter table public.orders
@@ -222,6 +218,10 @@ drop trigger if exists frosttech_direct_quote_snapshot_immutable
     on public.frosttech_direct_quotation_snapshots;
 create trigger frosttech_direct_quote_snapshot_immutable
     before update or delete on public.frosttech_direct_quotation_snapshots
+    for each row execute function public.frosttech_reject_direct_quote_snapshot_mutation();
+
+create trigger frosttech_direct_order_snapshot_immutable
+    before update or delete on public.frosttech_direct_order_snapshots
     for each row execute function public.frosttech_reject_direct_quote_snapshot_mutation();
 
 -- No browser role receives direct table access. New Edge Functions must use
