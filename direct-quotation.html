@@ -23,6 +23,14 @@ table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-bottom:1
 <h2 id="heading">Quotation</h2>
 <p id="customerGreeting"></p>
 <div id="feeNotice" class="notice"></div>
+<div id="feePanel" class="hidden" style="margin-top:14px">
+ <label style="display:flex;gap:9px;align-items:flex-start;font-weight:400;line-height:1.5">
+  <input id="feeTerms" type="checkbox" style="width:auto;margin:3px 0 0">
+  <span>I have read and agreed to the FrostTech General Terms and Conditions. <a href="terms.html" target="_blank" rel="noopener">Read the Terms and Conditions</a>.</span>
+ </label>
+ <button type="button" id="payFee" style="margin-top:12px">Pay Quotation Processing and Marketplace Administration Fee</button>
+ <p class="small">Payment is handled securely by Paystack. The amount is calculated by FrostTech's server. Delivery is excluded from the administration-fee calculation.</p>
+</div>
 <div id="quoteDetails" class="hidden">
 <p id="customerMessage"></p>
 <div style="overflow-x:auto"><table><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody id="items"></tbody></table></div>
@@ -79,7 +87,25 @@ async function load(){
   $("subtotal").textContent=money(q.subtotal);$("additional").textContent=money(q.additional_charges);$("discount").textContent=money(q.discount);$("delivery").textContent=money(q.delivery_cost);$("total").textContent=money(q.total_amount);
   $("validity").textContent=q.validity_expires_at?"Valid until "+new Date(q.validity_expires_at).toLocaleDateString("en-NG"):"No expiry date specified.";
  }else{
-  $("feeNotice").textContent="Your invitation is verified. The quotation details are temporarily locked until the quotation processing and marketplace administration fee of "+money(q.administration_fee)+" is paid. FrostTech will provide the secure payment step.";
+  $("feeNotice").textContent="Your invitation is verified. The quotation details are temporarily locked until the quotation processing and marketplace administration fee of "+money(q.administration_fee)+" is paid.";
+  $("feePanel").classList.remove("hidden");
+  $("payFee").onclick=async()=>{
+   const button=$("payFee");
+   if(!$("feeTerms").checked){message("Please accept the FrostTech General Terms and Conditions before payment.","error");return;}
+   button.disabled=true;button.textContent="Preparing secure Paystack checkout…";
+   try{
+    const {data:payment,error:paymentError}=await db.functions.invoke("direct-quotation-fee",{body:{action:"initialize_fee",quotation_id:q.quotation_id,token:invite,terms_accepted:true}});
+    if(paymentError||!payment?.success||!payment.authorization_url)throw new Error(payment?.error||paymentError?.message||"Payment checkout could not be prepared.");
+    location.href=payment.authorization_url;
+   }catch(e){message(e.message||"Unable to prepare payment.","error");button.disabled=false;button.textContent="Pay Quotation Processing and Marketplace Administration Fee";}
+  };
+ }
+ const callbackReference=params.get("reference")||params.get("trxref");
+ if(callbackReference){
+  const {data:payment,error:paymentError}=await db.functions.invoke("direct-quotation-fee",{body:{action:"verify_fee",quotation_id:q.quotation_id,token:invite,reference:callbackReference}});
+  if(paymentError||!payment?.success){message(payment?.error||paymentError?.message||"Payment verification is pending. Please contact FrostTech with your Paystack reference.","error");return;}
+  location.replace("direct-quotation.html?token="+encodeURIComponent(invite));
+  return;
  }
  message("Your quotation invitation has been verified successfully.","success");
 }
