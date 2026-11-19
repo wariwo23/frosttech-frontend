@@ -35,6 +35,8 @@ jobs:
           python-version: "3.12"
       - name: Validate customer and operator page JavaScript
         run: node scripts/validate-direct-quotation-html.mjs
+      - name: Run direct quotation security regression tests
+        run: node --test scripts/test-direct-quotation-security.mjs
       - name: Type-check new Edge Functions
         run: |
           deno check supabase/functions/create-direct-quotation/index.ts
