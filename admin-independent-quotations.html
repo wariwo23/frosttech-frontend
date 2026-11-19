@@ -104,8 +104,22 @@ async function refreshDrafts(){
   if(error)throw error;if(!data?.success)throw new Error(data?.error||"Could not load drafts.");
   const rows=data.drafts||[];
   if(!rows.length){box.textContent="No saved drafts yet.";return;}
-  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td></tr>').join("")+'</tbody></table></div>';
+  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
  }catch(e){box.textContent=e.message||"Could not load drafts.";}
+}
+async function issueQuotation(id,button){
+ if(!confirm("Issue this quotation and send a secure invitation to the customer? The quotation will no longer be an editable draft."))return;
+ button.disabled=true;show("Issuing quotation and preparing customer invitation…","info","result");
+ try{
+  const {data,error}=await db.functions.invoke("issue-direct-quotation",{body:{quotation_id:id}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation could not be issued.");
+  const link=String(data.invitation_url||"");
+  const emailText=data.email_sent?"Invitation email sent successfully.":"Email was not sent automatically. Use the secure link below.";
+  $("result").className="message success";
+  $("result").innerHTML='<strong>Quotation '+esc(data.quotation_number)+' issued.</strong><br>'+esc(emailText)+'<br>Administration fee: '+money(data.administration_fee)+' (delivery excluded). Fee status: '+esc(data.fee_status)+'<br><label style="margin-top:10px">Secure customer invitation link<input id="issuedInviteLink" readonly value="'+esc(link)+'"></label><div class="actions"><button type="button" id="copyIssuedLink">Copy invitation link</button></div><p class="small">Share this link only with the customer at the verified email address. It expires '+esc(new Date(data.invitation_expires_at).toLocaleString("en-NG"))+'.</p>';
+  $("copyIssuedLink").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(link);$("copyIssuedLink").textContent="Copied";}catch(e){$("issuedInviteLink").select();document.execCommand("copy");$("copyIssuedLink").textContent="Copied";}});
+  await refreshDrafts();
+ }catch(e){show(e.message||"Could not issue quotation.","error","result");button.disabled=false;}
 }
 function productOptions(){return '<option value="">Select catalogue product (optional for services)</option>'+products.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' — '+esc(p.category||"")+'</option>').join("");}
 function addItem(){
@@ -136,6 +150,7 @@ function renderTotals(){
  const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0,total=subtotal+additional-discount+delivery;
  $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
 }
+$("draftList").addEventListener("click",e=>{const b=e.target.closest("[data-issue-id]");if(b)issueQuotation(b.dataset.issueId,b);});
 $("refreshDrafts").addEventListener("click",refreshDrafts);
 $("addItem").addEventListener("click",addItem);
 ["additional","discount","delivery"].forEach(id=>$(id).addEventListener("input",renderTotals));
