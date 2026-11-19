@@ -12,6 +12,51 @@ function out(body:Record<string,unknown>,status=200,origin:string|null=null){
 function secret(environment:string){return environment==="development"?Deno.env.get("PAYSTACK_TEST_SECRET_KEY"):null;}
 function reference(){const b=new Uint8Array(8);crypto.getRandomValues(b);return "FT-DQF-"+Date.now()+"-"+Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");}
 async function sha(value:string){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("");}
+
+async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:string,quote:Record<string,any>,attempt:Record<string,any>,user:Record<string,any>){
+ try{
+  const {data:tax,error:taxError}=await db.from("frosttech_tax_settings").select("vat_enabled").eq("id",1).maybeSingle();
+  if(taxError||!tax||tax.vat_enabled===true)throw new Error("Tax settings do not permit receipt issuance.");
+  const {data:byRef,error:refError}=await db.from("payment_receipts")
+   .select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
+   .eq("payment_reference",attempt.provider_reference).maybeSingle();
+  if(refError)throw refError;
+  let receipt=byRef;
+  if(receipt){
+   if(receipt.receipt_type!=="quotation_admin_fee"||String(receipt.source_record_id)!==quote.id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(attempt.amount)||receipt.payment_status!=="successful"||receipt.environment!==attempt.environment)
+    throw new Error("Existing receipt reference does not match this direct quotation fee.");
+  }else{
+   const {data:bySource,error:sourceError}=await db.from("payment_receipts")
+    .select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
+    .eq("receipt_type","quotation_admin_fee").eq("source_record_id",quote.id).maybeSingle();
+   if(sourceError)throw sourceError;
+   if(bySource){
+    if(bySource.payment_reference!==attempt.provider_reference||bySource.customer_user_id!==user.id||Number(bySource.amount_received)!==Number(attempt.amount)||bySource.payment_status!=="successful"||bySource.environment!==attempt.environment)
+     throw new Error("Direct quotation already has a different fee receipt.");
+    receipt=bySource;
+   }else{
+    const {data:inserted,error:insertError}=await db.from("payment_receipts").insert({
+     receipt_type:"quotation_admin_fee",environment:attempt.environment,customer_user_id:user.id,
+     customer_name:quote.customer_name||"Customer",customer_email:user.email||quote.customer_email,
+     source_record_id:quote.id,quote_request_id:null,order_id:null,
+     payment_reference:attempt.provider_reference,payment_method:"paystack",
+     description:"Quotation Processing and Marketplace Administration Fee for "+quote.quotation_number,
+     amount_before_vat:attempt.amount,vat_status:"disabled",vat_rate:null,vat_mode:null,vat_amount:0,
+     amount_received:attempt.amount,currency:"NGN",payment_status:"successful",paid_at:attempt.verified_at||new Date().toISOString()
+    }).select("id,receipt_number").single();
+    if(insertError||!inserted)throw insertError||new Error("Receipt record could not be created.");
+    receipt=inserted;
+   }
+  }
+  const res=await fetch(URL+"/functions/v1/issue-payment-receipt",{
+   method:"POST",headers:{Authorization:"Bearer "+serviceKey,apikey:serviceKey,"Content-Type":"application/json"},
+   body:JSON.stringify({receipt_id:receipt.id})
+  });
+  const result=await res.json().catch(()=>({}));
+  return {receipt_id:receipt.id,receipt_number:receipt.receipt_number||null,processing:res.ok?(result.email_status==="sent"?"completed":result.document_status==="generated"?"pdf_generated":"pending"):"pending",message:result.message||"Receipt processing requested."};
+ }catch(e){console.error("Direct quotation fee receipt processing deferred:",e);return {receipt_id:null,receipt_number:null,processing:"pending",message:"Fee payment is successful. Receipt processing requires follow-up."};}
+}
+
 Deno.serve(async(req:Request)=>{
  const origin=req.headers.get("Origin");
  if(req.method==="OPTIONS")return new Response("ok",{headers:{...cors,"Access-Control-Allow-Origin":!origin||origin===SITE?(origin||SITE):"null"}});
@@ -37,7 +82,7 @@ Deno.serve(async(req:Request)=>{
   if(inviteError||!invite||invite.claimed_by!==user.id||(action==="initialize_fee"&&invite.expires_at<=new Date().toISOString())||invite.revoked_at||invite.used_at)
     return out({error:"Please verify your customer invitation again."},403,origin);
   const {data:quote,error:quoteError}=await db.from("frosttech_direct_quotations")
-    .select("id,quotation_number,customer_email,administration_fee,fee_status,environment,status,prepayment_terms_accepted_at")
+    .select("id,quotation_number,customer_name,customer_email,administration_fee,fee_status,environment,status,prepayment_terms_accepted_at")
     .eq("id",quoteId).maybeSingle();
   if(quoteError||!quote||quote.status!=="submitted"||String(quote.customer_email).trim().toLowerCase()!==user.email.trim().toLowerCase())
     return out({error:"The quotation is not available to this customer account."},404,origin);
@@ -112,7 +157,10 @@ Deno.serve(async(req:Request)=>{
       .select("id,amount,currency,provider_reference,status,environment")
       .eq("direct_quotation_id",quoteId).eq("provider_reference",ref).maybeSingle();
     if(attemptError||!attempt)return out({error:"The payment attempt could not be found."},404,origin);
-    if(attempt.status==="successful")return out({success:true,already_verified:true},200,origin);
+    if(attempt.status==="successful"){
+      const receipt=await issueFeeReceipt(db,SERVICE,quote,attempt,user);
+      return out({success:true,already_verified:true,receipt},200,origin);
+    }
     if(attempt.status!=="pending"||attempt.environment!=="development"||quote.environment!=="development")
       return out({error:"This payment attempt is not eligible for verification."},409,origin);
     const paystackSecret=secret(attempt.environment);
@@ -134,7 +182,10 @@ Deno.serve(async(req:Request)=>{
       console.error("Verified direct fee could not be recorded:",recordError);
       return out({error:"Paystack confirmed payment, but FrostTech could not record it yet. Please contact support with reference "+ref+"."},500,origin);
     }
-    return out({success:true,already_verified:recorded.already_recorded===true},200,origin);
+    const receipt=await issueFeeReceipt(db,SERVICE,{...quote,id:quote.id},{
+      ...attempt,provider_reference:ref,verified_at:new Date().toISOString()
+    },user);
+    return out({success:true,already_verified:recorded.already_recorded===true,receipt},200,origin);
   }
   return out({error:"Unsupported payment action."},400,origin);
  }catch(e){
