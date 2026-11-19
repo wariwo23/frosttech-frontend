@@ -1064,6 +1064,25 @@ begin
     for update;
 
     if not found then raise exception 'A claimed customer invitation is required'; end if;
+    if v_invite.email_normalized <> lower(btrim(v_quote.customer_email))
+       or not exists (
+           select 1 from auth.users u
+           where u.id=p_actor
+             and lower(btrim(u.email))=lower(btrim(v_quote.customer_email))
+             and u.email_confirmed_at is not null
+       ) then
+        raise exception 'The signed-in customer email no longer matches this quotation';
+    end if;
+    if v_quote.status='submitted' and (
+        v_quote.fee_status not in ('paid','waived')
+        or v_quote.prepayment_terms_accepted_at is null
+    ) then
+        raise exception 'The quotation processing fee and its Terms must be settled before a decision';
+    end if;
+    if v_quote.status='submitted' and v_quote.validity_expires_at is not null
+       and v_quote.validity_expires_at<=now() then
+        raise exception 'This quotation has expired';
+    end if;
 
     if p_decision='decline' then
         if v_quote.status='declined' then
