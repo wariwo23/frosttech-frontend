@@ -191,8 +191,8 @@ begin
     where oi.id=p_order_item_id and o.direct_quotation_id is not null
     for update of o;
     if not found then raise exception 'Direct quotation order item not found'; end if;
-    if v_order.status in ('pending','awaiting_payment','cancelled','delivered','completed') then
-        raise exception 'Supplier assignment is not available at this order stage';
+    if v_order.status not in ('paid','processing','ready_for_delivery','out_for_delivery') then
+        raise exception 'Supplier assignment is available only after payment and before delivery completion';
     end if;
 
     select s.* into v_supplier
@@ -294,7 +294,7 @@ begin
     where oi.id=p_order_item_id and o.direct_quotation_id is not null
     for update of o;
     if not found then raise exception 'Direct quotation order item not found'; end if;
-    if v_order.status in ('pending','awaiting_payment','cancelled') then
+    if v_order.status not in ('paid','processing','ready_for_delivery','out_for_delivery','delivered','completed') then
         raise exception 'Supplier costs can only be recorded after customer payment';
     end if;
 
@@ -410,6 +410,20 @@ begin
             ) order by fp.created_at desc)
             from public.frosttech_direct_quote_fee_payments fp
             where fp.direct_quotation_id=q.id
+        ),'[]'::jsonb),
+        'receipts',coalesce((
+            select jsonb_agg(jsonb_build_object(
+                'receipt_number',r.receipt_number,
+                'receipt_type',r.receipt_type,
+                'payment_reference',r.payment_reference,
+                'amount_received',r.amount_received,
+                'payment_status',r.payment_status,
+                'environment',r.environment,
+                'paid_at',r.paid_at
+            ) order by r.paid_at desc)
+            from public.payment_receipts r
+            where r.direct_quotation_id=q.id
+               or (o.id is not null and r.order_id=o.id::text)
         ),'[]'::jsonb)
     ) order by q.created_at desc),'[]'::jsonb) into v_rows
     from public.frosttech_direct_quotations q
