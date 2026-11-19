@@ -1,4 +1,4 @@
-import {createClient} from "npm:@supabase/supabase-js@2";
+import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
 import {processDelivery} from "./delivery.ts";
 const URL=Deno.env.get("SUPABASE_URL")??"",ANON=Deno.env.get("SUPABASE_ANON_KEY")??"",SERVICE=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")??"";
 const SITE="https://wariwo23.github.io",APP="https://wariwo23.github.io/frosttech-frontend";
@@ -137,6 +137,7 @@ Deno.serve(async(req:Request)=>{
   }
 
   if(action==="verify_order"){
+   if(!quote.order_payment_terms_accepted_at)return out({error:"Final-payment Terms acceptance has not been recorded."},403,origin);
    const ref=typeof body.reference==="string"?body.reference.trim():"";
    if(!ref||ref.length>120)return out({error:"Paystack reference is required."},400,origin);
    const {data:payment,error:paymentError}=await db.from("payments")
