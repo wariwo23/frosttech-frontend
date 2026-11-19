@@ -22,7 +22,7 @@ async function createReceipt(db:ReturnType<typeof createClient>,serviceKey:strin
   if(receipt){
    if(receipt.receipt_type!=="final_order_payment"||String(receipt.source_record_id)!==order.id||receipt.direct_quotation_id!==order.direct_quotation_id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(payment.amount)||receipt.payment_status!=="successful"||receipt.environment!==order.environment)throw new Error("Existing receipt reference does not match this order payment.");
   }else{
-   const {data:bySource,error:sourceError}=await db.from("payment_receipts").select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment").eq("receipt_type","final_order_payment").eq("source_record_id",order.id).maybeSingle();
+   const {data:bySource,error:sourceError}=await db.from("payment_receipts").select("id,receipt_number,receipt_type,source_record_id,direct_quotation_id,payment_reference,customer_user_id,amount_received,payment_status,environment").eq("receipt_type","final_order_payment").eq("source_record_id",order.id).maybeSingle();
    if(sourceError)throw sourceError;
    if(bySource){
     if(bySource.payment_reference!==payment.transaction_reference||bySource.direct_quotation_id!==order.direct_quotation_id||bySource.customer_user_id!==user.id||Number(bySource.amount_received)!==Number(payment.amount)||bySource.payment_status!=="successful"||bySource.environment!==order.environment)throw new Error("Order already has a different receipt payment reference.");
