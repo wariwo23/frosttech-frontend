@@ -161,7 +161,6 @@ alter table public.payment_receipts
             receipt_type='quotation_admin_fee'
             and quote_request_id is not null
             and order_id is null
-            and direct_quotation_id is null
         )
         or
         (
