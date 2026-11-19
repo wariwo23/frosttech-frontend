@@ -33,7 +33,8 @@ Deno.serve(async(req:Request)=>{
   const {data:invite,error:inviteError}=await db.from("frosttech_direct_quotation_invites")
     .select("id,claimed_by,expires_at,revoked_at,used_at,direct_quotation_id,token_hash")
     .eq("token_hash",tokenHash).eq("direct_quotation_id",quoteId).maybeSingle();
-  if(inviteError||!invite||invite.claimed_by!==user.id||invite.expires_at<=new Date().toISOString()||invite.revoked_at||invite.used_at)
+  const action=String(body?.action||"");
+  if(inviteError||!invite||invite.claimed_by!==user.id||(action==="initialize_fee"&&invite.expires_at<=new Date().toISOString())||invite.revoked_at||invite.used_at)
     return out({error:"Please verify your customer invitation again."},403,origin);
   const {data:quote,error:quoteError}=await db.from("frosttech_direct_quotations")
     .select("id,quotation_number,customer_email,administration_fee,fee_status,environment,status,prepayment_terms_accepted_at")
