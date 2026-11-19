@@ -129,9 +129,9 @@ test("supplier reassignment clears stale cost and records audit events", () => {
 });
 
 test("cost entry requires paid order, an assigned supplier and positive cost", () => {
-  has(sourcing, /v_order\.status in \('pending','awaiting_payment','cancelled'\)/i);
+  has(sourcing, /v_order\.status not in \('paid','processing','ready_for_delivery','out_for_delivery','delivered','completed'\)/i);
   has(sourcing, /Assign an approved supplier before recording its cost/i);
-  has(sourcing, /p_supplier_unit_cost<=0/i);
+  has(sourcing, /round\(p_supplier_unit_cost,2\)<=0/i);
   has(sourcing, /Only active, verified and approved suppliers may be assigned/i);
 });
 
@@ -142,6 +142,7 @@ test("Finance direct quotation ledger is separate and excludes supplier costs", 
   has(financeFn, /admin_has_permission\('quotations.read_financial'\)/i);
   has(financeFn, /'environment',q.environment/i);
   has(financeFn, /'environment',p.environment/i);
+  has(financeFn, /from public\.payment_receipts r/i);
   assert.doesNotMatch(financeFn, /supplier_cost|supplier_unit_cost|frosttech_margin/i);
   has(financePage, /finance_list_direct_quotation_activity/i);
   has(financePage, /directDevelopmentRows/i);
