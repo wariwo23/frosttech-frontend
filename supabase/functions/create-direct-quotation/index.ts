@@ -137,6 +137,22 @@ Deno.serve(async (req: Request) => {
       customerId = customer.id;
     }
 
+    if (!customerId) {
+      const { data: matchingCustomers, error: matchError } = await db
+        .from("customers")
+        .select("id,email")
+        .ilike("email", customerEmail)
+        .limit(2);
+      if (matchError) {
+        console.error("Existing customer email lookup failed:", matchError);
+        return reply({ error: "Could not verify whether this email belongs to an existing FrostTech customer." }, 500, origin);
+      }
+      if ((matchingCustomers || []).length > 1) {
+        return reply({ error: "More than one customer record uses this email. Please ask an administrator to reconcile the customer records." }, 409, origin);
+      }
+      if (matchingCustomers?.length === 1) customerId = matchingCustomers[0].id;
+    }
+
     const normalizedItems: Record<string, unknown>[] = [];
     let subtotalKobo = 0;
 
