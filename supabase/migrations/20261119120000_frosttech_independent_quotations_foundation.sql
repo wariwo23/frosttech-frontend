@@ -163,7 +163,7 @@ alter table public.payment_receipts
             )
         )
         or
-        (receipt_type='final_order_payment' and order_id is not null)
+        receipt_type='final_order_payment'
     );
 create index if not exists payment_receipts_direct_quotation_idx
     on public.payment_receipts(direct_quotation_id)
@@ -513,7 +513,7 @@ begin
     end if;
 
     select * into v_quote from public.frosttech_direct_quotations q where q.id=v_invite.direct_quotation_id;
-    if not found or v_quote.status not in ('submitted','accepted') then raise exception 'The quotation is no longer available'; end if;
+    if not found or v_quote.status not in ('submitted','accepted','declined') then raise exception 'The quotation is no longer available'; end if;
     if v_quote.validity_expires_at is not null and v_quote.validity_expires_at<=now()
        and v_quote.status='submitted' then raise exception 'This quotation has expired'; end if;
 
@@ -540,6 +540,7 @@ begin
         'delivery_cost',case when v_unlocked then v_quote.delivery_cost else null end,
         'customer_message',case when v_unlocked then v_quote.customer_message else null end,
         'validity_expires_at',v_quote.validity_expires_at,'details_unlocked',v_unlocked,
+        'declined_reason',v_quote.declined_reason,
         'order_id',v_order_id,'order_number',v_order_number,'order_status',v_order_status,'items',v_items
     );
 end;
@@ -649,7 +650,14 @@ begin
            and lower(btrim(u.email))=lower(btrim(v_quote.customer_email)) and u.email_confirmed_at is not null) then
         raise exception 'The signed-in customer email no longer matches this quotation';
     end if;
-    if v_quote.status='submitted' and (v_quote.fee_status not in ('paid','waived') or v_quote.prepayment_terms_accepted_at is null) then
+    if v_quote.status='submitted'
+       and (
+           v_quote.fee_status not in ('paid','waived')
+           or (
+               v_quote.fee_status='paid'
+               and v_quote.prepayment_terms_accepted_at is null
+           )
+       ) then
         raise exception 'The quotation processing fee and its Terms must be settled before a decision';
     end if;
     if v_quote.status='submitted' and v_quote.validity_expires_at is not null and v_quote.validity_expires_at<=now() then
