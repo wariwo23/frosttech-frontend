@@ -1,0 +1,265 @@
+import { createClient } from "npm:@supabase/supabase-js@2";
+
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+const SUPABASE_SERVICE_ROLE_KEY =
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
+const ALLOWED_ORIGIN = "https://wariwo23.github.io";
+
+const corsHeaders = {
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
+};
+
+function reply(body: Record<string, unknown>, status = 200, origin: string | null = null) {
+  const allowed = !origin || origin === ALLOWED_ORIGIN;
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      ...corsHeaders,
+      "Access-Control-Allow-Origin": allowed ? (origin || ALLOWED_ORIGIN) : "null",
+      "Content-Type": "application/json",
+    },
+  });
+}
+
+function isUuid(value: unknown): value is string {
+  return typeof value === "string" &&
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+}
+
+function moneyToKobo(value: unknown, field: string): number {
+  const amount = typeof value === "number" ? value : Number(value ?? 0);
+  if (!Number.isFinite(amount) || amount < 0 || amount > 1_000_000_000) {
+    throw new Error(`Invalid ${field} amount.`);
+  }
+  const kobo = Math.round(amount * 100);
+  if (!Number.isSafeInteger(kobo)) throw new Error(`Invalid ${field} amount.`);
+  return kobo;
+}
+
+function text(value: unknown, max: number, field: string, required = false): string {
+  const result = String(value ?? "").trim();
+  if (required && !result) throw new Error(`${field} is required.`);
+  if (result.length > max) throw new Error(`${field} is too long.`);
+  return result;
+}
+
+Deno.serve(async (req: Request) => {
+  const origin = req.headers.get("Origin");
+  if (req.method === "OPTIONS") {
+    return new Response("ok", { headers: {
+      ...corsHeaders,
+      "Access-Control-Allow-Origin":
+        !origin || origin === ALLOWED_ORIGIN ? (origin || ALLOWED_ORIGIN) : "null",
+    }});
+  }
+  if (req.method !== "POST") return reply({ error: "POST requests only." }, 405, origin);
+  if (origin && origin !== ALLOWED_ORIGIN) return reply({ error: "Origin not allowed." }, 403, origin);
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY || !SUPABASE_SERVICE_ROLE_KEY) {
+    console.error("Direct quotation function configuration is incomplete.");
+    return reply({ error: "The quotation service is not configured." }, 500, origin);
+  }
+
+  try {
+    const authorization = req.headers.get("Authorization");
+    if (!authorization?.startsWith("Bearer ")) {
+      return reply({ error: "Please sign in as an authorised FrostTech operator." }, 401, origin);
+    }
+
+    const token = authorization.slice(7);
+    const caller = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+    const { data: userData, error: userError } = await caller.auth.getUser(token);
+    if (userError || !userData.user) {
+      return reply({ error: "Your session is invalid or expired. Please sign in again." }, 401, origin);
+    }
+
+    // Reuse FrostTech's existing server-verified department role function.
+    const { data: role, error: roleError } = await caller.rpc("admin_get_my_role");
+    if (roleError || !["super_admin", "operations_admin"].includes(String(role))) {
+      return reply({ error: "Super Administrator or Operations Administrator access is required to prepare quotations." }, 403, origin);
+    }
+
+    const raw = await req.text();
+    if (raw.length > 64 * 1024) return reply({ error: "Request is too large." }, 413, origin);
+    const body = JSON.parse(raw);
+    if (body.action !== "create_draft") {
+      return reply({ error: "Unsupported action. Only draft creation is available in this implementation stage." }, 400, origin);
+    }
+
+    const customerName = text(body.customer_name, 160, "Customer name", true);
+    const customerEmail = text(body.customer_email, 254, "Customer email", true).toLowerCase();
+    const customerPhone = text(body.customer_phone, 40, "Customer phone");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      return reply({ error: "Enter a valid customer email address." }, 400, origin);
+    }
+    if (!Array.isArray(body.items) || body.items.length < 1 || body.items.length > 100) {
+      return reply({ error: "Add between 1 and 100 quotation items." }, 400, origin);
+    }
+
+    const db = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    });
+
+    let customerId: string | null = null;
+    if (body.customer_id !== undefined && body.customer_id !== null && body.customer_id !== "") {
+      if (!isUuid(body.customer_id)) return reply({ error: "Invalid registered customer selection." }, 400, origin);
+      const { data: customer, error } = await db
+        .from("customers")
+        .select("id, email, full_name")
+        .eq("id", body.customer_id)
+        .maybeSingle();
+      if (error || !customer) return reply({ error: "The selected customer account could not be verified." }, 409, origin);
+      if (String(customer.email ?? "").trim().toLowerCase() !== customerEmail) {
+        return reply({ error: "The quotation email must match the selected customer's registered email." }, 409, origin);
+      }
+      customerId = customer.id;
+    }
+
+    const normalizedItems: Record<string, unknown>[] = [];
+    let subtotalKobo = 0;
+
+    for (let i = 0; i < body.items.length; i++) {
+      const item = body.items[i];
+      if (!item || typeof item !== "object") return reply({ error: `Quotation item ${i + 1} is invalid.` }, 400, origin);
+      const itemType = String(item.item_type ?? "").toLowerCase();
+      if (!["product", "service", "other"].includes(itemType)) {
+        return reply({ error: `Quotation item ${i + 1} has an unsupported type.` }, 400, origin);
+      }
+      const description = text(item.description, 500, `Item ${i + 1} description`, true);
+      const unit = text(item.unit || "unit", 40, `Item ${i + 1} unit`, true);
+      const quantity = Number(item.quantity);
+      if (!Number.isFinite(quantity) || quantity <= 0 || quantity > 1_000_000) {
+        return reply({ error: `Item ${i + 1} quantity is invalid.` }, 400, origin);
+      }
+      const quantityMilli = Math.round(quantity * 1000);
+      if (!Number.isSafeInteger(quantityMilli) || quantityMilli <= 0) {
+        return reply({ error: `Item ${i + 1} quantity precision is invalid.` }, 400, origin);
+      }
+
+      let productId: string | null = null;
+      if (itemType === "product") {
+        if (!isUuid(item.product_id)) return reply({ error: `Item ${i + 1} must reference a valid catalogue product.` }, 400, origin);
+        const { data: product, error } = await db
+          .from("products")
+          .select("id, name, unit, is_active")
+          .eq("id", item.product_id)
+          .maybeSingle();
+        if (error || !product || product.is_active !== true) {
+          return reply({ error: `Catalogue product for item ${i + 1} is unavailable.` }, 409, origin);
+        }
+        productId = product.id;
+      } else if (item.product_id) {
+        return reply({ error: `Non-product item ${i + 1} cannot reference a catalogue product.` }, 400, origin);
+      }
+
+      const unitPriceKobo = moneyToKobo(item.unit_price, `Item ${i + 1} unit price`);
+      const lineTotalKobo = Math.round((quantityMilli * unitPriceKobo) / 1000);
+      if (!Number.isSafeInteger(lineTotalKobo)) return reply({ error: `Item ${i + 1} total is invalid.` }, 400, origin);
+      subtotalKobo += lineTotalKobo;
+      if (!Number.isSafeInteger(subtotalKobo)) return reply({ error: "Quotation subtotal is too large." }, 400, origin);
+
+      normalizedItems.push({
+        line_number: i + 1,
+        item_type: itemType,
+        product_id: productId,
+        description,
+        quantity: quantityMilli / 1000,
+        unit,
+        unit_price: unitPriceKobo / 100,
+        line_total: lineTotalKobo / 100,
+      });
+    }
+
+    const additionalKobo = moneyToKobo(body.additional_charges, "Additional charges");
+    const discountKobo = moneyToKobo(body.discount, "Discount");
+    const deliveryKobo = moneyToKobo(body.delivery_cost, "Delivery");
+    if (discountKobo > subtotalKobo + additionalKobo) {
+      return reply({ error: "Discount cannot exceed the subtotal plus additional charges." }, 400, origin);
+    }
+
+    const totalKobo = subtotalKobo + additionalKobo - discountKobo + deliveryKobo;
+    if (!Number.isSafeInteger(totalKobo) || totalKobo < 0) {
+      return reply({ error: "Quotation total is invalid." }, 400, origin);
+    }
+
+    const environment = "development"; // Drafts are development-only until a separately reviewed activation step.
+    const { data: quotation, error: insertError } = await db
+      .from("frosttech_direct_quotations")
+      .insert({
+        customer_id: customerId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone || null,
+        status: "draft",
+        environment,
+        subtotal: subtotalKobo / 100,
+        additional_charges: additionalKobo / 100,
+        discount: discountKobo / 100,
+        delivery_cost: deliveryKobo / 100,
+        administration_fee: 0,
+        total_amount: totalKobo / 100,
+        fee_status: "not_due",
+        validity_expires_at: body.validity_expires_at || null,
+        customer_message: text(body.customer_message, 4000, "Customer message"),
+        internal_note: text(body.internal_note, 4000, "Internal note"),
+        created_by: userData.user.id,
+      })
+      .select("id, quotation_number, status, subtotal, additional_charges, discount, delivery_cost, total_amount, environment")
+      .single();
+
+    if (insertError || !quotation) {
+      console.error("Direct quotation draft insert failed:", insertError);
+      return reply({ error: "The quotation draft could not be saved." }, 500, origin);
+    }
+
+    const itemRows = normalizedItems.map((item) => ({
+      ...item,
+      direct_quotation_id: quotation.id,
+    }));
+    const { error: itemError } = await db
+      .from("frosttech_direct_quotation_items")
+      .insert(itemRows);
+
+    if (itemError) {
+      console.error("Direct quotation items insert failed:", itemError);
+      const { error: cleanupError } = await db
+        .from("frosttech_direct_quotations")
+        .delete()
+        .eq("id", quotation.id)
+        .eq("status", "draft");
+      if (cleanupError) console.error("Incomplete draft cleanup requires review:", cleanupError);
+      return reply({ error: "Quotation items could not be saved. The incomplete draft was not issued." }, 500, origin);
+    }
+
+    const { error: auditError } = await db.from("admin_activity_log").insert({
+      actor_user_id: userData.user.id,
+      action: "direct_quotation_draft_created",
+      target_user_id: customerId ? null : null,
+      details: {
+        direct_quotation_id: quotation.id,
+        quotation_number: quotation.quotation_number,
+        customer_email: customerEmail,
+        item_count: itemRows.length,
+        environment,
+      },
+    });
+    if (auditError) console.error("Direct quotation audit event failed:", auditError);
+
+    return reply({
+      success: true,
+      message: "Direct quotation draft saved. It has not been sent to the customer and no payment has been started.",
+      quotation,
+      item_count: itemRows.length,
+    }, 201, origin);
+  } catch (error) {
+    console.error("Create direct quotation error:", error);
+    return reply({ error: error instanceof Error ? error.message : "Unexpected quotation error." }, 400, origin);
+  }
+});
