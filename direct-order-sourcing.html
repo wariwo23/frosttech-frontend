@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Direct Order Sourcing | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}header{background:#063b70;color:#fff;padding:18px}main{max-width:1120px;margin:auto;padding:14px}.card,.item{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:15px;margin:12px 0}.muted{color:#617386;font-size:13px}.message{padding:11px;border-radius:7px;background:#e8f3ff;color:#06477c;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.detail{background:#f5f8fb;padding:9px;border-radius:7px;overflow-wrap:anywhere}.item{margin:10px 0;background:#fbfdff}.item h3,.card h2{margin-top:0;color:#063b70}label{display:block;font-weight:bold;font-size:13px;margin:8px 0 5px}input,select,textarea,button{font:inherit;width:100%;padding:11px;border-radius:7px}input,select,textarea{border:1px solid #bdc9d5;background:#fff}button{border:0;background:#0879c9;color:#fff;font-weight:bold;cursor:pointer;margin-top:9px}button:disabled{opacity:.55;cursor:wait}.secondary{background:#536779}.toolbar{display:flex;gap:9px;flex-wrap:wrap}.toolbar button{width:auto;min-width:130px}.pill{display:inline-block;border-radius:20px;background:#edf3f8;padding:5px 9px;font-size:12px;font-weight:bold}.hidden{display:none!important}.audit{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:9px}.audit-row{padding:7px 0;border-bottom:1px solid #edf1f5;font-size:13px;overflow-wrap:anywhere}@media(max-width:480px){main{padding:9px}.card,.item{padding:12px}.toolbar button{width:100%}}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Direct Order Supplier Sourcing — Super Administrator</p></header>
+<main>
+<section class="card"><h2>Protected sourcing workspace</h2>
+<p class="muted">Assign an approved supplier to each direct-order line and record the actual supplier unit cost. Reassignment clears the previous cost and is audited. These figures do not change catalogue prices or customer payment totals.</p>
+<p id="status" class="message" role="status">Verifying Super Administrator access…</p>
+<div class="toolbar"><button id="refresh" type="button" disabled>Refresh Direct Orders</button><button id="logout" type="button" class="secondary">Log Out</button></div></section>
+<section id="orders" aria-live="polite"></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+const $=id=>document.getElementById(id);
+const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+function status(message,kind=""){const n=$("status");n.textContent=message;n.className="message "+kind;}
+function detail(parent,label,value){const n=el("div","detail");n.append(el("strong","",label),document.createTextNode(String(value??"—")));parent.append(n);}
+let suppliers=[];
+function render(data){
+ suppliers=Array.isArray(data.suppliers)?data.suppliers:[];
+ const root=$("orders");root.replaceChildren();
+ const orders=Array.isArray(data.orders)?data.orders:[];
+ if(!orders.length){root.append(el("p","card muted","No direct-quotation orders have been created yet."));return;}
+ orders.forEach(order=>{
+  const card=el("article","card");
+  card.append(el("h2","",order.order_number||"Direct order"));
+  const summary=el("div","grid");
+  detail(summary,"Order status",order.order_status);
+  detail(summary,"Environment",order.environment);
+  detail(summary,"Customer total",money(order.customer_total));
+  detail(summary,"Items costed",(order.costed_item_count||0)+" / "+(order.item_count||0));
+  detail(summary,"Recorded supplier costs",money(order.supplier_cost_total));
+  detail(summary,"Costing status",order.costing_status);
+  card.append(summary);
+  (order.items||[]).forEach((item,index)=>{
+   const box=el("section","item");
+   box.append(el("h3","",String(index+1)+". "+(item.product_name||"Order item")));
+   const info=el("div","grid");
+   detail(info,"Quantity",item.quantity);
+   detail(info,"Customer unit price",money(item.unit_price));
+   detail(info,"Customer line total",money(item.line_total));
+   detail(info,"Sourcing status",item.sourcing_status);
+   box.append(info);
+   const supplierLabel=el("label","","Assigned supplier");
+   const select=el("select","");
+   select.append(new Option("Select an approved supplier",""));
+   suppliers.forEach(s=>select.append(new Option(s.business_name+" — "+(s.contact_name||s.email||""),s.id)));
+   select.value=item.supplier_id||"";
+   box.append(supplierLabel,select);
+   const assignmentNote=el("textarea","");assignmentNote.rows=2;assignmentNote.maxLength=1000;assignmentNote.placeholder="Assignment note (optional)";
+   box.append(el("label","","Assignment note"),assignmentNote);
+   const assign=el("button","","Save supplier assignment");
+   assign.disabled=!suppliers.length||!["paid","processing","ready_for_delivery","out_for_delivery"].includes(order.order_status);
+   assign.addEventListener("click",async()=>{
+    if(!select.value){status("Select an approved supplier first.","error");return;}
+    if(item.supplier_id&&item.supplier_id!==select.value&&!window.confirm("Changing supplier clears the previous recorded cost. Continue?"))return;
+    assign.disabled=true;
+    try{
+     const {data:result,error}=await db.rpc("frosttech_super_admin_assign_direct_order_item_supplier",{p_order_item_id:item.order_item_id,p_supplier_id:select.value,p_notes:assignmentNote.value||null});
+     if(error)throw error;
+     status(result?.cost_reset?"Supplier changed. Previous cost was cleared; record the new supplier cost.":"Supplier assignment saved.","success");
+     await load();
+    }catch(e){status(e.message||"Supplier assignment failed.","error");assign.disabled=false;}
+   });
+   box.append(assign);
+   const cost=el("input","");cost.type="number";cost.min="0.01";cost.step="0.01";cost.inputMode="decimal";cost.placeholder="Supplier unit cost (NGN)";cost.value=item.supplier_unit_cost??"";
+   box.append(el("label","","Actual supplier unit cost (NGN)"),cost);
+   const costNote=el("textarea","");costNote.rows=2;costNote.maxLength=1000;costNote.placeholder="Cost note (optional)";box.append(el("label","","Cost note"),costNote);
+   const saveCost=el("button","","Save supplier unit cost");
+   saveCost.disabled=!item.supplier_id||!["paid","processing","ready_for_delivery","out_for_delivery","delivered","completed"].includes(order.order_status);
+   saveCost.addEventListener("click",async()=>{
+    const value=Number(cost.value);
+    if(!Number.isFinite(value)||value<=0){status("Enter a valid positive supplier unit cost.","error");return;}
+    saveCost.disabled=true;
+    try{
+     const {error}=await db.rpc("frosttech_super_admin_record_direct_order_item_cost",{p_order_item_id:item.order_item_id,p_supplier_unit_cost:value,p_notes:costNote.value||null});
+     if(error)throw error;
+     status("Supplier unit cost recorded and audit history updated.","success");await load();
+    }catch(e){status(e.message||"Supplier cost could not be saved.","error");saveCost.disabled=false;}
+   });
+   box.append(saveCost);
+   if(item.supplier_name)box.append(el("p","muted","Current supplier: "+item.supplier_name+(item.costed_at?" · Cost recorded: "+new Date(item.costed_at).toLocaleString("en-NG"):" · Cost pending")));
+   card.append(box);
+  });
+  root.append(card);
+ });
+}
+async function load(){
+ $("refresh").disabled=true;status("Loading protected direct-order sourcing records…");
+ try{
+  const {data,error}=await db.rpc("frosttech_super_admin_list_direct_order_sourcing");
+  if(error)throw error;
+  render(data||{orders:[],suppliers:[]});
+  status("Direct-order sourcing records loaded. Supplier costs are visible only in this Super Administrator workspace.","success");
+ }catch(e){status(e.message||"Unable to load sourcing records.","error");}
+ finally{$("refresh").disabled=false;}
+}
+async function start(){
+ try{
+  const {data,error}=await db.auth.getUser();if(error||!data.user)throw new Error("Please sign in through the FrostTech Super Administrator portal.");
+  const {data:role,error:roleError}=await db.rpc("admin_get_my_role");if(roleError)throw roleError;
+  if(role!=="super_admin")throw new Error("Access restricted to the Super Administrator.");
+  $("refresh").disabled=false;await load();
+ }catch(e){status(e.message||"Access verification failed.","error");}
+}
+$("refresh").addEventListener("click",load);
+$("logout").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){status(error.message,"error");return;}location.href="admin.html";});
+start();
+</script>
+</body></html>
