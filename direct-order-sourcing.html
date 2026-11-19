@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Direct Order Sourcing | FrostTech</title>
 <style>
-*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}header{background:#063b70;color:#fff;padding:18px}main{max-width:1120px;margin:auto;padding:14px}.card,.item{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:15px;margin:12px 0}.muted{color:#617386;font-size:13px}.message{padding:11px;border-radius:7px;background:#e8f3ff;color:#06477c;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.detail{background:#f5f8fb;padding:9px;border-radius:7px;overflow-wrap:anywhere}.item{margin:10px 0;background:#fbfdff}.item h3,.card h2{margin-top:0;color:#063b70}label{display:block;font-weight:bold;font-size:13px;margin:8px 0 5px}input,select,textarea,button{font:inherit;width:100%;padding:11px;border-radius:7px}input,select,textarea{border:1px solid #bdc9d5;background:#fff}button{border:0;background:#0879c9;color:#fff;font-weight:bold;cursor:pointer;margin-top:9px}button:disabled{opacity:.55;cursor:wait}.secondary{background:#536779}.toolbar{display:flex;gap:9px;flex-wrap:wrap}.toolbar button{width:auto;min-width:130px}.pill{display:inline-block;border-radius:20px;background:#edf3f8;padding:5px 9px;font-size:12px;font-weight:bold}.hidden{display:none!important}.audit{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:9px}.audit-row{padding:7px 0;border-bottom:1px solid #edf1f5;font-size:13px;overflow-wrap:anywhere}@media(max-width:480px){main{padding:9px}.card,.item{padding:12px}.toolbar button{width:100%}}
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}header{background:#063b70;color:#fff;padding:18px}main{max-width:1120px;margin:auto;padding:14px}.card,.item{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:15px;margin:12px 0}.muted{color:#617386;font-size:13px}.message{padding:11px;border-radius:7px;background:#e8f3ff;color:#06477c;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:9px}.detail{background:#f5f8fb;padding:9px;border-radius:7px;overflow-wrap:anywhere}.item{margin:10px 0;background:#fbfdff}.item h3,.card h2{margin-top:0;color:#063b70}label{display:block;font-weight:bold;font-size:13px;margin:8px 0 5px}input,select,textarea,button{font:inherit;width:100%;padding:11px;border-radius:7px}input,select,textarea{border:1px solid #bdc9d5;background:#fff}button{border:0;background:#0879c9;color:#fff;font-weight:bold;cursor:pointer;margin-top:9px}button:disabled{opacity:.55;cursor:wait}.secondary{background:#536779}.toolbar{display:flex;gap:9px;flex-wrap:wrap}.toolbar button{width:auto;min-width:130px}.pill{display:inline-block;border-radius:20px;background:#edf3f8;padding:5px 9px;font-size:12px;font-weight:bold}.hidden{display:none!important}.ft-backdrop{position:fixed;inset:0;background:rgba(5,20,38,.65);display:none;align-items:center;justify-content:center;padding:18px;z-index:9999}.ft-backdrop.open{display:flex}.ft-modal{width:min(100%,440px);background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 55px rgba(0,0,0,.28)}.ft-modal h2{margin:0 0 10px;color:#063b70}.ft-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:18px}.ft-actions button{width:auto}.audit{border-top:1px solid #e2e8f0;margin-top:12px;padding-top:9px}.audit-row{padding:7px 0;border-bottom:1px solid #edf1f5;font-size:13px;overflow-wrap:anywhere}@media(max-width:480px){main{padding:9px}.card,.item{padding:12px}.toolbar button{width:100%}}
 </style>
 </head>
 <body>
@@ -64,7 +64,7 @@ function render(data){
    assign.disabled=!suppliers.length||!["paid","processing","ready_for_delivery","out_for_delivery"].includes(order.order_status);
    assign.addEventListener("click",async()=>{
     if(!select.value){status("Select an approved supplier first.","error");return;}
-    if(item.supplier_id&&item.supplier_id!==select.value&&!window.confirm("Changing supplier clears the previous recorded cost. Continue?"))return;
+    if(item.supplier_id&&item.supplier_id!==select.value&&!(await ftConfirm("Changing the supplier clears the previous recorded cost. Continue?","Reassign Supplier")))return;
     assign.disabled=true;
     try{
      const {data:result,error}=await db.rpc("frosttech_super_admin_assign_direct_order_item_supplier",{p_order_item_id:item.order_item_id,p_supplier_id:select.value,p_notes:assignmentNote.value||null});
@@ -93,6 +93,16 @@ function render(data){
    if(item.supplier_name)box.append(el("p","muted","Current supplier: "+item.supplier_name+(item.costed_at?" · Cost recorded: "+new Date(item.costed_at).toLocaleString("en-NG"):" · Cost pending")));
    card.append(box);
   });
+  const history=Array.isArray(order.sourcing_audit)?order.sourcing_audit:[];
+  if(history.length){
+   const audit=el("div","audit");audit.append(el("h3","","Sourcing audit history"));
+   history.forEach(entry=>{
+    const line=el("div","audit-row");
+    const parts=[entry.event_type,entry.supplier_id?"Supplier "+entry.supplier_id:"",entry.supplier_unit_cost!==null&&entry.supplier_unit_cost!==undefined?"Unit cost "+money(entry.supplier_unit_cost):"",entry.notes||"",entry.created_at?new Date(entry.created_at).toLocaleString("en-NG"):""];
+    line.textContent=parts.filter(Boolean).join(" · ");audit.append(line);
+   });
+   card.append(audit);
+  }
   root.append(card);
  });
 }
@@ -117,5 +127,9 @@ async function start(){
 $("refresh").addEventListener("click",load);
 $("logout").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){status(error.message,"error");return;}location.href="admin.html";});
 start();
+</script>
+<div id="ftConfirmBackdrop" class="ft-backdrop" aria-hidden="true"><section class="ft-modal" role="dialog" aria-modal="true" aria-labelledby="ftConfirmTitle"><h2 id="ftConfirmTitle">FrostTech HVAC and Refrigeration Marketplace</h2><p id="ftConfirmMessage"></p><div class="ft-actions"><button type="button" id="ftConfirmCancel" class="secondary">Cancel</button><button type="button" id="ftConfirmAccept">Continue</button></div></section></div>
+<script>
+function ftConfirm(message,label){return new Promise(resolve=>{const back=$("ftConfirmBackdrop"),yes=$("ftConfirmAccept"),no=$("ftConfirmCancel");$("ftConfirmMessage").textContent=message;yes.textContent=label||"Continue";back.classList.add("open");back.setAttribute("aria-hidden","false");const close=value=>{back.classList.remove("open");back.setAttribute("aria-hidden","true");yes.removeEventListener("click",accept);no.removeEventListener("click",cancel);resolve(value);};const accept=()=>close(true),cancel=()=>close(false);yes.addEventListener("click",accept);no.addEventListener("click",cancel);no.focus();});}
 </script>
 </body></html>
