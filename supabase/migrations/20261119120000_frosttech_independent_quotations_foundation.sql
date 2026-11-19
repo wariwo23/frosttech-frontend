@@ -239,7 +239,7 @@ returns jsonb
 language plpgsql
 security invoker
 set search_path = ''
-as $
+as $body$
 declare
     v_role text;
     v_quote public.frosttech_direct_quotations%rowtype;
@@ -280,9 +280,8 @@ begin
     end if;
 
     v_email := lower(btrim(coalesce(p_header->>'customer_email', '')));
-    if v_email !~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+
- then
-        raise exception 'A valid customer email is required';
+    if position('@' in v_email) <= 1 or position('.' in split_part(v_email, '@', 2)) <= 1 or position(' ' in v_email) > 0 then
+                raise exception 'A valid customer email is required';
     end if;
 
     v_customer_id := nullif(p_header->>'customer_id', '')::uuid;
@@ -416,7 +415,7 @@ begin
         'item_count', v_line
     );
 end;
-$;
+$body$;
 
 revoke all on function public.frosttech_create_direct_quotation_draft(jsonb, jsonb, uuid)
     from public, anon, authenticated;
