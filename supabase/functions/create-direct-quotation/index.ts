@@ -108,8 +108,26 @@ Deno.serve(async (req: Request) => {
       return reply({ success: true, drafts: drafts || [] }, 200, origin);
     }
 
-    if (body.action !== "create_draft") {
+    if (body.action === "get_draft") {
+      if (!isUuid(body.quotation_id)) return reply({ error: "A valid quotation ID is required." }, 400, origin);
+      const { data: draft, error: draftError } = await db
+        .from("frosttech_direct_quotations")
+        .select("id,quotation_number,customer_id,customer_name,customer_email,customer_phone,subtotal,additional_charges,discount,delivery_cost,total_amount,validity_expires_at,customer_message,internal_note,status")
+        .eq("id", body.quotation_id).eq("created_by", userData.user.id).eq("status", "draft").maybeSingle();
+      if (draftError || !draft) return reply({ error: "Only your own saved draft can be opened for editing." }, 404, origin);
+      const { data: items, error: itemError } = await db
+        .from("frosttech_direct_quotation_items")
+        .select("item_type,product_id,description,quantity,unit,unit_price,line_total")
+        .eq("direct_quotation_id", draft.id).order("line_number");
+      if (itemError || !items?.length) return reply({ error: "The saved draft items could not be loaded." }, 409, origin);
+      return reply({ success: true, quotation: draft, items }, 200, origin);
+    }
+
+    if (!["create_draft", "update_draft"].includes(String(body.action))) {
       return reply({ error: "Unsupported action." }, 400, origin);
+    }
+    if (body.action === "update_draft" && !isUuid(body.quotation_id)) {
+      return reply({ error: "A valid quotation ID is required to update a draft." }, 400, origin);
     }
 
     const customerName = text(body.customer_name, 160, "Customer name", true);
@@ -220,10 +238,10 @@ Deno.serve(async (req: Request) => {
       return reply({ error: "Quotation total is invalid." }, 400, origin);
     }
 
-    const environment = "development"; // Drafts are development-only until a separately reviewed activation step.
-    const { data: created, error: createError } = await db.rpc(
-      "frosttech_create_direct_quotation_draft",
-      {
+    const isUpdate = body.action === "update_draft";
+    const rpcName = isUpdate ? "frosttech_update_direct_quotation_draft" : "frosttech_create_direct_quotation_draft";
+    const rpcArgs: Record<string, unknown> = {
+        p_header: {
         p_header: {
           customer_id: customerId,
           customer_name: customerName,
@@ -239,20 +257,21 @@ Deno.serve(async (req: Request) => {
         },
         p_items: normalizedItems,
         p_actor: userData.user.id,
-      },
-    );
+    };
+    if (isUpdate) rpcArgs.p_quote_id = body.quotation_id;
+    const { data: created, error: createError } = await db.rpc(rpcName, rpcArgs);
 
     if (createError || !created) {
-      console.error("Atomic direct quotation draft creation failed:", createError);
-      return reply({ error: "The quotation draft could not be saved. No incomplete quotation was issued." }, 409, origin);
+      console.error("Atomic direct quotation draft save failed:", createError);
+      return reply({ error: "The quotation draft could not be saved. It may have been issued or changed in another session." }, 409, origin);
     }
 
     return reply({
       success: true,
-      message: "Direct quotation draft saved. It has not been sent to the customer and no payment has been started.",
+      message: isUpdate ? "Quotation draft updated. It remains private and has not been issued." : "Direct quotation draft saved. It has not been sent to the customer and no payment has been started.",
       quotation: created,
       item_count: created.item_count,
-    }, 201, origin);
+    }, isUpdate ? 200 : 201, origin);
   } catch (error) {
     console.error("Create direct quotation error:", error);
     return reply({ error: error instanceof Error ? error.message : "Unexpected quotation error." }, 400, origin);
