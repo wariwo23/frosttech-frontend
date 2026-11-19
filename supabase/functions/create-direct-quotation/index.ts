@@ -144,7 +144,7 @@ Deno.serve(async (req: Request) => {
       const item = body.items[i];
       if (!item || typeof item !== "object") return reply({ error: `Quotation item ${i + 1} is invalid.` }, 400, origin);
       const itemType = String(item.item_type ?? "").toLowerCase();
-      if (!["product", "service", "other"].includes(itemType)) {
+      if (!["product", "service", "accessory", "installation", "other"].includes(itemType)) {
         return reply({ error: `Quotation item ${i + 1} has an unsupported type.` }, 400, origin);
       }
       const description = text(item.description, 500, `Item ${i + 1} description`, true);
