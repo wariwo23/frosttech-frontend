@@ -158,6 +158,21 @@ alter table public.frosttech_direct_order_snapshots enable row level security;
 revoke all on public.frosttech_direct_order_snapshots from anon, authenticated;
 grant select,insert on public.frosttech_direct_order_snapshots to service_role;
 
+create table if not exists public.frosttech_direct_order_payment_sessions (
+    id uuid primary key default gen_random_uuid(),
+    order_id uuid not null references public.orders(id) on delete restrict,
+    payment_id uuid not null unique references public.payments(id) on delete restrict,
+    authorization_url text,
+    environment text not null check (environment in ('development','production')),
+    created_at timestamptz not null default now(),
+    updated_at timestamptz not null default now()
+);
+create index if not exists frosttech_direct_order_payment_sessions_order_idx
+    on public.frosttech_direct_order_payment_sessions(order_id,created_at desc);
+alter table public.frosttech_direct_order_payment_sessions enable row level security;
+revoke all on public.frosttech_direct_order_payment_sessions from anon,authenticated;
+grant all on public.frosttech_direct_order_payment_sessions to service_role;
+
 -- Orders retain their existing request/quotation links. This nullable link is
 -- populated only by the new trusted direct-quotation acceptance path.
 alter table public.orders
