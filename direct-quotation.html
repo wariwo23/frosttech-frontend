@@ -13,10 +13,20 @@ button,.link{display:inline-block;padding:12px 16px;border:0;border-radius:7px;b
 table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-bottom:1px solid #e5eaf0;text-align:left}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 .row{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}.hidden{display:none!important}.small{font-size:13px;color:#64748b;line-height:1.5}
 @media(max-width:540px){.card{padding:15px}td,th{font-size:13px}}
+textarea{width:100%;min-height:82px;padding:11px;border:1px solid #bdc9d6;border-radius:7px;font:inherit}
+label.field{display:block;margin:12px 0;font-weight:600}label.field input,label.field textarea{display:block;margin-top:6px}
+.modal-backdrop{position:fixed;inset:0;background:#0b1e33a8;display:none;align-items:center;justify-content:center;padding:18px;z-index:60}
+.modal-backdrop.open{display:flex}.modal{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 50px #0003}
+.modal h2{margin:0 0 10px}.modal p{line-height:1.55;color:#344054}
+
 </style>
 </head>
 <body>
 <header><h1>FrostTech HVAC and Refrigeration</h1><p>Independent Customer Quotation</p></header>
+<div class="modal-backdrop" id="decisionModal" role="dialog" aria-modal="true" aria-labelledby="decisionModalTitle">
+ <div class="modal"><h2 id="decisionModalTitle">FrostTech HVAC and Refrigeration Marketplace</h2><p id="decisionModalText"></p>
+ <div class="row"><button type="button" id="cancelDecision" class="secondary">Cancel</button><button type="button" id="confirmDecision">Confirm</button></div></div>
+</div>
 <main>
 <section class="card"><div id="message" class="notice">Verifying your quotation invitation…</div><div class="row hidden" id="authActions"></div></section>
 <section class="card hidden" id="quotationCard">
@@ -31,6 +41,19 @@ table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-bottom:1
  <button type="button" id="payFee" style="margin-top:12px">Pay Quotation Processing and Marketplace Administration Fee</button>
  <p class="small">Payment is handled securely by Paystack. The amount is calculated by FrostTech's server. Delivery is excluded from the administration-fee calculation.</p>
 </div>
+<div id="decisionPanel" class="hidden" style="margin-top:20px;border-top:1px solid #e5eaf0;padding-top:16px">
+ <h2>Respond to this quotation</h2>
+ <label class="field">Delivery address (required for eligible catalogue products)<textarea id="deliveryAddress" maxlength="1500" placeholder="Enter the delivery address"></textarea></label>
+ <label class="field">Additional notes (optional)<textarea id="customerNotes" maxlength="2000"></textarea></label>
+ <label style="display:flex;gap:9px;align-items:flex-start;font-weight:400;line-height:1.5">
+  <input id="acceptTerms" type="checkbox" style="width:auto;margin:3px 0 0">
+  <span>I have read and agree to the quotation and its terms. <a href="terms.html" target="_blank" rel="noopener">Read the General Terms and Conditions</a>.</span>
+ </label>
+ <div class="row"><button id="acceptOffer" type="button">Accept Offer</button></div>
+ <label class="field">Reason for declining<textarea id="declineReason" maxlength="1000" placeholder="Please explain why you are declining this offer"></textarea></label>
+ <div class="row"><button id="declineOffer" type="button" class="secondary">Decline Offer</button></div>
+</div>
+<div id="decisionStatus" class="notice hidden"></div>
 <div id="quoteDetails" class="hidden">
 <p id="customerMessage"></p>
 <div style="overflow-x:auto"><table><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody id="items"></tbody></table></div>
@@ -55,6 +78,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:10px 6px;border-bottom:1
 const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const invite=params.get("token")||"";
+let currentQuoteId=null;
 const db=window.supabaseClient;
 const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 function message(t,type="notice"){const n=$("message");n.className="notice "+(type==="error"?"error":type==="success"?"success":"");n.textContent=t;}
@@ -76,6 +100,7 @@ async function load(){
  const {data,error:callError}=await db.functions.invoke("direct-customer-quotation",{body:{token:invite}});
  if(callError||!data?.success){message(data?.error||callError?.message||"This invitation could not be verified. Make sure you are signed in with the invited email address.","error");return;}
  const q=data.quotation;
+ currentQuoteId=q.quotation_id;
  $("quotationCard").classList.remove("hidden");
  $("heading").textContent="Quotation "+q.quotation_number;
  $("customerGreeting").textContent="Hello "+(q.customer_name||"Customer")+", FrostTech has prepared this quotation for you.";
@@ -86,6 +111,8 @@ async function load(){
   $("items").innerHTML=(q.items||[]).map(i=>'<tr><td>'+escapeText(i.description)+'</td><td class="num">'+Number(i.quantity).toLocaleString("en-NG")+' '+escapeText(i.unit)+'</td><td class="num">'+money(i.unit_price)+'</td><td class="num">'+money(i.line_total)+'</td></tr>').join("");
   $("subtotal").textContent=money(q.subtotal);$("additional").textContent=money(q.additional_charges);$("discount").textContent=money(q.discount);$("delivery").textContent=money(q.delivery_cost);$("total").textContent=money(q.total_amount);
   $("validity").textContent=q.validity_expires_at?"Valid until "+new Date(q.validity_expires_at).toLocaleDateString("en-NG"):"No expiry date specified.";
+  if(q.status==="submitted"){$("decisionPanel").classList.remove("hidden");}
+  else {$("decisionStatus").classList.remove("hidden");$("decisionStatus").textContent=q.status==="accepted"?"You have accepted this quotation. Your order is awaiting payment.":"This quotation is no longer awaiting a decision ("+q.status+").";}
  }else{
   $("feeNotice").textContent="Your invitation is verified. The quotation details are temporarily locked until the quotation processing and marketplace administration fee of "+money(q.administration_fee)+" is paid.";
   $("feePanel").classList.remove("hidden");
@@ -109,7 +136,40 @@ async function load(){
  }
  message("Your quotation invitation has been verified successfully.","success");
 }
+let pendingDecision=null;
+function openDecision(action){
+ if(action==="accept"&&!$("acceptTerms").checked){message("Please confirm that you accept the quotation and its terms.","error");return;}
+ if(action==="decline"&&!$("declineReason").value.trim()){message("Please provide a reason for declining this offer.","error");return;}
+ pendingDecision=action;
+ $("decisionModalText").textContent=action==="accept"?"Accept offer? Do you agree to the quotation and its terms?":"Are you sure you want to decline this offer?";
+ $("confirmDecision").textContent=action==="accept"?"Yes, Accept Offer":"Yes, Decline Offer";
+ $("decisionModal").classList.add("open");
+}
+async function submitDecision(){
+ if(!pendingDecision)return;
+ const decision=pendingDecision;pendingDecision=null;$("decisionModal").classList.remove("open");
+ $("confirmDecision").disabled=true;
+ try{
+  const {data,error}=await db.functions.invoke("direct-customer-quotation-decision",{body:{
+   quotation_id:currentQuoteId,decision,terms_accepted:decision==="accept"&&$("acceptTerms").checked,
+   delivery_address:$("deliveryAddress").value,customer_notes:$("customerNotes").value,
+   decline_reason:$("declineReason").value
+  }});
+  if(error||!data?.success)throw new Error(data?.error||error?.message||"Your decision could not be recorded.");
+  if(decision==="accept")message("Quotation accepted. Your FrostTech order "+(data.order_number||"")+" has been created and is awaiting payment.","success");
+  else message("Your decision to decline this quotation has been recorded.","success");
+  $("decisionPanel").classList.add("hidden");
+  $("decisionStatus").classList.remove("hidden");
+  $("decisionStatus").textContent=decision==="accept"?"Quotation accepted. Order "+(data.order_number||"")+" is awaiting payment.":"Quotation declined.";
+ }catch(e){message(e.message||"Unable to submit your decision.","error");}
+ finally{$("confirmDecision").disabled=false;}
+}
 function escapeText(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("acceptOffer").addEventListener("click",()=>openDecision("accept"));
+$("declineOffer").addEventListener("click",()=>openDecision("decline"));
+$("cancelDecision").addEventListener("click",()=>{$("decisionModal").classList.remove("open");pendingDecision=null;});
+$("confirmDecision").addEventListener("click",submitDecision);
+$("decisionModal").addEventListener("click",e=>{if(e.target===$("decisionModal")){$("decisionModal").classList.remove("open");pendingDecision=null;}});
 $("signOut").addEventListener("click",async()=>{await db.auth.signOut({scope:"local"});location.reload();});
 load();
 })();
