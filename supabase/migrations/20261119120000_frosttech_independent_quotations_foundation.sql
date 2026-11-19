@@ -762,6 +762,7 @@ begin
         return jsonb_build_object('success',true,'already_recorded',true,'order_status','paid');
     end if;
     if v_payment.status<>'pending' or v_payment.environment<>v_order.environment
+       or v_payment.currency<>'NGN' or v_payment.payment_method<>'paystack'
        or round(v_payment.amount*100)<>round(v_order.customer_total*100)
        or v_order.status not in ('awaiting_payment','pending') then
         raise exception 'Payment attempt does not match the accepted order';
