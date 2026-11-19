@@ -4,6 +4,7 @@ from pglast import parse_sql
 paths = [
     Path("supabase/migrations/20261119120000_frosttech_independent_quotations_foundation.sql"),
     Path("supabase/migrations/20261119130000_frosttech_direct_quotation_draft_editing.sql"),
+    Path("supabase/migrations/20261119140000_frosttech_admin_direct_quotation_count_rpc.sql"),
     Path("supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"),
 ]
 for path in paths:
