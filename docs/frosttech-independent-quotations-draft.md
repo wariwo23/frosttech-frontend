@@ -1,6 +1,6 @@
 # FrostTech Independent Quotations — Draft Implementation Contract
 
-**Status:** Review-only draft. No migration has been executed and no production code has been deployed.
+**Status:** Review-only implementation stage 1. No migration has been executed and no production code has been deployed.
 
 ## Scope
 
@@ -27,9 +27,17 @@ The additive database foundation is in:
 - Final order payment must equal the accepted quotation total; do not recalculate or silently alter the customer-approved amount.
 - Amounts and payment references must be calculated/verified server-side, never trusted from browser input.
 
-## Required server-side workflows before the feature is usable
+## Implemented in this review branch
 
-1. **Create/update draft:** authenticate operator; verify the existing department authorization model; validate customer identity/contact and every line item; derive totals server-side; never expose supplier cost.
+- `create-direct-quotation` Edge Function authenticates the operator, verifies `admin_get_my_role`, and supports listing that operator's own drafts.
+- The function validates customer details, active catalogue product references, item quantities and prices, and sends the normalized draft to the atomic database routine.
+- `frosttech_create_direct_quotation_draft` checks the actor's active Super Admin/Operations role again, recomputes and checks item totals, creates header and line items in one transaction, and records an activity-log event.
+- `admin-independent-quotations.html` provides the responsive draft-entry workspace and saved-draft list. The existing admin quotation workspace links to it without changing its request-based workflow.
+- Drafts are forced to the development environment and are not emailed, submitted, fee-charged, accepted, or converted to orders.
+
+## Remaining server-side workflows before the feature is usable
+
+1. **Create/update draft:** initial draft creation and draft listing are implemented; draft editing is still outstanding. Never expose supplier cost.
 2. **Submit quotation:** lock draft; validate item sum, discount, validity and environment; calculate the direct-quotation fee using the invariant above; issue the quotation number and secure customer invitation; record audit event.
 3. **Invite/claim:** generate a cryptographically random token; persist only a cryptographic hash; send the raw token once; enforce expiry, one-time use, email match and authenticated account ownership. Do not permit anonymous acceptance or create duplicate customer accounts.
 4. **Customer retrieval/decision:** authenticated customer may see only quotations bound to their verified account or a successfully claimed invitation. Accept/decline must be atomic and idempotent. Decline reason must be validated if required by the existing customer decision experience.
