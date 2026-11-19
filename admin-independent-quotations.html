@@ -32,6 +32,10 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <div class="actions"><a class="link secondary" href="admin.html">Return to Administration Dashboard</a><button type="button" class="secondary" id="signOut">Sign Out</button></div>
  <div id="status" class="message">Checking administrator access…</div>
 </div>
+<section class="card hidden" id="draftListCard">
+ <div class="item-head"><h2>Saved quotation drafts</h2><button type="button" id="refreshDrafts" class="secondary">Refresh drafts</button></div>
+ <div id="draftList" class="small">Loading saved drafts…</div>
+</section>
 <section class="card hidden" id="workspace">
  <h2>Create an independent quotation</h2>
  <p class="small">Use this workspace when FrostTech is preparing an offer without a customer-submitted quotation request. Saving creates a private draft only. It does not send an email, charge a fee, accept terms or create an order.</p>
@@ -88,9 +92,20 @@ async function initialise(){
   const {data:list,error:le}=await db.from("products").select("id,name,category,unit,selling_price").eq("is_active",true).order("name");
   if(le)throw le;products=list||[];
   $("workspace").classList.remove("hidden");
+  $("draftListCard").classList.remove("hidden");
   $("status").textContent="Connected. Authorised quotation operator verified.";
-  addItem();renderTotals();
+  addItem();renderTotals();await refreshDrafts();
  }catch(e){show(e.message||"Unable to verify access.","error");}
+}
+async function refreshDrafts(){
+ const box=$("draftList");box.textContent="Loading saved drafts…";
+ try{
+  const {data,error}=await db.functions.invoke("create-direct-quotation",{body:{action:"list_drafts"}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Could not load drafts.");
+  const rows=data.drafts||[];
+  if(!rows.length){box.textContent="No saved drafts yet.";return;}
+  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td></tr>').join("")+'</tbody></table></div>';
+ }catch(e){box.textContent=e.message||"Could not load drafts.";}
 }
 function productOptions(){return '<option value="">Select catalogue product (optional for services)</option>'+products.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' — '+esc(p.category||"")+'</option>').join("");}
 function addItem(){
@@ -121,6 +136,7 @@ function renderTotals(){
  const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0,total=subtotal+additional-discount+delivery;
  $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
 }
+$("refreshDrafts").addEventListener("click",refreshDrafts);
 $("addItem").addEventListener("click",addItem);
 ["additional","discount","delivery"].forEach(id=>$(id).addEventListener("input",renderTotals));
 $("quoteForm").addEventListener("submit",async e=>{
@@ -135,6 +151,7 @@ $("quoteForm").addEventListener("submit",async e=>{
   const payload={action:"create_draft",customer_name:$("customerName").value,customer_email:$("customerEmail").value,customer_phone:$("customerPhone").value,validity_expires_at:$("validUntil").value?new Date($("validUntil").value+"T23:59:59").toISOString():null,customer_message:$("customerMessage").value,internal_note:$("internalNote").value,additional_charges:additional,discount,delivery_cost:delivery,items};
   const {data,error}=await db.functions.invoke("create-direct-quotation",{body:payload});if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation draft could not be saved.");
   show("Draft saved: "+data.quotation.quotation_number+". It has not been sent to the customer.","success","result");
+  await refreshDrafts();
   $("quoteForm").reset();$("items").innerHTML="";addItem();renderTotals();
  }catch(err){show(err.message||"Unable to save quotation draft.","error","result");}
  finally{button.disabled=false;}
