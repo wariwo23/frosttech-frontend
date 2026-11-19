@@ -1,6 +1,6 @@
 # FrostTech Independent Quotations — Draft Implementation Contract
 
-**Status:** Review-only implementation stage 2. No migration has been executed and no production code has been deployed.
+**Status:** Review-only implementation stage 3. No migration has been executed and no production code has been deployed.
 
 ## Scope
 
@@ -38,16 +38,21 @@ The additive database foundation is in:
 - Customer quotation details remain locked until the separate direct-quotation administration fee is verified as paid or waived.
 - A separate Paystack Test Mode fee flow now records Terms acceptance server-side, reserves one pending payment attempt, verifies the exact reference/status/NGN amount, and records success atomically. The existing request-based Paystack functions remain unchanged.
 - The customer invitation page provides the sign-in/registration return path and displays quotation details only after the fee is settled.
+- Customers can accept or decline the issued quotation. Acceptance requires explicit confirmation and creates one direct order atomically; decline requires a reason and creates no order.
+- A customer record is linked or created only after the verified customer accepts; no duplicate Auth account or synthetic customer request is created.
+- Accepted orders retain an immutable quotation/order snapshot, preserve the accepted total and delivery amount, and start in `awaiting_payment`.
+- A separate final-order Paystack Test Mode flow requires a fresh Terms acceptance, verifies the exact order amount and reference, updates the existing `payments` record and order atomically, and requests the existing FrostTech receipt workflow.
+- Delivery processing reuses the existing conservative helper and is not run for development/Test Mode payments.
 
 ## Remaining server-side workflows before the feature is usable
 
 1. **Create/update draft:** initial draft creation and draft listing are implemented; draft editing is still outstanding. Never expose supplier cost.
 2. **Submit quotation:** implemented for saved drafts. The issue routine locks the draft, validates item sum and validity, calculates the fee using the invariant above, captures an immutable snapshot and stores only the invitation token hash.
 3. **Invite/claim:** implemented for first claim. A cryptographically random token is generated; only SHA-256 hash is stored; the email is sent through the existing Resend setup where configured; claims require a confirmed email match and an active customer account. Reissue/revocation management remains outstanding.
-4. **Customer retrieval/decision:** authenticated invitation claim and fee-gated quotation display are implemented. Accept/decline, decline-reason handling and atomic decision idempotency remain outstanding.
-5. **Accept/create order:** in one trusted server transaction, lock the quotation, verify ownership, claim, submitted state, paid/waived fee and explicit Terms acceptance; create one order, order items and immutable snapshot; link `orders.direct_quotation_id`. Never fabricate a `quote_requests` or `customer_requests` row.
-6. **Fee payment:** the isolated direct-quotation fee initialization and verification functions are implemented for development/Test Mode only. They use the stored server-calculated fee, require Terms acceptance, and verify Paystack reference, success, NGN currency and exact amount. Live-mode enablement and retry/reconciliation administration remain outstanding.
-7. **Order payment/delivery:** still outstanding. Reconcile the existing final order-payment and delivery safeguards with direct orders whose request links are null before implementation.
+4. **Customer retrieval/decision:** authenticated invitation claim, fee-gated quotation display, accept/decline, decline reason and atomic idempotency are implemented.
+5. **Accept/create order:** implemented in one trusted server transaction. The customer, invitation, quote status, paid/waived fee and explicit acceptance are checked; one order, order items and immutable snapshot are created; `orders.direct_quotation_id` is linked. No `quote_requests` or `customer_requests` row is fabricated.
+6. **Fee payment:** isolated direct-quotation fee initialization, verification and receipt processing are implemented for development/Test Mode only. They use the stored server-calculated fee, require Terms acceptance, and verify Paystack reference, success, NGN currency and exact amount. Live-mode enablement and retry/reconciliation administration remain outstanding.
+7. **Order payment/delivery:** isolated final-order payment initialization, fresh Terms acceptance, Paystack verification, order status update and receipt processing are implemented for Test Mode. Delivery uses the existing conservative helper and is intentionally not created for Test Mode payments. Production enablement remains outstanding.
 
 ## Security and preservation
 
@@ -60,4 +65,4 @@ The additive database foundation is in:
 
 ## Remaining implementation and verification
 
-This migration is a database foundation, **not a complete customer-facing feature**. Before the draft can be considered ready to merge, implement the server functions and admin/customer interfaces above, add automated tests for authorization, amount tampering, expired/replayed invitations, concurrent acceptance, duplicate payment callbacks and duplicate order creation, and verify the existing payment functions can process a direct order without request linkage. Keep all changes in this review branch until separately approved.
+This migration and code are still **review-only**. Draft editing, comprehensive automated tests, concurrency/replay tests, browser verification, and controlled end-to-end Test Mode testing remain outstanding. Confirm the email provider configuration and receipt delivery in Test Mode. Keep all changes in this review branch until separately approved.
