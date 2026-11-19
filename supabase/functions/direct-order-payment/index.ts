@@ -164,18 +164,20 @@ Deno.serve(async(req:Request)=>{
     .eq("id",order.id).maybeSingle();
    if(paidOrderError||!paidOrder||paidOrder.status!=="paid")return out({error:"Payment is recorded but order status needs FrostTech reconciliation."},500,origin);
 
-   const {data:items,error:itemsError}=await db.from("order_items").select("product_id").eq("order_id",order.id);
    let deliveryResult={deliveryCreated:false,existingDelivery:false,deliveryId:null,deliveryStatus:null,needsAdminReview:false,reviewReasons:[] as string[]};
-   if(itemsError){deliveryResult.needsAdminReview=true;deliveryResult.reviewReasons.push("Order product categories could not be checked.");}
-   else{
-    const productIds=[...new Set((items||[]).map(x=>x.product_id).filter(Boolean))] as string[];
-    if(productIds.length){
-     const {data:products,error:productsError}=await db.from("products").select("id,category").in("id",productIds);
-     if(productsError){deliveryResult.needsAdminReview=true;deliveryResult.reviewReasons.push("Order product categories could not be verified.");}
-     else{
-      const categories=(products||[]).map(p=>p.category).filter(Boolean);
-      const allEligible=products?.length===productIds.length&&categories.length===productIds.length&&categories.every(c=>["Air Conditioners","Refrigeration Parts","HVAC Accessories"].includes(c));
-      deliveryResult=await processDelivery(db,{id:paidOrder.id,status:paidOrder.status,delivery_fee:paidOrder.delivery_fee,delivery_address:paidOrder.delivery_address},allEligible?categories[0]:null,true,!allEligible);
+   if(paidOrder.environment==="production"){
+    const {data:items,error:itemsError}=await db.from("order_items").select("product_id").eq("order_id",order.id);
+    if(itemsError){deliveryResult.needsAdminReview=true;deliveryResult.reviewReasons.push("Order product categories could not be checked.");}
+    else{
+     const productIds=[...new Set((items||[]).map(x=>x.product_id).filter(Boolean))] as string[];
+     if(productIds.length){
+      const {data:products,error:productsError}=await db.from("products").select("id,category").in("id",productIds);
+      if(productsError){deliveryResult.needsAdminReview=true;deliveryResult.reviewReasons.push("Order product categories could not be verified.");}
+      else{
+       const categories=(products||[]).map(p=>p.category).filter(Boolean);
+       const allEligible=products?.length===productIds.length&&categories.length===productIds.length&&categories.every(c=>["Air Conditioners","Refrigeration Parts","HVAC Accessories"].includes(c));
+       deliveryResult=await processDelivery(db,{id:paidOrder.id,status:paidOrder.status,delivery_fee:paidOrder.delivery_fee,delivery_address:paidOrder.delivery_address},allEligible?categories[0]:null,true,!allEligible);
+      }
      }
     }
    }
