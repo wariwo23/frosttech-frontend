@@ -1326,7 +1326,11 @@ begin
     if not found then raise exception 'Order payment attempt not found'; end if;
 
     if v_payment.status='successful' then
-        return jsonb_build_object('success',true,'already_recorded',true,'order_status',v_order.status);
+        if v_order.status in ('awaiting_payment','pending') then
+            update public.orders set status='paid',updated_at=now()
+            where id=p_order_id and status in ('awaiting_payment','pending');
+        end if;
+        return jsonb_build_object('success',true,'already_recorded',true,'order_status','paid');
     end if;
 
     if v_payment.status<>'pending'
