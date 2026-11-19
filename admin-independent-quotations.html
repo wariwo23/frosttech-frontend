@@ -163,7 +163,7 @@ function readItems(){
  });
 }
 function renderTotals(){
- let subtotal=0;for(const x of [...$("items").children]){const q=Number(x.querySelector(".quantity").value)||0,p=Number(x.querySelector(".price").value)||0;subtotal+=Math.round(q*1000)*Math.round(p*100)/100000;}
+ let subtotal=0;for(const x of [...$("items").children]){const q=Number(x.querySelector(".quantity").value)||0,p=Number(x.querySelector(".price").value)||0;const quantityMilli=Math.round(q*1000),unitPriceKobo=Math.round(p*100);subtotal+=Math.round(quantityMilli*unitPriceKobo/1000)/100;}
  const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0,total=subtotal+additional-discount+delivery;
  $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
 }
