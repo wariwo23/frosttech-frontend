@@ -81,10 +81,10 @@ Deno.serve(async(req:Request)=>{
   const {data:customer,error:customerError}=await db.from("customers").select("id,user_id").eq("id",order.customer_id).maybeSingle();
   if(customerError||!customer||customer.user_id!==user.id)return out({error:"This order does not belong to your customer account."},403,origin);
   const {data:quote,error:quoteError}=await db.from("frosttech_direct_quotations")
-   .select("id,status,accepted_by,fee_status,order_payment_terms_accepted_at,environment")
+   .select("id,status,accepted_by,fee_status,order_payment_terms_accepted_at,environment,customer_email")
    .eq("id",order.direct_quotation_id).maybeSingle();
-  if(quoteError||!quote||quote.status!=="accepted"||quote.accepted_by!==user.id||!["paid","waived"].includes(quote.fee_status)||quote.environment!==order.environment)
-   return out({error:"The accepted quotation is not eligible for final payment."},409,origin);
+  if(quoteError||!quote||quote.status!=="accepted"||quote.accepted_by!==user.id||!["paid","waived"].includes(quote.fee_status)||quote.environment!==order.environment||String(quote.customer_email).trim().toLowerCase()!==user.email.trim().toLowerCase())
+   return out({error:"The accepted quotation is not eligible for final payment from this customer account."},409,origin);
 
   if(action==="initialize_order"){
    if(body.terms_accepted!==true)return out({error:"Please accept the FrostTech General Terms and Conditions before final payment."},400,origin);
