@@ -141,7 +141,7 @@ Deno.serve(async (req: Request) => {
       const { data: matchingCustomers, error: matchError } = await db
         .from("customers")
         .select("id,email")
-        .ilike("email", customerEmail)
+        .eq("email", customerEmail)
         .limit(2);
       if (matchError) {
         console.error("Existing customer email lookup failed:", matchError);
