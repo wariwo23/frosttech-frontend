@@ -112,7 +112,11 @@ test("all direct-order supplier cost reads and writes require Super Administrato
   for (const fn of ["frosttech_super_admin_list_direct_order_sourcing","frosttech_super_admin_assign_direct_order_item_supplier","frosttech_super_admin_record_direct_order_item_cost"]) {
     const start = sourcing.indexOf("create or replace function public." + fn);
     assert.notEqual(start, -1, fn + " exists");
-    const section = sourcing.slice(start, sourcing.indexOf("$;", start));
+    const tag = fn === "frosttech_super_admin_list_direct_order_sourcing" ? "$list_sourcing$;" :
+      fn === "frosttech_super_admin_assign_direct_order_item_supplier" ? "$assign_sourcing$;" : "$record_sourcing_cost$;";
+    const end = sourcing.indexOf(tag, start);
+    assert.ok(end > start, fn + " body closes");
+    const section = sourcing.slice(start, end);
     has(section, /public\.is_super_admin\(\)/i);
   }
   has(sourcing, /revoke all on function public\.frosttech_super_admin_record_direct_order_item_cost/i);
