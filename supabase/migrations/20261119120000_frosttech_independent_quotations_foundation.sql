@@ -785,7 +785,10 @@ begin
     select q.* into v_quote from public.frosttech_direct_quotations q
     where q.id=v_order.direct_quotation_id for update;
     if not found or v_quote.status<>'accepted' or v_quote.accepted_by<>p_actor
-       or v_quote.fee_status not in ('paid','waived') or v_quote.order_payment_terms_accepted_at is null then
+       or v_quote.fee_status not in ('paid','waived') or v_quote.order_payment_terms_accepted_at is null
+       or not exists(select 1 from auth.users u where u.id=p_actor
+           and lower(btrim(u.email))=lower(btrim(v_quote.customer_email))
+           and u.email_confirmed_at is not null) then
         raise exception 'Direct quotation is not eligible for final payment';
     end if;
     select p.* into v_payment from public.payments p
