@@ -13,7 +13,7 @@ function secret(environment:string){return environment==="development"?Deno.env.
 function reference(){const b=new Uint8Array(8);crypto.getRandomValues(b);return "FT-DQF-"+Date.now()+"-"+Array.from(b).map(x=>x.toString(16).padStart(2,"0")).join("");}
 async function sha(value:string){const d=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(value));return Array.from(new Uint8Array(d)).map(x=>x.toString(16).padStart(2,"0")).join("");}
 
-async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:string,quote:Record<string,any>,attempt:Record<string,any>,user:Record<string,any>){
+async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:string,quote:Record<string,any>,attempt:Record<string,any>,user:any){
  try{
   const {data:tax,error:taxError}=await db.from("frosttech_tax_settings").select("vat_enabled").eq("id",1).maybeSingle();
   if(taxError||!tax||tax.vat_enabled===true)throw new Error("Tax settings do not permit receipt issuance.");
