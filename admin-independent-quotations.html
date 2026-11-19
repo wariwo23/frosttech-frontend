@@ -113,7 +113,7 @@ async function refreshDrafts(){
   if(error)throw error;if(!data?.success)throw new Error(data?.error||"Could not load drafts.");
   const rows=data.drafts||[];
   if(!rows.length){box.textContent="No saved drafts yet.";return;}
-  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
+  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" class="secondary" data-edit-id="'+esc(q.id)+'">Edit draft</button> <button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
  }catch(e){box.textContent=e.message||"Could not load drafts.";}
 }
 let editingQuoteId=null;
@@ -202,7 +202,12 @@ function renderTotals(){
  const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0,total=subtotal+additional-discount+delivery;
  $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
 }
-$("draftList").addEventListener("click",e=>{const b=e.target.closest("[data-issue-id]");if(b)issueQuotation(b.dataset.issueId,b);});
+$("draftList").addEventListener("click",e=>{
+ const edit=e.target.closest("[data-edit-id]");
+ if(edit){editDraft(edit.dataset.editId,edit);return;}
+ const issue=e.target.closest("[data-issue-id]");
+ if(issue)issueQuotation(issue.dataset.issueId,issue);
+});
 $("cancelIssue").addEventListener("click",()=>{$("issueModal").classList.remove("open");pendingIssue=null;});
 $("confirmIssue").addEventListener("click",confirmIssueQuotation);
 $("issueModal").addEventListener("click",e=>{if(e.target===$("issueModal")){$("issueModal").classList.remove("open");pendingIssue=null;}});
@@ -218,9 +223,10 @@ $("quoteForm").addEventListener("submit",async e=>{
   const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0;
   const subtotal=items.reduce((s,i)=>s+Math.round(i.quantity*1000)*Math.round(i.unit_price*100)/100000,0);
   if(discount>subtotal+additional)throw new Error("Discount cannot exceed subtotal plus additional charges.");
-  const payload={action:"create_draft",customer_name:$("customerName").value,customer_email:$("customerEmail").value,customer_phone:$("customerPhone").value,validity_expires_at:$("validUntil").value?new Date($("validUntil").value+"T23:59:59").toISOString():null,customer_message:$("customerMessage").value,internal_note:$("internalNote").value,additional_charges:additional,discount,delivery_cost:delivery,items};
+  const payload={action:editingQuoteId?"update_draft":"create_draft",quotation_id:editingQuoteId,customer_name:$("customerName").value,customer_email:$("customerEmail").value,customer_phone:$("customerPhone").value,validity_expires_at:$("validUntil").value?new Date($("validUntil").value+"T23:59:59").toISOString():null,customer_message:$("customerMessage").value,internal_note:$("internalNote").value,additional_charges:additional,discount,delivery_cost:delivery,items};
   const {data,error}=await db.functions.invoke("create-direct-quotation",{body:payload});if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation draft could not be saved.");
-  show("Draft saved: "+data.quotation.quotation_number+". It has not been sent to the customer.","success","result");
+  show((editingQuoteId?"Draft updated: ":"Draft saved: ")+data.quotation.quotation_number+". It has not been sent to the customer.","success","result");
+  editingQuoteId=null;$("saveDraft").textContent="Save Quotation Draft";
   await refreshDrafts();
   $("quoteForm").reset();$("items").innerHTML="";addItem();renderTotals();
  }catch(err){show(err.message||"Unable to save quotation draft.","error","result");}
