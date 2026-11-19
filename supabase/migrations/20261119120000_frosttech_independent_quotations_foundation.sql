@@ -69,7 +69,7 @@ create table if not exists public.frosttech_direct_quotation_items (
     direct_quotation_id uuid not null
         references public.frosttech_direct_quotations(id) on delete restrict,
     line_number integer not null check (line_number > 0),
-    item_type text not null check (item_type in ('product', 'service', 'other')),
+    item_type text not null check (item_type in ('product', 'service', 'accessory', 'installation', 'other')),
     product_id uuid references public.products(id) on delete set null,
     description text not null,
     quantity numeric(14,3) not null check (quantity > 0),
@@ -315,7 +315,7 @@ begin
         v_line_total := (v_item->>'line_total')::numeric;
         v_product_id := nullif(v_item->>'product_id', '')::uuid;
 
-        if v_item_type not in ('product', 'service', 'other')
+        if v_item_type not in ('product', 'service', 'accessory', 'installation', 'other')
            or v_description = '' or length(v_description) > 500
            or v_unit = '' or length(v_unit) > 40
            or v_quantity <= 0 or v_quantity > 1000000
