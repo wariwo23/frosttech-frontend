@@ -283,7 +283,7 @@ begin
         raise exception 'Super Administrator access is required';
     end if;
     if p_order_item_id is null or p_supplier_unit_cost is null
-       or p_supplier_unit_cost<=0 or p_supplier_unit_cost>1000000000
+       or round(p_supplier_unit_cost,2)<=0 or p_supplier_unit_cost>1000000000
        or length(coalesce(p_notes,''))>1000 then
         raise exception 'Enter a valid positive supplier unit cost and note';
     end if;
@@ -303,6 +303,13 @@ begin
     where order_item_id=p_order_item_id
     for update;
     if not found then raise exception 'Assign an approved supplier before recording its cost'; end if;
+    if not exists(
+        select 1 from public.suppliers s
+        where s.id=v_sourcing.supplier_id and s.is_active is true
+          and s.is_verified is true and s.review_status='approved'
+    ) then
+        raise exception 'The assigned supplier is no longer active, verified and approved';
+    end if;
 
     v_event:=case when v_sourcing.supplier_unit_cost is null then 'cost_recorded' else 'cost_updated' end;
 
