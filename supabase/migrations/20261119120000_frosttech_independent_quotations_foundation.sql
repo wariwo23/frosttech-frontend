@@ -140,6 +140,28 @@ alter table public.frosttech_direct_quotations
 alter table public.frosttech_direct_quote_fee_payments
     add column if not exists authorization_url text;
 
+alter table public.frosttech_direct_quotations
+    add column if not exists order_payment_terms_accepted_at timestamptz,
+    add column if not exists order_payment_terms_version text;
+
+create table if not exists public.frosttech_direct_order_snapshots (
+    id uuid primary key default gen_random_uuid(),
+    order_id uuid not null unique references public.orders(id) on delete restrict,
+    direct_quotation_id uuid not null unique
+        references public.frosttech_direct_quotations(id) on delete restrict,
+    accepted_snapshot jsonb not null,
+    accepted_by uuid not null references auth.users(id) on delete restrict,
+    terms_accepted_at timestamptz not null,
+    captured_at timestamptz not null default now()
+);
+alter table public.frosttech_direct_order_snapshots enable row level security;
+revoke all on public.frosttech_direct_order_snapshots from anon, authenticated;
+grant select,insert on public.frosttech_direct_order_snapshots to service_role;
+
+create trigger frosttech_direct_order_snapshot_immutable
+    before update or delete on public.frosttech_direct_order_snapshots
+    for each row execute function public.frosttech_reject_direct_quote_snapshot_mutation();
+
 -- Orders retain their existing request/quotation links. This nullable link is
 -- populated only by the new trusted direct-quotation acceptance path.
 alter table public.orders
@@ -981,6 +1003,226 @@ $fee$;
 revoke all on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, uuid, text, text, timestamptz, jsonb)
     from public, anon, authenticated;
 grant execute on function public.frosttech_record_direct_quote_fee_success(uuid, uuid, text, text, timestamptz, jsonb)
+    to service_role;
+
+
+-- Customer acceptance/decline is atomic. Acceptance creates exactly one order
+-- without inventing quote_requests/customer_requests rows.
+create or replace function public.frosttech_decide_direct_quotation(
+    p_quote_id uuid,
+    p_actor uuid,
+    p_decision text,
+    p_terms_accepted boolean default false,
+    p_delivery_address text default null,
+    p_customer_notes text default null,
+    p_decline_reason text default null
+)
+returns jsonb
+language plpgsql
+security invoker
+set search_path = ''
+as $decision$
+declare
+    v_quote public.frosttech_direct_quotations%rowtype;
+    v_invite public.frosttech_direct_quotation_invites%rowtype;
+    v_customer_id uuid;
+    v_order_id uuid;
+    v_order_number text;
+    v_has_deliverable_product boolean;
+    v_net_subtotal numeric(14,2);
+    v_snapshot jsonb;
+    v_terms_at timestamptz;
+begin
+    if p_quote_id is null or p_actor is null
+       or p_decision not in ('accept','decline') then
+        raise exception 'Invalid quotation decision';
+    end if;
+
+    if not exists (
+        select 1 from public.profiles p
+        where p.id=p_actor and p.role='customer' and p.is_active is true
+    ) or not exists (
+        select 1 from auth.users u
+        where u.id=p_actor and u.email_confirmed_at is not null
+    ) then
+        raise exception 'An active customer account with confirmed email is required';
+    end if;
+
+    select * into v_quote
+    from public.frosttech_direct_quotations q
+    where q.id=p_quote_id
+    for update;
+    if not found then raise exception 'Quotation not found'; end if;
+
+    select * into v_invite
+    from public.frosttech_direct_quotation_invites i
+    where i.direct_quotation_id=p_quote_id
+      and i.claimed_by=p_actor
+      and i.revoked_at is null
+    order by i.claimed_at desc
+    limit 1
+    for update;
+
+    if not found then raise exception 'A claimed customer invitation is required'; end if;
+
+    if p_decision='decline' then
+        if v_quote.status='declined' then
+            return jsonb_build_object('success',true,'decision','declined','already_recorded',true);
+        end if;
+        if v_quote.status<>'submitted' then
+            raise exception 'This quotation can no longer be declined';
+        end if;
+        if nullif(btrim(coalesce(p_decline_reason,'')),'') is null
+           or length(p_decline_reason)>1000 then
+            raise exception 'Please provide a valid reason for declining this offer';
+        end if;
+
+        update public.frosttech_direct_quotations
+        set status='declined',decision_at=now(),accepted_by=null,
+            declined_reason=btrim(p_decline_reason),updated_at=now()
+        where id=p_quote_id;
+
+        update public.frosttech_direct_quotation_invites
+        set used_at=now()
+        where id=v_invite.id and used_at is null;
+
+        insert into public.admin_activity_log(actor_user_id,action,target_user_id,details)
+        values(p_actor,'direct_quotation_declined',v_quote.created_by,
+            jsonb_build_object('direct_quotation_id',p_quote_id,'quotation_number',v_quote.quotation_number));
+
+        return jsonb_build_object('success',true,'decision','declined','already_recorded',false);
+    end if;
+
+    if v_quote.status='accepted' then
+        select id,order_number into v_order_id,v_order_number
+        from public.orders where direct_quotation_id=p_quote_id;
+        if v_order_id is null then raise exception 'Accepted quotation order requires administrator reconciliation'; end if;
+        return jsonb_build_object('success',true,'decision','accepted','already_recorded',true,'order_id',v_order_id,'order_number',v_order_number,'total_amount',v_quote.total_amount);
+    end if;
+
+    if v_quote.status<>'submitted' then raise exception 'This quotation is not available for acceptance'; end if;
+    if v_quote.validity_expires_at is not null and v_quote.validity_expires_at<=now() then
+        raise exception 'This quotation has expired';
+    end if;
+    if v_quote.fee_status not in ('paid','waived') then
+        raise exception 'The quotation processing fee must be settled before acceptance';
+    end if;
+    if v_quote.prepayment_terms_accepted_at is null then
+        raise exception 'The quotation processing fee Terms acceptance is missing';
+    end if;
+    if p_terms_accepted is not true then
+        raise exception 'Please confirm that you accept the quotation and its terms';
+    end if;
+
+    select exists(
+        select 1
+        from public.frosttech_direct_quotation_items i
+        join public.products p on p.id=i.product_id
+        where i.direct_quotation_id=p_quote_id
+          and i.item_type='product'
+          and p.category in ('Air Conditioners','Refrigeration Parts','HVAC Accessories')
+    ) into v_has_deliverable_product;
+
+    if v_has_deliverable_product and nullif(btrim(coalesce(p_delivery_address,'')),'') is null then
+        raise exception 'A delivery address is required for catalogue products';
+    end if;
+    if length(coalesce(p_delivery_address,''))>1500 or length(coalesce(p_customer_notes,''))>2000 then
+        raise exception 'Delivery address or customer note is too long';
+    end if;
+
+    select id into v_customer_id
+    from public.customers
+    where user_id=p_actor
+    for update;
+
+    if v_customer_id is null then
+        insert into public.customers(user_id,full_name,email,phone)
+        values(p_actor,v_quote.customer_name,v_quote.customer_email,v_quote.customer_phone)
+        returning id into v_customer_id;
+    else
+        if exists(
+            select 1 from public.customers c
+            where c.id=v_customer_id
+              and c.email is not null
+              and lower(btrim(c.email))<>lower(btrim(v_quote.customer_email))
+        ) then
+            raise exception 'The customer account email does not match this quotation';
+        end if;
+    end if;
+
+    v_net_subtotal := round(v_quote.total_amount-v_quote.delivery_cost,2);
+    v_order_number := 'FT-ORD-' ||
+        to_char(clock_timestamp(),'YYYYMMDDHH24MISSMS') || '-' ||
+        upper(substr(replace(gen_random_uuid()::text,'-',''),1,8));
+    v_terms_at := now();
+
+    insert into public.orders(
+        order_number,customer_id,request_id,supplier_id,subtotal,delivery_fee,
+        customer_total,supplier_cost,frosttech_margin,status,delivery_address,
+        customer_notes,quotation_id,quote_request_id,environment,direct_quotation_id
+    ) values (
+        v_order_number,v_customer_id,null,null,v_net_subtotal,v_quote.delivery_cost,
+        v_quote.total_amount,0,0,'awaiting_payment',
+        nullif(btrim(coalesce(p_delivery_address,'')),''),
+        nullif(btrim(coalesce(p_customer_notes,'')),''),
+        null,null,v_quote.environment,p_quote_id
+    ) returning id into v_order_id;
+
+    insert into public.order_items(
+        order_id,product_id,product_name,quantity,unit_price,supplier_unit_cost,total_price
+    )
+    select v_order_id,i.product_id,i.description,i.quantity,i.unit_price,0,i.line_total
+    from public.frosttech_direct_quotation_items i
+    where i.direct_quotation_id=p_quote_id
+    order by i.line_number;
+
+    update public.frosttech_direct_quotations
+    set status='accepted',decision_at=v_terms_at,accepted_by=p_actor,
+        order_payment_terms_accepted_at=null,
+        order_payment_terms_version=null,updated_at=v_terms_at
+    where id=p_quote_id
+    returning * into v_quote;
+
+    update public.frosttech_direct_quotation_invites
+    set used_at=v_terms_at
+    where id=v_invite.id and used_at is null;
+
+    select jsonb_build_object(
+        'quotation',to_jsonb(v_quote),
+        'items',coalesce((
+            select jsonb_agg(to_jsonb(i) order by i.line_number)
+            from public.frosttech_direct_quotation_items i
+            where i.direct_quotation_id=p_quote_id
+        ),'[]'::jsonb),
+        'order',jsonb_build_object(
+            'id',v_order_id,'order_number',v_order_number,
+            'subtotal',v_net_subtotal,'delivery_fee',v_quote.delivery_cost,
+            'customer_total',v_quote.total_amount,
+            'delivery_address',nullif(btrim(coalesce(p_delivery_address,'')),'')
+        ),
+        'accepted_by',p_actor,
+        'quotation_terms_accepted_at',v_terms_at
+    ) into v_snapshot;
+
+    insert into public.frosttech_direct_order_snapshots(
+        order_id,direct_quotation_id,accepted_snapshot,accepted_by,terms_accepted_at
+    ) values(v_order_id,p_quote_id,v_snapshot,p_actor,v_terms_at);
+
+    insert into public.admin_activity_log(actor_user_id,action,target_user_id,details)
+    values(p_actor,'direct_quotation_accepted',v_quote.created_by,
+        jsonb_build_object('direct_quotation_id',p_quote_id,'order_id',v_order_id,'order_number',v_order_number,'total_amount',v_quote.total_amount));
+
+    return jsonb_build_object(
+        'success',true,'decision','accepted','already_recorded',false,
+        'order_id',v_order_id,'order_number',v_order_number,
+        'total_amount',v_quote.total_amount,'delivery_fee',v_quote.delivery_cost
+    );
+end;
+$decision$;
+
+revoke all on function public.frosttech_decide_direct_quotation(uuid, uuid, text, boolean, text, text, text)
+    from public, anon, authenticated;
+grant execute on function public.frosttech_decide_direct_quotation(uuid, uuid, text, boolean, text, text, text)
     to service_role;
 
 comment on table public.frosttech_direct_quotations is
