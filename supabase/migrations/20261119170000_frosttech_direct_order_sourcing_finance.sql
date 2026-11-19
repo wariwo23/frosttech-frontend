@@ -404,6 +404,26 @@ revoke all on function public.finance_list_direct_quotation_activity(date,date)
 grant execute on function public.finance_list_direct_quotation_activity(date,date)
     to authenticated,service_role;
 
+create or replace function public.frosttech_reject_direct_order_sourcing_audit_mutation()
+returns trigger
+language plpgsql
+set search_path=''
+as $sourcing_audit$
+begin
+    raise exception 'Direct-order sourcing audit records are immutable';
+end;
+$sourcing_audit$;
+
+drop trigger if exists frosttech_direct_order_sourcing_audit_immutable
+    on public.frosttech_direct_order_sourcing_audit;
+create trigger frosttech_direct_order_sourcing_audit_immutable
+    before update or delete on public.frosttech_direct_order_sourcing_audit
+    for each row execute function public.frosttech_reject_direct_order_sourcing_audit_mutation();
+revoke all on function public.frosttech_reject_direct_order_sourcing_audit_mutation()
+    from public,anon,authenticated;
+grant execute on function public.frosttech_reject_direct_order_sourcing_audit_mutation()
+    to service_role;
+
 comment on table public.frosttech_direct_order_item_sourcing is
     'Per-order-item supplier assignments and private supplier unit costs for independent direct-quotation orders. Super Administrator only.';
 comment on table public.frosttech_direct_order_sourcing_audit is
