@@ -190,73 +190,37 @@ Deno.serve(async (req: Request) => {
     }
 
     const environment = "development"; // Drafts are development-only until a separately reviewed activation step.
-    const { data: quotation, error: insertError } = await db
-      .from("frosttech_direct_quotations")
-      .insert({
-        customer_id: customerId,
-        customer_name: customerName,
-        customer_email: customerEmail,
-        customer_phone: customerPhone || null,
-        status: "draft",
-        environment,
-        subtotal: subtotalKobo / 100,
-        additional_charges: additionalKobo / 100,
-        discount: discountKobo / 100,
-        delivery_cost: deliveryKobo / 100,
-        administration_fee: 0,
-        total_amount: totalKobo / 100,
-        fee_status: "not_due",
-        validity_expires_at: body.validity_expires_at || null,
-        customer_message: text(body.customer_message, 4000, "Customer message"),
-        internal_note: text(body.internal_note, 4000, "Internal note"),
-        created_by: userData.user.id,
-      })
-      .select("id, quotation_number, status, subtotal, additional_charges, discount, delivery_cost, total_amount, environment")
-      .single();
-
-    if (insertError || !quotation) {
-      console.error("Direct quotation draft insert failed:", insertError);
-      return reply({ error: "The quotation draft could not be saved." }, 500, origin);
-    }
-
-    const itemRows = normalizedItems.map((item) => ({
-      ...item,
-      direct_quotation_id: quotation.id,
-    }));
-    const { error: itemError } = await db
-      .from("frosttech_direct_quotation_items")
-      .insert(itemRows);
-
-    if (itemError) {
-      console.error("Direct quotation items insert failed:", itemError);
-      const { error: cleanupError } = await db
-        .from("frosttech_direct_quotations")
-        .delete()
-        .eq("id", quotation.id)
-        .eq("status", "draft");
-      if (cleanupError) console.error("Incomplete draft cleanup requires review:", cleanupError);
-      return reply({ error: "Quotation items could not be saved. The incomplete draft was not issued." }, 500, origin);
-    }
-
-    const { error: auditError } = await db.from("admin_activity_log").insert({
-      actor_user_id: userData.user.id,
-      action: "direct_quotation_draft_created",
-      target_user_id: customerId ? null : null,
-      details: {
-        direct_quotation_id: quotation.id,
-        quotation_number: quotation.quotation_number,
-        customer_email: customerEmail,
-        item_count: itemRows.length,
-        environment,
+    const { data: created, error: createError } = await db.rpc(
+      "frosttech_create_direct_quotation_draft",
+      {
+        p_header: {
+          customer_id: customerId,
+          customer_name: customerName,
+          customer_email: customerEmail,
+          customer_phone: customerPhone || null,
+          subtotal: subtotalKobo / 100,
+          additional_charges: additionalKobo / 100,
+          discount: discountKobo / 100,
+          delivery_cost: deliveryKobo / 100,
+          validity_expires_at: body.validity_expires_at || null,
+          customer_message: text(body.customer_message, 4000, "Customer message"),
+          internal_note: text(body.internal_note, 4000, "Internal note"),
+        },
+        p_items: normalizedItems,
+        p_actor: userData.user.id,
       },
-    });
-    if (auditError) console.error("Direct quotation audit event failed:", auditError);
+    );
+
+    if (createError || !created) {
+      console.error("Atomic direct quotation draft creation failed:", createError);
+      return reply({ error: "The quotation draft could not be saved. No incomplete quotation was issued." }, 409, origin);
+    }
 
     return reply({
       success: true,
       message: "Direct quotation draft saved. It has not been sent to the customer and no payment has been started.",
-      quotation,
-      item_count: itemRows.length,
+      quotation: created,
+      item_count: created.item_count,
     }, 201, origin);
   } catch (error) {
     console.error("Create direct quotation error:", error);
