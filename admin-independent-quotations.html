@@ -23,10 +23,19 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
 .message{padding:11px 13px;border-radius:8px;margin:12px 0;background:#eef5fb;color:var(--navy)}.message.error{background:#fff0f0;color:var(--red)}.message.success{background:#ecfdf3;color:#067647}
 .small{font-size:13px;color:var(--muted);line-height:1.5}.hidden{display:none!important}
 @media(max-width:700px){.grid{grid-template-columns:1fr}.item-grid{grid-template-columns:1fr 1fr}.item-grid label:nth-child(2){grid-column:1/-1}.wide{grid-column:auto}.totals{max-width:none}}
+.modal-backdrop{position:fixed;inset:0;background:#0b1e33a8;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal-backdrop.open{display:flex}.modal{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 50px #0003}
+.modal h2{margin:0 0 10px;color:var(--navy)}.modal p{line-height:1.55;color:#344054}
+
 </style>
 </head>
 <body>
 <header><h1>FrostTech HVAC and Refrigeration</h1><p>Independent Customer Quotations</p></header>
+<div class="modal-backdrop" id="issueModal" role="dialog" aria-modal="true" aria-labelledby="issueModalTitle">
+ <div class="modal"><h2 id="issueModalTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+ <p>Issue this quotation and send a secure invitation to the customer? The quotation will no longer be an editable draft.</p>
+ <div class="actions"><button type="button" class="secondary" id="cancelIssue">Cancel</button><button type="button" id="confirmIssue">Yes, Issue Quotation</button></div></div>
+</div>
 <main>
 <div class="card">
  <div class="actions"><a class="link secondary" href="admin.html">Return to Administration Dashboard</a><button type="button" class="secondary" id="signOut">Sign Out</button></div>
@@ -107,8 +116,16 @@ async function refreshDrafts(){
   box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
  }catch(e){box.textContent=e.message||"Could not load drafts.";}
 }
-async function issueQuotation(id,button){
- if(!confirm("Issue this quotation and send a secure invitation to the customer? The quotation will no longer be an editable draft."))return;
+let pendingIssue=null;
+function issueQuotation(id,button){
+ pendingIssue={id,button};
+ $("issueModal").classList.add("open");
+ $("confirmIssue").focus();
+}
+async function confirmIssueQuotation(){
+ if(!pendingIssue)return;
+ const {id,button}=pendingIssue;pendingIssue=null;
+ $("issueModal").classList.remove("open");
  button.disabled=true;show("Issuing quotation and preparing customer invitation…","info","result");
  try{
   const {data,error}=await db.functions.invoke("issue-direct-quotation",{body:{quotation_id:id}});
@@ -151,6 +168,9 @@ function renderTotals(){
  $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
 }
 $("draftList").addEventListener("click",e=>{const b=e.target.closest("[data-issue-id]");if(b)issueQuotation(b.dataset.issueId,b);});
+$("cancelIssue").addEventListener("click",()=>{$("issueModal").classList.remove("open");pendingIssue=null;});
+$("confirmIssue").addEventListener("click",confirmIssueQuotation);
+$("issueModal").addEventListener("click",e=>{if(e.target===$("issueModal")){$("issueModal").classList.remove("open");pendingIssue=null;}});
 $("refreshDrafts").addEventListener("click",refreshDrafts);
 $("addItem").addEventListener("click",addItem);
 ["additional","discount","delivery"].forEach(id=>$(id).addEventListener("input",renderTotals));
