@@ -18,12 +18,12 @@ async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:str
   const {data:tax,error:taxError}=await db.from("frosttech_tax_settings").select("vat_enabled").eq("id",1).maybeSingle();
   if(taxError||!tax||tax.vat_enabled===true)throw new Error("Tax settings do not permit receipt issuance.");
   const {data:byRef,error:refError}=await db.from("payment_receipts")
-   .select("id,receipt_number,receipt_type,source_record_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
+   .select("id,receipt_number,receipt_type,source_record_id,direct_quotation_id,payment_reference,customer_user_id,amount_received,payment_status,environment")
    .eq("payment_reference",attempt.provider_reference).maybeSingle();
   if(refError)throw refError;
   let receipt=byRef;
   if(receipt){
-   if(receipt.receipt_type!=="quotation_admin_fee"||String(receipt.source_record_id)!==quote.id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(attempt.amount)||receipt.payment_status!=="successful"||receipt.environment!==attempt.environment)
+   if(receipt.receipt_type!=="quotation_admin_fee"||String(receipt.source_record_id)!==quote.id||receipt.direct_quotation_id!==quote.id||receipt.customer_user_id!==user.id||Number(receipt.amount_received)!==Number(attempt.amount)||receipt.payment_status!=="successful"||receipt.environment!==attempt.environment)
     throw new Error("Existing receipt reference does not match this direct quotation fee.");
   }else{
    const {data:bySource,error:sourceError}=await db.from("payment_receipts")
@@ -38,7 +38,7 @@ async function issueFeeReceipt(db:ReturnType<typeof createClient>,serviceKey:str
     const {data:inserted,error:insertError}=await db.from("payment_receipts").insert({
      receipt_type:"quotation_admin_fee",environment:attempt.environment,customer_user_id:user.id,
      customer_name:quote.customer_name||"Customer",customer_email:user.email||quote.customer_email,
-     source_record_id:quote.id,quote_request_id:null,order_id:null,
+     source_record_id:quote.id,quote_request_id:null,direct_quotation_id:quote.id,order_id:null,
      payment_reference:attempt.provider_reference,payment_method:"paystack",
      description:"Quotation Processing and Marketplace Administration Fee for "+quote.quotation_number,
      amount_before_vat:attempt.amount,vat_status:"disabled",vat_rate:null,vat_mode:null,vat_amount:0,
