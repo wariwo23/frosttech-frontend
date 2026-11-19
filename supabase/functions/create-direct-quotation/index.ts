@@ -241,22 +241,21 @@ Deno.serve(async (req: Request) => {
     const isUpdate = body.action === "update_draft";
     const rpcName = isUpdate ? "frosttech_update_direct_quotation_draft" : "frosttech_create_direct_quotation_draft";
     const rpcArgs: Record<string, unknown> = {
-        p_header: {
-        p_header: {
-          customer_id: customerId,
-          customer_name: customerName,
-          customer_email: customerEmail,
-          customer_phone: customerPhone || null,
-          subtotal: subtotalKobo / 100,
-          additional_charges: additionalKobo / 100,
-          discount: discountKobo / 100,
-          delivery_cost: deliveryKobo / 100,
-          validity_expires_at: body.validity_expires_at || null,
-          customer_message: text(body.customer_message, 4000, "Customer message"),
-          internal_note: text(body.internal_note, 4000, "Internal note"),
-        },
-        p_items: normalizedItems,
-        p_actor: userData.user.id,
+      p_header: {
+        customer_id: customerId,
+        customer_name: customerName,
+        customer_email: customerEmail,
+        customer_phone: customerPhone || null,
+        subtotal: subtotalKobo / 100,
+        additional_charges: additionalKobo / 100,
+        discount: discountKobo / 100,
+        delivery_cost: deliveryKobo / 100,
+        validity_expires_at: body.validity_expires_at || null,
+        customer_message: text(body.customer_message, 4000, "Customer message"),
+        internal_note: text(body.internal_note, 4000, "Internal note"),
+      },
+      p_items: normalizedItems,
+      p_actor: userData.user.id,
     };
     if (isUpdate) rpcArgs.p_quote_id = body.quotation_id;
     const { data: created, error: createError } = await db.rpc(rpcName, rpcArgs);
