@@ -616,6 +616,35 @@
         showSection(loginSection);
       }
 
+      function getValidReturnUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const requested = params.get("return");
+
+        if (!requested) {
+          return null;
+        }
+
+        try {
+          const destination = new URL(requested, window.location.href);
+          const currentDirectory =
+            window.location.pathname.slice(
+              0,
+              window.location.pathname.lastIndexOf("/") + 1
+            );
+
+          if (
+            destination.origin !== window.location.origin ||
+            !destination.pathname.startsWith(currentDirectory)
+          ) {
+            return null;
+          }
+
+          return destination.href;
+        } catch (error) {
+          return null;
+        }
+      }
+
       function getReturnUrl() {
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("return");
@@ -984,8 +1013,26 @@
     }
 
     if (sessionData.session && sessionData.session.user) {
+        const signedInUser = sessionData.session.user;
+
+        if (signedInUser.app_metadata?.account_type === "guest") {
+            showSection(loginSection);
+            showMessage(
+                "You are signed in with a FrostTech Guest identity. Guest identities cannot access customer accounts. Continue through the Guest option on the homepage.",
+                "error"
+            );
+            return;
+        }
+
+        const returnUrl = getValidReturnUrl();
+
+        if (returnUrl) {
+            window.location.replace(returnUrl);
+            return;
+        }
+
         activeSessionEmail.textContent =
-            "Signed in as: " + (sessionData.session.user.email || "Customer account");
+            "Signed in as: " + (signedInUser.email || "Customer account");
 
         showSection(activeSessionSection);
         return;
