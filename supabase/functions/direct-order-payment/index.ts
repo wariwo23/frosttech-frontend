@@ -102,24 +102,24 @@ Deno.serve(async(req:Request)=>{
    if(termsError)return out({error:"Your final-payment Terms acceptance could not be recorded. No payment was started."},500,origin);
    const amount=Number(order.customer_total),amountKobo=Math.round(amount*100);
    if(!Number.isSafeInteger(amountKobo)||amountKobo<=0)return out({error:"The stored order total is invalid."},409,origin);
-   const {data:successful,error:successfulError}=await db.from("payments").select("id").eq("order_id",order.id).eq("status","successful").maybeSingle();
-   if(successfulError)return out({error:"Could not check payment history."},500,origin);
-   if(successful)return out({error:"This order already has a successful payment."},409,origin);
-   const {data:pending,error:pendingError}=await db.from("payments")
-    .select("id,transaction_reference,amount,environment,status").eq("order_id",order.id).eq("status","pending").maybeSingle();
-   if(pendingError)return out({error:"Could not check existing payment attempts."},500,origin);
-   if(pending){
-    const {data:session}=await db.from("frosttech_direct_order_payment_sessions").select("authorization_url").eq("payment_id",pending.id).maybeSingle();
-    if(pending.environment!=="development")return out({error:"An existing payment attempt uses a different environment. Reconciliation is required."},409,origin);
-    if(session?.authorization_url)return out({success:true,authorization_url:session.authorization_url,reference:pending.transaction_reference,amount:pending.amount,reused:true},200,origin);
-    return out({error:"A previous payment initialization has an uncertain outcome. Please contact FrostTech before retrying."},409,origin);
+   const proposedReference=makeReference();
+   const {data:reservation,error:reservationError}=await db.rpc("frosttech_reserve_direct_order_payment",{
+    p_order_id:order.id,p_actor:user.id,p_reference:proposedReference
+   });
+   if(reservationError||!reservation?.success){
+    console.error("Direct order payment reservation failed:",reservationError);
+    return out({error:"Could not safely reserve this order payment. No new checkout was started."},409,origin);
    }
-   const ref=makeReference();
-   const {data:payment,error:insertError}=await db.from("payments").insert({
-    order_id:order.id,customer_id:order.customer_id,amount,currency:"NGN",payment_method:"paystack",
-    transaction_reference:ref,status:"pending",environment:"development"
-   }).select("id").single();
-   if(insertError||!payment)return out({error:"Could not reserve the order payment. No checkout was started."},409,origin);
+   const payment={id:reservation.payment_id};
+   const ref=String(reservation.reference||"");
+   if(!ref||Number(reservation.amount)!==amount)return out({error:"The reserved payment does not match this order total. Reconciliation is required."},409,origin);
+   if(reservation.reused===true){
+    const {data:session,error:sessionLookupError}=await db.from("frosttech_direct_order_payment_sessions")
+     .select("authorization_url").eq("payment_id",payment.id).maybeSingle();
+    if(sessionLookupError)return out({error:"Could not retrieve the existing checkout session. Please retry shortly."},500,origin);
+    if(session?.authorization_url)return out({success:true,authorization_url:session.authorization_url,reference:ref,amount:reservation.amount,reused:true},200,origin);
+    return out({error:"A payment initialization is already in progress or requires reconciliation. Do not start another payment attempt."},409,origin);
+   }
    let init:Response;
    try{
     init=await fetch("https://api.paystack.co/transaction/initialize",{
