@@ -93,3 +93,64 @@ test("critical customer decision and payment RPCs are service-role only", () => 
     has(migration, new RegExp("grant execute on function public\\." + escaped + "[\\s\\S]*?to service_role", "i"));
   }
 });
+
+
+const sourcing = readFileSync("supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql", "utf8");
+const sourcingPage = readFileSync("direct-order-sourcing.html", "utf8");
+const financePage = readFileSync("finance-admin.html", "utf8");
+
+test("direct-order sourcing tables are private, RLS protected and audit history is immutable", () => {
+  has(sourcing, /create table if not exists public\.frosttech_direct_order_item_sourcing/i);
+  has(sourcing, /create table if not exists public\.frosttech_direct_order_sourcing_audit/i);
+  has(sourcing, /enable row level security/i);
+  has(sourcing, /revoke all on public\.frosttech_direct_order_item_sourcing from anon,authenticated/i);
+  has(sourcing, /revoke all on public\.frosttech_direct_order_sourcing_audit from anon,authenticated/i);
+  has(sourcing, /before update or delete on public\.frosttech_direct_order_sourcing_audit/i);
+});
+
+test("all direct-order supplier cost reads and writes require Super Administrator", () => {
+  for (const fn of ["frosttech_super_admin_list_direct_order_sourcing","frosttech_super_admin_assign_direct_order_item_supplier","frosttech_super_admin_record_direct_order_item_cost"]) {
+    const start = sourcing.indexOf("create or replace function public." + fn);
+    assert.notEqual(start, -1, fn + " exists");
+    const section = sourcing.slice(start, sourcing.indexOf("$;", start));
+    has(section, /public\.is_super_admin\(\)/i);
+  }
+  has(sourcing, /revoke all on function public\.frosttech_super_admin_record_direct_order_item_cost/i);
+});
+
+test("supplier reassignment clears stale cost and records audit events", () => {
+  has(sourcing, /supplier_id=p_supplier_id,[\s\S]*?supplier_unit_cost=null,[\s\S]*?costed_by=null,[\s\S]*?costed_at=null/i);
+  has(sourcing, /'assigned','reassigned','cost_recorded','cost_updated'/i);
+  has(sourcing, /insert into public\.frosttech_direct_order_sourcing_audit/i);
+});
+
+test("cost entry requires paid order, an assigned supplier and positive cost", () => {
+  has(sourcing, /v_order\.status in \('pending','awaiting_payment','cancelled'\)/i);
+  has(sourcing, /Assign an approved supplier before recording its cost/i);
+  has(sourcing, /p_supplier_unit_cost<=0/i);
+  has(sourcing, /Only active, verified and approved suppliers may be assigned/i);
+});
+
+test("Finance direct quotation ledger is separate and excludes supplier costs", () => {
+  const start = sourcing.indexOf("create or replace function public.finance_list_direct_quotation_activity");
+  const end = sourcing.indexOf("$direct_finance$;", start);
+  const financeFn = sourcing.slice(start, end);
+  has(financeFn, /admin_has_permission\('quotations.read_financial'\)/i);
+  has(financeFn, /'environment',q.environment/i);
+  has(financeFn, /'environment',p.environment/i);
+  assert.doesNotMatch(financeFn, /supplier_cost|supplier_unit_cost|frosttech_margin/i);
+  has(financePage, /finance_list_direct_quotation_activity/i);
+  has(financePage, /directDevelopmentRows/i);
+  has(financePage, /directProductionRows/i);
+});
+
+test("Super Admin sourcing page uses protected RPCs and branded confirmation", () => {
+  has(sourcingPage, /admin_get_my_role/i);
+  has(sourcingPage, /role!=="super_admin"/i);
+  has(sourcingPage, /frosttech_super_admin_list_direct_order_sourcing/i);
+  has(sourcingPage, /frosttech_super_admin_assign_direct_order_item_supplier/i);
+  has(sourcingPage, /frosttech_super_admin_record_direct_order_item_cost/i);
+  has(sourcingPage, /ftConfirmBackdrop/i);
+  has(sourcingPage, /sourcing_audit/i);
+  assert.doesNotMatch(sourcingPage, /window\.confirm\(/i);
+});
