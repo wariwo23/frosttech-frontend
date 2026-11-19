@@ -113,6 +113,21 @@ begin
                 left join public.suppliers sp on sp.id=s.supplier_id
                 where oi.order_id=o.id
             ),'[]'::jsonb),
+            'sourcing_audit',coalesce((
+                select jsonb_agg(jsonb_build_object(
+                    'event_type',a.event_type,
+                    'order_item_id',a.order_item_id,
+                    'previous_supplier_id',a.previous_supplier_id,
+                    'supplier_id',a.supplier_id,
+                    'previous_unit_cost',a.previous_unit_cost,
+                    'supplier_unit_cost',a.supplier_unit_cost,
+                    'actor_user_id',a.actor_user_id,
+                    'notes',a.notes,
+                    'created_at',a.created_at
+                ) order by a.created_at desc)
+                from public.frosttech_direct_order_sourcing_audit a
+                where a.order_id=o.id
+            ),'[]'::jsonb),
             'costing_status',case
                 when (select count(*) from public.order_items oi where oi.order_id=o.id)=0 then 'no_items'
                 when (select count(*) from public.order_items oi
