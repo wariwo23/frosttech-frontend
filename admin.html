@@ -2257,37 +2257,108 @@ async function loadDashboardCounts() {
     };
 
     try {
-        const [products, requests, suppliers, directQuotes, supplierQuoteResult, supplierRowsResult] =
-            await Promise.all([
-                countRows("products"),
-                countRows("quote_requests"),
-                countRows("suppliers"),
-                countRows("admin_quotations"),
-                db.rpc("admin_list_supplier_quotes"),
-                db.from("suppliers").select("review_status")
-            ]);
+        const [
+            products,
+            requests,
+            suppliers,
+            legacyDirectQuotes,
+            independentDirectQuoteCountResult,
+            supplierQuoteResult,
+            supplierRowsResult
+        ] = await Promise.all([
+            countRows("products"),
+            countRows("quote_requests"),
+            countRows("suppliers"),
+            countRows("admin_quotations"),
+            db.rpc("frosttech_admin_count_direct_quotations"),
+            db.rpc("admin_list_supplier_quotes"),
+            db.from("suppliers").select("review_status")
+        ]);
 
-        if (supplierQuoteResult.error) throw supplierQuoteResult.error;
-        if (supplierRowsResult.error) throw supplierRowsResult.error;
+        if (independentDirectQuoteCountResult.error) {
+            throw independentDirectQuoteCountResult.error;
+        }
 
-        const supplierQuoteCount = (supplierQuoteResult.data || []).length;
-        const pendingCount = (supplierRowsResult.data || []).filter((supplier) => {
-            const status = String(supplier.review_status || "pending").toLowerCase();
-            return !["approved", "rejected", "suspended"].includes(status);
-        }).length;
+        if (supplierQuoteResult.error) {
+            throw supplierQuoteResult.error;
+        }
 
-        if ($("productCount")) $("productCount").textContent = products;
-        if ($("requestCount")) $("requestCount").textContent = requests;
-        if ($("supplierCount")) $("supplierCount").textContent = suppliers;
-        if ($("pendingSupplierCount")) $("pendingSupplierCount").textContent = pendingCount;
-        if ($("quotationCount")) $("quotationCount").textContent = supplierQuoteCount;
-        if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
+        if (supplierRowsResult.error) {
+            throw supplierRowsResult.error;
+        }
 
-        // Keep the approved homepage snapshot in sync with the existing live counts.
-        if ($("snapshotProductCount")) $("snapshotProductCount").textContent = products;
-        if ($("snapshotRequestCount")) $("snapshotRequestCount").textContent = requests;
-        if ($("snapshotSupplierCount")) $("snapshotSupplierCount").textContent = suppliers;
-        if ($("snapshotDirectQuoteCount")) $("snapshotDirectQuoteCount").textContent = directQuotes;
+        const independentDirectQuotes = Number(
+            independentDirectQuoteCountResult.data ?? 0
+        );
+
+        if (
+            !Number.isSafeInteger(independentDirectQuotes) ||
+            independentDirectQuotes < 0
+        ) {
+            throw new Error(
+                "Invalid independent quotation count returned by the database."
+            );
+        }
+
+        const directQuotes =
+            legacyDirectQuotes + independentDirectQuotes;
+
+        const supplierQuoteCount =
+            (supplierQuoteResult.data || []).length;
+
+        const pendingCount =
+            (supplierRowsResult.data || []).filter((supplier) => {
+                const status = String(
+                    supplier.review_status || "pending"
+                ).toLowerCase();
+
+                return ![
+                    "approved",
+                    "rejected",
+                    "suspended"
+                ].includes(status);
+            }).length;
+
+        if ($("productCount")) {
+            $("productCount").textContent = products;
+        }
+
+        if ($("requestCount")) {
+            $("requestCount").textContent = requests;
+        }
+
+        if ($("supplierCount")) {
+            $("supplierCount").textContent = suppliers;
+        }
+
+        if ($("pendingSupplierCount")) {
+            $("pendingSupplierCount").textContent = pendingCount;
+        }
+
+        if ($("quotationCount")) {
+            $("quotationCount").textContent = supplierQuoteCount;
+        }
+
+        if ($("directQuoteCount")) {
+            $("directQuoteCount").textContent = directQuotes;
+        }
+
+        // Keep the approved homepage snapshot in sync.
+        if ($("snapshotProductCount")) {
+            $("snapshotProductCount").textContent = products;
+        }
+
+        if ($("snapshotRequestCount")) {
+            $("snapshotRequestCount").textContent = requests;
+        }
+
+        if ($("snapshotSupplierCount")) {
+            $("snapshotSupplierCount").textContent = suppliers;
+        }
+
+        if ($("snapshotDirectQuoteCount")) {
+            $("snapshotDirectQuoteCount").textContent = directQuotes;
+        }
 
     } catch (error) {
         showMessage(
@@ -2295,6 +2366,7 @@ async function loadDashboardCounts() {
             error.message || "Unable to load dashboard counts.",
             "error"
         );
+
         throw error;
     }
 }
