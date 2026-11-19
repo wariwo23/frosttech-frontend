@@ -54,6 +54,16 @@ label.field{display:block;margin:12px 0;font-weight:600}label.field input,label.
  <div class="row"><button id="declineOffer" type="button" class="secondary">Decline Offer</button></div>
 </div>
 <div id="decisionStatus" class="notice hidden"></div>
+<div id="orderPaymentPanel" class="hidden" style="margin-top:20px;border-top:1px solid #e5eaf0;padding-top:16px">
+ <h2>Complete your FrostTech order</h2>
+ <p id="orderSummary"></p>
+ <label style="display:flex;gap:9px;align-items:flex-start;font-weight:400;line-height:1.5">
+  <input id="orderPaymentTerms" type="checkbox" style="width:auto;margin:3px 0 0">
+  <span>I have read and agreed to the FrostTech General Terms and Conditions. <a href="terms.html" target="_blank" rel="noopener">Read the Terms and Conditions</a>.</span>
+ </label>
+ <button type="button" id="payOrder" style="margin-top:12px">Proceed to Secure Order Payment</button>
+ <p class="small">Your final payment will be the accepted quotation total. Payment is processed securely by Paystack.</p>
+</div>
 <div id="quoteDetails" class="hidden">
 <p id="customerMessage"></p>
 <div style="overflow-x:auto"><table><thead><tr><th>Description</th><th class="num">Qty</th><th class="num">Unit price</th><th class="num">Amount</th></tr></thead><tbody id="items"></tbody></table></div>
@@ -79,6 +89,7 @@ const $=id=>document.getElementById(id);
 const params=new URLSearchParams(location.search);
 const invite=params.get("token")||"";
 let currentQuoteId=null;
+let currentOrderId=null;
 const db=window.supabaseClient;
 const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
 function message(t,type="notice"){const n=$("message");n.className="notice "+(type==="error"?"error":type==="success"?"success":"");n.textContent=t;}
@@ -101,6 +112,7 @@ async function load(){
  if(callError||!data?.success){message(data?.error||callError?.message||"This invitation could not be verified. Make sure you are signed in with the invited email address.","error");return;}
  const q=data.quotation;
  currentQuoteId=q.quotation_id;
+ currentOrderId=q.order_id||null;
  $("quotationCard").classList.remove("hidden");
  $("heading").textContent="Quotation "+q.quotation_number;
  $("customerGreeting").textContent="Hello "+(q.customer_name||"Customer")+", FrostTech has prepared this quotation for you.";
@@ -112,7 +124,14 @@ async function load(){
   $("subtotal").textContent=money(q.subtotal);$("additional").textContent=money(q.additional_charges);$("discount").textContent=money(q.discount);$("delivery").textContent=money(q.delivery_cost);$("total").textContent=money(q.total_amount);
   $("validity").textContent=q.validity_expires_at?"Valid until "+new Date(q.validity_expires_at).toLocaleDateString("en-NG"):"No expiry date specified.";
   if(q.status==="submitted"){$("decisionPanel").classList.remove("hidden");}
-  else {$("decisionStatus").classList.remove("hidden");$("decisionStatus").textContent=q.status==="accepted"?"You have accepted this quotation. Your order is awaiting payment.":"This quotation is no longer awaiting a decision ("+q.status+").";}
+  else {
+   $("decisionStatus").classList.remove("hidden");
+   $("decisionStatus").textContent=q.status==="accepted"?"You have accepted this quotation. Order "+(q.order_number||"")+" status: "+(q.order_status||"awaiting payment")+".":"This quotation is no longer awaiting a decision ("+q.status+").";
+   if(q.status==="accepted"&&q.order_id&&q.order_status!=="paid"){
+    $("orderPaymentPanel").classList.remove("hidden");
+    $("orderSummary").textContent="Order "+q.order_number+" is awaiting payment. Amount due: "+money(q.total_amount)+".";
+   }
+  }
  }else{
   $("feeNotice").textContent="Your invitation is verified. The quotation details are temporarily locked until the quotation processing and marketplace administration fee of "+money(q.administration_fee)+" is paid.";
   $("feePanel").classList.remove("hidden");
@@ -128,9 +147,15 @@ async function load(){
   };
  }
  const callbackReference=params.get("reference")||params.get("trxref");
- if(callbackReference){
+ if(callbackReference&&q.status==="submitted"){
   const {data:payment,error:paymentError}=await db.functions.invoke("direct-quotation-fee",{body:{action:"verify_fee",quotation_id:q.quotation_id,token:invite,reference:callbackReference}});
   if(paymentError||!payment?.success){message(payment?.error||paymentError?.message||"Payment verification is pending. Please contact FrostTech with your Paystack reference.","error");return;}
+  location.replace("direct-quotation.html?token="+encodeURIComponent(invite));
+  return;
+ }
+ if(callbackReference&&q.status==="accepted"&&q.order_id){
+  const {data:payment,error:paymentError}=await db.functions.invoke("direct-order-payment",{body:{action:"verify_order",order_id:q.order_id,token:invite,reference:callbackReference}});
+  if(paymentError||!payment?.success){message(payment?.error||paymentError?.message||"Order payment verification is pending. Please contact FrostTech with your Paystack reference.","error");return;}
   location.replace("direct-quotation.html?token="+encodeURIComponent(invite));
   return;
  }
@@ -158,13 +183,22 @@ async function submitDecision(){
   if(error||!data?.success)throw new Error(data?.error||error?.message||"Your decision could not be recorded.");
   if(decision==="accept")message("Quotation accepted. Your FrostTech order "+(data.order_number||"")+" has been created and is awaiting payment.","success");
   else message("Your decision to decline this quotation has been recorded.","success");
-  $("decisionPanel").classList.add("hidden");
-  $("decisionStatus").classList.remove("hidden");
-  $("decisionStatus").textContent=decision==="accept"?"Quotation accepted. Order "+(data.order_number||"")+" is awaiting payment.":"Quotation declined.";
+  location.replace("direct-quotation.html?token="+encodeURIComponent(invite));
+  return;
  }catch(e){message(e.message||"Unable to submit your decision.","error");}
  finally{$("confirmDecision").disabled=false;}
 }
 function escapeText(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+$("payOrder").addEventListener("click",async()=>{
+ const button=$("payOrder");
+ if(!$("orderPaymentTerms").checked){message("Please accept the FrostTech General Terms and Conditions before final order payment.","error");return;}
+ button.disabled=true;button.textContent="Preparing secure checkout…";
+ try{
+  const {data:payment,error}=await db.functions.invoke("direct-order-payment",{body:{action:"initialize_order",order_id:currentOrderId,token:invite,terms_accepted:true}});
+  if(error||!payment?.success||!payment.authorization_url)throw new Error(payment?.error||error?.message||"Order checkout could not be prepared.");
+  location.href=payment.authorization_url;
+ }catch(e){message(e.message||"Unable to prepare order payment.","error");button.disabled=false;button.textContent="Proceed to Secure Order Payment";}
+});
 $("acceptOffer").addEventListener("click",()=>openDecision("accept"));
 $("declineOffer").addEventListener("click",()=>openDecision("decline"));
 $("cancelDecision").addEventListener("click",()=>{$("decisionModal").classList.remove("open");pendingDecision=null;});
