@@ -251,7 +251,7 @@ $("quoteForm").addEventListener("submit",async e=>{
  }catch(err){show(err.message||"Unable to save quotation draft.","error","result");}
  finally{button.disabled=false;}
 });
-$("signOut").addEventListener("click",async()=>{await db.auth.signOut();window.location.href="index.html";});
+$("signOut").addEventListener("click",async()=>{await db.auth.signOut();window.location.href="test-admin-login.html";});
 initialise();
 </script>
 </body>
