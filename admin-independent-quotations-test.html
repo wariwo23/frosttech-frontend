@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FrostTech — Independent Quotations</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--bg:#f3f6fa;--line:#dce3eb;--ink:#172333;--muted:#64748b;--green:#16803c;--red:#b42318}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}
+header{background:var(--navy);color:#fff;padding:18px 20px}header h1{font-size:21px;margin:0 0 6px}header p{margin:0;opacity:.9}
+main{max-width:1000px;margin:20px auto;padding:0 14px 40px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin:0 0 16px;box-shadow:0 2px 6px #1723330a}
+h2{color:var(--navy);font-size:19px;margin:0 0 12px}h3{font-size:16px;margin:0 0 12px}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:block;font-weight:600;font-size:13px;color:#344054}input,select,textarea{width:100%;margin-top:6px;padding:11px;border:1px solid #bdc9d6;border-radius:7px;font:inherit;background:#fff;color:var(--ink)}
+textarea{min-height:76px;resize:vertical}.wide{grid-column:1/-1}
+button,.link{display:inline-block;border:0;border-radius:7px;padding:11px 15px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none;cursor:pointer}
+button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:disabled{opacity:.55;cursor:not-allowed}
+.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:14px}.item{border:1px solid var(--line);border-radius:9px;padding:13px;margin:12px 0}
+.item-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:8px}
+.item-grid{display:grid;grid-template-columns:1.1fr 1.5fr .7fr .8fr .8fr;gap:8px}
+.item-grid label{min-width:0}.remove{background:#fff0f0;color:var(--red);padding:7px 10px}
+.totals{max-width:420px;margin-left:auto}.total-row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--line)}.total-row strong{font-variant-numeric:tabular-nums}
+.message{padding:11px 13px;border-radius:8px;margin:12px 0;background:#eef5fb;color:var(--navy)}.message.error{background:#fff0f0;color:var(--red)}.message.success{background:#ecfdf3;color:#067647}
+.small{font-size:13px;color:var(--muted);line-height:1.5}.hidden{display:none!important}
+@media(max-width:700px){.grid{grid-template-columns:1fr}.item-grid{grid-template-columns:1fr 1fr}.item-grid label:nth-child(2){grid-column:1/-1}.wide{grid-column:auto}.totals{max-width:none}}
+.modal-backdrop{position:fixed;inset:0;background:#0b1e33a8;display:none;align-items:center;justify-content:center;padding:18px;z-index:50}
+.modal-backdrop.open{display:flex}.modal{width:100%;max-width:440px;background:#fff;border-radius:12px;padding:22px;box-shadow:0 18px 50px #0003}
+.modal h2{margin:0 0 10px;color:var(--navy)}.modal p{line-height:1.55;color:#344054}
+
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Independent Customer Quotations</p></header>
+<div class="modal-backdrop" id="issueModal" role="dialog" aria-modal="true" aria-labelledby="issueModalTitle">
+ <div class="modal"><h2 id="issueModalTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+ <p>Issue this quotation and send a secure invitation to the customer? The quotation will no longer be an editable draft.</p>
+ <div class="actions"><button type="button" class="secondary" id="cancelIssue">Cancel</button><button type="button" id="confirmIssue">Yes, Issue Quotation</button></div></div>
+</div>
+<div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+ <div class="modal"><h2 id="resetModalTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+ <p>Start a new quotation? Unsaved changes in this form will be cleared. Any previously saved draft will remain unchanged.</p>
+ <div class="actions"><button type="button" class="secondary" id="cancelReset">Cancel</button><button type="button" id="confirmReset">Yes, Start New Quotation</button></div></div>
+</div>
+<main>
+<div class="card">
+ <div class="actions"><a class="link secondary" href="index.html">Return to Administration Dashboard</a><button type="button" class="secondary" id="signOut">Sign Out</button></div>
+ <div id="status" class="message">Checking administrator access…</div>
+</div>
+<section class="card hidden" id="draftListCard">
+ <div class="item-head"><h2>Saved quotation drafts</h2><button type="button" id="refreshDrafts" class="secondary">Refresh drafts</button></div>
+ <div id="draftList" class="small">Loading saved drafts…</div>
+</section>
+<section class="card hidden" id="workspace">
+ <h2>Create an independent quotation</h2>
+ <p class="small">Use this workspace when FrostTech is preparing an offer without a customer-submitted quotation request. Saving creates a private draft only. It does not send an email, charge a fee, accept terms or create an order.</p>
+ <form id="quoteForm">
+  <h3>Customer details</h3>
+  <div class="grid">
+   <label>Customer full name<input id="customerName" maxlength="160" required></label>
+   <label>Customer email<input id="customerEmail" type="email" maxlength="254" required></label>
+   <label>Phone number<input id="customerPhone" maxlength="40"></label>
+   <label>Quotation valid until<input id="validUntil" type="date"></label>
+   <label class="wide">Message to customer<textarea id="customerMessage" maxlength="4000" placeholder="Optional message that may appear on the quotation"></textarea></label>
+   <label class="wide">Internal note (not for customer)<textarea id="internalNote" maxlength="4000"></textarea></label>
+  </div>
+  <hr style="border:0;border-top:1px solid var(--line);margin:20px 0">
+  <div class="item-head"><h3>Quotation items</h3><button type="button" id="addItem" class="secondary">Add item</button></div>
+  <div id="items"></div>
+  <div class="grid">
+   <label>Additional charges (₦)<input id="additional" type="number" min="0" step="0.01" value="0"></label>
+   <label>Discount (₦)<input id="discount" type="number" min="0" step="0.01" value="0"></label>
+   <label>Delivery cost (₦)<input id="delivery" type="number" min="0" step="0.01" value="0"></label>
+  </div>
+  <div class="totals">
+   <div class="total-row"><span>Items subtotal</span><strong id="subtotalView">₦0.00</strong></div>
+   <div class="total-row"><span>Additional charges</span><strong id="additionalView">₦0.00</strong></div>
+   <div class="total-row"><span>Discount</span><strong id="discountView">₦0.00</strong></div>
+   <div class="total-row"><span>Delivery (separate)</span><strong id="deliveryView">₦0.00</strong></div>
+   <div class="total-row"><strong>Customer quotation total</strong><strong id="totalView">₦0.00</strong></div>
+  </div>
+  <p class="small">The approved administration-fee rule remains 2% × (subtotal + additional charges − discount). Delivery is excluded. The fee is not charged or calculated on this draft screen.</p>
+  <div class="actions"><button type="button" class="secondary" id="resetForm">New / Reset Form</button><button type="submit" id="saveDraft">Save Quotation Draft</button></div>
+ </form>
+ <div id="result" aria-live="polite"></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+const SUPABASE_URL="https://gqnidjifiobhqhnxjlow.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_epS9WBwMNlSIgxQ3JXHQIw_4JvBO-sL";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+let products=[];
+function show(message,type="info",target="status"){const n=$(target);n.className="message "+type;n.textContent=message;}
+async function initialise(){
+ try{
+  const {data:{session},error}=await db.auth.getSession();if(error)throw error;
+  if(!session?.user){show("Please sign in through the FrostTech administrator portal.","error");return;}
+  const {data:profile,error:pe}=await db.from("profiles").select("id,role,is_active").eq("id",session.user.id).maybeSingle();
+  if(pe||!profile||profile.is_active!==true)throw new Error("Administrator profile could not be verified.");
+  const {data:role,error:re}=await db.rpc("admin_get_my_role");
+  if(re||!["super_admin","operations_admin"].includes(role))throw new Error("Only Super Administrator or Operations Administrator can prepare independent quotations.");
+  const {data:list,error:le}=await db.from("products").select("id,name,category,unit,selling_price").eq("is_active",true).order("name");
+  if(le)throw le;products=list||[];
+  $("workspace").classList.remove("hidden");
+  $("draftListCard").classList.remove("hidden");
+  $("status").textContent="Connected. Authorised quotation operator verified.";
+  addItem();renderTotals();await refreshDrafts();
+ }catch(e){show(e.message||"Unable to verify access.","error");}
+}
+async function refreshDrafts(){
+ const box=$("draftList");box.textContent="Loading saved drafts…";
+ try{
+  const {data,error}=await db.functions.invoke("create-direct-quotation",{body:{action:"list_drafts"}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Could not load drafts.");
+  const rows=data.drafts||[];
+  if(!rows.length){box.textContent="No saved drafts yet.";return;}
+  box.innerHTML='<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse"><thead><tr><th align="left">Reference</th><th align="left">Customer</th><th align="right">Total</th><th align="left">Created</th><th>Action</th></tr></thead><tbody>'+rows.map(q=>'<tr><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.quotation_number)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+esc(q.customer_name)+'<br><span class="small">'+esc(q.customer_email)+'</span></td><td style="padding:9px;border-top:1px solid #dce3eb;text-align:right">'+money(q.total_amount)+'</td><td style="padding:9px;border-top:1px solid #dce3eb">'+new Date(q.created_at).toLocaleDateString("en-NG")+'</td><td style="padding:9px;border-top:1px solid #dce3eb"><button type="button" class="secondary" data-edit-id="'+esc(q.id)+'">Edit draft</button> <button type="button" data-issue-id="'+esc(q.id)+'">Issue quotation</button></td></tr>').join("")+'</tbody></table></div>';
+ }catch(e){box.textContent=e.message||"Could not load drafts.";}
+}
+let editingQuoteId=null;
+let pendingIssue=null;
+async function editDraft(id,button){
+ button.disabled=true;show("Loading saved quotation draft…","info","result");
+ try{
+  const {data,error}=await db.functions.invoke("create-direct-quotation",{body:{action:"get_draft",quotation_id:id}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Draft could not be loaded.");
+  const q=data.quotation;editingQuoteId=q.id;
+  $("customerName").value=q.customer_name||"";
+  $("customerEmail").value=q.customer_email||"";
+  $("customerPhone").value=q.customer_phone||"";
+  $("validUntil").value=q.validity_expires_at?new Date(q.validity_expires_at).toISOString().slice(0,10):"";
+  $("customerMessage").value=q.customer_message||"";
+  $("internalNote").value=q.internal_note||"";
+  $("additional").value=Number(q.additional_charges||0).toFixed(2);
+  $("discount").value=Number(q.discount||0).toFixed(2);
+  $("delivery").value=Number(q.delivery_cost||0).toFixed(2);
+  $("items").innerHTML="";
+  for(const item of data.items){
+   addItem();
+   const row=$("items").lastElementChild;
+   row.querySelector(".type").value=item.item_type;
+   row.querySelector(".type").dispatchEvent(new Event("change"));
+   if(item.product_id)row.querySelector(".product").value=item.product_id;
+   row.querySelector(".description").value=item.description||"";
+   row.querySelector(".quantity").value=String(item.quantity);
+   row.querySelector(".unit").value=item.unit||"unit";
+   row.querySelector(".price").value=Number(item.unit_price||0).toFixed(2);
+  }
+  renumber();renderTotals();
+  $("saveDraft").textContent="Save Draft Changes";
+  show("Editing "+q.quotation_number+". Changes remain private until you issue the quotation.","success","result");
+  $("workspace").scrollIntoView({behavior:"smooth",block:"start"});
+ }catch(e){show(e.message||"Could not load draft.","error","result");}
+ finally{button.disabled=false;}
+}
+function issueQuotation(id,button){
+ pendingIssue={id,button};
+ $("issueModal").classList.add("open");
+ $("confirmIssue").focus();
+}
+async function confirmIssueQuotation(){
+ if(!pendingIssue)return;
+ const {id,button}=pendingIssue;pendingIssue=null;
+ $("issueModal").classList.remove("open");
+ button.disabled=true;show("Issuing quotation and preparing customer invitation…","info","result");
+ try{
+  const {data,error}=await db.functions.invoke("issue-direct-quotation",{body:{quotation_id:id}});
+  if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation could not be issued.");
+  const link=String(data.invitation_url||"");
+  const emailText=data.email_sent?"Invitation email sent successfully.":"Email was not sent automatically. Use the secure link below.";
+  $("result").className="message success";
+  $("result").innerHTML='<strong>Quotation '+esc(data.quotation_number)+' issued.</strong><br>'+esc(emailText)+'<br>Administration fee: '+money(data.administration_fee)+' (delivery excluded). Fee status: '+esc(data.fee_status)+'<br><label style="margin-top:10px">Secure customer invitation link<input id="issuedInviteLink" readonly value="'+esc(link)+'"></label><div class="actions"><button type="button" id="copyIssuedLink">Copy invitation link</button></div><p class="small">Share this link only with the customer at the verified email address. It expires '+esc(new Date(data.invitation_expires_at).toLocaleString("en-NG"))+'.</p>';
+  $("copyIssuedLink").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(link);$("copyIssuedLink").textContent="Copied";}catch(e){$("issuedInviteLink").select();document.execCommand("copy");$("copyIssuedLink").textContent="Copied";}});
+  await refreshDrafts();
+ }catch(e){show(e.message||"Could not issue quotation.","error","result");button.disabled=false;}
+}
+function productOptions(){return '<option value="">Select catalogue product (optional for services)</option>'+products.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.name)+' — '+esc(p.category||"")+'</option>').join("");}
+function addItem(){
+ const n=$("items").children.length+1,div=document.createElement("div");div.className="item";
+ div.innerHTML='<div class="item-head"><strong>Item '+n+'</strong><button type="button" class="remove">Remove</button></div><div class="item-grid">'+
+ '<label>Type<select class="type"><option value="product">Product</option><option value="service">HVAC service</option><option value="accessory">Accessory</option><option value="installation">Installation</option><option value="other">Other</option></select></label>'+
+ '<label>Catalogue product<select class="product">'+productOptions()+'</select></label>'+
+ '<label>Description<input class="description" maxlength="500" required></label>'+
+ '<label>Quantity<input class="quantity" type="number" min="0.001" step="0.001" value="1" required></label>'+
+ '<label>Unit<input class="unit" maxlength="40" value="unit" required></label>'+
+ '<label>Unit price (₦)<input class="price" type="number" min="0" step="0.01" value="0" required></label></div>';
+ div.querySelector(".remove").addEventListener("click",()=>{if($("items").children.length>1)div.remove();renumber();renderTotals();});
+ div.querySelector(".type").addEventListener("change",()=>{const productType=div.querySelector(".type").value==="product";div.querySelector(".product").disabled=!productType;if(!productType)div.querySelector(".product").value="";});
+ div.querySelector(".product").addEventListener("change",()=>{const p=products.find(x=>x.id===div.querySelector(".product").value);if(p){div.querySelector(".description").value=p.name;div.querySelector(".unit").value=p.unit||"piece";div.querySelector(".price").value=Number(p.selling_price||0).toFixed(2);}});
+ div.querySelectorAll("input,select").forEach(x=>x.addEventListener("input",renderTotals));
+ $("items").appendChild(div);div.querySelector(".type").dispatchEvent(new Event("change"));renumber();renderTotals();
+}
+function renumber(){[...$("items").children].forEach((x,i)=>x.querySelector(".item-head strong").textContent="Item "+(i+1));}
+function readItems(){
+ return [...$("items").children].map((x,i)=>{
+  const type=x.querySelector(".type").value,quantity=Number(x.querySelector(".quantity").value),unitPrice=Number(x.querySelector(".price").value);
+  const productId=x.querySelector(".product").value||null;
+  return {item_type:type,product_id:type==="product"?productId:null,description:x.querySelector(".description").value.trim(),quantity,unit:x.querySelector(".unit").value.trim()||"unit",unit_price:unitPrice};
+ });
+}
+function renderTotals(){
+ let subtotal=0;for(const x of [...$("items").children]){const q=Number(x.querySelector(".quantity").value)||0,p=Number(x.querySelector(".price").value)||0;const quantityMilli=Math.round(q*1000),unitPriceKobo=Math.round(p*100);subtotal+=Math.round(quantityMilli*unitPriceKobo/1000)/100;}
+ const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0,total=subtotal+additional-discount+delivery;
+ $("subtotalView").textContent=money(subtotal);$("additionalView").textContent=money(additional);$("discountView").textContent=money(discount);$("deliveryView").textContent=money(delivery);$("totalView").textContent=money(total);
+}
+$("draftList").addEventListener("click",e=>{
+ const edit=e.target.closest("[data-edit-id]");
+ if(edit){editDraft(edit.dataset.editId,edit);return;}
+ const issue=e.target.closest("[data-issue-id]");
+ if(issue)issueQuotation(issue.dataset.issueId,issue);
+});
+function resetQuotationForm(){
+ editingQuoteId=null;
+ $("quoteForm").reset();
+ $("items").innerHTML="";
+ addItem();
+ $("saveDraft").textContent="Save Quotation Draft";
+ renderTotals();
+ show("New quotation form is ready. Previously saved drafts have not been changed.","success","result");
+ $("workspace").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("resetForm").addEventListener("click",()=>{$("resetModal").classList.add("open");$("confirmReset").focus();});
+$("cancelReset").addEventListener("click",()=>{$("resetModal").classList.remove("open");});
+$("confirmReset").addEventListener("click",()=>{$("resetModal").classList.remove("open");resetQuotationForm();});
+$("resetModal").addEventListener("click",e=>{if(e.target===$("resetModal"))$("resetModal").classList.remove("open");});
+$("cancelIssue").addEventListener("click",()=>{$("issueModal").classList.remove("open");pendingIssue=null;});
+$("confirmIssue").addEventListener("click",confirmIssueQuotation);
+$("issueModal").addEventListener("click",e=>{if(e.target===$("issueModal")){$("issueModal").classList.remove("open");pendingIssue=null;}});
+$("refreshDrafts").addEventListener("click",refreshDrafts);
+$("addItem").addEventListener("click",addItem);
+["additional","discount","delivery"].forEach(id=>$(id).addEventListener("input",renderTotals));
+$("quoteForm").addEventListener("submit",async e=>{
+ e.preventDefault();const button=$("saveDraft");button.disabled=true;show("Saving private quotation draft…","info","result");
+ try{
+  const items=readItems();
+  if(items.some(i=>!i.description||!Number.isFinite(i.quantity)||i.quantity<=0||!Number.isFinite(i.unit_price)||i.unit_price<0))throw new Error("Check every quotation item, quantity and unit price.");
+  if(items.some(i=>i.item_type==="product"&&!i.product_id))throw new Error("Select a catalogue product for every product line.");
+  const additional=Number($("additional").value)||0,discount=Number($("discount").value)||0,delivery=Number($("delivery").value)||0;
+  const subtotal=items.reduce((s,i)=>s+Math.round(i.quantity*1000)*Math.round(i.unit_price*100)/100000,0);
+  if(discount>subtotal+additional)throw new Error("Discount cannot exceed subtotal plus additional charges.");
+  const payload={action:editingQuoteId?"update_draft":"create_draft",quotation_id:editingQuoteId,customer_name:$("customerName").value,customer_email:$("customerEmail").value,customer_phone:$("customerPhone").value,validity_expires_at:$("validUntil").value?new Date($("validUntil").value+"T23:59:59").toISOString():null,customer_message:$("customerMessage").value,internal_note:$("internalNote").value,additional_charges:additional,discount,delivery_cost:delivery,items};
+  const {data,error}=await db.functions.invoke("create-direct-quotation",{body:payload});if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation draft could not be saved.");
+  show((editingQuoteId?"Draft updated: ":"Draft saved: ")+data.quotation.quotation_number+". It has not been sent to the customer.","success","result");
+  editingQuoteId=null;$("saveDraft").textContent="Save Quotation Draft";
+  await refreshDrafts();
+  $("quoteForm").reset();$("items").innerHTML="";addItem();renderTotals();
+ }catch(err){show(err.message||"Unable to save quotation draft.","error","result");}
+ finally{button.disabled=false;}
+});
+$("signOut").addEventListener("click",async()=>{await db.auth.signOut();window.location.href="index.html";});
+initialise();
+</script>
+</body>
+</html>
