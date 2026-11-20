@@ -185,3 +185,14 @@ const receiptTriggerMigration = readFileSync("supabase/migrations/20261120102000
 test("receipt delivery trigger cannot be invoked directly by API roles", () => {
   has(receiptTriggerMigration, /revoke all on function public\\.frosttech_create_receipt_delivery_record\\(\\)[\\s\\S]*?from public,anon,authenticated/i);
 });
+
+
+const financeActivityFix = readFileSync("supabase/migrations/20261120113000_fix_direct_finance_activity_period.sql", "utf8");
+test("Finance reporting includes quote, order, fee, payment and receipt activity within Lagos date boundaries", () => {
+  has(financeActivityFix, /q\\.created_at >= v_period_start[\\s\\S]*?q\\.submitted_at >= v_period_start[\\s\\S]*?q\\.decision_at >= v_period_start/i);
+  has(financeActivityFix, /o\\.created_at >= v_period_start/i);
+  has(financeActivityFix, /fp\\.created_at >= v_period_start[\\s\\S]*?fp\\.verified_at >= v_period_start/i);
+  has(financeActivityFix, /p\\.created_at >= v_period_start[\\s\\S]*?p\\.paid_at >= v_period_start/i);
+  has(financeActivityFix, /r\\.paid_at >= v_period_start/i);
+  has(financeActivityFix, /at time zone 'Africa\\/Lagos'/i);
+});
