@@ -159,3 +159,17 @@ test("Super Admin sourcing page uses protected RPCs and branded confirmation", (
   has(sourcingPage, /sourcing_audit/i);
   assert.doesNotMatch(sourcingPage, /window\.confirm\(/i);
 });
+
+
+test("customer can reconcile the latest recorded order payment without exposing a payment reference", () => {
+  has(payment, /if\(!ref\)\{[\s\S]*?\.eq\("order_id",order\.id\)[\s\S]*?\.in\("status",\["pending","successful"\]\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)/i);
+  has(payment, /No pending or successful payment attempt was found for this order/i);
+  has(payment, /order\.customer_id[\s\S]*?customer\.user_id!==user\.id/i);
+});
+
+test("customer quotation page exposes an explicit existing-payment reconciliation action", () => {
+  const customerPage = readFileSync("direct-quotation.html", "utf8");
+  has(customerPage, /id="reconcileOrderPayment"/i);
+  has(customerPage, /action:"verify_order",order_id:currentOrderId,token:invite/i);
+  has(customerPage, /Check Existing Payment/i);
+});
