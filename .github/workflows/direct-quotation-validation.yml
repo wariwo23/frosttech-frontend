@@ -58,3 +58,5 @@ jobs:
         run: |
           python -m pip install --disable-pip-version-check pglast
           python scripts/validate-direct-quotation-sql.py
+
+# Trigger the full validation suite against the merged PR #13 code.
