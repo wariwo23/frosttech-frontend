@@ -143,8 +143,19 @@ Deno.serve(async(req:Request)=>{
 
   if(action==="verify_order"){
    if(!quote.order_payment_terms_accepted_at)return out({error:"Final-payment Terms acceptance has not been recorded."},403,origin);
-   const ref=typeof body.reference==="string"?body.reference.trim():"";
-   if(!ref||ref.length>120)return out({error:"Paystack reference is required."},400,origin);
+   let ref=typeof body.reference==="string"?body.reference.trim():"";
+   if(!ref){
+    const {data:latest,error:latestError}=await db.from("payments")
+     .select("transaction_reference")
+     .eq("order_id",order.id)
+     .in("status",["pending","successful"])
+     .order("created_at",{ascending:false})
+     .limit(1)
+     .maybeSingle();
+    if(latestError)return out({error:"The existing payment attempt could not be located. Please try again shortly."},500,origin);
+    ref=String(latest?.transaction_reference||"");
+   }
+   if(!ref||ref.length>120)return out({error:"No pending or successful payment attempt was found for this order."},404,origin);
    const {data:payment,error:paymentError}=await db.from("payments")
     .select("id,amount,currency,transaction_reference,status,environment,paid_at")
     .eq("order_id",order.id).eq("transaction_reference",ref).maybeSingle();
