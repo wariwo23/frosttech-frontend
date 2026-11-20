@@ -6,6 +6,7 @@ paths = [
     Path("supabase/migrations/20261119130000_frosttech_direct_quotation_draft_editing.sql"),
     Path("supabase/migrations/20261119140000_frosttech_admin_direct_quotation_count_rpc.sql"),
     Path("supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"),
+    Path("supabase/migrations/20261120102000_harden_receipt_delivery_trigger_function.sql"),
 ]
 for path in paths:
     statements = parse_sql(path.read_text(encoding="utf-8"))
