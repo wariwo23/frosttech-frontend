@@ -110,7 +110,8 @@ a{color:#075985}
 
       if (
         destination.origin !== base.origin ||
-        !destination.pathname.startsWith(base.pathname)
+        !destination.pathname.startsWith(base.pathname) ||
+        destination.pathname.split("/").pop() !== "direct-quotation-test.html"
       ) {
         return "";
       }
