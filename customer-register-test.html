@@ -80,8 +80,7 @@ a{color:#075985}
     <p>Already registered?
       <a id="loginLink" href="customer-login-test.html">Sign in</a>
     </p>
-    <p><a href="guest-register.html">Continue as a Guest</a></p>
-    <p><a href="index.html">Return to homepage</a></p>
+    <p><a href="customer-login-test.html">Return to test customer sign in</a></p>
   </div>
 </main>
 
@@ -102,7 +101,7 @@ a{color:#075985}
     const requested = params.get("return");
 
     if (!requested) {
-      return "index.html";
+      return "";
     }
 
     try {
@@ -113,20 +112,20 @@ a{color:#075985}
         destination.origin !== base.origin ||
         !destination.pathname.startsWith(base.pathname)
       ) {
-        return "index.html";
+        return "";
       }
 
       return destination.pathname.slice(base.pathname.length) +
         destination.search + destination.hash;
     } catch (error) {
-      return "index.html";
+      return "";
     }
   }
 
   const returnPath = getSafeReturnPath();
 
   const loginUrl = new URL("customer-login-test.html", window.location.href);
-  loginUrl.searchParams.set("return", returnPath);
+  if (returnPath) loginUrl.searchParams.set("return", returnPath);
   loginLink.href = loginUrl.href;
 
   function showMessage(text, type) {
@@ -185,7 +184,7 @@ a{color:#075985}
       const confirmationUrl =
         new URL("customer-login-test.html", window.location.href);
 
-      confirmationUrl.searchParams.set("return", returnPath);
+      if (returnPath) confirmationUrl.searchParams.set("return", returnPath);
 
       const { data, error } = await client.auth.signUp({
         email: email,
@@ -204,15 +203,12 @@ a{color:#075985}
         throw error;
       }
 
-      if (data && data.session) {
+      if (data && data.session && returnPath) {
         showMessage(
-          "Your FrostTech customer account has been created. Opening your next page...",
+          "Your FrostTech test customer account has been created. Opening your quotation invitation...",
           "success"
         );
-
-        window.location.replace(
-          new URL(returnPath, window.location.href).href
-        );
+        window.location.replace(new URL(returnPath, window.location.href).href);
         return;
       }
 
