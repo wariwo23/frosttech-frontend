@@ -36,6 +36,11 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <p>Issue this quotation and send a secure invitation to the customer? The quotation will no longer be an editable draft.</p>
  <div class="actions"><button type="button" class="secondary" id="cancelIssue">Cancel</button><button type="button" id="confirmIssue">Yes, Issue Quotation</button></div></div>
 </div>
+<div class="modal-backdrop" id="resetModal" role="dialog" aria-modal="true" aria-labelledby="resetModalTitle">
+ <div class="modal"><h2 id="resetModalTitle">FrostTech HVAC and Refrigeration Marketplace</h2>
+ <p>Start a new quotation? Unsaved changes in this form will be cleared. Any previously saved draft will remain unchanged.</p>
+ <div class="actions"><button type="button" class="secondary" id="cancelReset">Cancel</button><button type="button" id="confirmReset">Yes, Start New Quotation</button></div></div>
+</div>
 <main>
 <div class="card">
  <div class="actions"><a class="link secondary" href="admin.html">Return to Administration Dashboard</a><button type="button" class="secondary" id="signOut">Sign Out</button></div>
@@ -74,7 +79,7 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
    <div class="total-row"><strong>Customer quotation total</strong><strong id="totalView">₦0.00</strong></div>
   </div>
   <p class="small">The approved administration-fee rule remains 2% × (subtotal + additional charges − discount). Delivery is excluded. The fee is not charged or calculated on this draft screen.</p>
-  <div class="actions"><button type="submit" id="saveDraft">Save Quotation Draft</button></div>
+  <div class="actions"><button type="button" class="secondary" id="resetForm">New / Reset Form</button><button type="submit" id="saveDraft">Save Quotation Draft</button></div>
  </form>
  <div id="result" aria-live="polite"></div>
 </section>
@@ -208,6 +213,20 @@ $("draftList").addEventListener("click",e=>{
  const issue=e.target.closest("[data-issue-id]");
  if(issue)issueQuotation(issue.dataset.issueId,issue);
 });
+function resetQuotationForm(){
+ editingQuoteId=null;
+ $("quoteForm").reset();
+ $("items").innerHTML="";
+ addItem();
+ $("saveDraft").textContent="Save Quotation Draft";
+ renderTotals();
+ show("New quotation form is ready. Previously saved drafts have not been changed.","success","result");
+ $("workspace").scrollIntoView({behavior:"smooth",block:"start"});
+}
+$("resetForm").addEventListener("click",()=>{$("resetModal").classList.add("open");$("confirmReset").focus();});
+$("cancelReset").addEventListener("click",()=>{$("resetModal").classList.remove("open");});
+$("confirmReset").addEventListener("click",()=>{$("resetModal").classList.remove("open");resetQuotationForm();});
+$("resetModal").addEventListener("click",e=>{if(e.target===$("resetModal"))$("resetModal").classList.remove("open");});
 $("cancelIssue").addEventListener("click",()=>{$("issueModal").classList.remove("open");pendingIssue=null;});
 $("confirmIssue").addEventListener("click",confirmIssueQuotation);
 $("issueModal").addEventListener("click",e=>{if(e.target===$("issueModal")){$("issueModal").classList.remove("open");pendingIssue=null;}});
