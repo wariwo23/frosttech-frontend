@@ -1,0 +1,60 @@
+name: Independent quotation validation
+
+on:
+  push:
+    branches:
+      - review/direct-customer-quotations
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "admin-independent-quotations.html"
+      - "direct-quotation.html"
+      - "direct-order-sourcing.html"
+      - "finance-admin.html"
+      - "admin.html"
+      - "supabase/functions/**"
+      - "supabase/migrations/20261119120000_frosttech_independent_quotations_foundation.sql"
+      - "supabase/migrations/20261119130000_frosttech_direct_quotation_draft_editing.sql"
+      - "supabase/migrations/20261119140000_frosttech_admin_direct_quotation_count_rpc.sql"
+      - "supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"
+      - "supabase/migrations/20261120102000_harden_receipt_delivery_trigger_function.sql"
+      - "supabase/migrations/20261120113000_fix_direct_finance_activity_period.sql"
+      - "scripts/test-direct-quotation-security.mjs"
+      - "scripts/validate-direct-quotation-html.mjs"
+      - "scripts/validate-direct-quotation-sql.py"
+      - ".github/workflows/direct-quotation-validation.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate customer and operator page JavaScript
+        run: node scripts/validate-direct-quotation-html.mjs
+      - name: Run direct quotation security regression tests
+        run: node --test scripts/test-direct-quotation-security.mjs
+      - name: Type-check new Edge Functions
+        run: |
+          deno check supabase/functions/create-direct-quotation/index.ts
+          deno check supabase/functions/issue-direct-quotation/index.ts
+          deno check supabase/functions/direct-customer-quotation/index.ts
+          deno check supabase/functions/direct-quotation-fee/index.ts
+          deno check supabase/functions/direct-customer-quotation-decision/index.ts
+          deno check supabase/functions/direct-order-payment/index.ts
+      - name: Validate migration SQL syntax
+        run: |
+          python -m pip install --disable-pip-version-check pglast
+          python scripts/validate-direct-quotation-sql.py

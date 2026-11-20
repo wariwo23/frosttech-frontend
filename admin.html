@@ -1209,7 +1209,7 @@ footer {
     <div id="message" role="status"></div>
 </section>
 
-<section class="card" id="superAdminDepartmentWorkspaces">
+<section class="card hidden" id="superAdminDepartmentWorkspaces">
     <h2>Departmental Workspaces</h2>
     <p>Super Administrator access to every department is available even when a departmental operator has not yet been appointed. Opening a workspace does not create an employee account or change departmental assignments.</p>
     <div class="action-row actions">
@@ -1217,6 +1217,7 @@ footer {
         <a class="button-link" href="finance-admin.html">Finance</a>
         <a class="button-link" href="supplier-admin.html">Supplier Administration</a>
         <a class="button-link" href="catalogue-admin.html">Catalogue</a>
+        <a class="button-link" href="direct-order-sourcing.html">Direct Order Sourcing &amp; Costing</a>
     </div>
 </section>
 
@@ -1469,6 +1470,7 @@ footer {
 <!-- DIRECT QUOTATIONS -->
 <section class="card admin-page-section hidden" id="directQuotationSection" data-admin-title="Admin-Direct Quotations">
 <h2>Review Customer Quotes</h2>
+<p><a class="button-link" href="admin-independent-quotations.html">Create an Independent Quotation — No Customer Request Required</a></p>
 <p>Customer quotation details load automatically when you open a request or saved draft. Review the items and quantities, then calculate the quotation for submission.</p>
 <div class="message info">
     Select View Record to inspect the quotation details, or Edit Draft to revise the administrator's saved quotation before submission.
@@ -2075,6 +2077,13 @@ async function refreshAdminSession() {
 
         showAdminDashboard();
 
+        const { data: verifiedAdminRole, error: verifiedAdminRoleError } =
+            await db.rpc("admin_get_my_role");
+        $("superAdminDepartmentWorkspaces")?.classList.toggle(
+            "hidden",
+            Boolean(verifiedAdminRoleError) || verifiedAdminRole !== "super_admin"
+        );
+
         showMessage(
             "systemStatus",
             "Connected. Administrator access verified.",
@@ -2256,37 +2265,108 @@ async function loadDashboardCounts() {
     };
 
     try {
-        const [products, requests, suppliers, directQuotes, supplierQuoteResult, supplierRowsResult] =
-            await Promise.all([
-                countRows("products"),
-                countRows("quote_requests"),
-                countRows("suppliers"),
-                countRows("admin_quotations"),
-                db.rpc("admin_list_supplier_quotes"),
-                db.from("suppliers").select("review_status")
-            ]);
+        const [
+            products,
+            requests,
+            suppliers,
+            legacyDirectQuotes,
+            independentDirectQuoteCountResult,
+            supplierQuoteResult,
+            supplierRowsResult
+        ] = await Promise.all([
+            countRows("products"),
+            countRows("quote_requests"),
+            countRows("suppliers"),
+            countRows("admin_quotations"),
+            db.rpc("frosttech_admin_count_direct_quotations"),
+            db.rpc("admin_list_supplier_quotes"),
+            db.from("suppliers").select("review_status")
+        ]);
 
-        if (supplierQuoteResult.error) throw supplierQuoteResult.error;
-        if (supplierRowsResult.error) throw supplierRowsResult.error;
+        if (independentDirectQuoteCountResult.error) {
+            throw independentDirectQuoteCountResult.error;
+        }
 
-        const supplierQuoteCount = (supplierQuoteResult.data || []).length;
-        const pendingCount = (supplierRowsResult.data || []).filter((supplier) => {
-            const status = String(supplier.review_status || "pending").toLowerCase();
-            return !["approved", "rejected", "suspended"].includes(status);
-        }).length;
+        if (supplierQuoteResult.error) {
+            throw supplierQuoteResult.error;
+        }
 
-        if ($("productCount")) $("productCount").textContent = products;
-        if ($("requestCount")) $("requestCount").textContent = requests;
-        if ($("supplierCount")) $("supplierCount").textContent = suppliers;
-        if ($("pendingSupplierCount")) $("pendingSupplierCount").textContent = pendingCount;
-        if ($("quotationCount")) $("quotationCount").textContent = supplierQuoteCount;
-        if ($("directQuoteCount")) $("directQuoteCount").textContent = directQuotes;
+        if (supplierRowsResult.error) {
+            throw supplierRowsResult.error;
+        }
 
-        // Keep the approved homepage snapshot in sync with the existing live counts.
-        if ($("snapshotProductCount")) $("snapshotProductCount").textContent = products;
-        if ($("snapshotRequestCount")) $("snapshotRequestCount").textContent = requests;
-        if ($("snapshotSupplierCount")) $("snapshotSupplierCount").textContent = suppliers;
-        if ($("snapshotDirectQuoteCount")) $("snapshotDirectQuoteCount").textContent = directQuotes;
+        const independentDirectQuotes = Number(
+            independentDirectQuoteCountResult.data ?? 0
+        );
+
+        if (
+            !Number.isSafeInteger(independentDirectQuotes) ||
+            independentDirectQuotes < 0
+        ) {
+            throw new Error(
+                "Invalid independent quotation count returned by the database."
+            );
+        }
+
+        const directQuotes =
+            legacyDirectQuotes + independentDirectQuotes;
+
+        const supplierQuoteCount =
+            (supplierQuoteResult.data || []).length;
+
+        const pendingCount =
+            (supplierRowsResult.data || []).filter((supplier) => {
+                const status = String(
+                    supplier.review_status || "pending"
+                ).toLowerCase();
+
+                return ![
+                    "approved",
+                    "rejected",
+                    "suspended"
+                ].includes(status);
+            }).length;
+
+        if ($("productCount")) {
+            $("productCount").textContent = products;
+        }
+
+        if ($("requestCount")) {
+            $("requestCount").textContent = requests;
+        }
+
+        if ($("supplierCount")) {
+            $("supplierCount").textContent = suppliers;
+        }
+
+        if ($("pendingSupplierCount")) {
+            $("pendingSupplierCount").textContent = pendingCount;
+        }
+
+        if ($("quotationCount")) {
+            $("quotationCount").textContent = supplierQuoteCount;
+        }
+
+        if ($("directQuoteCount")) {
+            $("directQuoteCount").textContent = directQuotes;
+        }
+
+        // Keep the approved homepage snapshot in sync.
+        if ($("snapshotProductCount")) {
+            $("snapshotProductCount").textContent = products;
+        }
+
+        if ($("snapshotRequestCount")) {
+            $("snapshotRequestCount").textContent = requests;
+        }
+
+        if ($("snapshotSupplierCount")) {
+            $("snapshotSupplierCount").textContent = suppliers;
+        }
+
+        if ($("snapshotDirectQuoteCount")) {
+            $("snapshotDirectQuoteCount").textContent = directQuotes;
+        }
 
     } catch (error) {
         showMessage(
@@ -2294,6 +2374,7 @@ async function loadDashboardCounts() {
             error.message || "Unable to load dashboard counts.",
             "error"
         );
+
         throw error;
     }
 }
