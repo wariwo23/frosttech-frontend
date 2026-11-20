@@ -975,7 +975,7 @@
     if (sessionError) {
         showSection(loginSection);
         showMessage(
-            "We could not verify your current customer session. Please refresh and try again.",
+            "We could not verify your current test administrator session. Please refresh and try again.",
             "error"
         );
         return;
@@ -984,27 +984,28 @@
     if (sessionData.session && sessionData.session.user) {
         const signedInUser = sessionData.session.user;
 
-        if (signedInUser.app_metadata?.account_type === "guest") {
+        try {
+            const authorisedRole = await verifyAdminRole(signedInUser);
+            if (!authorisedRole) {
+                await db.auth.signOut({ scope: "local" });
+                showSection(loginSection);
+                showMessage(
+                    "This account is not authorised for the test quotation administration workspace.",
+                    "error"
+                );
+                return;
+            }
+
+            window.location.replace(getReturnUrl());
+            return;
+        } catch (error) {
             showSection(loginSection);
             showMessage(
-                "You are signed in with a FrostTech Guest identity. Guest identities cannot access customer accounts. Continue through the Guest option on the homepage.",
+                error.message || "Administrator access could not be verified.",
                 "error"
             );
             return;
         }
-
-        const returnUrl = getValidReturnUrl();
-
-        if (returnUrl) {
-            window.location.replace(returnUrl);
-            return;
-        }
-
-        activeSessionEmail.textContent =
-            "Signed in as: " + (signedInUser.email || "Customer account");
-
-        showSection(activeSessionSection);
-        return;
     }
 
     showSection(loginSection);
