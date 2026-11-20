@@ -179,3 +179,9 @@ test("recovered payment lookup filters and validates Paystack method, NGN amount
   has(payment, /payment\.payment_method!=="paystack"\|\|payment\.currency!=="NGN"\|\|payment\.environment!==order\.environment/i);
   has(payment, /Number\(payment\.amount\)!==Number\(order\.customer_total\)/i);
 });
+
+
+const receiptTriggerMigration = readFileSync("supabase/migrations/20261120102000_harden_receipt_delivery_trigger_function.sql", "utf8");
+test("receipt delivery trigger cannot be invoked directly by API roles", () => {
+  has(receiptTriggerMigration, /revoke all on function public\\.frosttech_create_receipt_delivery_record\\(\\)[\\s\\S]*?from public,anon,authenticated/i);
+});
