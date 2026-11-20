@@ -148,6 +148,8 @@ Deno.serve(async(req:Request)=>{
     const {data:latest,error:latestError}=await db.from("payments")
      .select("transaction_reference")
      .eq("order_id",order.id)
+     .eq("payment_method","paystack")
+     .eq("environment",order.environment)
      .in("status",["pending","successful"])
      .order("created_at",{ascending:false})
      .limit(1)
@@ -157,9 +159,13 @@ Deno.serve(async(req:Request)=>{
    }
    if(!ref||ref.length>120)return out({error:"No pending or successful payment attempt was found for this order."},404,origin);
    const {data:payment,error:paymentError}=await db.from("payments")
-    .select("id,amount,currency,transaction_reference,status,environment,paid_at")
+    .select("id,amount,currency,payment_method,transaction_reference,status,environment,paid_at")
     .eq("order_id",order.id).eq("transaction_reference",ref).maybeSingle();
    if(paymentError||!payment)return out({error:"Order payment attempt could not be found."},404,origin);
+   if(payment.payment_method!=="paystack"||payment.currency!=="NGN"||payment.environment!==order.environment
+      ||Number(payment.amount)!==Number(order.customer_total)||payment.transaction_reference!==ref){
+    return out({error:"The recorded payment does not match this order's Paystack amount, currency or environment. FrostTech reconciliation is required."},409,origin);
+   }
    if(payment.status!=="successful"){
     if(payment.status!=="pending"||payment.environment!=="development"||order.environment!=="development")return out({error:"This payment attempt is not eligible for verification."},409,origin);
     const secret=paystackSecret(payment.environment);if(!secret)return out({error:"Paystack Test Mode is not configured."},503,origin);
