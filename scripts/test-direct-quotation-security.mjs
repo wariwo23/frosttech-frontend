@@ -196,3 +196,20 @@ test("Finance reporting includes quote, order, fee, payment and receipt activity
   has(financeActivityFix, /r\.paid_at >= v_period_start/i);
   has(financeActivityFix, /at time zone 'Africa\/Lagos'/i);
 });
+
+
+test("reconciling an already-successful payment repairs only an unpaid order idempotently", () => {
+  has(payment, /if\(payment\.status!=="successful"\)[\s\S]*?else\{[\s\S]*?reconciled_existing_success:true[\s\S]*?frosttech_record_direct_order_payment_success/i);
+  has(record, /if v_payment\.status='successful' then[\s\S]*?if v_order\.status in \('awaiting_payment','pending'\)[\s\S]*?set status='paid'[\s\S]*?already_recorded',true/i);
+});
+
+test("direct order receipt is issued only after the order is confirmed paid", () => {
+  has(payment, /if\(!paidOrder\|\|paidOrder\.status!=="paid"\)[\s\S]*?createReceipt\(db,SERVICE,paidOrder,payment/i);
+});
+
+test("automatic delivery remains limited to eligible physical product categories and does not duplicate", () => {
+  const delivery = readFileSync("supabase/functions/direct-order-payment/delivery.ts", "utf8");
+  has(delivery, /"Air Conditioners"[\s\S]*?"Refrigeration Parts"[\s\S]*?"HVAC Accessories"/);
+  has(delivery, /\.eq\("order_id",order\.id\)[\s\S]*?if \(existing\)[\s\S]*?return result/i);
+  has(delivery, /if \(insertError\.code === "23505"\)[\s\S]*?concurrentDelivery/i);
+});
