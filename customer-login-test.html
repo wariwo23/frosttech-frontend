@@ -412,17 +412,7 @@
       <p class="help-text">
         Log in to access your FrostTech customer account.
       </p>
-      <section class="guest-access-panel" aria-labelledby="guestAccessHeading">
-        <h2 id="guestAccessHeading">Guest Quotation Access</h2>
-        <p>
-          Received a quotation as a guest? You do not need to create an account.
-          Access your quotation securely using your quotation reference and email address.
-        </p>
-        <a class="guest-access-button" href="guest-quotations.html">
-          Access Guest Quotation
-        </a>
-      </section>
-    </section>
+</section>
 
     <!-- REQUEST A PASSWORD RESET EMAIL -->
     <section id="resetSection" class="hidden">
@@ -626,19 +616,14 @@
 
         try {
           const destination = new URL(requested, window.location.href);
-          const currentDirectory =
-            window.location.pathname.slice(
-              0,
-              window.location.pathname.lastIndexOf("/") + 1
-            );
-
+          const currentDirectory = window.location.pathname.slice(
+            0, window.location.pathname.lastIndexOf("/") + 1
+          );
           if (
             destination.origin !== window.location.origin ||
-            !destination.pathname.startsWith(currentDirectory)
-          ) {
-            return null;
-          }
-
+            !destination.pathname.startsWith(currentDirectory) ||
+            destination.pathname.split("/").pop() !== "direct-quotation-test.html"
+          ) return null;
           return destination.href;
         } catch (error) {
           return null;
@@ -646,29 +631,7 @@
       }
 
       function getReturnUrl() {
-        const params = new URLSearchParams(window.location.search);
-        const requested = params.get("return");
-
-        if (!requested) {
-          return "index.html";
-        }
-
-        /*
-         * Only allow a relative URL on the current FrostTech site.
-         * This prevents a supplied return parameter from redirecting
-         * the customer to an unrelated website.
-         */
-        try {
-          const destination = new URL(requested, window.location.href);
-
-          if (destination.origin !== window.location.origin) {
-            return "index.html";
-          }
-
-          return destination.href;
-        } catch (error) {
-          return "index.html";
-        }
+        return getValidReturnUrl();
       }
 
       function setButtonLoading(button, loading, loadingText, normalText) {
@@ -795,7 +758,9 @@
 
             showMessage("Login successful. Opening your account...", "success");
 
-            window.location.href = getReturnUrl();
+            const returnUrl = getReturnUrl();
+            if (returnUrl) window.location.href = returnUrl;
+            else await showLoginOrActiveSession();
           } catch (error) {
             showMessage(
               error.message || "Login failed. Check your email and password.",
