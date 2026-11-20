@@ -162,7 +162,7 @@ test("Super Admin sourcing page uses protected RPCs and branded confirmation", (
 
 
 test("customer can reconcile the latest recorded order payment without exposing a payment reference", () => {
-  has(payment, /if\(!ref\)\{[\s\S]*?\.eq\("order_id",order\.id\)[\s\S]*?\.in\("status",\["pending","successful"\]\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)/i);
+  has(payment, /if\s*\(!ref\)\s*\{[\s\S]*?\.eq\("status","successful"\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)[\s\S]*?if\(successful\?\.transaction_reference\)[\s\S]*?\.eq\("status","pending"\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)/i);
   has(payment, /No pending or successful payment attempt was found for this order/i);
   has(payment, /order\.customer_id[\s\S]*?customer\.user_id!==user\.id/i);
 });
@@ -204,7 +204,7 @@ test("reconciling an already-successful payment repairs only an unpaid order ide
 });
 
 test("direct order receipt is issued only after the order is confirmed paid", () => {
-  has(payment, /if\(!paidOrder\|\|paidOrder\.status!=="paid"\)[\s\S]*?createReceipt\(db,SERVICE,paidOrder,payment/i);
+  has(payment, /if\s*\(paidOrderError\|\|!paidOrder\|\|paidOrder\.status!=="paid"\)[\s\S]*?createReceipt\(db,SERVICE,paidOrder,payment/i);
 });
 
 test("automatic delivery remains limited to eligible physical product categories and does not duplicate", () => {
