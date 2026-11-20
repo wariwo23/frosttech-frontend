@@ -162,7 +162,7 @@ test("Super Admin sourcing page uses protected RPCs and branded confirmation", (
 
 
 test("customer can reconcile the latest recorded order payment without exposing a payment reference", () => {
-  has(payment, /if\(!ref\)\{[\s\S]*?\.eq\("order_id",order\.id\)[\s\S]*?\.in\("status",\["pending","successful"\]\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)/i);
+  has(payment, /if\(!ref\)\{[\s\S]*?\.eq\("order_id",order\.id\)[\s\S]*?\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment\)[\s\S]*?\.eq\("status","successful"\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)[\s\S]*?\.eq\("status","pending"\)[\s\S]*?\.order\("created_at",\{ascending:false\}\)/i);
   has(payment, /No pending or successful payment attempt was found for this order/i);
   has(payment, /order\.customer_id[\s\S]*?customer\.user_id!==user\.id/i);
 });
@@ -176,7 +176,7 @@ test("customer quotation page exposes an explicit existing-payment reconciliatio
 
 test("recovered payment lookup filters and validates Paystack method, NGN amount and environment", () => {
   has(payment, /\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment\)[\s\S]*?\.in\("status",\["pending","successful"\]\)/i);
-  has(payment, /payment\.payment_method!=="paystack"\|\|payment\.currency!=="NGN"\|\|payment\.environment!==order\.environment/i);
+  has(payment, /payment\.payment_method!=="paystack"\s*\|\|payment\.currency!=="NGN"\s*\|\|payment\.environment!==order\.environment/i);
   has(payment, /Number\(payment\.amount\)!==Number\(order\.customer_total\)/i);
 });
 
@@ -204,13 +204,13 @@ test("reconciling an already-successful payment repairs only an unpaid order ide
 });
 
 test("direct order receipt is issued only after the order is confirmed paid", () => {
-  has(payment, /if\(!paidOrder\|\|paidOrder\.status!=="paid"\)[\s\S]*?createReceipt\(db,SERVICE,paidOrder,payment/i);
+  has(payment, /if\(paidOrderError\|\|!paidOrder\|\|paidOrder\.status!=="paid"\)[\s\S]*?createReceipt\(db,SERVICE,paidOrder,payment/i);
 });
 
 test("automatic delivery remains limited to eligible physical product categories and does not duplicate", () => {
   const delivery = readFileSync("supabase/functions/direct-order-payment/delivery.ts", "utf8");
   has(delivery, /"Air Conditioners"[\s\S]*?"Refrigeration Parts"[\s\S]*?"HVAC Accessories"/);
-  has(delivery, /\.eq\("order_id",order\.id\)[\s\S]*?if \(existing\)[\s\S]*?return result/i);
+  has(delivery, /\.eq\("order_id",\s*order\.id\)[\s\S]*?if \(existing\)[\s\S]*?return result/i);
   has(delivery, /if \(insertError\.code === "23505"\)[\s\S]*?concurrentDelivery/i);
 });
 
