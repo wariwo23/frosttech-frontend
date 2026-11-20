@@ -180,6 +180,14 @@ Deno.serve(async(req:Request)=>{
      p_verification_payload:{reference:tx.reference,status:tx.status,amount:tx.amount,currency:tx.currency,channel:tx.channel,paid_at:tx.paid_at}
     });
     if(recordError||!recorded?.success){console.error("Direct order payment record failed:",recordError);return out({error:"Paystack confirmed payment, but FrostTech could not complete the order record. Contact support with reference "+ref+"."},500,origin);}
+   }else{
+    // Repair an interrupted order-status update for a payment already verified by Paystack.
+    const {data:recorded,error:recordError}=await db.rpc("frosttech_record_direct_order_payment_success",{
+     p_order_id:order.id,p_payment_id:payment.id,p_actor:user.id,p_reference:ref,
+     p_provider_transaction_id:null,p_verified_at:payment.paid_at||new Date().toISOString(),
+     p_verification_payload:{reference:ref,status:"success",amount:Math.round(Number(payment.amount)*100),currency:"NGN",reconciled_existing_success:true}
+    });
+    if(recordError||!recorded?.success){console.error("Existing successful payment reconciliation failed:",recordError);return out({error:"The payment is already recorded, but the order status could not be reconciled. Contact FrostTech support."},500,origin);}
    }
    const {data:paidOrder,error:paidOrderError}=await db.from("orders")
     .select("id,order_number,customer_id,customer_total,delivery_fee,delivery_address,status,environment,direct_quotation_id")
