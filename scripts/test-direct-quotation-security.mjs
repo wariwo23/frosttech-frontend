@@ -173,3 +173,9 @@ test("customer quotation page exposes an explicit existing-payment reconciliatio
   has(customerPage, /action:"verify_order",order_id:currentOrderId,token:invite/i);
   has(customerPage, /Check Existing Payment/i);
 });
+
+test("recovered payment lookup filters and validates Paystack method, NGN amount and environment", () => {
+  has(payment, /\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment"[\s\S]*?\.in\("status",\["pending","successful"\]\)/i);
+  has(payment, /payment\.payment_method!=="paystack"\|\|payment\.currency!=="NGN"\|\|payment\.environment!==order\.environment/i);
+  has(payment, /Number\(payment\.amount\)!==Number\(order\.customer_total\)/i);
+});
