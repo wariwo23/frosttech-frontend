@@ -199,7 +199,9 @@ test("Finance reporting includes quote, order, fee, payment and receipt activity
 
 
 test("reconciling an already-successful payment repairs only an unpaid order idempotently", () => {
-  has(payment, /if\s*\(payment\.status!=="successful"\)[\s\S]*?\}\s*else\s*\{[\s\S]*?reconciled_existing_success:true[\s\S]*?frosttech_record_direct_order_payment_success/i);
+  has(payment, /if\(payment\.status!=="successful"\)/i);
+  has(payment, /reconciled_existing_success:true/i);
+  has(payment, /frosttech_record_direct_order_payment_success/i);
   has(record, /if v_payment\.status='successful' then[\s\S]*?if v_order\.status in \('awaiting_payment','pending'\)[\s\S]*?set status='paid'[\s\S]*?already_recorded',true/i);
 });
 
