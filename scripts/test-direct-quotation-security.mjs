@@ -213,3 +213,8 @@ test("automatic delivery remains limited to eligible physical product categories
   has(delivery, /\.eq\("order_id",order\.id\)[\s\S]*?if \(existing\)[\s\S]*?return result/i);
   has(delivery, /if \(insertError\.code === "23505"\)[\s\S]*?concurrentDelivery/i);
 });
+
+
+test("payment recovery prefers a confirmed payment before a newer pending attempt", () => {
+  has(payment, /\.eq\("status","successful"\)[\s\S]*?if\(successful\?\.transaction_reference\)[\s\S]*?\.eq\("status","pending"\)/i);
+});
