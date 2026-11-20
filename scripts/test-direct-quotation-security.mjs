@@ -175,7 +175,7 @@ test("customer quotation page exposes an explicit existing-payment reconciliatio
 });
 
 test("recovered payment lookup filters and validates Paystack method, NGN amount and environment", () => {
-  has(payment, /\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment\)[\s\S]*?\.in\("status",\["pending","successful"\]\)/i);
+  has(payment, /\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment\)[\s\S]*?\.eq\("status","successful"\)/i);\n  has(payment, /\.eq\("payment_method","paystack"\)[\s\S]*?\.eq\("environment",order\.environment\)[\s\S]*?\.eq\("status","pending"\)/i);
   has(payment, /payment\.payment_method!=="paystack"\s*\|\|payment\.currency!=="NGN"\s*\|\|payment\.environment!==order\.environment/i);
   has(payment, /Number\(payment\.amount\)!==Number\(order\.customer_total\)/i);
 });
@@ -199,7 +199,7 @@ test("Finance reporting includes quote, order, fee, payment and receipt activity
 
 
 test("reconciling an already-successful payment repairs only an unpaid order idempotently", () => {
-  has(payment, /if\(payment\.status!=="successful"\)[\s\S]*?else\{[\s\S]*?reconciled_existing_success:true[\s\S]*?frosttech_record_direct_order_payment_success/i);
+  has(payment, /if\(payment\.status!=="successful"\)[\s\S]*?else\{[\s\S]*?frosttech_record_direct_order_payment_success[\s\S]*?reconciled_existing_success:true/i);
   has(record, /if v_payment\.status='successful' then[\s\S]*?if v_order\.status in \('awaiting_payment','pending'\)[\s\S]*?set status='paid'[\s\S]*?already_recorded',true/i);
 });
 
