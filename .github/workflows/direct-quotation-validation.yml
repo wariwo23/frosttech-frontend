@@ -19,6 +19,7 @@ on:
       - "supabase/migrations/20261119140000_frosttech_admin_direct_quotation_count_rpc.sql"
       - "supabase/migrations/20261119170000_frosttech_direct_order_sourcing_finance.sql"
       - "supabase/migrations/20261120102000_harden_receipt_delivery_trigger_function.sql"
+      - "supabase/migrations/20261120113000_fix_direct_finance_activity_period.sql"
       - "scripts/test-direct-quotation-security.mjs"
       - "scripts/validate-direct-quotation-html.mjs"
       - "scripts/validate-direct-quotation-sql.py"
