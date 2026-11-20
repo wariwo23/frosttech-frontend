@@ -346,9 +346,9 @@
 
     <!-- ACTIVE CUSTOMER SESSION: PREVENT PASSWORD FORM FROM APPEARING FOR A SIGNED-IN USER -->
     <section id="activeSessionSection" class="hidden" aria-labelledby="activeSessionHeading">
-      <h2 id="activeSessionHeading">Customer Already Signed In</h2>
+      <h2 id="activeSessionHeading">Administrator Already Signed In</h2>
       <p class="help-text">
-        An active FrostTech customer session is open in this browser.
+        An active FrostTech test administrator session is open in this browser.
       </p>
       <p id="activeSessionEmail" class="help-text"></p>
       <button type="button" id="signOutButton" class="primary-button">
@@ -358,7 +358,7 @@
 
     <!-- CUSTOMER LOGIN -->
     <section id="loginSection">
-      <h2>Customer Login</h2>
+      <h2>Administrator Sign In — TEST ENVIRONMENT</h2>
 
       <form id="loginForm">
         <div class="form-group">
@@ -405,24 +405,10 @@
         Forgot Password?
       </button>
 
-      <button type="button" id="createAccountButton" class="secondary-button">
-        Create Customer Account
-      </button>
-
-      <p class="help-text">
-        Log in to access your FrostTech customer account.
+<p class="help-text">
+        Sign in with an authorised FrostTech test administrator account. Access is verified against the test project’s active administrator role.
       </p>
-      <section class="guest-access-panel" aria-labelledby="guestAccessHeading">
-        <h2 id="guestAccessHeading">Guest Quotation Access</h2>
-        <p>
-          Received a quotation as a guest? You do not need to create an account.
-          Access your quotation securely using your quotation reference and email address.
-        </p>
-        <a class="guest-access-button" href="guest-quotations.html">
-          Access Guest Quotation
-        </a>
-      </section>
-    </section>
+</section>
 
     <!-- REQUEST A PASSWORD RESET EMAIL -->
     <section id="resetSection" class="hidden">
@@ -574,49 +560,53 @@
         clearMessage();
       }
 
+      async function verifyAdminRole(user) {
+        if (!user || user.app_metadata?.account_type === "guest") return null;
+        const { data: profile, error: profileError } = await db
+          .from("profiles").select("id, role, is_active").eq("id", user.id).maybeSingle();
+        if (profileError) throw profileError;
+        if (!profile || profile.is_active !== true || profile.role !== "admin") return null;
+        const { data: role, error: roleError } = await db.rpc("admin_get_my_role");
+        if (roleError) throw roleError;
+        return ["super_admin", "operations_admin"].includes(role) ? role : null;
+      }
+
       async function showLoginOrActiveSession() {
         if (!db || !db.auth) {
           showSection(loginSection);
-          showMessage(
-            "The login service did not load. Please refresh and try again.",
-            "error"
-          );
+          showMessage("The test administrator login service did not load. Please refresh and try again.", "error");
           return;
         }
-
         const { data, error } = await db.auth.getSession();
-
         if (error) {
           showSection(loginSection);
-          showMessage(
-            "We could not verify your current customer session. Please refresh and try again.",
-            "error"
-          );
+          showMessage("We could not verify the current test administrator session. Please refresh and try again.", "error");
           return;
         }
-
-        if (data.session && data.session.user) {
-          const signedInUser = data.session.user;
-
-          if (signedInUser.app_metadata?.account_type === "guest") {
+        if (data.session?.user) {
+          try {
+            const role = await verifyAdminRole(data.session.user);
+            if (!role) {
+              await db.auth.signOut({ scope: "local" });
+              showSection(loginSection);
+              showMessage("This account is not authorised for the test quotation administration workspace.", "error");
+              return;
+            }
+            activeSessionEmail.textContent = "Signed in as: " +
+              (data.session.user.email || "Administrator") + " · Role: " +
+              role.replaceAll("_", " ");
+            showSection(activeSessionSection);
+            return;
+          } catch (error) {
             showSection(loginSection);
-            showMessage(
-              "You are signed in with a FrostTech Guest identity. Guest identities cannot access customer accounts. Continue through the Guest option on the homepage.",
-              "info"
-            );
+            showMessage(error.message || "Administrator access could not be verified.", "error");
             return;
           }
-
-          activeSessionEmail.textContent =
-            "Signed in as: " + (signedInUser.email || "Customer account");
-          showSection(activeSessionSection);
-          return;
         }
-
         showSection(loginSection);
       }
 
-      function getValidReturnUrl() {
+      function getValidReturnUrl()() {
         const params = new URLSearchParams(window.location.search);
         const requested = params.get("return");
 
@@ -647,27 +637,18 @@
 
       function getReturnUrl() {
         const params = new URLSearchParams(window.location.search);
-        const requested = params.get("return");
-
-        if (!requested) {
-          return "index.html";
-        }
-
-        /*
-         * Only allow a relative URL on the current FrostTech site.
-         * This prevents a supplied return parameter from redirecting
-         * the customer to an unrelated website.
-         */
+        const requested = params.get("return") || "admin-independent-quotations-test.html";
         try {
           const destination = new URL(requested, window.location.href);
-
-          if (destination.origin !== window.location.origin) {
-            return "index.html";
+          const currentDirectory = window.location.pathname.slice(0, window.location.pathname.lastIndexOf("/") + 1);
+          if (destination.origin !== window.location.origin ||
+              !destination.pathname.startsWith(currentDirectory) ||
+              destination.pathname.split("/").pop() !== "admin-independent-quotations-test.html") {
+            return "admin-independent-quotations-test.html";
           }
-
           return destination.href;
         } catch (error) {
-          return "index.html";
+          return "admin-independent-quotations-test.html";
         }
       }
 
@@ -716,20 +697,6 @@
           });
         });
 
-      document.getElementById("createAccountButton")
-        .addEventListener("click", function () {
-          const params = new URLSearchParams(window.location.search);
-          const requested = params.get("return");
-
-          let destination = "customer-register-test.html";
-
-          if (requested) {
-            destination += "?return=" + encodeURIComponent(requested);
-          }
-
-          window.location.href = destination;
-        });
-
       signOutButton.addEventListener("click", async function () {
         if (!db || !db.auth) {
           showMessage("The sign-out service is unavailable. Please refresh and try again.", "error");
@@ -746,7 +713,7 @@
           }
 
           showSection(loginSection);
-          showMessage("You have signed out successfully. You can now sign in with another customer account.", "success");
+          showMessage("You have signed out of the test administrator session.", "success");
           document.getElementById("loginForm").reset();
         } catch (error) {
           showMessage(error.message || "Unable to sign out. Please try again.", "error");
@@ -784,16 +751,18 @@
               throw result.error;
             }
 
-            if (result.data?.user?.app_metadata?.account_type === "guest") {
+            const authorisedRole = await verifyAdminRole(result.data?.user);
+
+            if (!authorisedRole) {
               await db.auth.signOut({ scope: "local" });
               showMessage(
-                "This email belongs to a FrostTech Guest identity, not a customer account. Please use the Guest option on the homepage to continue with a quotation.",
+                "This account is not authorised for the test quotation administration workspace. Use an active Super Administrator or Operations Administrator account.",
                 "error"
               );
               return;
             }
 
-            showMessage("Login successful. Opening your account...", "success");
+            showMessage("Administrator access verified (" + authorisedRole.replaceAll("_", " ") + "). Opening the test workspace...", "success");
 
             window.location.href = getReturnUrl();
           } catch (error) {
