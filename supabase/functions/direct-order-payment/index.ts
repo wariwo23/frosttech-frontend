@@ -145,17 +145,34 @@ Deno.serve(async(req:Request)=>{
    if(!quote.order_payment_terms_accepted_at)return out({error:"Final-payment Terms acceptance has not been recorded."},403,origin);
    let ref=typeof body.reference==="string"?body.reference.trim():"";
    if(!ref){
-    const {data:latest,error:latestError}=await db.from("payments")
+    // Prefer a confirmed payment over a newer unfinished attempt so recovery
+    // never overlooks money already received for this order.
+    const paymentLookup=db.from("payments")
      .select("transaction_reference")
      .eq("order_id",order.id)
      .eq("payment_method","paystack")
      .eq("environment",order.environment)
-     .in("status",["pending","successful"])
+     .eq("status","successful")
      .order("created_at",{ascending:false})
      .limit(1)
      .maybeSingle();
-    if(latestError)return out({error:"The existing payment attempt could not be located. Please try again shortly."},500,origin);
-    ref=String(latest?.transaction_reference||"");
+    const {data:successful,error:successfulError}=await paymentLookup;
+    if(successfulError)return out({error:"The existing successful payment could not be located. Please try again shortly."},500,origin);
+    if(successful?.transaction_reference){
+     ref=String(successful.transaction_reference);
+    }else{
+     const {data:pending,error:pendingError}=await db.from("payments")
+      .select("transaction_reference")
+      .eq("order_id",order.id)
+      .eq("payment_method","paystack")
+      .eq("environment",order.environment)
+      .eq("status","pending")
+      .order("created_at",{ascending:false})
+      .limit(1)
+      .maybeSingle();
+     if(pendingError)return out({error:"The pending payment attempt could not be located. Please try again shortly."},500,origin);
+     ref=String(pending?.transaction_reference||"");
+    }
    }
    if(!ref||ref.length>120)return out({error:"No pending or successful payment attempt was found for this order."},404,origin);
    const {data:payment,error:paymentError}=await db.from("payments")
