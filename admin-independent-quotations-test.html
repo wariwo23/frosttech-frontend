@@ -185,7 +185,7 @@ async function confirmIssueQuotation(){
   const {data,error}=await db.functions.invoke("issue-direct-quotation",{body:{quotation_id:id}});
   if(error)throw error;if(!data?.success)throw new Error(data?.error||"Quotation could not be issued.");
   const link=String(data.invitation_url||"");
-  const emailText=data.email_sent?"Invitation email sent successfully.":"Email was not sent automatically. Use the secure link below.";
+  const emailText=data.email_sent?"Password-protected PDF attachment and secure invitation email accepted by Resend.":"Quotation issued and PDF stored, but email delivery failed. The secure invitation link is available below; use the controlled resend process before customer testing.";
   $("result").className="message success";
   $("result").innerHTML='<strong>Quotation '+esc(data.quotation_number)+' issued.</strong><br>'+esc(emailText)+'<br>Administration fee: '+money(data.administration_fee)+' (delivery excluded). Fee status: '+esc(data.fee_status)+'<br><label style="margin-top:10px">Secure customer invitation link<input id="issuedInviteLink" readonly value="'+esc(link)+'"></label><div class="actions"><button type="button" id="copyIssuedLink">Copy invitation link</button></div><p class="small">Share this link only with the customer at the verified email address. It expires '+esc(new Date(data.invitation_expires_at).toLocaleString("en-NG"))+'.</p>';
   $("copyIssuedLink").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(link);$("copyIssuedLink").textContent="Copied";}catch(e){$("issuedInviteLink").select();document.execCommand("copy");$("copyIssuedLink").textContent="Copied";}});
