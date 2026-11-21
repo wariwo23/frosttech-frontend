@@ -46,6 +46,12 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <div class="actions"><a class="link secondary" href="test-admin-login.html?return=admin-independent-quotations-test.html">Test Administrator Sign In</a><button type="button" class="secondary" id="signOut">Sign Out</button></div>
  <div id="status" class="message">Checking administrator access…</div>
 </div>
+<section class="card hidden" id="hotelEmailPreviewCard">
+ <h2>Hotel quotation email preview — internal test</h2>
+ <p class="small">Sends the fixed seven-item quotation preview only to unajite3@gmail.com. This does not save or issue a quotation, create an invitation, contact the hotel, or affect production administrator roles.</p>
+ <div class="actions"><button type="button" id="sendHotelEmailPreview">Send Test Email Preview</button></div>
+ <div id="hotelEmailPreviewResult" aria-live="polite"></div>
+</section>
 <section class="card hidden" id="draftListCard">
  <div class="item-head"><h2>Saved quotation drafts</h2><button type="button" id="refreshDrafts" class="secondary">Refresh drafts</button></div>
  <div id="draftList" class="small">Loading saved drafts…</div>
@@ -108,6 +114,7 @@ async function initialise(){
   $("workspace").classList.remove("hidden");
   $("draftListCard").classList.remove("hidden");
   $("status").textContent="Connected. Authorised quotation operator verified.";
+  $("hotelEmailPreviewCard").classList.remove("hidden");
   addItem();renderTotals();await refreshDrafts();
  }catch(e){show(e.message||"Unable to verify access.","error");}
 }
@@ -230,6 +237,20 @@ $("resetModal").addEventListener("click",e=>{if(e.target===$("resetModal"))$("re
 $("cancelIssue").addEventListener("click",()=>{$("issueModal").classList.remove("open");pendingIssue=null;});
 $("confirmIssue").addEventListener("click",confirmIssueQuotation);
 $("issueModal").addEventListener("click",e=>{if(e.target===$("issueModal")){$("issueModal").classList.remove("open");pendingIssue=null;}});
+$("sendHotelEmailPreview").addEventListener("click",async()=>{
+ const button=$("sendHotelEmailPreview"),out=$("hotelEmailPreviewResult");
+ button.disabled=true;show("Checking your signed-in test administrator session…","info","hotelEmailPreviewResult");
+ try{
+  const {data:{session},error:sessionError}=await db.auth.getSession();
+  if(sessionError)throw sessionError;
+  if(!session?.access_token)throw new Error("Your test administrator session has expired. Sign in again.");
+  const {data,error}=await db.functions.invoke("hotel-quotation-email-preview-test");
+  if(error)throw error;
+  if(!data?.success||data?.test_only!==true)throw new Error(data?.error||"The email preview was not accepted.");
+  show("Test email accepted by Resend for "+data.sent_to+". Email ID: "+(data.email_id||"not supplied")+". Inbox delivery is not yet confirmed. No quotation was saved or issued; no invitation was created; the hotel was not contacted.","success","hotelEmailPreviewResult");
+ }catch(e){show(e.message||"Unable to send the test email preview.","error","hotelEmailPreviewResult");}
+ finally{button.disabled=false;}
+});
 $("refreshDrafts").addEventListener("click",refreshDrafts);
 $("addItem").addEventListener("click",addItem);
 ["additional","discount","delivery"].forEach(id=>$(id).addEventListener("input",renderTotals));
