@@ -53,9 +53,9 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <div id="hotelEmailPreviewResult" aria-live="polite"></div>
 </section>
 <section class="card hidden" id="hotelPdfEncryptionTestCard">
- <h2>Hotel quotation PDF encryption — internal test</h2>
- <p class="small">Uses the isolated hotel quotation draft addressed to unajite@yahoo.com. Checks AES-256 encryption, rejection of an incorrect password, and opening with the correct password. It does not issue the quotation, create an invitation, send email, reveal a password, or start payment.</p>
- <div class="actions"><button type="button" id="runHotelPdfEncryptionTest">Run PDF Encryption Test</button></div>
+ <h2>Hotel quotation PDF and encryption-key test — internal test</h2>
+ <p class="small">Checks the saved DIRECT_QUOTE_PASSWORD_KEY with AES-GCM encryption/decryption and wrong-key rejection, then checks AES-256 PDF encryption. Uses the isolated hotel quotation draft. No password is returned; no document is stored; no quotation is issued; no invitation, email or payment is created.</p>
+ <div class="actions"><button type="button" id="runHotelPdfEncryptionTest">Run PDF and Key Test</button></div>
  <div id="hotelPdfEncryptionTestResult" aria-live="polite"></div>
 </section>
 <section class="card hidden" id="draftListCard">
@@ -273,6 +273,10 @@ $("runHotelPdfEncryptionTest").addEventListener("click",async()=>{
    "Incorrect password rejected: "+(data.wrong_password_rejected?"PASS":"FAIL"),
    "Correct password opens PDF: "+(data.correct_password_opens?"PASS":"FAIL"),
    "PDF size: "+Number(data.pdf_bytes||0).toLocaleString("en-NG")+" bytes",
+   "Password key configured: "+(data.password_key_configured?"PASS":"FAIL"),
+   "Password key encryption/decryption: "+(data.password_key_roundtrip?"PASS":"FAIL"),
+   "Wrong encryption key rejected: "+(data.password_key_wrong_key_rejected?"PASS":"FAIL"),
+   "No document stored: "+(data.document_stored===false?"PASS":"FAIL"),
    "No password returned; no quotation issued; no invitation, email or payment created."
   ];
   const box=$("hotelPdfEncryptionTestResult");
