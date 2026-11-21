@@ -52,6 +52,12 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <div class="actions"><button type="button" id="sendHotelEmailPreview">Send Test Email Preview</button></div>
  <div id="hotelEmailPreviewResult" aria-live="polite"></div>
 </section>
+<section class="card hidden" id="hotelPdfEncryptionTestCard">
+ <h2>Hotel quotation PDF encryption — internal test</h2>
+ <p class="small">Uses the isolated hotel quotation draft addressed to unajite@yahoo.com. Checks AES-256 encryption, rejection of an incorrect password, and opening with the correct password. It does not issue the quotation, create an invitation, send email, reveal a password, or start payment.</p>
+ <div class="actions"><button type="button" id="runHotelPdfEncryptionTest">Run PDF Encryption Test</button></div>
+ <div id="hotelPdfEncryptionTestResult" aria-live="polite"></div>
+</section>
 <section class="card hidden" id="draftListCard">
  <div class="item-head"><h2>Saved quotation drafts</h2><button type="button" id="refreshDrafts" class="secondary">Refresh drafts</button></div>
  <div id="draftList" class="small">Loading saved drafts…</div>
@@ -115,6 +121,7 @@ async function initialise(){
   $("draftListCard").classList.remove("hidden");
   $("status").textContent="Connected. Authorised quotation operator verified.";
   $("hotelEmailPreviewCard").classList.remove("hidden");
+  $("hotelPdfEncryptionTestCard").classList.remove("hidden");
   addItem();renderTotals();await refreshDrafts();
  }catch(e){show(e.message||"Unable to verify access.","error");}
 }
@@ -249,6 +256,30 @@ $("sendHotelEmailPreview").addEventListener("click",async()=>{
   if(!data?.success||data?.test_only!==true)throw new Error(data?.error||"The email preview was not accepted.");
   show("Test email accepted by Resend for "+data.sent_to+". Email ID: "+(data.email_id||"not supplied")+". Inbox delivery is not yet confirmed. No quotation was saved or issued; no invitation was created; the hotel was not contacted.","success","hotelEmailPreviewResult");
  }catch(e){show(e.message||"Unable to send the test email preview.","error","hotelEmailPreviewResult");}
+ finally{button.disabled=false;}
+});
+$("runHotelPdfEncryptionTest").addEventListener("click",async()=>{
+ const button=$("runHotelPdfEncryptionTest");
+ button.disabled=true;
+ show("Generating and checking the encrypted test PDF…","info","hotelPdfEncryptionTestResult");
+ try{
+  const {data,error}=await db.functions.invoke("hotel-quotation-pdf-encryption-test",{body:{}});
+  if(error)throw error;
+  if(!data?.success||data?.test_only!==true)throw new Error(data?.error||"PDF encryption test did not pass.");
+  const checks=[
+   "Quotation: "+data.quotation_reference,
+   "Encryption: "+data.encryption,
+   "Encrypted document detected: "+(data.encrypted_document_detected?"PASS":"FAIL"),
+   "Incorrect password rejected: "+(data.wrong_password_rejected?"PASS":"FAIL"),
+   "Correct password opens PDF: "+(data.correct_password_opens?"PASS":"FAIL"),
+   "PDF size: "+Number(data.pdf_bytes||0).toLocaleString("en-NG")+" bytes",
+   "No password returned; no quotation issued; no invitation, email or payment created."
+  ];
+  const box=$("hotelPdfEncryptionTestResult");
+  box.className="message success";
+  box.textContent=checks.join("\\n");
+  box.style.whiteSpace="pre-line";
+ }catch(e){show(e.message||"PDF encryption test failed.","error","hotelPdfEncryptionTestResult");}
  finally{button.disabled=false;}
 });
 $("refreshDrafts").addEventListener("click",refreshDrafts);
