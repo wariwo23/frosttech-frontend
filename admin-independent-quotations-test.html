@@ -132,7 +132,7 @@ async function initialise(){
   $("bankWorkflowCard").classList.remove("hidden");
   const canPrepare=["super_admin","operations_admin"].includes(role);
   const canConfirm=["super_admin","finance_admin"].includes(role);
-  $("confirmBankCredit").disabled=!canConfirm;
+  $("confirmBankCredit").disabled=!canConfirm;\n  $("sendBankInstructions").disabled=!canPrepare;
   if(!canConfirm)$("bankConfirmationForm").querySelector("h3").textContent="Bank confirmation is restricted to Finance Administrator or Super Administrator.";
   if(canPrepare){
    const {data:list,error:le}=await db.from("products").select("id,name,category,unit,selling_price").eq("is_active",true).order("name");
