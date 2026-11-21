@@ -58,6 +58,19 @@ button.secondary,.link.secondary{background:#eaf2f9;color:var(--navy)}button:dis
  <div class="actions"><button type="button" id="runHotelPdfEncryptionTest">Run PDF and Key Test</button></div>
  <div id="hotelPdfEncryptionTestResult" aria-live="polite"></div>
 </section>
+<section class="card hidden" id="bankWorkflowCard">
+ <h2>Consultation fee — bank transfer test</h2>
+ <p class="small">Test quotation only. Send the protected PDF and bank instructions to the quotation email. After independently checking a bank-originated credit notification, a Finance Administrator or Super Administrator can confirm the transfer and release the PDF password by email.</p>
+ <div class="actions"><button type="button" id="sendBankInstructions">Send bank instructions and protected PDF</button><button type="button" class="secondary" id="refreshBankStatus">Refresh payment status</button></div>
+ <div id="bankWorkflowStatus" class="message" aria-live="polite">Checking bank-transfer status…</div>
+ <div id="bankConfirmationForm">
+  <h3>Confirm bank credit notification</h3>
+  <label>Bank transaction reference<input id="bankTransferReference" maxlength="120" placeholder="Enter the bank's transaction reference"></label>
+  <label style="margin-top:10px">Bank-originated credit notification details<textarea id="bankNotificationDetails" maxlength="2000" placeholder="Record the bank notification details you independently received"></textarea></label>
+  <div class="actions"><button type="button" id="confirmBankCredit">Confirm bank credit and email PDF password</button><button type="button" id="retryPasswordEmail" class="secondary hidden">Retry password email</button></div>
+  <p class="small">Do not confirm from a customer-uploaded receipt or customer statement alone. This action records the confirming administrator, time, amount, and bank reference.</p>
+ </div>
+</section>
 <section class="card hidden" id="draftListCard">
  <div class="item-head"><h2>Saved quotation drafts</h2><button type="button" id="refreshDrafts" class="secondary">Refresh drafts</button></div>
  <div id="draftList" class="small">Loading saved drafts…</div>
@@ -105,7 +118,7 @@ const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
 const $=id=>document.getElementById(id);
 const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
-let products=[];
+let products=[];\nlet currentAdminRole="";
 function show(message,type="info",target="status"){const n=$(target);n.className="message "+type;n.textContent=message;}
 async function initialise(){
  try{
@@ -114,15 +127,24 @@ async function initialise(){
   const {data:profile,error:pe}=await db.from("profiles").select("id,role,is_active").eq("id",session.user.id).maybeSingle();
   if(pe||!profile||profile.is_active!==true)throw new Error("Administrator profile could not be verified.");
   const {data:role,error:re}=await db.rpc("admin_get_my_role");
-  if(re||!["super_admin","operations_admin"].includes(role))throw new Error("Only Super Administrator or Operations Administrator can prepare independent quotations.");
-  const {data:list,error:le}=await db.from("products").select("id,name,category,unit,selling_price").eq("is_active",true).order("name");
-  if(le)throw le;products=list||[];
-  $("workspace").classList.remove("hidden");
-  $("draftListCard").classList.remove("hidden");
-  $("status").textContent="Connected. Authorised quotation operator verified.";
-  $("hotelEmailPreviewCard").classList.remove("hidden");
-  $("hotelPdfEncryptionTestCard").classList.remove("hidden");
-  addItem();renderTotals();await refreshDrafts();
+  if(re||!["super_admin","operations_admin","finance_admin"].includes(role))throw new Error("An authorised FrostTech administrator account is required.");
+  currentAdminRole=role;
+  $("bankWorkflowCard").classList.remove("hidden");
+  const canPrepare=["super_admin","operations_admin"].includes(role);
+  const canConfirm=["super_admin","finance_admin"].includes(role);
+  $("confirmBankCredit").disabled=!canConfirm;
+  if(!canConfirm)$("bankConfirmationForm").querySelector("h3").textContent="Bank confirmation is restricted to Finance Administrator or Super Administrator.";
+  if(canPrepare){
+   const {data:list,error:le}=await db.from("products").select("id,name,category,unit,selling_price").eq("is_active",true).order("name");
+   if(le)throw le;products=list||[];
+   $("workspace").classList.remove("hidden");
+   $("draftListCard").classList.remove("hidden");
+   $("hotelEmailPreviewCard").classList.remove("hidden");
+   $("hotelPdfEncryptionTestCard").classList.remove("hidden");
+   addItem();renderTotals();await refreshDrafts();
+  }
+  $("status").textContent="Connected. Authorised administrator role verified: "+role+".";
+  await refreshBankStatus();
  }catch(e){show(e.message||"Unable to verify access.","error");}
 }
 async function refreshDrafts(){
@@ -295,6 +317,54 @@ $("runHotelPdfEncryptionTest").addEventListener("click",async()=>{
   box.style.whiteSpace="pre-line";
  }catch(e){show(e.message||"PDF encryption test failed.","error","hotelPdfEncryptionTestResult");}
  finally{button.disabled=false;}
+});
+async function refreshBankStatus(){
+ const box=$("bankWorkflowStatus");box.textContent="Checking bank-transfer status…";
+ try{
+  const {data,error}=await db.functions.invoke("direct-quotation-bank-workflow",{body:{action:"get_status"}});
+  if(error||!data?.success)throw new Error(data?.error||error?.message||"Could not retrieve bank payment status.");
+  const c=data.bank_confirmation;
+  box.className="message "+(c?.password_email_status==="sent"?"success":"");
+  box.textContent="Quotation "+data.quotation_number+" | Consultation Fee: "+money(data.consultation_fee)+" | Fee status: "+data.fee_status+" | Protected PDF email: "+data.document_email_status+(c?" | Bank reference: "+c.bank_reference+" | Confirmed: "+new Date(c.confirmed_at).toLocaleString("en-NG")+" | Password email: "+c.password_email_status:" | Awaiting bank transfer confirmation.");
+  if(c?.password_email_status==="failed"&&["super_admin","finance_admin"].includes(currentAdminRole))$("retryPasswordEmail").classList.remove("hidden");
+  else $("retryPasswordEmail").classList.add("hidden");
+  if(c?.password_email_status==="sent")$("confirmBankCredit").disabled=true;
+ }catch(e){box.className="message error";box.textContent=e.message||"Could not retrieve bank status.";}
+}
+$("sendBankInstructions").addEventListener("click",async()=>{
+ const b=$("sendBankInstructions");b.disabled=true;b.textContent="Sending email…";
+ try{
+  const {data,error}=await db.functions.invoke("direct-quotation-bank-workflow",{body:{action:"send_instructions"}});
+  if(error||!data?.success)throw new Error(data?.error||error?.message||"Bank instructions email failed.");
+  show("Bank instructions and protected PDF accepted by Resend for "+data.recipient+". Check the internal test inbox; provider acceptance is not proof of inbox delivery.","success","bankWorkflowStatus");
+  await refreshBankStatus();
+ }catch(e){$("bankWorkflowStatus").className="message error";$("bankWorkflowStatus").textContent=e.message||"Could not send bank instructions.";}
+ finally{b.disabled=false;b.textContent="Send bank instructions and protected PDF";}
+});
+$("refreshBankStatus").addEventListener("click",refreshBankStatus);
+$("confirmBankCredit").addEventListener("click",async()=>{
+ const ref=$("bankTransferReference").value.trim(),details=$("bankNotificationDetails").value.trim(),b=$("confirmBankCredit");
+ if(ref.length<4||details.length<8){$("bankWorkflowStatus").className="message error";$("bankWorkflowStatus").textContent="Enter the bank transaction reference and bank-originated credit notification details.";return;}
+ if(!["super_admin","finance_admin"].includes(currentAdminRole)){ $("bankWorkflowStatus").className="message error";$("bankWorkflowStatus").textContent="Only Finance Administrator or Super Administrator can confirm bank credit.";return;}
+ b.disabled=true;b.textContent="Verifying and releasing password…";
+ try{
+  const {data,error}=await db.functions.invoke("direct-quotation-bank-workflow",{body:{action:"confirm_bank_payment",bank_reference:ref,notification_details:details}});
+  if(error||!data?.success)throw new Error(data?.error||error?.message||"Bank confirmation failed.");
+  $("bankWorkflowStatus").className="message success";
+  $("bankWorkflowStatus").textContent=data.password_email_sent?"Bank credit recorded and PDF password email accepted by Resend for "+data.recipient+".":"Bank credit recorded. Password email status: "+(data.password_email_status||"processing")+".";
+  await refreshBankStatus();
+ }catch(e){$("bankWorkflowStatus").className="message error";$("bankWorkflowStatus").textContent=e.message||"Bank confirmation failed.";}
+ finally{b.disabled=false;b.textContent="Confirm bank credit and email PDF password";}
+});
+$("retryPasswordEmail").addEventListener("click",async()=>{
+ const b=$("retryPasswordEmail");b.disabled=true;b.textContent="Retrying…";
+ try{
+  const {data,error}=await db.functions.invoke("direct-quotation-bank-workflow",{body:{action:"retry_password_email"}});
+  if(error||!data?.success)throw new Error(data?.error||error?.message||"Password email retry failed.");
+  $("bankWorkflowStatus").className="message success";$("bankWorkflowStatus").textContent="Password email accepted by Resend for "+(data.recipient||"the quotation email")+".";
+  await refreshBankStatus();
+ }catch(e){$("bankWorkflowStatus").className="message error";$("bankWorkflowStatus").textContent=e.message||"Password email retry failed.";}
+ finally{b.disabled=false;b.textContent="Retry password email";}
 });
 $("refreshDrafts").addEventListener("click",refreshDrafts);
 $("addItem").addEventListener("click",addItem);
