@@ -41,6 +41,17 @@ label.field{display:block;margin:12px 0;font-weight:600}label.field input,label.
  <button type="button" id="payFee" style="margin-top:12px">Pay Quotation Processing and Marketplace Administration Fee</button>
  <p class="small">Payment is handled securely by Paystack. The amount is calculated by FrostTech's server. Delivery is excluded from the administration-fee calculation.</p>
 </div>
+<div id="pdfPasswordPanel" class="card hidden" style="margin:18px 0 0;border:1px solid #cbd8e5">
+ <h2>Open your protected quotation PDF</h2>
+ <p class="small">Your quotation processing fee has been verified. You can now securely reveal the PDF password below. Keep it private.</p>
+ <button type="button" id="revealPdfPassword">Reveal PDF Password</button>
+ <div id="pdfPasswordResult" class="hidden" style="margin-top:12px">
+  <label class="field">PDF password<input id="pdfPasswordValue" type="text" readonly autocomplete="off" style="width:100%;padding:11px;border:1px solid #bdc9d6;border-radius:7px"></label>
+  <div class="row"><button type="button" id="copyPdfPassword" class="secondary">Copy Password</button></div>
+  <p class="small">Open the encrypted PDF attachment from your FrostTech email and enter this password. Do not forward the password to anyone.</p>
+ </div>
+ <div id="pdfPasswordMessage" class="notice hidden" style="margin-top:10px"></div>
+</div>
 <div id="decisionPanel" class="hidden" style="margin-top:20px;border-top:1px solid #e5eaf0;padding-top:16px">
  <h2>Respond to this quotation</h2>
  <label class="field">Delivery address (required for eligible catalogue products)<textarea id="deliveryAddress" maxlength="1500" placeholder="Enter the delivery address"></textarea></label>
@@ -121,6 +132,29 @@ async function load(){
  $("heading").textContent="Quotation "+q.quotation_number;
  $("customerGreeting").textContent="Hello "+(q.customer_name||"Customer")+", FrostTech has prepared this quotation for you.";
  if(q.details_unlocked){
+  $("pdfPasswordPanel").classList.remove("hidden");
+  $("revealPdfPassword").addEventListener("click",async()=>{
+   const button=$("revealPdfPassword"),note=$("pdfPasswordMessage");
+   button.disabled=true;button.textContent="Verifying secure access…";
+   note.classList.add("hidden");
+   try{
+    const {data:release,error:releaseError}=await db.functions.invoke("direct-quotation-password",{body:{quotation_id:q.quotation_id,token:invite}});
+    if(releaseError||!release?.success)throw new Error(release?.error||releaseError?.message||"The PDF password could not be released.");
+    $("pdfPasswordValue").value=release.password;
+    $("pdfPasswordResult").classList.remove("hidden");
+    note.textContent="Your PDF password has been released to this authenticated customer account.";
+    note.className="notice success";note.classList.remove("hidden");
+    button.textContent="Password Revealed";
+   }catch(e){
+    note.textContent=e.message||"Unable to retrieve the PDF password.";
+    note.className="notice error";note.classList.remove("hidden");
+    button.disabled=false;button.textContent="Try Again";
+   }
+  });
+  $("copyPdfPassword").addEventListener("click",async()=>{
+   try{await navigator.clipboard.writeText($("pdfPasswordValue").value);$("copyPdfPassword").textContent="Copied";}
+   catch(e){$("pdfPasswordValue").select();document.execCommand("copy");$("copyPdfPassword").textContent="Copied";}
+  });
   $("feeNotice").textContent="Quotation details are available. Your quotation processing fee has been recorded as paid or waived.";
   $("quoteDetails").classList.remove("hidden");
   $("customerMessage").textContent=q.customer_message||"";
