@@ -112,3 +112,17 @@ The test database contains the expanded bookkeeping, supplier-settlement and tax
 The test tax functions include several correctly Super Admin-only controls for tax rule creation/activation/deactivation, tax settings, and final supplier settlement approval. Finance has prepare/review/documentation permissions, not final tax-rule or settlement approval authority. This boundary must be preserved when porting.
 
 **No Finance tables or tax/settlement functions were copied to production in this step.** Copying them without their foreign keys, triggers, RLS policies, Storage policies, idempotency controls, accounting constraints, and records would be unsafe. The next Finance release package must be schema-first, with explicit dependency ordering and a record-preserving import plan for the verified opening bookkeeping entries.
+
+
+## Finance permission groundwork — 26 November 2026
+
+Production permission map now includes the Finance operational capabilities already established in the isolated test:
+- bookkeeping read, preparation, document handling and reports;
+- supplier settlement read, preparation and audit review;
+- tax assessment operations, certificate/remittance handling, tax-rule read access and supplier tax-profile handling.
+
+The migration is recorded as `20261126223000_production_finance_department_permissions.sql` and was applied to production. Post-change query confirmed all 14 permission rows exist for `finance_admin`.
+
+This is permission groundwork only. The production Finance UI at `finance-admin.html` still uses the existing payment/quotation RPCs. The test-only bookkeeping/tax/settlement tables and their journal guards, append-only audit triggers, tax rules, evidence storage and settlement workflow are not yet present as a complete production schema. No test finance records were copied. The test bookkeeping record counts (4 journals, 8 lines, 1 expense and 1 shareholder-loan row) are not proof of production records; the ₦100,000 loan / ₦10,000 expense / ₦90,000 bank balance must be reconciled against the supporting bank statement and existing production bookkeeping before import.
+
+Final tax-rule authority and final supplier-settlement approval remain Super Admin responsibilities. Finance does not receive those powers.
