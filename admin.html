@@ -2847,12 +2847,43 @@ async function saveProduct(event) {
 
             values.is_active = $("productActive").value === "true";
 
-            const { error } = await db
-                .from("products")
-                .update(values)
-                .eq("id", productId);
+            const { error: detailsError } = await db.rpc(
+                "catalogue_update_product_details",
+                {
+                    p_product_id: productId,
+                    p_name: values.name,
+                    p_category: values.category,
+                    p_brand: values.brand,
+                    p_model: values.model,
+                    p_description: values.description,
+                    p_sku: values.sku,
+                    p_unit: values.unit,
+                    p_image_url: values.image_url ?? existing.image_url ?? null
+                }
+            );
+            if (detailsError) throw detailsError;
 
-            if (error) throw error;
+            const { error: stockError } = await db.rpc(
+                "catalogue_update_stock",
+                {
+                    p_product_id: productId,
+                    p_stock_quantity: stock,
+                    p_min_stock_level: minStock
+                }
+            );
+            if (stockError) throw stockError;
+
+            const nextActive = $("productActive").value === "true";
+            if (nextActive !== Boolean(existing.is_active)) {
+                const { error: activeError } = await db.rpc(
+                    "catalogue_set_product_active",
+                    {
+                        p_product_id: productId,
+                        p_is_active: nextActive
+                    }
+                );
+                if (activeError) throw activeError;
+            }
         } else {
             /*
              * New products start inactive and unpriced.
@@ -2863,11 +2894,23 @@ async function saveProduct(event) {
             values.selling_price = null;
             values.supplier_id = null;
 
-            const { error } = await db
-                .from("products")
-                .insert(values);
-
-            if (error) throw error;
+            const { data: createdProductId, error: createError } = await db.rpc(
+                "catalogue_create_product",
+                {
+                    p_name: name,
+                    p_category: category,
+                    p_brand: values.brand,
+                    p_model: values.model,
+                    p_description: values.description,
+                    p_sku: values.sku,
+                    p_unit: values.unit || "piece",
+                    p_image_url: values.image_url ?? null,
+                    p_stock_quantity: stock,
+                    p_min_stock_level: minStock
+                }
+            );
+            if (createError) throw createError;
+            if (!createdProductId) throw new Error("Product creation did not return a product ID.");
         }
 
         await loadProducts();
@@ -2918,13 +2961,13 @@ async function toggleProduct(id) {
             }
         }
 
-        const { error } = await db
-            .from("products")
-            .update({
-                is_active: nextActive,
-                updated_at: new Date().toISOString()
-            })
-            .eq("id", id);
+        const { error } = await db.rpc(
+            "catalogue_set_product_active",
+            {
+                p_product_id: id,
+                p_is_active: nextActive
+            }
+        );
 
         if (error) throw error;
 
