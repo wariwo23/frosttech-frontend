@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Advertisers &amp; Communications | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}
+header{background:#063b70;color:#fff;padding:20px}main{max-width:900px;margin:auto;padding:16px}
+.card{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:18px;margin:14px 0}
+h1{font-size:22px;margin:0 0 8px}h2{color:#063b70}.message{padding:12px;border-radius:7px;background:#e8f3ff;color:#06477c;line-height:1.5}
+button{border:0;border-radius:6px;background:#536579;color:#fff;padding:11px 16px;font-weight:bold}
+.muted{color:#5c6d7e;line-height:1.55}a{color:#0879c9}
+</style></head><body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Advertisers &amp; Communications Administration</p></header>
+<main>
+<section class="card"><h2 id="heading">Verifying departmental access</h2><p id="status" class="message">Checking your assigned FrostTech role…</p><p id="identity" hidden></p></section>
+<section class="card"><h2>Department responsibilities</h2>
+<ul><li>Advertiser applications and document review</li><li>Campaign content review and approval workflow</li><li>Customer and advertiser communications</li><li>Notification delivery monitoring</li></ul>
+<p class="muted">This department does not control advertising package prices, payment verification, refunds, or payment status. Those financial controls remain separate.</p>
+</section>
+<section class="card"><h2>Workspace integration status</h2>
+<p class="message">Departmental role and permission mapping are installed. The advertising review interface and notification actions are being reconciled against the new permission model. Until that compatibility work is complete, this page is intentionally read-only. No campaign, payment or customer record can be changed here.</p>
+<p><a href="departmental-admin.html">Return to departmental portal</a> · <a href="index.html">Return to marketplace</a></p>
+<button id="logout" type="button">Sign Out</button>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+(async()=>{const status=document.getElementById("status");try{
+ const {data:{user},error:uerr}=await db.auth.getUser();if(uerr||!user)throw new Error("Please sign in through Departmental Sign-in.");
+ const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;
+ if(role!=="advertisers_admin"&&role!=="super_admin")throw new Error("This workspace is restricted to Advertisers & Communications Administrators.");
+ document.getElementById("heading").textContent=role==="super_admin"?"Advertisers & Communications — Super Admin Preview":"Advertisers & Communications Administration";
+ document.getElementById("identity").hidden=false;document.getElementById("identity").textContent="Signed in: "+(user.email||"Administrator")+" · "+role;
+ status.textContent="Access verified. The workspace is currently read-only while campaign and notification permissions are being reconciled.";
+}catch(e){status.textContent=e.message||"Access verification failed.";status.style.background="#ffebee";status.style.color="#a11919";}})();
+document.getElementById("logout").onclick=async()=>{const {error}=await db.auth.signOut();if(error){document.getElementById("status").textContent=error.message;return;}location.href="department-sign-in.html";};
+</script></body></html>
