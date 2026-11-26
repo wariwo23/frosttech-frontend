@@ -124,7 +124,7 @@ $("createProductForm").addEventListener("submit",async event=>{
 async function start(){
  try{const {data:u,error:ue}=await db.auth.getUser();if(ue||!u.user){status("Please sign in through the FrostTech administrator login.","error");return;}
  const {data:role,error}=await db.rpc("admin_get_my_role");if(error)throw error;
- if(role!=="catalogue_admin"&&role!=="super_admin"){status("This page is restricted to Catalogue Administrators and Super Administrator preview.","error");return;}
+ if(role!=="catalogue_admin"&&role!=="supplier_catalogue_admin"&&role!=="super_admin"){status("This page is restricted to Catalogue Administrators and Super Administrator preview.","error");return;}
  preview=role==="super_admin";$("heading").textContent=preview?"Catalogue Administration — Preview":"Catalogue Administration";
  $("email").textContent=u.user.email||"Administrator";$("role").textContent=role;$("session").classList.remove("hidden");$("catalogue").classList.remove("hidden");
  if(preview){$("preview").classList.remove("hidden");$("newProduct").classList.add("hidden");}await load();
