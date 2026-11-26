@@ -93,3 +93,22 @@ Post-migration inspection confirmed the three constraints contain the new role/d
 - Operations standard quotation revision dependencies remain outstanding.
 - Finance permission and bookkeeping/tax/settlement compatibility remains outstanding.
 - GitHub Pages deployment and browser regression for the commits above remain unverified in this pass.
+
+
+## Finance integration reconciliation — production versus isolated test
+
+A live function/table inventory was completed after the role foundation.
+
+Production already has permission-gated Finance RPCs:
+- `finance_get_dashboard` and `finance_get_summary` — `financial_reports.read`
+- `finance_list_payments` — `payments.read`
+- `finance_list_quotations` and `finance_list_direct_quotation_activity` — `quotations.read_financial`
+- `finance_list_my_cost_submissions` and `finance_list_quotations_for_costing` — `quotations.costs.submit`
+
+The existing production `finance_admin` mapping already includes these permissions. No duplicate permission grants were added.
+
+The test database contains the expanded bookkeeping, supplier-settlement and tax workflows, including 12 bookkeeping tables and tax/settlement tables. Production currently has only `frosttech_tax_settings` among those tax/finance-specific table families; it does not yet contain the bookkeeping journals/accounts/bank transaction/document/expense/loan tables, nor the test tax assessment/rule/certificate/remittance and supplier settlement tables.
+
+The test tax functions include several correctly Super Admin-only controls for tax rule creation/activation/deactivation, tax settings, and final supplier settlement approval. Finance has prepare/review/documentation permissions, not final tax-rule or settlement approval authority. This boundary must be preserved when porting.
+
+**No Finance tables or tax/settlement functions were copied to production in this step.** Copying them without their foreign keys, triggers, RLS policies, Storage policies, idempotency controls, accounting constraints, and records would be unsafe. The next Finance release package must be schema-first, with explicit dependency ordering and a record-preserving import plan for the verified opening bookkeeping entries.
