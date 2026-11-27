@@ -36,7 +36,7 @@ confirmBtn.onclick=async()=>{
  if(ok)closeReview();else{confirmBtn.disabled=false;confirmBtn.textContent=p.action==="approve"?"Yes, Approve and Activate":"Yes, Reject Advertisement";}
 };
 async function load(){queue.textContent="Loading paid submissions…";const {data:{user},error:uerr}=await db.auth.getUser();if(uerr||!user)throw new Error("Administrator sign-in required.");
-const {data:admin,error:aerr}=await db.rpc("is_admin");if(aerr||admin!==true)throw new Error("Administrator authorization failed.");
+const {data:canReview,error:aerr}=await db.rpc("admin_has_permission",{required_permission:"advertisements.review"});if(aerr||canReview!==true)throw new Error("Advertising review permission is required.");
 const {data:ads,error}=await db.from("advertisement_submissions").select("id,advertiser_id,advertisement_title,category,description,image_paths,advertised_price,status,created_at").eq("status","submitted").order("created_at",{ascending:true});if(error)throw error;
 const paid=[];
 for(const ad of (ads||[])){const {data:items,error:ie}=await db.from("advertising_order_items").select("id,advertising_order_id,package_name_snapshot,duration_days_snapshot,unit_price").eq("advertisement_id",ad.id);if(ie)throw ie;
