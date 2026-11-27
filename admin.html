@@ -2579,7 +2579,7 @@ async function loadProducts() {
     try {
         const { data, error } = await db
             .from("products")
-            .select("id, name, category, brand, model, description, sku, unit, selling_price, stock_quantity, min_stock_level, image_url, is_active, supplier_id, created_at, updated_at")
+            .select("id, name, category, brand, model, description, sku, unit, selling_price, stock_quantity, min_stock_level, image_url, is_active, created_at, updated_at")
             .order("created_at", { ascending: false });
 
         if (error) throw error;
