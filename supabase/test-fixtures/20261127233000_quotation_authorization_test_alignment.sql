@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION public.admin_create_direct_quotation_revision_v2(p_so
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$
+AS $function$;
 declare
   v_source public.admin_quotations%rowtype;
   v_new public.admin_quotations%rowtype;
@@ -106,7 +106,7 @@ begin
     'quotation_number',v_new.quotation_number,'version_group_id',v_new.version_group_id,
     'version_number',v_new.version_number,'supersedes_quotation_id',v_source.id);
 end;
-$function$
+$function$;
 
 
 -- Remaining production RPC compatibility definitions.
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION public.admin_replace_direct_quotation_items_v2(p_quot
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$
+AS $function$;
 declare
   v_quote public.admin_quotations%rowtype;
   v_count integer;
@@ -242,7 +242,7 @@ begin
   return jsonb_build_object('success',true,'quotation_id',v_quote.id,
     'item_count',v_count,'items_total',round(v_total,2));
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.admin_submit_direct_quotation(p_quotation_id uuid)
@@ -250,7 +250,7 @@ CREATE OR REPLACE FUNCTION public.admin_submit_direct_quotation(p_quotation_id u
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$
+AS $function$;
 declare
   v_quote public.admin_quotations%rowtype;
   v_request public.quote_requests%rowtype;
@@ -431,7 +431,7 @@ begin
     'subtotal',v_subtotal,'total_amount',v_total,'status',v_quote.status
   );
 end;
-$function$
+$function$;
 
 
 CREATE OR REPLACE FUNCTION public.frosttech_get_request_alternative_review_v1(p_request_id uuid)
@@ -439,7 +439,7 @@ CREATE OR REPLACE FUNCTION public.frosttech_get_request_alternative_review_v1(p_
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $function$
+AS $function$;
 declare
   v_can_see_prices boolean;
   v_result jsonb;
@@ -482,7 +482,7 @@ begin
 
   return v_result;
 end;
-$function$
+$function$;
 
 
 commit;
