@@ -39,7 +39,7 @@
       message = "Your password must not exceed Supabase’s 72-byte password limit. Use fewer characters or simpler characters.";
     } else if (!password.trim()) {
       message = "Your password cannot contain only spaces.";
-    } else if (confirmInput && password !== confirmInput.value) {
+    } else if (confirmInput && confirmInput.value && password !== confirmInput.value) {
       message = "The passwords do not match.";
     }
 
