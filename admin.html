@@ -1709,6 +1709,7 @@ let currentAdvertisers = [];
 let currentAdvertiserDocuments = [];
 let isSuperAdminAdvertiserReviewer = false;
 let canReviewAdvertiserDocuments = false;
+let canManageAdvertiserApplications = false;
 let currentRequests = [];
 let currentSuppliers = [];
 let currentSupplierQuotes = [];
@@ -2390,20 +2391,23 @@ async function loadAdvertisers() {
     await requireAdmin();
     showMessage("advertiserMessage", "Loading advertiser applications and private document records...", "info");
     try {
-        const [{ data: advertisers, error: advertiserError }, { data: superAdmin, error: roleError }, { data: documentPermission, error: documentPermissionError }] = await Promise.all([
+        const [{ data: advertisers, error: advertiserError }, { data: superAdmin, error: roleError }, { data: documentPermission, error: documentPermissionError }, { data: advertiserPermission, error: advertiserPermissionError }] = await Promise.all([
             db.from("advertisers")
                 .select("id,user_id,company_name,contact_person,email,phone,business_address,registration_number,verification_status,review_reason,created_at")
                 .order("created_at", { ascending: false }),
             db.rpc("is_super_admin"),
-            db.rpc("admin_has_permission", { required_permission: "advertiser_documents.review" })
+            db.rpc("admin_has_permission", { required_permission: "advertiser_documents.review" }),
+            db.rpc("admin_has_permission", { required_permission: "advertisers.manage" })
         ]);
         if (advertiserError) throw advertiserError;
         if (roleError) throw roleError;
         if (documentPermissionError) throw documentPermissionError;
+        if (advertiserPermissionError) throw advertiserPermissionError;
         currentAdvertisers = advertisers || [];
         currentAdvertiserDocuments = [];
         isSuperAdminAdvertiserReviewer = superAdmin === true;
         canReviewAdvertiserDocuments = documentPermission === true;
+        canManageAdvertiserApplications = advertiserPermission === true;
 
         const advertiserIds = currentAdvertisers.map(item => item.id).filter(Boolean);
         if (advertiserIds.length) {
@@ -2454,7 +2458,7 @@ function renderAdvertisers() {
 
     container.innerHTML = currentAdvertisers.map(advertiser => {
         const docs = documentsFor(advertiser.id);
-        const canReviewApplication = isSuperAdminAdvertiserReviewer &&
+        const canReviewApplication = canManageAdvertiserApplications &&
             ["pending", "rejected"].includes(String(advertiser.verification_status || "").toLowerCase());
         const applicationActions = canReviewApplication ? `
             <div class="admin-actions">
