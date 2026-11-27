@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Supplier Tax Profile | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#1d2939;font:15px Arial,sans-serif}header{background:#073b70;color:#fff;padding:20px}main{max-width:760px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #dce3eb;border-radius:12px;padding:20px;margin:14px 0}h1{font-size:22px;margin:0}h2{color:#073b70;margin-top:0}label{display:block;font-weight:600;margin:14px 0 6px}input,select{width:100%;padding:12px;border:1px solid #bdc9d5;border-radius:7px;font:inherit;background:#fff}button{background:#087443;color:#fff;border:0;border-radius:7px;padding:12px 16px;font-weight:700;margin-top:16px;width:100%}.muted{color:#64748b;font-size:13px}.message{padding:12px;border-radius:8px;background:#e8f2ff;color:#174276;overflow-wrap:anywhere}.error{background:#fff0ef;color:#a12622}.success{background:#e8f7ee;color:#17663a}a{color:#fff}
+</style></head><body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Supplier Tax Profile</p><a href="supplier.html">← Return to Supplier Portal</a></header>
+<main><section class="card"><h2>Submit or Update Tax Details</h2>
+<p class="muted">Provide accurate tax information for supplier settlement administration. Every new or changed submission returns to pending verification. Your tax identifier is not displayed publicly.</p>
+<p id="identity" class="message">Checking supplier account…</p>
+<form id="profileForm">
+<label for="classification">Tax classification</label><input id="classification" maxlength="120" required placeholder="Enter your applicable tax classification">
+<label for="entity">Entity type</label><select id="entity" required><option value="">Select entity type</option><option value="individual">Individual</option><option value="company">Company</option><option value="partnership">Partnership</option><option value="other">Other</option></select>
+<label for="residency">Tax residency</label><select id="residency" required><option value="">Select residency</option><option value="resident">Resident</option><option value="non_resident">Non-resident</option></select>
+<label for="taxId">Tax identification number</label><input id="taxId" maxlength="100" autocomplete="off" placeholder="Enter TIN, where applicable">
+<button id="save" type="submit">Submit Tax Profile for Verification</button>
+</form><p id="status" class="muted"></p></section></main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script src="supabase.js"></script>
+<script>
+"use strict";
+(async()=>{
+ const db=window.supabaseClient;const box=document.getElementById("identity"),form=document.getElementById("profileForm"),status=document.getElementById("status"),save=document.getElementById("save");
+ if(!db){box.textContent="Secure connection unavailable. Please return to the Supplier Portal.";box.className="message error";form.hidden=true;return}
+ const {data:{session},error}=await db.auth.getSession();
+ if(error||!session){box.textContent="Please sign in through your approved Supplier Portal account.";box.className="message error";form.hidden=true;return}
+ const {data:supplier,error:supplierError}=await db.from("suppliers").select("id,business_name,is_active,is_verified,review_status").eq("user_id",session.user.id).maybeSingle();
+ if(supplierError||!supplier||!supplier.is_active||!supplier.is_verified||supplier.review_status!=="approved"){box.textContent="An active, approved supplier account is required to submit tax details.";box.className="message error";form.hidden=true;return}
+ box.textContent="Signed in as "+(supplier.business_name||session.user.email)+".";
+ const {data:existing}=await db.rpc("frosttech_supplier_get_own_tax_profile");
+ if(existing){document.getElementById("classification").value=existing.tax_classification||"";document.getElementById("entity").value=existing.entity_type||"";document.getElementById("residency").value=existing.residency_status||"";document.getElementById("taxId").value=existing.tax_identifier||"";status.textContent="Current submission status: "+(existing.verification_status||"not submitted");}
+ form.addEventListener("submit",async e=>{e.preventDefault();save.disabled=true;save.textContent="Submitting…";try{const {data,error}=await db.rpc("frosttech_supplier_submit_tax_profile",{p_tax_classification:document.getElementById("classification").value.trim(),p_entity_type:document.getElementById("entity").value,p_residency_status:document.getElementById("residency").value,p_tax_identifier:document.getElementById("taxId").value.trim()});if(error)throw error;status.textContent="Tax profile submitted. Status: pending verification.";status.className="message success";}catch(err){status.textContent=err.message||"Unable to submit tax profile.";status.className="message error";}finally{save.disabled=false;save.textContent="Submit Tax Profile for Verification";}});
+})().catch(e=>{const b=document.getElementById("identity");b.textContent=e.message;b.className="message error";});
+</script></body></html>
