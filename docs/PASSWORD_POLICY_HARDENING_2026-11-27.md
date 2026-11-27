@@ -1,34 +1,40 @@
 # FrostTech Authentication Password Policy
 
 ## Scope
-This change adds a shared browser-side password policy to customer, supplier, guest and advertiser registration, plus customer, advertiser and supplier password reset. It does not alter sign-in validation, Supabase Auth configuration, existing passwords, accounts, sessions, or database records.
+A shared browser-side password policy is included on:
+- Customer registration
+- Supplier registration
+- Guest registration
+- Advertiser registration
+- Customer password reset
+- Supplier password reset
+- Advertiser password reset
 
-Employee invitation/password setup is intentionally excluded while FrostTech employment remains paused.
+Existing sign-in fields are not subject to the new-password rule. Employee invitation/password setup is intentionally excluded while FrostTech employment remains paused.
 
 ## Policy
 - New passwords must contain at least 12 Unicode characters.
-- Maximum accepted password size is 72 UTF-8 bytes, matching the Supabase Auth bcrypt limit.
+- Maximum accepted password size is 72 UTF-8 bytes, matching the Supabase Auth bcrypt password limit.
 - Spaces and passphrases are allowed; no arbitrary uppercase, digit, or symbol composition rule is imposed.
 - Password confirmation must match wherever the form has a confirmation field.
 - Passwords consisting only of whitespace are rejected.
-- The browser gives inline guidance and blocks submission before the existing Supabase sign-up/update handler runs.
+- The browser provides inline guidance and blocks invalid form submission before existing registration or Supabase password-update handlers run.
 
-This is a frontend guard. Supabase Auth remains the authoritative validator and continues to enforce its configured server-side requirements. This change does not enable leaked-password screening.
+This is a frontend guard. It is not a substitute for server-side Auth enforcement; Supabase Auth remains authoritative and continues to enforce its configured server-side requirements. No Auth settings were changed and leaked-password screening remains unavailable on the current Free plan.
 
-## Regression checklist
-1. 8-character password: blocked with the 12-character guidance.
-2. Supplier and guest registration forms load the shared validator.
-3. 11-character password: blocked.
-4. 12-character passphrase with spaces: accepted by the client validator.
-5. 12-character password with mixed case, digits, and symbols: accepted.
-6. Confirmation mismatch: blocked.
-7. Matching confirmation: accepted.
-8. Password exceeding 72 UTF-8 bytes: blocked with the Supabase size-limit message.
-9. Whitespace-only password: blocked.
-10. Customer and advertiser sign-in: unchanged; no new minimum is imposed on existing login passwords.
-11. Reset email requests, redirect URLs, recovery-session checks, and Supabase update calls: unchanged.
-12. Employee invitation setup: unchanged and not enabled by this work.
-13. Password guidance is associated with its input for assistive technology.
+## Verification completed
+- 9 password-validator regression cases.
+- 12 authentication page integration/compatibility cases.
+- 16 DOM-level cases using the actual HTML forms and shared validator through jsdom.
+- GitHub Actions run for commit `b8621e9ae00b4fd634fb9822ef138e4ebb6c6dba`: **37 tests passed, 0 failed**.
+
+The DOM tests verify short-password blocking, valid passphrase acceptance, confirmation mismatch feedback, and the 72-byte limit across the relevant forms. They do not constitute a manual test in a full graphical browser or a live Supabase email-delivery test.
+
+## Not changed
+- Existing passwords, accounts, sessions, or user records.
+- Supabase Auth configuration, database, Edge Functions, or SMTP/Brevo settings.
+- Existing login rules or password-reset email destinations.
+- Employee onboarding and appointments.
 
 ## Deployment status
-Prepared on the isolated Git branch `security/password-policy-hardening`. It has not been merged into `main` and has not been deployed to GitHub Pages or applied to Supabase.
+Prepared on the isolated Git branch `security/password-policy-hardening` and tracked in Draft Pull Request #17. It has not been merged into `main`, deployed to GitHub Pages, or applied to Supabase. Manual graphical-browser verification and a separately approved test recovery-email delivery remain outstanding.
