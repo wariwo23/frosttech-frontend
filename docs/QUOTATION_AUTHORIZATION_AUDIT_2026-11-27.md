@@ -51,3 +51,5 @@ The migration includes a separate `super_admin_quotation_items_manage` policy us
 
 ## Production release status
 The production migration remains unapplied pending explicit approval. The production data inventory at audit time remains 10 quotations, 12 quotation items, 1 private pricing snapshot and 11 quote requests.
+
+- Rollback validation: PASS. The isolated migration was rolled back, reapplied, and the full regression script passed again after reapplication.
