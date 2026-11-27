@@ -1,0 +1,191 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Company Bookkeeping | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}header{background:#063b70;color:#fff;padding:18px}header a{color:#fff;font-weight:bold}main{max-width:1180px;margin:auto;padding:16px}.card,.record{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:16px;margin:14px 0}.banner{background:#fff4d6;border-color:#e8cf87;color:#704b00}.muted{color:#607284;font-size:13px}.message{padding:11px;border-radius:7px;background:#e8f3ff;color:#06477c;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.metric{background:#f4f7fa;border-radius:8px;padding:13px}.metric strong{display:block;font-size:20px;margin-top:6px;overflow-wrap:anywhere}.toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}button,.button{display:inline-block;background:#0879c9;color:#fff;border:0;border-radius:7px;padding:10px 14px;font-weight:bold;text-decoration:none;cursor:pointer}.secondary{background:#536779}.tablewrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px;font-size:13px}th,td{padding:9px;border:1px solid #dce3eb;text-align:left;vertical-align:top}th{background:#edf3f8}.tag{display:inline-block;padding:4px 8px;border-radius:99px;background:#fff0cf;color:#805400;font-size:12px;font-weight:bold}.hidden{display:none!important}h2{margin-top:0;color:#063b70}.lineitems{margin:8px 0 0;padding-left:18px}.lineitems li{margin:4px 0}.field{padding:9px;border:1px solid #cbd5df;border-radius:6px;width:100%;max-width:100%;background:#fff}.entry-line{display:grid;grid-template-columns:minmax(150px,2fr) minmax(90px,1fr) minmax(90px,1fr) auto;gap:7px;margin:8px 0}@media(max-width:620px){.entry-line{grid-template-columns:1fr 1fr}.entry-line select{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header>
+<h1>FrostTech HVAC and Refrigeration</h1>
+<p>Company Bookkeeping &amp; Financial Records · Production Workspace</p>
+<p><a href="finance-admin.html">← Return to Finance Administration</a></p>
+</header>
+<main>
+<section class="card hidden" id="bookkeepingLogin"><h2>Finance Administrator Sign In</h2><p class="muted">Use your existing FrostTech production administrator account. Bookkeeping access is checked separately against your assigned production permissions.</p><form id="bookkeepingLoginForm"><label>Email address <input id="bookkeepingEmail" class="field" type="email" autocomplete="username" required></label><label>Password <input id="bookkeepingPassword" class="field" type="password" autocomplete="current-password" required></label><button id="bookkeepingLoginButton" type="submit">Sign In</button><a href="#" id="bookkeepingForgot" style="display:block;margin-top:10px">Forgot Password?</a></form><p id="bookkeepingLoginMessage" class="message">Sign in with your existing administrator account.</p></section>
+<section class="card"><h2>Bookkeeping access</h2><p id="accessStatus" class="message">Verifying your administrator session…</p><div id="identity" class="muted"></div><div id="documentPermission" class="muted"></div><div class="toolbar"><button id="refresh" type="button">Refresh Bookkeeping</button><button id="signOut" type="button" class="secondary">Sign Out</button></div></section>
+<div id="workspace" class="hidden">
+<section class="card"><h2>Accounting period</h2><div id="periodInfo" class="message">Loading accounting period…</div></section>
+<section class="card"><h2>Bookkeeping control summary</h2><p class="muted">Only posted journal entries form the official ledger balances. Draft entries remain pending and are displayed separately below.</p><div id="metrics" class="grid"></div></section>
+<section class="card" id="journalPreparation"><h2>Prepare Journal Entry</h2><p class="muted">Finance Admin prepares and submits journals. Submission does not post to the ledger.</p><div id="prepareAccess" class="message">Checking access…</div><div id="journalForm" class="hidden"><p><label>Entry date <input id="entryDate" class="field" type="date"></label></p><p><label>Accounting period <select id="entryPeriod" class="field"></select></label></p><p><label>Description <input id="entryDescription" class="field" maxlength="240"></label></p><p><label>Source reference (optional) <input id="entryReference" class="field" maxlength="100"></label></p><div id="entryLines"></div><div class="toolbar"><button id="addLine" type="button" class="secondary">Add line</button><strong id="entryTotals">Debits ₦0.00 · Credits ₦0.00</strong></div><p><button id="submitJournal" type="button">Save and Submit for Review</button></p><p id="formMessage" class="message">At least two lines are required; total debits must equal total credits.</p></div></section>
+<section class="card"><h2>Super Administrator Review &amp; Posting</h2><p class="muted">Approval and posting are separate actions. Only posted journals enter official ledger reports.</p><div id="approvalAccess" class="message">Checking access…</div><div id="approvalQueue"></div><div id="confirmPanel" class="card hidden"><strong id="confirmText">Confirm action</strong><p class="toolbar"><button id="confirmYes" type="button">Confirm</button><button id="confirmNo" type="button" class="secondary">Cancel</button></p></div></section><section class="card" id="financialReports"><h2>Financial Reports</h2><p class="muted">Reports are calculated exclusively from posted journal entries. Draft, submitted, approved-but-unposted and rejected entries are excluded.</p><p><label>Reporting period <select id="reportPeriod" class="field"></select></label> <button id="runReports" type="button">Refresh Reports</button></p><div id="reportNotice" class="message">Reports have not yet been calculated.</div><h3>Trial Balance</h3><div id="trialBalance"></div><h3>Profit &amp; Loss</h3><div id="profitLoss"></div><h3>Balance Sheet</h3><div id="balanceSheet"></div><h3>Bank Cash Movement</h3><div id="cashFlow"></div></section><section class="card"><h2>Chart of Accounts</h2><div id="accounts"></div></section>
+<section class="card"><h2>Journal Register</h2><div id="journals"></div></section>
+<section class="card"><h2>Expense Register</h2><div id="expenses"></div></section>
+<section class="card"><h2>Shareholder Loan Register</h2><div id="loans"></div></section>
+<section class="card" id="auditSection"><h2>Bookkeeping Audit Trail</h2><p class="muted">Changes to bookkeeping registers are recorded automatically. Audit entries cannot be edited or deleted through the application.</p><div id="auditRecords"></div></section>
+<section class="card"><h2>Financial reporting status</h2><p class="message">The opening entries remain drafts until reviewed. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p></section>
+</div>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+"use strict";
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+const $=id=>document.getElementById(id);
+const money=v=>"₦"+Number(v||0).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2});
+function el(tag,cls,text){const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;}
+function showMessage(message,kind){$("accessStatus").textContent=message;$("accessStatus").className="message "+(kind||"");}
+function renderTable(root,heads,rows,empty){root.replaceChildren();if(!rows.length){root.append(el("p","muted",empty));return;}const wrap=el("div","tablewrap"),t=el("table"),thead=el("thead"),hr=el("tr");heads.forEach(h=>hr.append(el("th","",h)));thead.append(hr);t.append(thead);const body=el("tbody");rows.forEach(row=>{const tr=el("tr");row.forEach(value=>{const td=el("td","");if(value instanceof Node)td.append(value);else td.textContent=value??"—";tr.append(td);});body.append(tr);});t.append(body);wrap.append(t);root.append(wrap);}
+let activeUser=null,activeRole=null,canPrepare=false,canReadReports=false,canManageDocuments=false,accountsCache=[],periodsCache=[],journalsCache=[],linesCache=[],pendingAction=null;
+async function load(){
+ $("refresh").disabled=true;showMessage("Loading company bookkeeping records…");
+ try{
+  const [accountResult,periodResult,journalResult,lineResult,expenseResult,loanResult,auditResult]=await Promise.all([
+   db.from("ft_bookkeeping_accounts").select("id,code,name,account_type,is_active").order("code"),
+   db.from("ft_bookkeeping_periods").select("id,period_name,start_date,end_date,status").order("start_date",{ascending:false}),
+   db.from("ft_bookkeeping_journals").select("id,entry_number,entry_date,description,source_reference,status,created_at").order("entry_date",{ascending:false}),
+   db.from("ft_bookkeeping_journal_lines").select("journal_id,account_id,line_description,debit,credit"),
+   db.from("ft_bookkeeping_expenses").select("expense_date,payee,description,amount,status,payment_method").order("expense_date",{ascending:false}),
+   db.from("ft_bookkeeping_shareholder_loans").select("lender_name,principal_amount,interest_rate,amount_repaid,repayment_terms,status,agreement_date").order("created_at",{ascending:false}),
+   db.from("ft_bookkeeping_audit_log").select("id,table_name,record_id,action,actor_id,details,created_at").order("created_at",{ascending:false}).limit(100)
+  ]);
+  for(const result of [accountResult,periodResult,journalResult,lineResult,expenseResult,loanResult,auditResult])if(result.error)throw result.error;
+  const accounts=accountResult.data||[],periods=periodResult.data||[],journals=journalResult.data||[],lines=lineResult.data||[],expenses=expenseResult.data||[],loans=loanResult.data||[],audit=auditResult.data||[];
+  accountsCache=accounts;periodsCache=periods;journalsCache=journals;linesCache=lines;
+  const active=accounts.filter(a=>a.is_active);
+  renderTable($("accounts"),["Code","Account","Type","Status"],active.map(a=>[a.code,a.name,a.account_type,"Active"]),"No active accounts.");
+  const period=periods[0];
+  $("periodInfo").textContent=period?period.period_name+" · "+period.start_date+" to "+period.end_date+" · "+period.status.toUpperCase():"No accounting period configured.";
+  const draft=journals.filter(j=>j.status==="draft"),posted=journals.filter(j=>j.status==="posted"),rejected=journals.filter(j=>j.status==="rejected");
+  const metrics=$("metrics");metrics.replaceChildren();
+  [["Active accounts",active.length],["Open accounting periods",periods.filter(p=>p.status==="open").length],["Draft journal entries",draft.length],["Posted journal entries",posted.length],["Rejected duplicate drafts",rejected.length],["Expense records",expenses.length],["Shareholder loan records",loans.length]].forEach(([label,value])=>{const m=el("div","metric");m.append(el("span","muted",label),el("strong","",String(value)));metrics.append(m);});
+  const accountNames=new Map(accounts.map(a=>[a.id,a.code+" · "+a.name]));
+  const journalRows=journals.map(j=>{const detail=el("div","");detail.append(el("strong","",j.description));detail.append(el("div","muted",j.source_reference||"No source reference"));const journalLines=lines.filter(line=>line.journal_id===j.id);const list=el("ul","lineitems");let debit=0,credit=0;journalLines.forEach(line=>{debit+=Number(line.debit||0);credit+=Number(line.credit||0);list.append(el("li","",accountNames.get(line.account_id)+" · Dr "+money(line.debit)+" · Cr "+money(line.credit)+(line.line_description?" · "+line.line_description:"")));});detail.append(list);return [j.entry_number||"—",j.entry_date,detail,money(debit),money(credit),el("span","tag",j.status.toUpperCase())];});
+  renderTable($("journals"),["Entry No.","Date","Description / Account Lines","Total Debits","Total Credits","Status"],journalRows,"No journal entries.");
+  renderTable($("expenses"),["Date","Payee","Description","Amount","Payment Method","Status"],expenses.map(e=>[e.expense_date,e.payee,e.description,money(e.amount),e.payment_method,e.status.toUpperCase()]),"No expense records.");
+  renderTable($("loans"),["Lender","Principal","Interest","Repaid","Outstanding","Repayment Terms","Status"],loans.map(l=>[l.lender_name,money(l.principal_amount),Number(l.interest_rate).toFixed(2)+"%",money(l.amount_repaid),money(Number(l.principal_amount)-Number(l.amount_repaid)),l.repayment_terms,l.status.toUpperCase()]),"No shareholder loans recorded.");
+  renderTable($("auditRecords"),["Time","Table","Record","Action","Actor","Change Detail"],audit.map(a=>[new Date(a.created_at).toLocaleString(),a.table_name,a.record_id,a.action,a.actor_id||"System",JSON.stringify(a.details)]),"No audit events recorded yet.");
+  renderApprovalQueue();showMessage("Production bookkeeping records loaded. Only approved and posted journals affect official ledger balances.","success");
+ }catch(error){console.error(error);showMessage(error.message||"Unable to load bookkeeping records.","error");}
+ finally{$("refresh").disabled=false;}
+}
+
+
+function populateReportPeriods(){
+ const select=$("reportPeriod");select.replaceChildren();
+ periodsCache.forEach(p=>{const o=el("option","",p.period_name+" · "+p.start_date+" to "+p.end_date);o.value=p.id;select.append(o);});
+ const current=periodsCache.find(p=>p.status==="open")||periodsCache[0];if(current)select.value=current.id;
+}
+function calculateReports(){
+ const period=periodsCache.find(p=>p.id===$("reportPeriod").value);
+ if(!period){$("reportNotice").textContent="No accounting period is available.";return;}
+ const posted=journalsCache.filter(j=>j.status==="posted"&&j.entry_date>=period.start_date&&j.entry_date<=period.end_date);
+ const ids=new Set(posted.map(j=>j.id));
+ const accountMap=new Map(accountsCache.map(a=>[a.id,a]));
+ const totals=new Map();
+ linesCache.filter(l=>ids.has(l.journal_id)).forEach(l=>{const a=accountMap.get(l.account_id);if(!a)return;const t=totals.get(a.id)||{debit:0,credit:0};t.debit+=Number(l.debit||0);t.credit+=Number(l.credit||0);totals.set(a.id,t);});
+ const rows=accountsCache.filter(a=>a.is_active).map(a=>{const t=totals.get(a.id)||{debit:0,credit:0};const net=t.debit-t.credit;return {...a,...t,net,debitBalance:Math.max(net,0),creditBalance:Math.max(-net,0)};});
+ const sum=(arr,key)=>arr.reduce((s,x)=>s+x[key],0);
+ renderTable($("trialBalance"),["Code","Account","Type","Debit Balance","Credit Balance"],rows.map(a=>[a.code,a.name,a.account_type,money(a.debitBalance),money(a.creditBalance)]),"No accounts available.");
+ const income=rows.filter(a=>a.account_type==="income"),expense=rows.filter(a=>a.account_type==="expense");
+ const incomeTotal=sum(income,"credit")-sum(income,"debit"),expenseTotal=sum(expense,"debit")-sum(expense,"credit"),netResult=incomeTotal-expenseTotal;
+ renderTable($("profitLoss"),["Description","Amount"],[...income.map(a=>[a.name,money(a.credit-a.debit)]),["Total Income",money(incomeTotal)],...expense.map(a=>[a.name,money(a.debit-a.credit)]),["Total Expenses",money(expenseTotal)],["Net Profit / (Loss)",money(netResult)]],"No income or expense accounts.");
+ const assets=rows.filter(a=>a.account_type==="asset"),liabilities=rows.filter(a=>a.account_type==="liability"),equity=rows.filter(a=>a.account_type==="equity");
+ const assetTotal=sum(assets,"net"),liabilityTotal=-sum(liabilities,"net"),equityTotal=-sum(equity,"net"),equityPlusResult=equityTotal+netResult,liabilitiesAndEquity=liabilityTotal+equityPlusResult;
+ renderTable($("balanceSheet"),["Description","Amount"],[...assets.map(a=>[a.name,money(a.net)]),["Total Assets",money(assetTotal)],...liabilities.map(a=>[a.name,money(-a.net)]),["Total Liabilities",money(liabilityTotal)],...equity.map(a=>[a.name,money(-a.net)]),["Current Period Profit / (Loss)",money(netResult)],["Total Equity including current result",money(equityPlusResult)],["Total Liabilities & Equity",money(liabilitiesAndEquity)],["Balance Check (Assets less Liabilities & Equity)",money(assetTotal-liabilitiesAndEquity)]],"No balance sheet accounts.");
+ const bank=rows.filter(a=>a.code==="1000"),bankDebits=sum(bank,"debit"),bankCredits=sum(bank,"credit");
+ renderTable($("cashFlow"),["Description","Amount"],[["Recorded bank debits / receipts",money(bankDebits)],["Recorded bank credits / payments",money(bankCredits)],["Net recorded bank movement",money(bankDebits-bankCredits)]],"Corporate bank account (1000) not configured.");
+ $("reportNotice").textContent=posted.length?posted.length+" posted journal(s) included for "+period.period_name+". All unposted entries are excluded.":"No posted journals exist in "+period.period_name+". Reports correctly show zero activity; draft opening transactions are not included.";
+}
+
+function addJournalLine(){
+ const r=el("div","entry-line"),a=el("select","field"),d=el("input","field"),cr=el("input","field"),rm=el("button","secondary","Remove");
+ a.innerHTML='<option value="">Select account</option>';accountsCache.filter(x=>x.is_active).forEach(x=>{const o=el("option","",x.code+" · "+x.name);o.value=x.id;a.append(o);});
+ d.type=cr.type="number";d.min=cr.min="0";d.step=cr.step="0.01";d.placeholder="Debit ₦";cr.placeholder="Credit ₦";
+ d.addEventListener("input",()=>{if(Number(d.value)>0)cr.value="";updateJournalTotals();});cr.addEventListener("input",()=>{if(Number(cr.value)>0)d.value="";updateJournalTotals();});
+ rm.type="button";rm.addEventListener("click",()=>{if($("entryLines").children.length>2){r.remove();updateJournalTotals();}});
+ r.append(a,d,cr,rm);$("entryLines").append(r);updateJournalTotals();
+}
+function updateJournalTotals(){let d=0,cr=0;$("entryLines").querySelectorAll(".entry-line").forEach(r=>{d+=Number(r.children[1].value||0);cr+=Number(r.children[2].value||0);});$("entryTotals").textContent="Debits "+money(d)+" · Credits "+money(cr);}
+async function submitJournal(){
+ const date=$("entryDate").value,periodId=$("entryPeriod").value,description=$("entryDescription").value.trim(),reference=$("entryReference").value.trim();
+ const rows=[...$("entryLines").querySelectorAll(".entry-line")].map(r=>({account_id:r.children[0].value,debit:Number(r.children[1].value||0),credit:Number(r.children[2].value||0)}));
+ const d=rows.reduce((s,x)=>s+x.debit,0),cr=rows.reduce((s,x)=>s+x.credit,0),period=periodsCache.find(x=>x.id===periodId);
+ if(!date||!period||!description){$("formMessage").textContent="Complete the date, open period and description.";return;}
+ if(period.status!=="open"||date<period.start_date||date>period.end_date){$("formMessage").textContent="The selected open period must contain the journal date.";return;}
+ if(rows.length<2||rows.some(x=>!x.account_id||((x.debit>0)===(x.credit>0)))||d<=0||d!==cr){$("formMessage").textContent="Use at least two valid lines. Each line must be debit or credit, and totals must balance.";return;}
+ $("submitJournal").disabled=true;
+ try{
+  const ins=await db.from("ft_bookkeeping_journals").insert({entry_date:date,description,source_type:"manual",source_reference:reference||null,period_id:periodId,status:"draft",prepared_by:activeUser.id}).select("id").single();if(ins.error)throw ins.error;
+  const li=await db.from("ft_bookkeeping_journal_lines").insert(rows.map((x,i)=>({journal_id:ins.data.id,account_id:x.account_id,line_description:"Journal line "+(i+1),debit:x.debit,credit:x.credit})));if(li.error)throw li.error;
+  const su=await db.from("ft_bookkeeping_journals").update({status:"submitted",submitted_at:new Date().toISOString()}).eq("id",ins.data.id);if(su.error)throw su.error;
+  $("formMessage").textContent="Submitted for Super Administrator review. This entry has not been posted.";
+  $("entryDescription").value="";$("entryReference").value="";$("entryLines").replaceChildren();addJournalLine();addJournalLine();await load();
+ }catch(e){$("formMessage").textContent="Submission failed: "+(e.message||"Unknown error")+". If a draft was created, review the Journal Register before retrying.";}
+ finally{$("submitJournal").disabled=false;}
+}
+function renderApprovalQueue(){
+ const root=$("approvalQueue");root.replaceChildren();const queue=journalsCache.filter(j=>["submitted","approved"].includes(j.status));
+ if(!queue.length){root.append(el("p","muted","No journals are awaiting approval or posting."));return;}
+ queue.forEach(j=>{const box=el("div","record");box.append(el("strong","",j.description),el("p","muted",(j.source_reference||"No reference")+" · "+j.entry_date+" · "+j.status.toUpperCase()));
+ let d=0,cr=0;linesCache.filter(x=>x.journal_id===j.id).forEach(x=>{d+=Number(x.debit);cr+=Number(x.credit);const a=accountsCache.find(y=>y.id===x.account_id);box.append(el("p","muted",(a?a.code+" · "+a.name:"Account")+" — Dr "+money(x.debit)+" / Cr "+money(x.credit)));});
+ box.append(el("p","", "Debits "+money(d)+" · Credits "+money(cr)));
+ if(activeRole==="super_admin"){const bar=el("div","toolbar");if(j.status==="submitted"){const b=el("button","","Approve");b.addEventListener("click",()=>askStatus(j.id,"approved"));bar.append(b);}if(j.status==="approved"){const b=el("button","","Post to Official Ledger");b.addEventListener("click",()=>askStatus(j.id,"posted"));bar.append(b);}box.append(bar);}root.append(box);
+ });
+}
+function askStatus(id,status){pendingAction={id,status};$("confirmText").textContent=status==="approved"?"Confirm approval of this journal entry?":"Confirm posting? This will include the journal in official ledger balances and lock it against routine editing.";$("confirmPanel").classList.remove("hidden");}
+async function confirmJournalAction(){
+ if(!pendingAction)return;const action=pendingAction; $("confirmYes").disabled=true;
+ try{const {error}=await db.from("ft_bookkeeping_journals").update({status:action.status}).eq("id",action.id);if(error)throw error;$("approvalAccess").textContent=action.status==="approved"?"Journal approved. Posting is a separate step.":"Journal posted to the official ledger.";pendingAction=null;$("confirmPanel").classList.add("hidden");await load();}
+ catch(e){$("approvalAccess").textContent="Action not completed: "+(e.message||"Unknown error");}
+ finally{$("confirmYes").disabled=false;}
+}
+
+async function init(){
+ try{
+  if(!db?.auth)throw new Error("The production database client did not load.");
+  const {data:{session},error:sessionError}=await db.auth.getSession();if(sessionError)throw sessionError;
+  if(!session?.user){showMessage("Sign in with your existing production administrator account to continue.","error");$("bookkeepingLogin").classList.remove("hidden");$("refresh").disabled=true;$("signOut").disabled=true;return;}
+  const {data:role,error:roleError}=await db.rpc("admin_get_my_role");if(roleError)throw roleError;
+  if(!role)throw new Error("No active administrator role was found.");
+  let permitted=role==="super_admin";
+  if(!permitted){const {data,error}=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.read"});if(error)throw error;permitted=data===true;}
+  if(!permitted)throw new Error("Your administrator account does not have Company Bookkeeping access.");
+  activeUser=session.user;$("identity").textContent=(session.user.email||"Administrator")+" · "+role.replaceAll("_"," ");
+  activeRole=role;canPrepare=role==="super_admin";
+  if(!canPrepare){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.prepare"});if(p.error)throw p.error;canPrepare=p.data===true;}
+  canReadReports=role==="super_admin";if(!canReadReports){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.reports.read"});if(p.error)throw p.error;canReadReports=p.data===true;}
+  canManageDocuments=role==="super_admin";if(!canManageDocuments){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.documents.manage"});if(p.error)throw p.error;canManageDocuments=p.data===true;}
+  const requiredTables=["ft_bookkeeping_accounts","ft_bookkeeping_audit_log","ft_bookkeeping_periods","ft_bookkeeping_journals","ft_bookkeeping_bank_accounts","ft_bookkeeping_journal_lines","ft_bookkeeping_bank_transactions","ft_bookkeeping_documents","ft_bookkeeping_expenses","ft_bookkeeping_fixed_assets","ft_bookkeeping_reconciliations","ft_bookkeeping_shareholder_loans"];
+  const probes=await Promise.all(requiredTables.map(name=>db.from(name).select("*",{head:true,count:"exact"}).limit(0)));
+  const unavailable=probes.map((result,index)=>result.error?requiredTables[index]:null).filter(Boolean);
+  if(unavailable.length){$("workspace").classList.add("hidden");showMessage("Production sign-in and role checks passed, but the bookkeeping database is not yet ready. Required tables are missing or not accessible: "+unavailable.join(", ")+". No bookkeeping records have been changed. The database release must be completed and verified before this workspace can be used.","error");return;}
+  $("financialReports").classList.toggle("hidden",!canReadReports);
+  $("documentPermission").textContent=canManageDocuments?"Document management permission: enabled. Document upload controls are not exposed on this bookkeeping page yet.":"Document management permission: not assigned to this account.";
+  $("prepareAccess").textContent=canPrepare?"Journal preparation is available.":"This account has read-only bookkeeping access.";
+  $("journalForm").classList.toggle("hidden",!canPrepare);
+  $("approvalAccess").textContent=role==="super_admin"?"Super Administrator approval and posting controls are enabled.":"Approval and posting are restricted to the Super Administrator.";
+
+  $("workspace").classList.remove("hidden");
+  $("entryDate").value=new Date().toISOString().slice(0,10);
+  await load();
+  if(canReadReports){populateReportPeriods();calculateReports();}
+  $("entryPeriod").replaceChildren();
+  periodsCache.forEach(p=>{const op=el("option","",p.period_name+" ("+p.status+")");op.value=p.id;$("entryPeriod").append(op);});
+  $("entryPeriod").value=(periodsCache.find(p=>p.status==="open")||{}).id||"";
+  if(canPrepare){addJournalLine();addJournalLine();}
+ }catch(error){showMessage(error.message||"Bookkeeping access verification failed.","error");}
+}
+$("refresh").addEventListener("click",load);
+$("runReports").addEventListener("click",calculateReports);$("reportPeriod").addEventListener("change",calculateReports);
+$("addLine").addEventListener("click",addJournalLine);$("submitJournal").addEventListener("click",submitJournal);$("confirmYes").addEventListener("click",confirmJournalAction);$("confirmNo").addEventListener("click",()=>{$("confirmPanel").classList.add("hidden");pendingAction=null;});
+$("bookkeepingLoginForm").addEventListener("submit",async event=>{event.preventDefault();const button=$("bookkeepingLoginButton");button.disabled=true;$("bookkeepingLoginMessage").textContent="Verifying production administrator sign-in…";try{const {error}=await db.auth.signInWithPassword({email:$("bookkeepingEmail").value.trim(),password:$("bookkeepingPassword").value});if(error)throw error;$("bookkeepingLogin").classList.add("hidden");await init();}catch(error){$("bookkeepingLoginMessage").textContent=error.message||"Sign-in failed.";$("bookkeepingLoginMessage").className="message error";}finally{button.disabled=false;}});
+$("bookkeepingForgot").addEventListener("click",async event=>{event.preventDefault();const email=$("bookkeepingEmail").value.trim();if(!email){$("bookkeepingLoginMessage").textContent="Enter your administrator email address first.";$("bookkeepingEmail").focus();return;}try{const redirectTo=new URL("customer-login.html?reset=1",window.location.href).toString();const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;$("bookkeepingLoginMessage").textContent="If the account exists, a password-reset email has been requested.";$("bookkeepingLoginMessage").className="message success";}catch(error){$("bookkeepingLoginMessage").textContent=error.message||"Password reset request failed.";$("bookkeepingLoginMessage").className="message error";}});
+$("signOut").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){showMessage(error.message,"error");return;}location.href="finance-admin.html";});
+init();
+</script>
+</body>
+</html>
