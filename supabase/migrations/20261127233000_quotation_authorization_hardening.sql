@@ -61,6 +61,13 @@ with check (
 
 -- Finance receives read-only access to quotation items, not private pricing inputs.
 drop policy if exists admin_quotation_items_admin_manage on public.admin_quotation_items;
+drop policy if exists super_admin_quotation_items_manage on public.admin_quotation_items;
+create policy super_admin_quotation_items_manage
+on public.admin_quotation_items
+for all to authenticated
+using (public.is_super_admin())
+with check (public.is_super_admin());
+
 drop policy if exists department_operations_quotation_items_read on public.admin_quotation_items;
 create policy department_operations_quotation_items_read
 on public.admin_quotation_items
