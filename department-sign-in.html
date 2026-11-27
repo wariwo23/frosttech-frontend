@@ -32,7 +32,7 @@ a{color:#0879c9}small{color:#536579;line-height:1.5;display:block;margin-top:14p
 const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
 const $=id=>document.getElementById(id);
 function status(text,type=""){$("message").textContent=text;$("message").className="message"+(type?" "+type:"");}
-const destinations={super_admin:"admin.html",operations_admin:"departmental-admin.html",supplier_admin:"supplier-admin.html",finance_admin:"finance-admin.html",catalogue_admin:"catalogue-admin.html",supplier_catalogue_admin:"supplier-catalogue-admin.html",advertisers_admin:"advertisers-communications-admin.html"};
+const destinations={super_admin:"admin.html",operations_admin:"departmental-admin.html",supplier_admin:"supplier-admin.html",finance_admin:"finance-admin.html",catalogue_admin:"catalogue-admin.html",supplier_catalogue_admin:"supplier-admin.html",advertisers_admin:"advertisers-communications-admin.html"};
 $("loginForm").addEventListener("submit",async event=>{
  event.preventDefault();const email=$("email").value.trim(),password=$("password").value;if(!email||!password)return;
  const button=$("submit");button.disabled=true;status("Verifying your FrostTech sign-in…");
