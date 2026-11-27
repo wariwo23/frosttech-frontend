@@ -20,6 +20,9 @@ begin
   if exists(select 1 from pg_policies where schemaname='public' and tablename='admin_quotation_items' and policyname='admin_quotation_items_admin_manage') then
     raise exception 'Legacy is_admin quotation-item policy remains';
   end if;
+  if not exists(select 1 from pg_policies where schemaname='public' and tablename='admin_quotation_items' and policyname='super_admin_quotation_items_manage' and cmd='ALL') then
+    raise exception 'Super Administrator direct quotation-item authority was not preserved';
+  end if;
   if exists(select 1 from pg_policies where schemaname='public' and tablename='admin_quotation_pricing_snapshots' and policyname='Admins manage quotation pricing snapshots') then
     raise exception 'Legacy is_admin pricing-snapshot policy remains';
   end if;
