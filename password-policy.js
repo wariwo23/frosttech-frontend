@@ -74,7 +74,7 @@
     passwordInput.minLength = MIN_LENGTH;
     passwordInput.maxLength = 72;
     const statusId = "ft-password-status-" + (form.id || "form");
-    const describedBy = (passwordInput.getAttribute("aria-describedby") || "").trim().split(/\\s+/).filter(Boolean);
+    const describedBy = (passwordInput.getAttribute("aria-describedby") || "").trim().split(/\s+/).filter(Boolean);
     if (!describedBy.includes(statusId)) describedBy.push(statusId);
     passwordInput.setAttribute("aria-describedby", describedBy.join(" "));
 
