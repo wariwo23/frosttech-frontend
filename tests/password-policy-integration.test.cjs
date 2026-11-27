@@ -4,6 +4,8 @@ const fs = require("node:fs");
 
 const cases = [
   ["customer-register.html", "registerForm"],
+  ["supplier-register.html", "registrationForm"],
+  ["guest-register.html", "guestForm"],
   ["advertiser-register.html", "registerForm"],
   ["advertiser-reset-password.html", "passwordForm"],
   ["supplier-reset-password.html", "newPasswordForm"],
