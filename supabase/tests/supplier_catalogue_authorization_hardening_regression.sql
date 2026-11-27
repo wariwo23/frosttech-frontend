@@ -62,14 +62,6 @@ begin
     raise exception 'Supplier Catalogue role is missing supplier application read permission';
   end if;
 
-  if not exists (
-    select 1 from public.admin_role_permissions
-    where role='finance_admin'
-      and permission='supplier_settlements.read'
-  ) then
-    raise exception 'Finance supplier settlement read permission is missing';
-  end if;
-
   if not has_function_privilege(
     'authenticated',
     'public.admin_review_supplier(uuid,text,text)',
