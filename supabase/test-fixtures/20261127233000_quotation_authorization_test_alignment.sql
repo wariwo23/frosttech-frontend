@@ -32,7 +32,7 @@ CREATE OR REPLACE FUNCTION public.admin_create_direct_quotation_revision_v2(p_so
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_source public.admin_quotations%rowtype;
   v_new public.admin_quotations%rowtype;
@@ -115,7 +115,7 @@ CREATE OR REPLACE FUNCTION public.admin_replace_direct_quotation_items_v2(p_quot
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_quote public.admin_quotations%rowtype;
   v_count integer;
@@ -250,7 +250,7 @@ CREATE OR REPLACE FUNCTION public.admin_submit_direct_quotation(p_quotation_id u
  LANGUAGE plpgsql
  SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_quote public.admin_quotations%rowtype;
   v_request public.quote_requests%rowtype;
@@ -439,7 +439,7 @@ CREATE OR REPLACE FUNCTION public.frosttech_get_request_alternative_review_v1(p_
  LANGUAGE plpgsql
  STABLE SECURITY DEFINER
  SET search_path TO ''
-AS $function$;
+AS $function$
 declare
   v_can_see_prices boolean;
   v_result jsonb;
