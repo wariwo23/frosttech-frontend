@@ -13,6 +13,16 @@ alter table public.isolated_test_admin_grants drop constraint if exists isolated
 alter table public.isolated_test_admin_grants add constraint isolated_test_admin_grants_role_check
  check (role = any (array['finance_admin','supplier_catalogue_admin']::text[]));
 
+-- Match production product-table grants: public roles may read approved
+-- catalogue fields, but cannot access supplier_cost or write products directly.
+revoke all on table public.products from anon, authenticated;
+grant references, trigger on table public.products to anon, authenticated;
+grant select (
+ id, name, category, brand, model, description, sku, unit,
+ selling_price, stock_quantity, min_stock_level, image_url,
+ is_active, created_at, updated_at
+) on table public.products to anon, authenticated;
+
 insert into public.admin_role_permissions(role, permission)
 values
  ('supplier_catalogue_admin','supplier_applications.manage'),
