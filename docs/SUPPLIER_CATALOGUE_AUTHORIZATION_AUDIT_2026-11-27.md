@@ -20,7 +20,7 @@ Repository: `wariwo23/frosttech-frontend`
 5. Product catalogue RPCs require `products.manage`, `selling_prices.manage`, and `stock.manage`. `catalogue_list_products()` omits `supplier_cost`.
 6. **Production supplier-cost confidentiality is intact at the table-grant layer.** `anon` and `authenticated` have SELECT only on the public catalogue columns; neither has SELECT/INSERT/UPDATE on `supplier_cost`, and neither has direct product-table INSERT/UPDATE/DELETE. Super Admin supplier-cost access is through dedicated RPCs.
 7. The consolidated Supplier & Catalogue role has the supplier application, verification, quotation, catalogue, product, selling-price and stock permissions. Finance settlement permissions remain separate.
-8. Frontend compatibility issue found: `admin.html` product loader selects `supplier_id` directly from `products`, but production grants do not include SELECT on that column. The field is not used by the loader's rendered product list. A small frontend query correction (remove `supplier_id` from that SELECT list) is recommended. It has NOT been committed or deployed pending approval.
+8. Frontend compatibility issue found: `admin.html` product loader selects `supplier_id` directly from `products`, but production grants do not include SELECT on that column. The field is not used by the loader's rendered product list. The unused `supplier_id` field was removed from the product SELECT list in `admin.html` and committed as `0a647b55296e497bacccc568a1e0b5f613504e51`. GitHub Pages rendering/smoke testing remains pending.
 
 ## Isolated test reconciliation and verification
 The test database originally differed from production:
@@ -59,7 +59,7 @@ The rollback restores the prior broad `is_admin()` supplier policies and the pri
 
 ## Not yet done
 - The production migration has NOT been applied.
-- Production frontend changes have NOT been made or deployed.
+- The frontend compatibility correction is committed; GitHub Pages deployment/rendering has not yet been independently confirmed.
 - GitHub Pages browser smoke tests have NOT been performed.
 - No employee account or invitation was created; employment remains paused.
 
