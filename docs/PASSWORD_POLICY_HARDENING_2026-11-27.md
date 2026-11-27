@@ -1,7 +1,7 @@
 # FrostTech Authentication Password Policy
 
 ## Scope
-This change adds a shared browser-side password policy to customer registration, advertiser registration, customer password reset, advertiser password reset, and supplier password reset. It does not alter sign-in validation, Supabase Auth configuration, existing passwords, accounts, sessions, or database records.
+This change adds a shared browser-side password policy to customer, supplier, guest and advertiser registration, plus customer, advertiser and supplier password reset. It does not alter sign-in validation, Supabase Auth configuration, existing passwords, accounts, sessions, or database records.
 
 Employee invitation/password setup is intentionally excluded while FrostTech employment remains paused.
 
@@ -17,16 +17,18 @@ This is a frontend guard. Supabase Auth remains the authoritative validator and 
 
 ## Regression checklist
 1. 8-character password: blocked with the 12-character guidance.
-2. 11-character password: blocked.
-3. 12-character passphrase with spaces: accepted by the client validator.
-4. 12-character password with mixed case, digits, and symbols: accepted.
-5. Confirmation mismatch: blocked.
-6. Matching confirmation: accepted.
-7. Password exceeding 72 UTF-8 bytes: blocked with the Supabase size-limit message.
-8. Whitespace-only password: blocked.
-9. Customer and advertiser sign-in: unchanged; no new minimum is imposed on existing login passwords.
-10. Reset email requests, redirect URLs, recovery-session checks, and Supabase update calls: unchanged.
-11. Employee invitation setup: unchanged and not enabled by this work.
+2. Supplier and guest registration forms load the shared validator.
+3. 11-character password: blocked.
+4. 12-character passphrase with spaces: accepted by the client validator.
+5. 12-character password with mixed case, digits, and symbols: accepted.
+6. Confirmation mismatch: blocked.
+7. Matching confirmation: accepted.
+8. Password exceeding 72 UTF-8 bytes: blocked with the Supabase size-limit message.
+9. Whitespace-only password: blocked.
+10. Customer and advertiser sign-in: unchanged; no new minimum is imposed on existing login passwords.
+11. Reset email requests, redirect URLs, recovery-session checks, and Supabase update calls: unchanged.
+12. Employee invitation setup: unchanged and not enabled by this work.
+13. Password guidance is associated with its input for assistive technology.
 
 ## Deployment status
 Prepared on the isolated Git branch `security/password-policy-hardening`. It has not been merged into `main` and has not been deployed to GitHub Pages or applied to Supabase.
