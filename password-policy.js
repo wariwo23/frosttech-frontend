@@ -3,7 +3,7 @@
 
   const MIN_LENGTH = 12;
   const MAX_BYTES = 72;
-  const FORM_IDS = ["registerForm", "passwordForm", "newPasswordForm"];
+  const FORM_IDS = ["registerForm", "registrationForm", "guestForm", "passwordForm", "newPasswordForm"];
 
   function countCharacters(value) {
     return Array.from(value).length;
