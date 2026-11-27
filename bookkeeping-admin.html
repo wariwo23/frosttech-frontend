@@ -23,10 +23,10 @@
 <section class="card" id="journalPreparation"><h2>Prepare Journal Entry</h2><p class="muted">Finance Admin prepares and submits journals. Submission does not post to the ledger.</p><div id="prepareAccess" class="message">Checking access…</div><div id="journalForm" class="hidden"><p><label>Entry date <input id="entryDate" class="field" type="date"></label></p><p><label>Accounting period <select id="entryPeriod" class="field"></select></label></p><p><label>Description <input id="entryDescription" class="field" maxlength="240"></label></p><p><label>Source reference (optional) <input id="entryReference" class="field" maxlength="100"></label></p><div id="entryLines"></div><div class="toolbar"><button id="addLine" type="button" class="secondary">Add line</button><strong id="entryTotals">Debits ₦0.00 · Credits ₦0.00</strong></div><p><button id="submitJournal" type="button">Save and Submit for Review</button></p><p id="formMessage" class="message">At least two lines are required; total debits must equal total credits.</p></div></section>
 <section class="card"><h2>Super Administrator Review &amp; Posting</h2><p class="muted">Approval and posting are separate actions. Only posted journals enter official ledger reports.</p><div id="approvalAccess" class="message">Checking access…</div><div id="approvalQueue"></div><div id="confirmPanel" class="card hidden"><strong id="confirmText">Confirm action</strong><p class="toolbar"><button id="confirmYes" type="button">Confirm</button><button id="confirmNo" type="button" class="secondary">Cancel</button></p></div></section><section class="card" id="financialReports"><h2>Financial Reports</h2><p class="muted">Reports are calculated exclusively from posted journal entries. Draft, submitted, approved-but-unposted and rejected entries are excluded.</p><p><label>Reporting period <select id="reportPeriod" class="field"></select></label> <button id="runReports" type="button">Refresh Reports</button></p><div id="reportNotice" class="message">Reports have not yet been calculated.</div><h3>Trial Balance</h3><div id="trialBalance"></div><h3>Profit &amp; Loss</h3><div id="profitLoss"></div><h3>Balance Sheet</h3><div id="balanceSheet"></div><h3>Bank Cash Movement</h3><div id="cashFlow"></div></section><section class="card"><h2>Chart of Accounts</h2><div id="accounts"></div></section>
 <section class="card"><h2>Journal Register</h2><div id="journals"></div></section>
-<section class="card"><h2>Expense Register</h2><div id="expenses"></div></section>
-<section class="card"><h2>Shareholder Loan Register</h2><div id="loans"></div></section>
+<section class="card" id="expenseRegisterSection"><h2>Expense Register</h2><p class="muted">Register an expense against its existing posted journal. This does not create or post another journal entry.</p><div id="expenseRegisterAccess" class="message">Register access is checked after sign-in.</div><div id="expenseRegisterForm" class="hidden"><p><label>Expense date <input id="expenseDate" class="field" type="date"></label></p><p><label>Payee <input id="expensePayee" class="field" maxlength="180"></label></p><p><label>Description <input id="expenseDescription" class="field" maxlength="240"></label></p><p><label>Posted journal <select id="expenseJournal" class="field"></select></label></p><p><label>Expense account <select id="expenseAccount" class="field"></select></label></p><p><label>Amount (₦) <input id="expenseAmount" class="field" type="number" min="0.01" step="0.01"></label></p><p><label>Payment method <input id="expensePaymentMethod" class="field" maxlength="80" placeholder="e.g. Bank transfer"></label></p><button id="saveExpenseRegister" type="button">Save Expense Register Record</button><p id="expenseRegisterMessage" class="message">Select the existing posted journal and match its expense line exactly.</p></div><div id="expenses"></div></section>
+<section class="card" id="loanRegisterSection"><h2>Shareholder Loan Register</h2><p class="muted">Record the shareholder loan against its existing posted journal. This does not create or post another journal entry.</p><div id="loanRegisterAccess" class="message">Super Administrator access is required.</div><div id="loanRegisterForm" class="hidden"><p><label>Lender name <input id="loanLender" class="field" maxlength="180"></label></p><p><label>Agreement date <input id="loanAgreementDate" class="field" type="date"></label></p><p><label>Posted loan journal <select id="loanJournal" class="field"></select></label></p><p><label>Principal amount (₦) <input id="loanPrincipal" class="field" type="number" min="0.01" step="0.01"></label></p><p><label>Interest rate (%) <input id="loanInterest" class="field" type="number" min="0" step="0.0001" value="0"></label></p><p><label>Repayment terms <textarea id="loanTerms" class="field" rows="3">Interest-free shareholder loan. Repayment only when FrostTech and the shareholder agree.</textarea></label></p><button id="saveLoanRegister" type="button">Save Shareholder Loan Record</button><p id="loanRegisterMessage" class="message">The principal must match the shareholder-loan credit in the selected posted journal.</p></div><div id="loans"></div></section>
 <section class="card" id="auditSection"><h2>Bookkeeping Audit Trail</h2><p class="muted">Changes to bookkeeping registers are recorded automatically. Audit entries cannot be edited or deleted through the application.</p><div id="auditRecords"></div></section>
-<section class="card"><h2>Financial reporting status</h2><p class="message">The opening entries remain drafts until reviewed. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p></section>
+<section class="card"><h2>Financial reporting status</h2><p class="message">The opening journal entries are posted and form part of the official ledger. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p></section>
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -66,6 +66,7 @@ async function load(){
   renderTable($("journals"),["Entry No.","Date","Description / Account Lines","Total Debits","Total Credits","Status"],journalRows,"No journal entries.");
   renderTable($("expenses"),["Date","Payee","Description","Amount","Payment Method","Status"],expenses.map(e=>[e.expense_date,e.payee,e.description,money(e.amount),e.payment_method,e.status.toUpperCase()]),"No expense records.");
   renderTable($("loans"),["Lender","Principal","Interest","Repaid","Outstanding","Repayment Terms","Status"],loans.map(l=>[l.lender_name,money(l.principal_amount),Number(l.interest_rate).toFixed(2)+"%",money(l.amount_repaid),money(Number(l.principal_amount)-Number(l.amount_repaid)),l.repayment_terms,l.status.toUpperCase()]),"No shareholder loans recorded.");
+  populateRegisterJournalOptions();
   renderTable($("auditRecords"),["Time","Table","Record","Action","Actor","Change Detail"],audit.map(a=>[new Date(a.created_at).toLocaleString(),a.table_name,a.record_id,a.action,a.actor_id||"System",JSON.stringify(a.details)]),"No audit events recorded yet.");
   renderApprovalQueue();showMessage("Production bookkeeping records loaded. Only approved and posted journals affect official ledger balances.","success");
  }catch(error){console.error(error);showMessage(error.message||"Unable to load bookkeeping records.","error");}
@@ -73,6 +74,52 @@ async function load(){
 }
 
 
+function populateRegisterJournalOptions(){
+ const expenseSelect=$("expenseJournal"),loanSelect=$("loanJournal");
+ [expenseSelect,loanSelect].forEach(s=>{if(s)s.replaceChildren();});
+ journalsCache.filter(j=>j.status==="posted").forEach(j=>{
+  const label=(j.entry_number?"#"+j.entry_number+" · ":"")+j.entry_date+" · "+j.description;
+  [expenseSelect,loanSelect].forEach(s=>{if(s){const o=el("option","",label);o.value=j.id;s.append(o);}});
+ });
+ $("expenseAccount").replaceChildren();
+ accountsCache.filter(a=>a.is_active&&a.account_type==="expense").forEach(a=>{const o=el("option","",a.code+" · "+a.name);o.value=a.id;$("expenseAccount").append(o);});
+}
+function selectedJournalLines(journalId){return linesCache.filter(x=>x.journal_id===journalId);}
+async function saveExpenseRegister(){
+ const journalId=$("expenseJournal").value,accountId=$("expenseAccount").value,amount=Number($("expenseAmount").value);
+ const journal=journalsCache.find(j=>j.id===journalId),line=selectedJournalLines(journalId).find(x=>x.account_id===accountId&&Number(x.debit)>0);
+ const date=$("expenseDate").value,payee=$("expensePayee").value.trim(),description=$("expenseDescription").value.trim();
+ if(activeRole!=="super_admin"){ $("expenseRegisterMessage").textContent="Only the Super Administrator can register historical posted expenses.";return; }
+ if(!journal||journal.status!=="posted"||!date||!payee||!description||!accountId||!Number.isFinite(amount)||amount<=0){$("expenseRegisterMessage").textContent="Complete every required field and select an existing posted journal.";return;}
+ if(!line||Number(line.debit)!==amount){$("expenseRegisterMessage").textContent="The amount and expense account must match a debit line in the selected posted journal exactly.";return;}
+ $("saveExpenseRegister").disabled=true;
+ try{
+  const {error}=await db.from("ft_bookkeeping_expenses").insert({expense_date:date,payee,description,account_id:accountId,amount,payment_method:$("expensePaymentMethod").value.trim()||null,journal_id:journalId,status:"approved",prepared_by:activeUser.id,approved_by:activeUser.id,approved_at:new Date().toISOString()});
+  if(error)throw error;
+  $("expenseRegisterMessage").textContent="Expense register record saved and linked to the existing posted journal. No new journal was created.";
+  $("expensePayee").value="";$("expenseDescription").value="";$("expenseAmount").value="";$("expensePaymentMethod").value="";
+  await load();
+ }catch(e){$("expenseRegisterMessage").textContent="Could not save expense record: "+(e.message||"Unknown error");}
+ finally{$("saveExpenseRegister").disabled=false;}
+}
+async function saveLoanRegister(){
+ const journalId=$("loanJournal").value,journal=journalsCache.find(j=>j.id===journalId);
+ const lender=$("loanLender").value.trim(),principal=Number($("loanPrincipal").value),interest=Number($("loanInterest").value);
+ const terms=$("loanTerms").value.trim(),agreementDate=$("loanAgreementDate").value;
+ const credit=selectedJournalLines(journalId).filter(x=>Number(x.credit)>0).reduce((s,x)=>s+Number(x.credit),0);
+ if(activeRole!=="super_admin"){ $("loanRegisterMessage").textContent="Only the Super Administrator can register shareholder loans.";return; }
+ if(!journal||journal.status!=="posted"||!lender||!terms||!Number.isFinite(principal)||principal<=0||!Number.isFinite(interest)||interest<0){$("loanRegisterMessage").textContent="Complete all required fields and select an existing posted journal.";return;}
+ if(credit!==principal){$("loanRegisterMessage").textContent="The principal must equal the total credit in the selected posted journal. Select the correct loan journal.";return;}
+ $("saveLoanRegister").disabled=true;
+ try{
+  const {error}=await db.from("ft_bookkeeping_shareholder_loans").insert({lender_name:lender,principal_amount:principal,interest_rate:interest,repayment_terms:terms,agreement_date:agreementDate||null,amount_repaid:0,status:"outstanding",journal_id:journalId,created_by:activeUser.id});
+  if(error)throw error;
+  $("loanRegisterMessage").textContent="Shareholder loan record saved and linked to the existing posted journal. No new journal was created.";
+  $("loanLender").value="";$("loanPrincipal").value="";$("loanAgreementDate").value="";
+  await load();
+ }catch(e){$("loanRegisterMessage").textContent="Could not save shareholder loan record: "+(e.message||"Unknown error");}
+ finally{$("saveLoanRegister").disabled=false;}
+}
 function populateReportPeriods(){
  const select=$("reportPeriod");select.replaceChildren();
  periodsCache.forEach(p=>{const o=el("option","",p.period_name+" · "+p.start_date+" to "+p.end_date);o.value=p.id;select.append(o);});
@@ -158,6 +205,7 @@ async function init(){
   if(!canPrepare){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.prepare"});if(p.error)throw p.error;canPrepare=p.data===true;}
   canReadReports=role==="super_admin";if(!canReadReports){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.reports.read"});if(p.error)throw p.error;canReadReports=p.data===true;}
   canManageDocuments=role==="super_admin";if(!canManageDocuments){const p=await db.rpc("admin_has_permission",{required_permission:"bookkeeping.documents.manage"});if(p.error)throw p.error;canManageDocuments=p.data===true;}
+  $("expenseRegisterAccess").textContent=role==="super_admin"?"Historical expense register entry is enabled for the Super Administrator.":"Historical register entry is restricted to the Super Administrator.";$("expenseRegisterForm").classList.toggle("hidden",role!=="super_admin");$("loanRegisterAccess").textContent=role==="super_admin"?"Shareholder loan register entry is enabled.":"Only the Super Administrator can register shareholder loans.";$("loanRegisterForm").classList.toggle("hidden",role!=="super_admin");
   const requiredTables=["ft_bookkeeping_accounts","ft_bookkeeping_audit_log","ft_bookkeeping_periods","ft_bookkeeping_journals","ft_bookkeeping_bank_accounts","ft_bookkeeping_journal_lines","ft_bookkeeping_bank_transactions","ft_bookkeeping_documents","ft_bookkeeping_expenses","ft_bookkeeping_fixed_assets","ft_bookkeeping_reconciliations","ft_bookkeeping_shareholder_loans"];
   const probes=await Promise.all(requiredTables.map(name=>db.from(name).select("*",{head:true,count:"exact"}).limit(0)));
   const unavailable=probes.map((result,index)=>result.error?requiredTables[index]:null).filter(Boolean);
@@ -179,6 +227,7 @@ async function init(){
  }catch(error){showMessage(error.message||"Bookkeeping access verification failed.","error");}
 }
 $("refresh").addEventListener("click",load);
+$("saveExpenseRegister").addEventListener("click",saveExpenseRegister);$("saveLoanRegister").addEventListener("click",saveLoanRegister);
 $("runReports").addEventListener("click",calculateReports);$("reportPeriod").addEventListener("change",calculateReports);
 $("addLine").addEventListener("click",addJournalLine);$("submitJournal").addEventListener("click",submitJournal);$("confirmYes").addEventListener("click",confirmJournalAction);$("confirmNo").addEventListener("click",()=>{$("confirmPanel").classList.add("hidden");pendingAction=null;});
 $("signOut").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){showMessage(error.message,"error");return;}location.href="finance-admin.html";});
