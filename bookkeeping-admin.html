@@ -26,7 +26,7 @@
 <section class="card"><h2>Expense Register</h2><div id="expenses"></div></section>
 <section class="card"><h2>Shareholder Loan Register</h2><div id="loans"></div></section>
 <section class="card" id="auditSection"><h2>Bookkeeping Audit Trail</h2><p class="muted">Changes to bookkeeping registers are recorded automatically. Audit entries cannot be edited or deleted through the application.</p><div id="auditRecords"></div></section>
-<section class="card"><h2>Financial reporting status</h2><p class="message">The opening entries remain drafts until reviewed. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p></section>
+<section class="card"><h2>Financial reporting status</h2><p class="message success">Production opening journals are posted and included in the official ledger. The current opening baseline is two posted entries: the shareholder loan received on 20 November 2026 and the legal search fee paid on 24 November 2026. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p><p class="muted">Expense and Shareholder Loan Register rows are separate supporting records linked to their posted journal entries. A missing register row does not mean the journal is a draft, and must never be corrected by posting the same transaction again. Register write access is restricted to the Super Administrator.</p></section>
 </div>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
