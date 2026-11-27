@@ -72,7 +72,8 @@ function updateSelected(){
  $("selectedSummary").textContent=chosen.length+" item(s) selected · "+(suppliers.length===1?"one supplier":"select items from one supplier only");
 }
 async function load(){try{
- await loadEligible();\n const [rules,profiles,settlements,disbursements,remits,certs]=await Promise.all([
+ await loadEligible();
+ const [rules,profiles,settlements,disbursements,remits,certs]=await Promise.all([
  db.from("frosttech_tax_rules").select("*").order("effective_from",{ascending:false}),
  db.from("frosttech_supplier_tax_profiles").select("*").order("updated_at",{ascending:false}),
  db.from("frosttech_supplier_settlements").select("*").order("created_at",{ascending:false}),
