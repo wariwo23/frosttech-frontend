@@ -30,3 +30,20 @@ Isolated test project: `gqnidjifiobhqhnxjlow`
 
 ## Boundaries
 This audit has not modified production data or policies. The migration must be applied to the isolated project and tested before any production approval. Employment remains paused; no employee or admin accounts are created or invited.
+
+## Isolated validation completed
+- Applied the migration to the isolated test project successfully.
+- Regression script returned PASS.
+- Verified that no RLS policy still references `is_admin()`.
+- Verified `anon` and `authenticated` can no longer execute `public.is_admin()`.
+- Verified Operations permission boundaries: customer request management works, Super Administrator identity is false, and Finance/Advertiser permissions are denied.
+- Verified Super Administrator retains Operations, Finance and Advertiser permissions through `admin_has_permission`.
+- Executed the rollback successfully, reapplied the migration, and reran the regression script: PASS.
+- Frontend repository code search found no runtime invocation of the legacy `is_admin` RPC; matches were historical migration/rollback/audit documentation.
+- Test security advisors still report other SECURITY DEFINER RPC grants and 25 RLS-enabled/no-policy tables in the isolated project. Those are separate findings and are not silently altered by this policy-retirement migration.
+
+## Production release gate
+- The production migration has NOT been applied.
+- Production audit still shows 10 policies referencing `is_admin()` and the helper remains executable by anon/authenticated until this release is approved.
+- No production records, customer requests, payment rows, advertisement packages, notification records, or quotation snapshots were changed during this stage.
+- Approval is required before applying `20261127234500_legacy_admin_policy_retirement` to production.
