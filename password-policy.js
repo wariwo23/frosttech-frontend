@@ -18,6 +18,7 @@
     if (!status) {
       status = document.createElement("p");
       status.setAttribute("data-ft-password-status", "");
+      status.id = "ft-password-status-" + (form.id || "form");
       status.setAttribute("role", "status");
       status.setAttribute("aria-live", "polite");
       status.style.cssText = "margin:7px 0 12px;color:#526579;font-size:12px;line-height:1.5";
@@ -72,8 +73,10 @@
     );
     passwordInput.minLength = MIN_LENGTH;
     passwordInput.maxLength = 72;
-    passwordInput.setAttribute("aria-describedby",
-      (passwordInput.getAttribute("aria-describedby") || "").trim());
+    const statusId = "ft-password-status-" + (form.id || "form");
+    const describedBy = (passwordInput.getAttribute("aria-describedby") || "").trim().split(/\\s+/).filter(Boolean);
+    if (!describedBy.includes(statusId)) describedBy.push(statusId);
+    passwordInput.setAttribute("aria-describedby", describedBy.join(" "));
 
     if (confirmInput) {
       confirmInput.minLength = MIN_LENGTH;
