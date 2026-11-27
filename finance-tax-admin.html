@@ -23,7 +23,8 @@
 <div><label>Legal reference</label><input id="legalRef"></div></div><button id="saveRule">Save Tax Rule</button></div>
 <div id="rulesRows"></div></section>
 <section class="card"><h2>Supplier Tax Profiles</h2><p class="muted">Supplier-submitted profiles require verification before settlement preparation.</p><div id="profileRows"></div></section>
-<section class="card"><h2>Supplier Settlements</h2><p class="muted">Finance prepares and submits settlements. Only the Super Administrator can approve or reject. No payment is initiated by approval.</p><div id="settlementRows"></div></section>
+<section class="card"><h2>Prepare Supplier Settlements from Completed Orders</h2><p class="muted">Select eligible order items for one supplier. Only verified supplier tax profiles and assigned supplier costs can be used. Preparation creates a draft; submission sends it for separate Super Admin approval.</p><div id="eligibleRows"></div><div class="row"><div><label>Supplier ID</label><input id="prepareSupplier" placeholder="Supplier UUID"></div><div><button id="prepareSettlement">Prepare Selected Items</button></div></div><div id="selectedSummary" class="muted">No items selected.</div></section>
+<section class="card"><h2>Record Supplier Disbursement</h2><p class="muted">Record an independently authorized payment reference only. This page does not initiate bank transfers.</p><div class="grid"><div><label>Approved settlement ID</label><input id="disbSettlement"></div><div><label>Payment method</label><select id="disbMethod"><option value="manual_bank_transfer">Manual bank transfer</option><option value="online_payment">Online payment reference</option></select></div><div><label>Amount (NGN)</label><input id="disbAmount" type="number" min="0.01" step="0.01"></div><div><label>Bank reference</label><input id="disbBankRef"></div><div><label>Provider reference</label><input id="disbProviderRef"></div><div><label>Evidence storage path</label><input id="disbEvidence"></div><div><label>Idempotency key</label><input id="disbKey"></div></div><button id="recordDisbursement">Save Disbursement Record</button></section><section class="card"><h2>Supplier Settlements</h2><p class="muted">Finance prepares and submits settlements. Only the Super Administrator can approve or reject. No payment is initiated by approval.</p><div id="settlementRows"></div></section>
 <section class="card"><h2>Disbursement Records</h2><p class="muted">Record a payment reference after an independently authorised payment arrangement. Recording does not initiate a bank transfer. A different administrator must verify the record.</p><div id="disbursementRows"></div></section>
 <section class="card"><h2>Tax Remittances &amp; Certificates</h2><p class="muted">These are record-keeping functions only. They do not pay a tax authority or submit a statutory return.</p>
 <h3>Record tax remittance</h3><div class="grid">
@@ -55,8 +56,23 @@ function actionButton(label,fn,cls=""){const b=el("button",label,cls);b.type="bu
 function isoLocal(v){return v?new Date(v).toLocaleString():"—"}
 function key(prefix){return prefix+"-"+crypto.randomUUID()}
 async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw error;return data}
+let eligibleItems=[];
+async function loadEligible(){
+ const data=await rpc("frosttech_finance_list_settlement_eligible_items",{});
+ eligibleItems=Array.isArray(data)?data:[];
+ const root=$("eligibleRows");root.replaceChildren();
+ if(!eligibleItems.length){root.append(el("p","No eligible delivered/completed order items are currently available.","muted"));return}
+ const groups={};eligibleItems.forEach(x=>(groups[x.supplier_id]??=[]).push(x));
+ Object.entries(groups).forEach(([supplier,items])=>{const box=el("div","");box.className="record";box.append(el("h3","Supplier "+supplier+" · "+items.length+" eligible item(s)"));items.forEach(x=>{const line=el("label","");line.style.fontWeight="normal";const cb=document.createElement("input");cb.type="checkbox";cb.value=x.order_item_id;cb.dataset.supplier=supplier;cb.style.width="auto";cb.style.marginRight="8px";cb.onchange=updateSelected;line.append(cb,document.createTextNode(x.order_number+" · "+x.product_name+" · Qty "+x.quantity+" · "+money(x.line_total)+" · "+x.assignment_source));box.append(line)});root.append(box)});
+}
+function updateSelected(){
+ const chosen=[...document.querySelectorAll("#eligibleRows input[type=checkbox]:checked")];
+ const suppliers=[...new Set(chosen.map(x=>x.dataset.supplier))];
+ $("prepareSupplier").value=suppliers.length===1?suppliers[0]:"";
+ $("selectedSummary").textContent=chosen.length+" item(s) selected · "+(suppliers.length===1?"one supplier":"select items from one supplier only");
+}
 async function load(){try{
- const [rules,profiles,settlements,disbursements,remits,certs]=await Promise.all([
+ await loadEligible();\n const [rules,profiles,settlements,disbursements,remits,certs]=await Promise.all([
  db.from("frosttech_tax_rules").select("*").order("effective_from",{ascending:false}),
  db.from("frosttech_supplier_tax_profiles").select("*").order("updated_at",{ascending:false}),
  db.from("frosttech_supplier_settlements").select("*").order("created_at",{ascending:false}),
@@ -78,6 +94,23 @@ async function load(){try{
  ]);
  msg("Finance and tax records loaded.");
  }catch(e){msg(e.message||"Unable to load finance records.","error")}}
+$("prepareSettlement").onclick=async()=>{try{
+ const chosen=[...document.querySelectorAll("#eligibleRows input[type=checkbox]:checked")];
+ const suppliers=[...new Set(chosen.map(x=>x.dataset.supplier))];
+ if(!chosen.length||suppliers.length!==1||$("prepareSupplier").value!==suppliers[0])throw new Error("Select one or more items belonging to exactly one supplier.");
+ const result=await rpc("frosttech_finance_prepare_supplier_settlement",{p_supplier_id:suppliers[0],p_order_item_ids:chosen.map(x=>x.value)});
+ await rpc("frosttech_finance_submit_supplier_settlement",{p_settlement_id:result.settlement_id,p_note:"Submitted from Finance Administration"});
+ msg("Settlement draft prepared and submitted. Gross "+money(result.gross_entitlement)+" · WHT "+money(result.wht_amount)+" · Net "+money(result.net_payable)+". Awaiting Super Admin approval.","success");
+ await load();
+ }catch(e){msg(e.message,"error")}};
+$("recordDisbursement").onclick=async()=>{try{
+ const result=await rpc("frosttech_finance_record_supplier_disbursement",{
+ p_settlement_id:$("disbSettlement").value.trim(),p_payment_method:$("disbMethod").value,
+ p_amount:Number($("disbAmount").value),p_payment_reference:$("disbBankRef").value.trim(),
+ p_provider_reference:$("disbProviderRef").value.trim(),p_idempotency_key:$("disbKey").value.trim()||key("DISB"),
+ p_evidence_path:$("disbEvidence").value.trim()||null});
+ msg("Disbursement record saved ("+result.status+"). No payment was initiated.","success");load();
+ }catch(e){msg(e.message,"error")}};
 $("saveRule").onclick=async()=>{try{if(role!=="super_admin")throw new Error("Only Super Administrator can create tax rules.");const f=v=>v?new Date(v).toISOString():null;await rpc("frosttech_super_admin_save_tax_rule",{p_tax_type:$("taxType").value,p_direction:$("direction").value,p_transaction_category:$("category").value.trim(),p_tax_classification:$("classification").value.trim(),p_rate:Number($("rate").value),p_calculation_basis:$("basis").value,p_vat_mode:$("taxType").value==="VAT"?$("vatMode").value:null,p_legal_reference:$("legalRef").value,p_effective_from:f($("effectiveFrom").value),p_effective_until:f($("effectiveUntil").value),p_entity_type:$("entity").value,p_residency_status:$("residency").value});msg("Tax rule saved.","success");load()}catch(e){msg(e.message,"error")}};
 $("recordRemit").onclick=async()=>{try{await rpc("frosttech_finance_record_tax_remittance",{p_tax_type:$("remitType").value,p_amount:Number($("remitAmount").value),p_tax_assessment_id:$("assessmentId").value.trim()||null,p_supplier_settlement_id:$("remitSettlementId").value.trim()||null,p_reference:$("remitRef").value.trim(),p_remittance_date:$("remitDate").value||null,p_evidence_path:$("remitEvidence").value.trim(),p_idempotency_key:$("remitKey").value.trim()||key("TAX")});msg("Tax remittance record saved. No payment or filing was initiated.","success");load()}catch(e){msg(e.message,"error")}};
 $("recordCert").onclick=async()=>{try{await rpc("frosttech_finance_record_tax_certificate",{p_tax_assessment_id:$("certAssessment").value.trim()||null,p_settlement_id:$("certSettlement").value.trim()||null,p_certificate_type:$("certType").value,p_certificate_reference:$("certRef").value.trim(),p_document_path:$("certPath").value.trim(),p_issued_at:$("certIssued").value?new Date($("certIssued").value).toISOString():null,p_idempotency_key:$("certKey").value.trim()||key("CERT")});msg("Tax certificate record saved.","success");load()}catch(e){msg(e.message,"error")}};
