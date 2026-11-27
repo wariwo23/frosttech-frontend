@@ -93,8 +93,10 @@
       if (!update()) {
         event.preventDefault();
         event.stopImmediatePropagation();
-        passwordInput.reportValidity();
-        if (confirmInput && passwordInput.value === confirmInput.value) {
+        if (passwordInput.validity && !passwordInput.validity.valid) {
+          passwordInput.reportValidity();
+        }
+        if (confirmInput && confirmInput.validity && !confirmInput.validity.valid) {
           confirmInput.reportValidity();
         }
       }
