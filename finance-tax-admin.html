@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Finance, Supplier Settlements & Tax | FrostTech</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f3f6fa;color:#172333;font:15px Arial,sans-serif}header{background:#063b70;color:#fff;padding:18px}main{max-width:1180px;margin:auto;padding:16px}.card{background:#fff;border:1px solid #dce3eb;border-radius:10px;padding:16px;margin:14px 0}.muted{color:#607284;font-size:13px}.message{padding:11px;border-radius:6px;background:#e8f3ff;color:#06477c;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e7f6ec;color:#176534}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:10px}label{display:block;font-weight:bold;font-size:13px;margin:9px 0 5px}input,select,textarea{width:100%;padding:10px;border:1px solid #bdc9d5;border-radius:6px;font:inherit;background:#fff}button{background:#0879c9;color:#fff;border:0;border-radius:6px;padding:10px 14px;font-weight:bold;cursor:pointer;margin:4px}button.secondary{background:#536779}button.danger{background:#a72c2c}button:disabled{opacity:.55}.tablewrap{overflow:auto}table{border-collapse:collapse;width:100%;min-width:760px;font-size:13px}th,td{padding:9px;border:1px solid #dce3eb;text-align:left;vertical-align:top}th{background:#edf3f8}.hidden{display:none!important}.row{display:flex;gap:10px;flex-wrap:wrap;align-items:end}.row>*{flex:1;min-width:150px}.record{border:1px solid #dce3eb;border-radius:8px;padding:12px;margin:10px 0}.record h3{margin:0 0 8px}.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#edf3f8;font-size:12px}
+</style></head><body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Finance, Supplier Settlements &amp; Tax Administration</p><p><a href="finance-admin.html" style="color:#fff">← Return to Finance Administration</a></p></header>
+<main>
+<section class="card" id="access"><h2>Finance Administration Access</h2><p id="accessMsg" class="message">Checking administrator session…</p><p id="identity" class="muted"></p><button id="refresh">Refresh Records</button><button id="logout" class="secondary">Sign Out</button></section>
+<section class="card" id="taxRules"><h2>Tax Rules <span class="pill">Super Admin control</span></h2><p class="muted">Create effective-dated VAT and WHT rules. No rate is preselected or assumed. Confirm the applicable legal rate and basis before saving.</p>
+<div id="ruleForm" class="hidden"><div class="grid">
+<div><label>Tax type</label><select id="taxType"><option>WHT</option><option>VAT</option></select></div>
+<div><label>Direction</label><select id="direction"><option value="outbound">Outbound</option><option value="inbound">Inbound</option><option value="both">Both</option></select></div>
+<div><label>Transaction category</label><input id="category" value="supplier_settlement"></div>
+<div><label>Tax classification</label><input id="classification" placeholder="Exact supplier tax class"></div>
+<div><label>Rate (%)</label><input id="rate" type="number" min="0" max="100" step="0.0001"></div>
+<div><label>Calculation basis</label><select id="basis"><option value="taxable_base">Taxable base</option><option value="gross_amount">Gross amount</option><option value="net_amount">Net amount</option></select></div>
+<div><label>VAT mode (VAT only)</label><select id="vatMode"><option value="exclusive">Exclusive</option><option value="inclusive">Inclusive</option></select></div>
+<div><label>Entity type</label><select id="entity"><option value="any">Any</option><option value="individual">Individual</option><option value="company">Company</option><option value="partnership">Partnership</option><option value="other">Other</option></select></div>
+<div><label>Residency</label><select id="residency"><option value="any">Any</option><option value="resident">Resident</option><option value="non_resident">Non-resident</option></select></div>
+<div><label>Effective from</label><input id="effectiveFrom" type="datetime-local"></div>
+<div><label>Effective until (optional)</label><input id="effectiveUntil" type="datetime-local"></div>
+<div><label>Legal reference</label><input id="legalRef"></div></div><button id="saveRule">Save Tax Rule</button></div>
+<div id="rulesRows"></div></section>
+<section class="card"><h2>Supplier Tax Profiles</h2><p class="muted">Supplier-submitted profiles require verification before settlement preparation.</p><div id="profileRows"></div></section>
+<section class="card"><h2>Supplier Settlements</h2><p class="muted">Finance prepares and submits settlements. Only the Super Administrator can approve or reject. No payment is initiated by approval.</p><div id="settlementRows"></div></section>
+<section class="card"><h2>Disbursement Records</h2><p class="muted">Record a payment reference after an independently authorised payment arrangement. Recording does not initiate a bank transfer. A different administrator must verify the record.</p><div id="disbursementRows"></div></section>
+<section class="card"><h2>Tax Remittances &amp; Certificates</h2><p class="muted">These are record-keeping functions only. They do not pay a tax authority or submit a statutory return.</p>
+<h3>Record tax remittance</h3><div class="grid">
+<div><label>Tax type</label><select id="remitType"><option>WHT</option><option>VAT</option></select></div>
+<div><label>Tax assessment ID (use one source only)</label><input id="assessmentId"></div>
+<div><label>Supplier settlement ID (WHT)</label><input id="remitSettlementId"></div>
+<div><label>Amount (NGN)</label><input id="remitAmount" type="number" min="0.01" step="0.01"></div>
+<div><label>Reference</label><input id="remitRef"></div>
+<div><label>Remittance date</label><input id="remitDate" type="date"></div>
+<div><label>Evidence storage path</label><input id="remitEvidence"></div>
+<div><label>Unique idempotency key</label><input id="remitKey"></div></div><button id="recordRemit">Record Remittance</button>
+<h3>Record tax certificate</h3><div class="grid">
+<div><label>Tax assessment ID</label><input id="certAssessment"></div><div><label>Settlement ID</label><input id="certSettlement"></div>
+<div><label>Certificate type</label><select id="certType"><option value="withholding_tax_credit">Withholding tax credit</option><option value="withholding_tax_remittance">Withholding tax remittance</option><option value="vat_supporting_document">VAT supporting document</option><option value="other">Other</option></select></div>
+<div><label>Certificate reference</label><input id="certRef"></div><div><label>Document storage path</label><input id="certPath"></div>
+<div><label>Issued at</label><input id="certIssued" type="datetime-local"></div><div><label>Unique idempotency key</label><input id="certKey"></div></div><button id="recordCert">Record Certificate</button>
+<div id="taxRows"></div></section>
+<p id="pageMsg" class="message" role="status">Loading…</p>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+"use strict";
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV");
+const $=id=>document.getElementById(id);let role="";let currentUser=null;
+function msg(t,c=""){const e=$("pageMsg");e.textContent=t;e.className="message "+c}
+function money(v){return v==null?"—":"₦"+Number(v).toLocaleString("en-NG",{minimumFractionDigits:2,maximumFractionDigits:2})}
+function el(tag,txt,cls=""){const n=document.createElement(tag);n.textContent=txt??"—";if(cls)n.className=cls;return n}
+function table(root,heads,rows){root.replaceChildren();if(!rows.length){root.append(el("p","No records available." ,"muted"));return}const w=el("div","");w.className="tablewrap";const t=el("table",""),h=el("thead",""),hr=el("tr","");heads.forEach(x=>hr.append(el("th",x)));h.append(hr);t.append(h);const b=el("tbody","");rows.forEach(row=>{const tr=el("tr","");row.forEach(x=>{const td=el("td",x);tr.append(td)});b.append(tr)});t.append(b);w.append(t);root.append(w)}
+function actionButton(label,fn,cls=""){const b=el("button",label,cls);b.type="button";b.onclick=fn;return b}
+function isoLocal(v){return v?new Date(v).toLocaleString():"—"}
+function key(prefix){return prefix+"-"+crypto.randomUUID()}
+async function rpc(name,args){const {data,error}=await db.rpc(name,args);if(error)throw error;return data}
+async function load(){try{
+ const [rules,profiles,settlements,disbursements,remits,certs]=await Promise.all([
+ db.from("frosttech_tax_rules").select("*").order("effective_from",{ascending:false}),
+ db.from("frosttech_supplier_tax_profiles").select("*").order("updated_at",{ascending:false}),
+ db.from("frosttech_supplier_settlements").select("*").order("created_at",{ascending:false}),
+ db.from("frosttech_supplier_disbursements").select("*").order("created_at",{ascending:false}),
+ db.from("frosttech_tax_remittances").select("*").order("created_at",{ascending:false}),
+ db.from("frosttech_tax_certificates").select("*").order("created_at",{ascending:false})
+ ]);
+ for(const r of [rules,profiles,settlements,disbursements,remits,certs])if(r.error)throw r.error;
+ table($("rulesRows"),["Type","Direction","Category","Classification","Rate","Basis","Effective from","Until","Active"].map(x=>x),rules.data.map(r=>[r.tax_type,r.direction,r.transaction_category,r.tax_classification,r.rate+"%",r.calculation_basis,isoLocal(r.effective_from),isoLocal(r.effective_until),r.is_active?"Yes":"No"]));
+ $("profileRows").replaceChildren();if(!profiles.data.length)$("profileRows").append(el("p","No supplier tax profiles submitted.","muted"));
+ profiles.data.forEach(p=>{const c=el("div","");c.className="record";c.append(el("h3","Supplier "+p.supplier_id),el("p","Class: "+p.tax_classification+" · "+p.entity_type+" · "+p.residency_status+" · Status: "+p.verification_status),el("p","Tax ID: "+(p.tax_identifier||"Not supplied")+" · Updated: "+isoLocal(p.updated_at),"muted"));if(role==="finance_admin"||role==="super_admin"){c.append(actionButton("Verify",async()=>{const note=prompt("Verification note (optional):")??"";try{await rpc("frosttech_finance_verify_supplier_tax_profile",{p_supplier_id:p.supplier_id,p_approve:true,p_note:note});msg("Supplier tax profile verified.","success");load()}catch(e){msg(e.message,"error")}}),actionButton("Reject",async()=>{const note=prompt("Reason for rejection:");if(!note)return;try{await rpc("frosttech_finance_verify_supplier_tax_profile",{p_supplier_id:p.supplier_id,p_approve:false,p_note:note});msg("Supplier tax profile rejected.","success");load()}catch(e){msg(e.message,"error")}},"danger"))}$("profileRows").append(c)});
+ $("settlementRows").replaceChildren();if(!settlements.data.length)$("settlementRows").append(el("p","No supplier settlements prepared.","muted"));
+ settlements.data.forEach(s=>{const c=el("div","");c.className="record";c.append(el("h3",s.settlement_number+" · "+s.status),el("p","Supplier: "+s.supplier_id),el("p","Gross: "+money(s.gross_entitlement)+" · WHT: "+money(s.wht_amount)+" ("+s.wht_rate+"%) · Net payable: "+money(s.net_payable)),el("p","Prepared: "+isoLocal(s.prepared_at)+" · Submitted: "+isoLocal(s.submitted_at),"muted"));if(role==="super_admin"&&s.status==="submitted"){c.append(actionButton("Approve",async()=>{try{await rpc("frosttech_super_admin_approve_supplier_settlement",{p_settlement_id:s.id,p_reason:"Approved by Super Administrator"});msg("Settlement approved. No payment was initiated.","success");load()}catch(e){msg(e.message,"error")}}),actionButton("Reject",async()=>{const reason=prompt("Enter rejection reason (minimum 5 characters):");if(!reason)return;try{await rpc("frosttech_super_admin_reject_supplier_settlement",{p_settlement_id:s.id,p_reason:reason});msg("Settlement rejected.","success");load()}catch(e){msg(e.message,"error")}},"danger"))}$("settlementRows").append(c)});
+ $("disbursementRows").replaceChildren();if(!disbursements.data.length)$("disbursementRows").append(el("p","No disbursement records.","muted"));
+ disbursements.data.forEach(d=>{const c=el("div","");c.className="record";c.append(el("h3",money(d.amount)+" · "+d.status),el("p","Settlement: "+d.settlement_id+" · Method: "+d.payment_method),el("p","Reference: "+(d.payment_reference||d.provider_reference||"—")+" · Recorded: "+isoLocal(d.initiated_at),"muted"));if(["pending","processing"].includes(d.status)&&d.initiated_by!==currentUser.id){c.append(actionButton("Verify Successful",async()=>{if(!confirm("Confirm that independent bank/provider evidence has been checked?"))return;try{await rpc("frosttech_finance_verify_supplier_disbursement",{p_disbursement_id:d.id,p_success:true,p_note:"Evidence checked by a separate administrator"});msg("Disbursement verified.","success");load()}catch(e){msg(e.message,"error")}}),actionButton("Mark Failed",async()=>{const note=prompt("Reason payment failed:");if(!note)return;try{await rpc("frosttech_finance_verify_supplier_disbursement",{p_disbursement_id:d.id,p_success:false,p_note:note});msg("Disbursement marked failed.","success");load()}catch(e){msg(e.message,"error")}},"danger"))}$("disbursementRows").append(c)});
+ table($("taxRows"),["Record","Type","Amount / Reference","Status","Date"],[
+ ...remits.data.map(r=>["Remittance",r.tax_type,money(r.amount)+" · "+(r.remittance_reference||""),r.status,r.remittance_date||isoLocal(r.created_at)]),
+ ...certs.data.map(c=>["Certificate",c.certificate_type,c.certificate_reference||c.document_path,"Recorded",isoLocal(c.created_at)])
+ ]);
+ msg("Finance and tax records loaded.");
+ }catch(e){msg(e.message||"Unable to load finance records.","error")}}
+$("saveRule").onclick=async()=>{try{if(role!=="super_admin")throw new Error("Only Super Administrator can create tax rules.");const f=v=>v?new Date(v).toISOString():null;await rpc("frosttech_super_admin_save_tax_rule",{p_tax_type:$("taxType").value,p_direction:$("direction").value,p_transaction_category:$("category").value.trim(),p_tax_classification:$("classification").value.trim(),p_rate:Number($("rate").value),p_calculation_basis:$("basis").value,p_vat_mode:$("taxType").value==="VAT"?$("vatMode").value:null,p_legal_reference:$("legalRef").value,p_effective_from:f($("effectiveFrom").value),p_effective_until:f($("effectiveUntil").value),p_entity_type:$("entity").value,p_residency_status:$("residency").value});msg("Tax rule saved.","success");load()}catch(e){msg(e.message,"error")}};
+$("recordRemit").onclick=async()=>{try{await rpc("frosttech_finance_record_tax_remittance",{p_tax_type:$("remitType").value,p_amount:Number($("remitAmount").value),p_tax_assessment_id:$("assessmentId").value.trim()||null,p_supplier_settlement_id:$("remitSettlementId").value.trim()||null,p_reference:$("remitRef").value.trim(),p_remittance_date:$("remitDate").value||null,p_evidence_path:$("remitEvidence").value.trim(),p_idempotency_key:$("remitKey").value.trim()||key("TAX")});msg("Tax remittance record saved. No payment or filing was initiated.","success");load()}catch(e){msg(e.message,"error")}};
+$("recordCert").onclick=async()=>{try{await rpc("frosttech_finance_record_tax_certificate",{p_tax_assessment_id:$("certAssessment").value.trim()||null,p_settlement_id:$("certSettlement").value.trim()||null,p_certificate_type:$("certType").value,p_certificate_reference:$("certRef").value.trim(),p_document_path:$("certPath").value.trim(),p_issued_at:$("certIssued").value?new Date($("certIssued").value).toISOString():null,p_idempotency_key:$("certKey").value.trim()||key("CERT")});msg("Tax certificate record saved.","success");load()}catch(e){msg(e.message,"error")}};
+$("refresh").onclick=load;$("logout").onclick=async()=>{await db.auth.signOut();location.href="finance-admin.html"};
+(async()=>{try{const {data:{user},error}=await db.auth.getUser();if(error)throw error;if(!user){$("accessMsg").textContent="Sign in through Finance Administration first.";return}currentUser=user;role=await rpc("admin_get_my_role",{});if(!["finance_admin","super_admin"].includes(role))throw new Error("Finance Administrator or Super Administrator access required.");$("identity").textContent=user.email+" · "+(role==="super_admin"?"Super Administrator":"Finance Administrator");$("accessMsg").textContent="Access granted."; $("accessMsg").className="message success";if(role==="super_admin")$("ruleForm").classList.remove("hidden");await load()}catch(e){$("accessMsg").textContent=e.message||"Access denied."; $("accessMsg").className="message error"}})();
+</script></body></html>
