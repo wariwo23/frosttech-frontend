@@ -310,9 +310,11 @@ const db = window.supabase.createClient(
 
 const roleNames = {
     operations_admin:"Operations Administration",
-    supplier_admin:"Supplier Administration",
+    supplier_admin:"Supplier Administration (legacy)",
+    supplier_catalogue_admin:"Supplier & Catalogue Administration",
     finance_admin:"Finance Administration",
-    catalogue_admin:"Catalogue Administration",
+    catalogue_admin:"Catalogue Administration (legacy)",
+    advertisers_admin:"Advertisers & Communications Administration",
     super_admin:"Super Administrator — Preview"
 };
 
@@ -1355,10 +1357,18 @@ async function start() {
                 portalLink.href = "supplier-admin.html";
                 portalLink.textContent = "Open Supplier Administration";
                 portalDescription.textContent = "Review supplier applications, record verification decisions, manage submitted supplier quotations and select or reject supplier quotations. Supplier-cost records and internal pricing remain restricted to the Super Administrator.";
+            } else if (role==="supplier_catalogue_admin") {
+                portalLink.href = "supplier-admin.html";
+                portalLink.textContent = "Open Supplier & Catalogue Administration";
+                portalDescription.textContent = "Manage supplier applications, supplier quotations and catalogue products. Supplier-cost records and internal pricing remain restricted to the Super Administrator.";
             } else if (role==="finance_admin") {
                 portalLink.href = "finance-admin.html";
                 portalLink.textContent = "Open Finance Administration";
                 portalDescription.textContent = "Review production payment reconciliation, financial quotations and your own cost submissions. Cost approval and expense-ledger access remain restricted to the Super Administrator.";
+            } else if (role==="advertisers_admin") {
+                portalLink.href = "advertisers-communications-admin.html";
+                portalLink.textContent = "Open Advertisers & Communications Administration";
+                portalDescription.textContent = "Review advertiser applications, campaign content and customer communications. Advertising package prices and payment controls remain outside this department.";
             }
 
             document.getElementById("otherDepartmentMessage")
