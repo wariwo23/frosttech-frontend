@@ -2,11 +2,15 @@
   "use strict";
 
   const MIN_LENGTH = 12;
-  const MAX_LENGTH = 128;
+  const MAX_BYTES = 72;
   const FORM_IDS = ["registerForm", "passwordForm", "newPasswordForm"];
 
   function countCharacters(value) {
     return Array.from(value).length;
+  }
+
+  function countUtf8Bytes(value) {
+    return new TextEncoder().encode(value).length;
   }
 
   function getStatusNode(form, passwordInput) {
@@ -26,12 +30,13 @@
   function validate(form, passwordInput, confirmInput, status) {
     const password = passwordInput.value;
     const length = countCharacters(password);
+    const bytes = countUtf8Bytes(password);
     let message = "";
 
     if (length < MIN_LENGTH) {
       message = "Use at least 12 characters. A memorable passphrase is a good choice.";
-    } else if (length > MAX_LENGTH) {
-      message = "Use no more than 128 characters.";
+    } else if (bytes > MAX_BYTES) {
+      message = "Your password must not exceed Supabase’s 72-byte password limit. Use fewer characters or simpler characters.";
     } else if (!password.trim()) {
       message = "Your password cannot contain only spaces.";
     } else if (confirmInput && password !== confirmInput.value) {
@@ -39,7 +44,7 @@
     }
 
     passwordInput.setCustomValidity(
-      length > MAX_LENGTH || (length > 0 && length < MIN_LENGTH) || !password.trim()
+      bytes > MAX_BYTES || (length > 0 && length < MIN_LENGTH) || !password.trim()
         ? message : ""
     );
     if (confirmInput) {
@@ -52,7 +57,7 @@
     if (status) {
       status.textContent = message || (length >= MIN_LENGTH
         ? "Password length looks good. Avoid reusing a password from another service."
-        : "Password guidance: 12–128 characters; spaces and passphrases are allowed.");
+        : "Password guidance: 12 or more characters, up to 72 UTF-8 bytes. Spaces and passphrases are allowed.");
       status.style.color = message ? "#a11919" : "#526579";
     }
     return !message;
@@ -66,13 +71,13 @@
       'input[id*="confirm" i], input[name*="confirm" i]'
     );
     passwordInput.minLength = MIN_LENGTH;
-    passwordInput.maxLength = MAX_LENGTH;
+    passwordInput.maxLength = 72;
     passwordInput.setAttribute("aria-describedby",
       (passwordInput.getAttribute("aria-describedby") || "").trim());
 
     if (confirmInput) {
       confirmInput.minLength = MIN_LENGTH;
-      confirmInput.maxLength = MAX_LENGTH;
+      confirmInput.maxLength = 72;
     }
 
     const status = getStatusNode(form, passwordInput);
