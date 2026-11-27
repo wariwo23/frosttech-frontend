@@ -1,7 +1,7 @@
 -- Supplier & Catalogue authorization hardening
 -- Production project: nftxptjpgidcsgtaltjn
--- Removes broad legacy administrator table policies. Supplier and Finance
--- reads are permission-gated; supplier decisions remain RPC-only.
+-- Removes broad legacy administrator table policies. Supplier reads are
+-- permission-gated; supplier decisions remain RPC-only.
 
 begin;
 
@@ -17,7 +17,6 @@ to authenticated
 using (
   user_id = (select auth.uid())
   or public.admin_has_permission('supplier_applications.read')
-  or public.admin_has_permission('supplier_settlements.read')
 );
 
 create or replace function public.admin_review_supplier(
