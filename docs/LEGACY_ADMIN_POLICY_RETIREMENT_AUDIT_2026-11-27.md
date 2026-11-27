@@ -47,3 +47,18 @@ This audit has not modified production data or policies. The migration must be a
 - Production audit still shows 10 policies referencing `is_admin()` and the helper remains executable by anon/authenticated until this release is approved.
 - No production records, customer requests, payment rows, advertisement packages, notification records, or quotation snapshots were changed during this stage.
 - Approval is required before applying `20261127234500_legacy_admin_policy_retirement` to production.
+
+## Production release applied
+- Approved by the project owner and applied to production project `nftxptjpgidcsgtaltjn`.
+- Post-release policy audit: zero RLS policies reference legacy `is_admin()`.
+- Legacy helper EXECUTE is revoked from both `anon` and `authenticated`.
+- The only remaining function-body text match is the legacy helper's own definition; no policy or other audited function calls it.
+- Verified all replacement policies on the nine affected tables.
+- Public active advertising package SELECT policy preserved.
+- Advertiser self-read policies for advertising payments and terms preserved.
+- Customer-owned customer/request access preserved.
+- Production record counts after release: admin controls 6; advertising enquiries 0; advertising packages 9; advertising payments 0; advertising terms 0; customer requests 1; customers 3; notifications 2; approved order quotation snapshots 2.
+- Quotation records remained unchanged: 10 quotations, 12 quotation items, 1 private pricing snapshot and 11 quote requests.
+- Production account state remains one active Super Administrator and zero active departmental administrators. No employee records or invitations were created.
+- Super Administrator read-only smoke test passed across all affected tables and quotation tables; transaction rolled back.
+- No customer, quotation, payment, supplier or notification records were edited by the release.
