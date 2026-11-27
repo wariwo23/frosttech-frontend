@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech Administration Portal</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--line:#dce3eb;--bg:#f3f6fa;--ink:#172333}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font-family:Arial,sans-serif;display:flex;flex-direction:column}
+header{background:linear-gradient(120deg,#052b50,#075a9c);color:#fff;padding:25px 18px;border-bottom:4px solid #19a4e8}
+header h1{max-width:980px;margin:0 auto 6px;font-size:clamp(22px,4vw,30px);font-weight:800;text-align:center}
+header p{max-width:980px;margin:0 auto;text-align:center;color:#dceeff}
+main{width:100%;max-width:980px;margin:auto;padding:24px 16px;flex:1}
+.intro{text-align:center;margin:8px auto 24px;max-width:700px}
+.intro h2{color:var(--navy);font-size:clamp(21px,4vw,27px);margin:0 0 9px}
+.intro p{line-height:1.6;color:#526174;margin:0}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.choice{display:flex;flex-direction:column;align-items:center;text-align:center;background:#fff;border:1px solid var(--line);border-top:5px solid var(--blue);border-radius:13px;padding:25px 20px;box-shadow:0 5px 18px #0f28460d}
+.choice .symbol{font-size:34px;line-height:1.2;margin-bottom:12px;color:var(--navy)}
+.choice h3{font-size:19px;line-height:1.35;color:var(--navy);margin:0 0 10px}
+.choice p{font-size:14px;line-height:1.6;color:#526174;margin:0 0 18px}
+.choice a{display:inline-block;margin-top:auto;background:var(--blue);color:#fff;text-decoration:none;font-weight:800;padding:12px 18px;border-radius:8px}
+.choice a:focus-visible{outline:3px solid #f0b429;outline-offset:3px}
+.notice{margin:20px auto 0;max-width:740px;padding:13px 15px;border:1px solid #dce7f1;border-radius:9px;background:#fff;color:#526174;font-size:13px;line-height:1.6;text-align:center}
+footer{text-align:center;padding:18px;color:#64748b;font-size:13px}
+@media(max-width:600px){main{padding:18px 12px}.choices{grid-template-columns:1fr}.choice{padding:22px 17px}}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Administration Portal</p></header>
+<main>
+<section class="intro">
+<h2>Choose Your Administration Sign-in</h2>
+<p>Use the sign-in route assigned to your authority. Super Administrator access and departmental administrator access are separate.</p>
+</section>
+<section class="choices" aria-label="Administration sign-in choices">
+<article class="choice">
+<div class="symbol" aria-hidden="true">♛</div>
+<h3>Super Administrator</h3>
+<p>For the permanent Super Administrator. Access the central command centre, marketplace oversight, department workspaces, appointments, permissions, security and final approvals.</p>
+<a href="admin.html">Super Administrator Sign In</a>
+</article>
+<article class="choice">
+<div class="symbol" aria-hidden="true">▦</div>
+<h3>Departmental Administrators</h3>
+<p>For appointed department heads. Sign in to the authorised mini command centre for Operations; Supplier &amp; Catalogue; Finance; or Advertisers &amp; Communications.</p>
+<a href="department-sign-in.html">Departmental Administrator Sign In</a>
+</article>
+</section>
+<p class="notice">Department access is verified against the signed-in account and its server-controlled role. Choosing a sign-in route does not grant or change any permission. Departmental administrators do not enter the Super Administrator command centre.</p>
+</main>
+<footer>FrostTech HVAC and Refrigeration · Administration Access</footer>
+</body>
+</html>
