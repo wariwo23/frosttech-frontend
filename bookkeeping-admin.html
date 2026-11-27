@@ -15,7 +15,7 @@
 <p><a href="finance-admin.html">← Return to Finance Administration</a></p>
 </header>
 <main>
-<section class="card hidden" id="bookkeepingLogin"><h2>Finance Administrator Sign In</h2><p class="muted">Use your existing FrostTech production administrator account. Bookkeeping access is checked separately against your assigned production permissions.</p><form id="bookkeepingLoginForm"><label>Email address <input id="bookkeepingEmail" class="field" type="email" autocomplete="username" required></label><label>Password <input id="bookkeepingPassword" class="field" type="password" autocomplete="current-password" required></label><button id="bookkeepingLoginButton" type="submit">Sign In</button><a href="#" id="bookkeepingForgot" style="display:block;margin-top:10px">Forgot Password?</a></form><p id="bookkeepingLoginMessage" class="message">Sign in with your existing administrator account.</p></section>
+<section class="card hidden" id="bookkeepingLogin"><h2>Administrator Sign In Required</h2><p class="muted">Use the established FrostTech Finance Administration sign-in. Your existing session will carry into this workspace, and bookkeeping permissions will be checked separately.</p><p><a class="button" href="finance-admin.html">Continue to Finance Administrator Sign In</a></p></section>
 <section class="card"><h2>Bookkeeping access</h2><p id="accessStatus" class="message">Verifying your administrator session…</p><div id="identity" class="muted"></div><div id="documentPermission" class="muted"></div><div class="toolbar"><button id="refresh" type="button">Refresh Bookkeeping</button><button id="signOut" type="button" class="secondary">Sign Out</button></div></section>
 <div id="workspace" class="hidden">
 <section class="card"><h2>Accounting period</h2><div id="periodInfo" class="message">Loading accounting period…</div></section>
@@ -29,7 +29,6 @@
 <section class="card"><h2>Financial reporting status</h2><p class="message">The opening entries remain drafts until reviewed. The Trial Balance, Profit &amp; Loss, Balance Sheet and Bank Cash Movement reports use posted journal entries only.</p></section>
 </div>
 </main>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 "use strict";
@@ -182,8 +181,6 @@ async function init(){
 $("refresh").addEventListener("click",load);
 $("runReports").addEventListener("click",calculateReports);$("reportPeriod").addEventListener("change",calculateReports);
 $("addLine").addEventListener("click",addJournalLine);$("submitJournal").addEventListener("click",submitJournal);$("confirmYes").addEventListener("click",confirmJournalAction);$("confirmNo").addEventListener("click",()=>{$("confirmPanel").classList.add("hidden");pendingAction=null;});
-$("bookkeepingLoginForm").addEventListener("submit",async event=>{event.preventDefault();const button=$("bookkeepingLoginButton");button.disabled=true;$("bookkeepingLoginMessage").textContent="Verifying production administrator sign-in…";try{const {error}=await db.auth.signInWithPassword({email:$("bookkeepingEmail").value.trim(),password:$("bookkeepingPassword").value});if(error)throw error;$("bookkeepingLogin").classList.add("hidden");await init();}catch(error){$("bookkeepingLoginMessage").textContent=error.message||"Sign-in failed.";$("bookkeepingLoginMessage").className="message error";}finally{button.disabled=false;}});
-$("bookkeepingForgot").addEventListener("click",async event=>{event.preventDefault();const email=$("bookkeepingEmail").value.trim();if(!email){$("bookkeepingLoginMessage").textContent="Enter your administrator email address first.";$("bookkeepingEmail").focus();return;}try{const redirectTo=new URL("customer-login.html?reset=1",window.location.href).toString();const {error}=await db.auth.resetPasswordForEmail(email,{redirectTo});if(error)throw error;$("bookkeepingLoginMessage").textContent="If the account exists, a password-reset email has been requested.";$("bookkeepingLoginMessage").className="message success";}catch(error){$("bookkeepingLoginMessage").textContent=error.message||"Password reset request failed.";$("bookkeepingLoginMessage").className="message error";}});
 $("signOut").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){showMessage(error.message,"error");return;}location.href="finance-admin.html";});
 init();
 </script>
