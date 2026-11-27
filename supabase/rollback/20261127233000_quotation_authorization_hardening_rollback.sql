@@ -10,6 +10,7 @@ drop policy if exists department_operations_quotations_update_draft on public.ad
 
 drop policy if exists department_operations_quotation_items_read on public.admin_quotation_items;
 drop policy if exists department_finance_quotation_items_read on public.admin_quotation_items;
+drop policy if exists super_admin_quotation_items_manage on public.admin_quotation_items;
 create policy admin_quotation_items_admin_manage
 on public.admin_quotation_items
 for all to authenticated
