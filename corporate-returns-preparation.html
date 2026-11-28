@@ -174,6 +174,20 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="certificateSecurityAlertSummary" class="grid"></div>
 <div id="certificateSecurityAlertRows"></div>
 </section>
+<section class="card" id="governanceActionTracking">
+<h2>Governance Action Register</h2>
+<p class="muted">Create and track formal follow-up actions arising from certificate security alerts or other governance matters. All changes are restricted to the Super Administrator and retained in an event history.</p>
+<div class="grid">
+<div><label for="governanceActionDescription">Action description</label><textarea id="governanceActionDescription" rows="3" maxlength="3000" placeholder="Describe the required follow-up action"></textarea></div>
+<div><label for="governanceActionResponsible">Responsible person / office</label><input id="governanceActionResponsible" maxlength="200" placeholder="Name or responsible office"></div>
+<div><label for="governanceActionDue">Due date</label><input id="governanceActionDue" type="date"></div>
+<div><label for="governanceActionAlert">Related security alert (optional)</label><select id="governanceActionAlert"><option value="">No linked alert</option></select></div>
+</div>
+<div class="actions"><button type="button" id="createGovernanceAction">Create governance action</button><button type="button" class="secondary" id="refreshGovernanceActions">Refresh action register</button><button type="button" class="secondary" id="printGovernanceActions">Print action register</button></div>
+<div id="governanceActionStatus" class="status" role="status">No action register loaded yet.</div>
+<div id="governanceActionSummary" class="grid"></div>
+<div id="governanceActionRows"></div>
+</section>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
 <p class="muted">Update an existing statutory filing record. The database rechecks Super Administrator authority and validates required references and active document-vault records. This screen does not initiate payment or submit a return.</p>
@@ -671,6 +685,36 @@ async function sendCertificateSecurityDigest(){
  }catch(e){status.textContent="Alert digest not sent: "+(e.message||"Unknown delivery error.");}
  finally{button.disabled=false;}
 }
+let currentCertificateSecurityAlerts=[];
+async function loadGovernanceActionRegister(){
+ const status=field("governanceActionStatus"),summary=field("governanceActionSummary"),host=field("governanceActionRows");
+ status.textContent="Loading governance action register…";summary.innerHTML="";host.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_governance_action_register");if(error)throw error;
+  const s=data?.summary||{},actions=Array.isArray(data?.actions)?data.actions:[];
+  const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
+  summary.innerHTML=metric("Total actions",s.total)+metric("Open",s.open)+metric("In progress",s.in_progress)+metric("Completed",s.completed)+metric("Overdue",s.overdue);
+  host.innerHTML=actions.length?actions.map(a=>'<article class="metric" style="margin:12px 0;background:#fff"><h3>'+esc(a.reference)+' · '+esc(a.status)+'</h3><p>'+esc(a.description)+'</p><p><strong>Responsible:</strong> '+esc(a.responsible_person||"Not assigned")+' · <strong>Due:</strong> '+esc(a.due_date||"Not set")+'</p>'+(a.alert_title?'<p><strong>Linked alert:</strong> '+esc(a.alert_title)+' ('+esc(a.alert_severity)+')</p>':'')+'<label for="govStatus_'+esc(a.id)+'">Update status</label><select id="govStatus_'+esc(a.id)+'" class="governance-action-status"><option value="open" '+(a.status==="open"?"selected":"")+'>Open</option><option value="in_progress" '+(a.status==="in_progress"?"selected":"")+'>In progress</option><option value="completed" '+(a.status==="completed"?"selected":"")+'>Completed</option><option value="deferred" '+(a.status==="deferred"?"selected":"")+'>Deferred</option><option value="cancelled" '+(a.status==="cancelled"?"selected":"")+'>Cancelled</option></select><button type="button" class="secondary save-governance-action" data-action="'+esc(a.id)+'">Save status</button><details><summary>Action event history ('+(a.events||[]).length+')</summary>'+((a.events||[]).map(e=>'<p>'+esc(e.event_type)+' · '+esc(date(e.created_at))+' · '+esc(e.event_note||"")+' · '+esc(JSON.stringify(e.event_snapshot||{}))+'</p>').join("")||'<p>No events recorded.</p>')+'</details></article>').join(""):'<p>No governance actions have been recorded.</p>';
+  status.textContent="Action register refreshed. "+actions.length+" action(s) recorded.";
+ }catch(e){status.textContent="Unable to load action register: "+(e.message||"Super Administrator authorization required.");}
+}
+async function createGovernanceAction(){
+ const status=field("governanceActionStatus"),description=val("governanceActionDescription"),responsible=val("governanceActionResponsible"),due=val("governanceActionDue"),alertId=val("governanceActionAlert");
+ if(!description){status.textContent="Enter an action description first.";return;}
+ status.textContent="Creating governance action…";
+ try{
+  const {data,error}=await db.rpc("ft_create_security_governance_action",{p_alert_id:alertId||null,p_description:description,p_responsible_person:responsible||null,p_due_date:due||null});
+  if(error)throw error;
+  field("governanceActionDescription").value="";field("governanceActionResponsible").value="";field("governanceActionDue").value="";field("governanceActionAlert").value="";
+  status.textContent="Created "+(data?.action_reference||"governance action")+".";
+  await loadGovernanceActionRegister();
+ }catch(e){status.textContent="Action could not be created: "+(e.message||"Authorization error.");}
+}
+async function saveGovernanceActionStatus(button){
+ const id=button.dataset.action,select=field("govStatus_"+id);button.disabled=true;
+ try{const {error}=await db.rpc("ft_update_governance_action_status",{p_action_id:id,p_status:select.value,p_note:"Status updated by Super Administrator"});if(error)throw error;await loadGovernanceActionRegister();}
+ catch(e){field("governanceActionStatus").textContent="Status update failed: "+(e.message||"Authorization error.");button.disabled=false;}
+}
 async function loadCertificateSecurityAlerts(){
  const status=field("certificateSecurityAlertStatus"),summary=field("certificateSecurityAlertSummary"),host=field("certificateSecurityAlertRows");
  status.textContent="Refreshing alert scan and loading the Super Administrator register…";summary.innerHTML="";host.innerHTML="";
@@ -682,10 +726,10 @@ async function loadCertificateSecurityAlerts(){
   const s=data?.summary||{};
   const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
   summary.innerHTML=metric("Open alerts",s.open)+metric("Acknowledged",s.acknowledged)+metric("Critical",s.critical)+metric("Warnings",s.warning);
-  const alerts=Array.isArray(data?.alerts)?data.alerts:[];
+  const alerts=Array.isArray(data?.alerts)?data.alerts:[];currentCertificateSecurityAlerts=alerts;field("governanceActionAlert").innerHTML='<option value="">No linked alert</option>'+alerts.map(a=>'<option value="'+esc(a.id)+'">'+esc(a.title)+" · "+esc(a.severity)+'</option>').join("");
   host.innerHTML=alerts.length?alerts.map(a=>{
    const d=a.details||{};
-   return '<article class="metric" style="margin:12px 0;background:#fff"><h3>'+esc(a.title)+' · '+esc(a.severity)+'</h3><p><strong>Status:</strong> '+esc(a.status)+' · <strong>Occurrences:</strong> '+esc(a.occurrence_count)+'</p><p><strong>Certificate:</strong> '+esc(d.certificate_reference||"—")+' · <strong>Recipient:</strong> '+esc(d.recipient_name||"—")+' ('+esc(d.recipient_email||"—")+')</p><p><strong>First detected:</strong> '+esc(new Date(a.first_detected_at).toLocaleString())+' · <strong>Last detected:</strong> '+esc(new Date(a.last_detected_at).toLocaleString())+'</p><p>'+esc(JSON.stringify(d))+'</p>'+(a.status==="open"?'<button type="button" class="secondary acknowledge-certificate-alert" data-alert="'+esc(a.id)+'">Acknowledge alert</button>':'<p class="muted">Acknowledged '+esc(a.acknowledged_at?new Date(a.acknowledged_at).toLocaleString():"")+' '+esc(a.resolution_note||"")+'</p>')+'</article>';
+   return '<article class="metric" style="margin:12px 0;background:#fff"><h3>'+esc(a.title)+' · '+esc(a.severity)+'</h3><p><strong>Status:</strong> '+esc(a.status)+' · <strong>Occurrences:</strong> '+esc(a.occurrence_count)+'</p><p><strong>Certificate:</strong> '+esc(d.certificate_reference||"—")+' · <strong>Recipient:</strong> '+esc(d.recipient_name||"—")+' ('+esc(d.recipient_email||"—")+')</p><p><strong>First detected:</strong> '+esc(new Date(a.first_detected_at).toLocaleString())+' · <strong>Last detected:</strong> '+esc(new Date(a.last_detected_at).toLocaleString())+'</p><p>'+esc(JSON.stringify(d))+'</p>'+(a.status==="open"?'<button type="button" class="secondary acknowledge-certificate-alert" data-alert="'+esc(a.id)+'">Acknowledge alert</button>':'<p class="muted">Acknowledged '+esc(a.acknowledged_at?new Date(a.acknowledged_at).toLocaleString():"")+' '+esc(a.resolution_note||"")+'</p>')+'<button type="button" class="secondary create-action-from-alert" data-alert="'+esc(a.id)+'">Create governance action</button></article>';
   }).join(""):'<p>No certificate security alerts are currently recorded.</p>';
   status.textContent="Alert scan complete. "+(scanData??0)+" alert record(s) updated; "+alerts.length+" alert(s) in the register.";
  }catch(e){status.textContent="Alert register unavailable: "+(e.message||"Super Administrator authorization required.");}
@@ -931,6 +975,12 @@ field("grantCertificateDistribution").addEventListener("click",grantCertificateD
 field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
 field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMonitoring);
 field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
+field("createGovernanceAction").addEventListener("click",createGovernanceAction);
+field("refreshGovernanceActions").addEventListener("click",loadGovernanceActionRegister);
+field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
+field("governanceActionRows").addEventListener("click",e=>{const b=e.target.closest(".save-governance-action");if(b)saveGovernanceActionStatus(b);});
+field("certificateSecurityAlertRows").addEventListener("click",e=>{const b=e.target.closest(".create-action-from-alert");if(!b)return;field("governanceActionAlert").value=b.dataset.alert;field("governanceActionDescription").focus();field("governanceActionStatus").textContent="Alert linked. Enter the follow-up action and create it.";});
+
 field("sendCertificateSecurityDigest").addEventListener("click",sendCertificateSecurityDigest);
 field("printCertificateSecurityAlerts").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
 field("certificateSecurityAlertRows").addEventListener("click",async e=>{const b=e.target.closest(".acknowledge-certificate-alert");if(!b)return;b.disabled=true;try{const {error}=await db.rpc("ft_acknowledge_annual_certificate_security_alert",{p_alert_id:b.dataset.alert,p_resolution_note:"Reviewed by Super Administrator"});if(error)throw error;await loadCertificateSecurityAlerts();}catch(err){b.disabled=false;field("certificateSecurityAlertStatus").textContent="Acknowledgement failed: "+(err.message||"Authorization error.");}});
