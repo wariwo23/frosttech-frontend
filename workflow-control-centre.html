@@ -98,6 +98,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
+<h3>Delivery Exception Register</h3><p class="muted">Super Administrator follow-up register for failed submissions, bounced or blocked recipients, spam complaints and unmatched provider events. Closing an exception requires a resolution note. This register never edits or deletes an archived report.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
 </section>
@@ -244,16 +245,18 @@ async function exportPerformancePeriod(p){
  $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
 }
 async function loadReportDeliveryAudit(){
- const [attemptsResult,archivesResult,eventsResult]=await Promise.all([
+ const [attemptsResult,archivesResult,eventsResult,exceptionsResult]=await Promise.all([
   db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,provider_delivery_status,provider_event_at,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(250),
   db.from("ft_management_report_archive").select("id,archive_reference"),
-  db.from("ft_management_report_provider_events").select("delivery_attempt_id,event_type").limit(1000)
+  db.from("ft_management_report_provider_events").select("delivery_attempt_id,event_type").limit(1000),
+  db.from("ft_management_report_delivery_exceptions").select("id,delivery_attempt_id,provider_event_fingerprint,exception_type,exception_status").in("exception_status",["open","investigating"]).limit(1000)
  ]);
  if(attemptsResult.error)throw attemptsResult.error;
  if(archivesResult.error)throw archivesResult.error;
  if(eventsResult.error)throw eventsResult.error;
+ if(exceptionsResult.error)throw exceptionsResult.error;
  const attempts=attemptsResult.data||[], archives=new Map((archivesResult.data||[]).map(a=>[a.id,a.archive_reference]));
- const events=eventsResult.data||[];
+ const events=eventsResult.data||[], exceptions=exceptionsResult.data||[];
  const count=(types)=>events.filter(e=>types.includes(e.event_type)).length;
  const metrics=[
   ["Email attempts",attempts.length],
@@ -261,32 +264,88 @@ async function loadReportDeliveryAudit(){
   ["Bounced / blocked",attempts.filter(a=>["soft_bounced","hard_bounced","blocked","invalid_email","spam","error"].includes(a.provider_delivery_status)).length],
   ["Opened events",count(["opened"])],
   ["Clicked events",count(["clicked"])],
-  ["Unmatched events",events.filter(e=>!e.delivery_attempt_id).length]
+  ["Open exceptions",exceptions.length]
  ];
  $("reportDeliveryMetrics").replaceChildren();
  metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("reportDeliveryMetrics").appendChild(box)});
- table($("reportDeliveryAudit"),["Report Archive","Recipient","Provider","Submission","Latest Provider Event","Attempted","Delivered","Failure"],attempts,(tr,r)=>{
+ table($("reportDeliveryAudit"),["Report Archive","Recipient","Provider","Submission","Latest Provider Event","Attempted","Delivered","Failure","Follow-up"],attempts,(tr,r)=>{
   cell(tr,archives.get(r.archive_id)||"Archive unavailable");cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status==="sent"?"Accepted by Brevo":r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
+  const td=cell(tr,"—");
+  const status=r.provider_delivery_status||"";
+  const type=r.delivery_status==="failed"?"submission_failed":
+    ["soft_bounced","hard_bounced"].includes(status)?"bounced":
+    status==="blocked"?"blocked":status==="invalid_email"?"invalid_recipient":status==="spam"?"spam_complaint":null;
+  if(type){
+   const existing=exceptions.some(x=>x.delivery_attempt_id===r.id&&x.exception_type===type);
+   if(existing){td.textContent="Exception open";}
+   else{const b=document.createElement("button");b.type="button";b.textContent="Open exception";b.addEventListener("click",()=>createReportDeliveryException({delivery_attempt_id:r.id,exception_type:type,exception_summary:"Follow up delivery issue for "+r.recipient_email+" ("+status+")"}));td.appendChild(b)}
+  }
  });
 }
 async function loadReportProviderEvents(){
- const [eventsResult,attemptsResult,archivesResult]=await Promise.all([
-  db.from("ft_management_report_provider_events").select("delivery_attempt_id,provider_message_id,recipient_email,event_type,event_at,event_reason,received_at").order("received_at",{ascending:false}).limit(250),
+ const [eventsResult,attemptsResult,archivesResult,exceptionsResult]=await Promise.all([
+  db.from("ft_management_report_provider_events").select("delivery_attempt_id,provider_message_id,recipient_email,event_type,event_at,event_reason,received_at,event_fingerprint").order("received_at",{ascending:false}).limit(250),
   db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_email,delivery_status,provider_delivery_status,attempted_at,delivered_at").order("attempted_at",{ascending:false}).limit(250),
-  db.from("ft_management_report_archive").select("id,archive_reference")
+  db.from("ft_management_report_archive").select("id,archive_reference"),
+  db.from("ft_management_report_delivery_exceptions").select("id,delivery_attempt_id,provider_event_fingerprint,exception_type,exception_status").in("exception_status",["open","investigating"]).limit(1000)
  ]);
  if(eventsResult.error)throw eventsResult.error;
  if(attemptsResult.error)throw attemptsResult.error;
  if(archivesResult.error)throw archivesResult.error;
+ if(exceptionsResult.error)throw exceptionsResult.error;
  const attempts=new Map((attemptsResult.data||[]).map(a=>[a.id,a]));
  const archives=new Map((archivesResult.data||[]).map(a=>[a.id,a.archive_reference]));
+ const openExceptions=exceptionsResult.data||[];
  const rows=(eventsResult.data||[]).map(e=>{
   const attempt=e.delivery_attempt_id?attempts.get(e.delivery_attempt_id):null;
-  return {...e,archive_reference:attempt?archives.get(attempt.archive_id)||"Archive unavailable":"Unmatched delivery attempt",submission_status:attempt?.delivery_status||"Unmatched",current_status:attempt?.provider_delivery_status||"—"};
+  return {...e,archive_reference:attempt?archives.get(attempt.archive_id)||"Archive unavailable":"Unmatched delivery attempt",submission_status:attempt?.delivery_status||"Unmatched",current_status:attempt?.provider_delivery_status||"—",has_exception:openExceptions.some(x=>x.provider_event_fingerprint===e.event_fingerprint)};
  });
- table($("reportProviderEvents"),["Report Archive","Recipient","Event","Submission","Current Provider Status","Provider Event Time","Recorded","Message ID / Reason"],rows,(tr,r)=>{
+ table($("reportProviderEvents"),["Report Archive","Recipient","Event","Submission","Current Provider Status","Provider Event Time","Recorded","Message ID / Reason","Follow-up"],rows,(tr,r)=>{
   cell(tr,r.archive_reference);cell(tr,r.recipient_email);cell(tr,r.event_type);cell(tr,r.submission_status);cell(tr,r.current_status);cell(tr,r.event_at?date(r.event_at):"—");cell(tr,date(r.received_at));cell(tr,[r.provider_message_id,r.event_reason].filter(Boolean).join(" · ")||"—");
+  const td=cell(tr,"—");
+  const type=["soft_bounced","hard_bounced"].includes(r.event_type)?"bounced":r.event_type==="blocked"?"blocked":r.event_type==="invalid_email"?"invalid_recipient":r.event_type==="spam"?"spam_complaint":!r.delivery_attempt_id?"unmatched_provider_event":null;
+  if(type){
+   if(r.has_exception)td.textContent="Exception open";
+   else{const b=document.createElement("button");b.type="button";b.textContent="Open exception";b.addEventListener("click",()=>createReportDeliveryException({provider_event_fingerprint:r.event_fingerprint,exception_type:type,exception_summary:"Provider event "+r.event_type+" for "+r.recipient_email+"; message ID "+r.provider_message_id}));td.appendChild(b)}
+  }
  });
+ await loadReportDeliveryExceptions();
+}
+async function createReportDeliveryException(payload){
+ const summary=window.prompt("Describe the follow-up action for this delivery exception:",payload.exception_summary);
+ if(summary===null)return;
+ const clean=summary.trim();if(!clean){setStatus("An exception summary is required.","error");return}
+ const {error}=await db.from("ft_management_report_delivery_exceptions").insert({...payload,exception_summary:clean,created_by:currentUserId});
+ if(error){setStatus("Exception could not be opened: "+error.message,"error");return}
+ setStatus("Delivery exception opened and recorded.","success");
+ await Promise.all([loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportDeliveryExceptions()]);
+}
+async function loadReportDeliveryExceptions(){
+ const {data,error}=await db.from("ft_management_report_delivery_exceptions").select("id,delivery_attempt_id,provider_event_fingerprint,exception_type,exception_status,exception_summary,resolution_note,assigned_to,created_at,updated_at,resolved_at").order("created_at",{ascending:false}).limit(250);
+ if(error)throw error;
+ table($("reportDeliveryExceptions"),["Type","Status","Exception","Assigned To","Created","Resolution / Action"],data||[],(tr,r)=>{
+  cell(tr,r.exception_type);cell(tr,r.exception_status);cell(tr,r.exception_summary);cell(tr,r.assigned_to||"Unassigned");cell(tr,date(r.created_at));
+  const td=cell(tr,r.resolution_note||"—");
+  if(["open","investigating"].includes(r.exception_status)){
+   const wrap=document.createElement("div");wrap.className="actions";
+   const investigate=document.createElement("button");investigate.type="button";investigate.className="secondary";investigate.textContent="Mark Investigating";investigate.addEventListener("click",()=>updateReportDeliveryException(r.id,"investigating"));wrap.appendChild(investigate);
+   const resolve=document.createElement("button");resolve.type="button";resolve.textContent="Resolve / Close";resolve.addEventListener("click",()=>resolveReportDeliveryException(r.id));wrap.appendChild(resolve);td.appendChild(document.createElement("br"));td.appendChild(wrap);
+  }
+ });
+}
+async function updateReportDeliveryException(id,status){
+ const {error}=await db.from("ft_management_report_delivery_exceptions").update({exception_status:status}).eq("id",id);
+ if(error){setStatus("Exception status was not updated: "+error.message,"error");return}
+ setStatus("Exception marked as "+status+".","success");await loadReportDeliveryExceptions();
+}
+async function resolveReportDeliveryException(id){
+ const note=window.prompt("Enter the resolution note required to close this exception:");
+ if(note===null)return;
+ if(!note.trim()){setStatus("A resolution note is required.","error");return}
+ const {error}=await db.from("ft_management_report_delivery_exceptions").update({exception_status:"resolved",resolution_note:note.trim()}).eq("id",id);
+ if(error){setStatus("Exception could not be resolved: "+error.message,"error");return}
+ setStatus("Delivery exception resolved and permanently recorded.","success");
+ await Promise.all([loadReportDeliveryExceptions(),loadReportDeliveryAudit()]);
 }
 async function registerBrevoReportWebhook(){
  const button=$("registerBrevoWebhook"),status=$("brevoWebhookStatus");button.disabled=true;status.textContent="Registering secure Brevo webhook…";
