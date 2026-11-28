@@ -70,7 +70,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <section id="tasksCard" class="card hidden">
 <h2>My Department's Workflow Tasks</h2>
 <p class="muted">Only records returned by the database's existing row-level security policies are displayed.</p>
-<div id="tasks" class="table-wrap"></div>
+<div class="toolbar"><button id="queueReminders" type="button" class="secondary">Queue Overdue Reminders</button></div><p class="muted">Departmental users can acknowledge assigned tasks. Overdue reminders are queued only when an authorised administrator requests them.</p><div id="tasks" class="table-wrap"></div>
 </section>
 <section id="approvalsCard" class="card hidden">
 <h2>Pending Workflow Approvals</h2>
@@ -189,6 +189,9 @@ async function loadNotifications(){
  if(!data.length){empty($("notifications"),"No workflow notifications have been queued for this account.");return}
  data.forEach(r=>{const item=document.createElement("article");item.className="item";const title=document.createElement("strong");title.textContent=r.title;const msg=document.createElement("p");msg.textContent=r.message;msg.className="muted";const meta=document.createElement("p");meta.className="muted";meta.textContent="Type: "+r.notification_type+" · Status: "+r.status+" · Scheduled: "+date(r.scheduled_at);item.append(title,msg,meta);$("notifications").appendChild(item)});
 }
+async function queueOverdueReminders(){
+ const btn=$("queueReminders");btn.disabled=true;try{const {data,error}=await db.rpc("ft_queue_overdue_workflow_reminders",{p_limit:50});if(error)throw error;setStatus("Overdue reminders queued. Records considered: "+(data?.reminders_considered??0)+".","success");await loadNotifications()}catch(e){setStatus("Reminder queueing was not authorised or failed: "+(e.message||"Permission denied."),"error")}finally{btn.disabled=false}
+}
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
@@ -217,7 +220,7 @@ async function start(){
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);
+$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
 $("launchForm").addEventListener("submit",launchWorkflow);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
