@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Business Workflow Register | FrostTech</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--bg:#f3f6fa;--line:#dce3eb;--ink:#172333}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}header{background:linear-gradient(120deg,#052b50,#075a9c);color:white;padding:20px 16px}header h1,header p{max-width:1100px;margin:0 auto}header p{margin-top:6px;color:#dceeff}main{max-width:1100px;margin:auto;padding:16px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin:14px 0;box-shadow:0 3px 12px #0f28460a}h2{font-size:18px;color:var(--navy);margin:0 0 10px}.muted{color:#637487;font-size:13px;line-height:1.5}.status{padding:11px 13px;border-radius:8px;background:#e8f3ff;color:#06477c;line-height:1.5;overflow-wrap:anywhere}.error{background:#ffebee;color:#a11919}.success{background:#e8f5e9;color:#166534}.toolbar,.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}button,.link{border:0;border-radius:7px;padding:10px 14px;background:var(--blue);color:white;font-weight:bold;text-decoration:none;cursor:pointer}button:disabled{opacity:.5;cursor:not-allowed}.secondary{background:#536779}select{width:100%;max-width:560px;padding:11px;border:1px solid #cbd6e2;border-radius:7px;font:inherit;background:white}.table-wrap{overflow-x:auto}table{width:100%;min-width:680px;border-collapse:collapse;font-size:13px}th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#edf3f8;color:#173b60;white-space:nowrap}.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#edf2f7;font-size:11px;font-weight:bold}.inactive{background:#fff0c2;color:#805500}.hidden{display:none!important}@media(max-width:700px){main{padding:10px}.card{padding:13px}}
+</style></head><body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Business Record Workflow Register</p></header>
+<main>
+<section class="card"><h2 id="heading">Verifying administrator access</h2><p id="status" class="status" role="status">Please wait while your administrator session is verified.</p><div id="tools" class="toolbar hidden"><a class="link secondary" href="workflow-control-centre.html">Workflow Control Centre</a><a class="link secondary" href="admin-portal.html">Administration Portal</a><button id="refresh" type="button">Refresh Records</button></div></section>
+<section class="card hidden" id="register"><h2>Choose a business record category</h2><p class="muted">This register connects existing FrostTech records to their corresponding workflow templates. It does not create, edit, approve, pay, publish or otherwise change the source business record.</p><select id="category"><option value="">Select a category</option><option value="CUSTOMER_REQUEST">Customer Requests</option><option value="STANDARD_QUOTATION">Standard Quotations</option><option value="DIRECT_QUOTATION">Direct Quotations</option><option value="SUPPLIER_ONBOARDING">Supplier Applications</option><option value="PROCUREMENT_RECEIPT">Purchase Orders</option><option value="SUPPLIER_SETTLEMENT">Supplier Settlements</option><option value="ADVERTISING_CAMPAIGN">Advertising Campaigns</option></select><p id="workflowState" class="muted">Choose a category to view records.</p><div id="records" class="table-wrap"></div></section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
+const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);let role=null,defs={};
+const configs={
+ CUSTOMER_REQUEST:{code:"CUSTOMER_REQUEST",entity:"customer_request",table:"customer_requests",id:"id",ref:"request_number",title:"title",status:"status",label:"Customer request"},
+ STANDARD_QUOTATION:{code:"STANDARD_QUOTATION",entity:"quotation",table:"admin_quotations",id:"id",ref:"quotation_number",title:"product_description",status:"status",label:"Standard quotation"},
+ DIRECT_QUOTATION:{code:"DIRECT_QUOTATION",entity:"direct_quotation",table:"frosttech_direct_quotations",id:"id",ref:"quotation_number",title:"customer_name",status:"status",label:"Direct quotation"},
+ SUPPLIER_ONBOARDING:{code:"SUPPLIER_ONBOARDING",entity:"supplier_application",table:"suppliers",id:"id",ref:"id",title:"business_name",status:"review_status",label:"Supplier application"},
+ PROCUREMENT_RECEIPT:{code:"PROCUREMENT_RECEIPT",entity:"purchase_order",table:"ft_purchase_orders",id:"id",ref:"purchase_order_number",title:"supplier_name",status:"status",label:"Purchase order"},
+ SUPPLIER_SETTLEMENT:{code:"SUPPLIER_SETTLEMENT",entity:"supplier_settlement",table:"frosttech_supplier_settlements",id:"id",ref:"settlement_number",title:"supplier_id",status:"status",label:"Supplier settlement"},
+ ADVERTISING_CAMPAIGN:{code:"ADVERTISING_CAMPAIGN",entity:"advertising_campaign",table:"ft_advertising_campaigns",id:"id",ref:"campaign_reference",title:"campaign_title",status:"campaign_status",label:"Advertising campaign"}
+};
+function setStatus(msg,type){$("status").textContent=msg;$("status").className="status"+(type?" "+type:"")}
+function empty(msg){$("records").replaceChildren();const p=document.createElement("p");p.className="muted";p.textContent=msg;$("records").appendChild(p)}
+function td(tr,v){const x=document.createElement("td");x.textContent=v==null?"—":String(v);tr.appendChild(x);return x}
+function effective(d){const n=Date.now();return d&&d.status==="active"&&(!d.effective_from||new Date(d.effective_from).getTime()<=n)&&(!d.effective_to||new Date(d.effective_to).getTime()>=n)}
+async function loadCategory(){
+ const key=$("category").value;if(!key){empty("Choose a category to view records.");$("workflowState").textContent="";return}
+ const cfg=configs[key],wf=defs[key],active=effective(wf);$("workflowState").textContent=active?"Active workflow available: "+wf.workflow_name:"Workflow template is not active. Existing records can be viewed, but launching remains disabled until the Super Administrator activates the approved template.";
+ empty("Loading records visible to your administrator account…");
+ const cols=[cfg.id,cfg.ref,cfg.title,cfg.status].filter((v,i,a)=>a.indexOf(v)===i).join(",");
+ const {data,error}=await db.from(cfg.table).select(cols).order(cfg.ref,{ascending:false}).limit(100);
+ if(error){empty("Records are not available under your current database permissions: "+error.message);return}
+ if(!data||!data.length){empty("No "+cfg.label.toLowerCase()+" records are currently visible.");return}
+ $("records").replaceChildren();const t=document.createElement("table"),h=document.createElement("thead"),hr=document.createElement("tr");["Business reference","Record","Current status","Workflow"].forEach(v=>{const th=document.createElement("th");th.textContent=v;hr.appendChild(th)});h.appendChild(hr);t.appendChild(h);const b=document.createElement("tbody");
+ data.forEach(r=>{const tr=document.createElement("tr");td(tr,r[cfg.ref]);td(tr,r[cfg.title]);td(tr,r[cfg.status]);const action=td(tr,"");const btn=document.createElement("button");btn.type="button";btn.textContent="Start workflow";btn.disabled=!active;btn.addEventListener("click",()=>startWorkflow(cfg,r));const note=document.createElement("span");note.className="muted";note.textContent=active?"":" Template Draft";action.append(btn,note);b.appendChild(tr)});t.appendChild(b);$("records").appendChild(t)
+}
+async function startWorkflow(cfg,r){
+ const ref=String(r[cfg.ref]??r[cfg.id]??"").trim();if(!ref){setStatus("The selected source record has no usable reference. No workflow was started.","error");return}
+ if(!effective(defs[$("category").value])){setStatus("This workflow template is not active. No workflow was started.","error");return}
+ const context={source_table:cfg.table,source_record_id:r[cfg.id],source_record_reference:ref,source_record_title:r[cfg.title]??null,source_record_status:r[cfg.status]??null};
+ const {data,error}=await db.rpc("ft_start_workflow_instance",{p_workflow_code:cfg.code,p_entity_type:cfg.entity,p_entity_reference:ref,p_priority:"normal",p_context_data:context});
+ if(error){setStatus("Workflow was not started: "+error.message,"error");return}
+ setStatus("Workflow started for "+ref+". "+(data?.instance_reference||"Workflow instance created")+". The source business record was not modified.","success");
+}
+async function refresh(){
+ try{
+  const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user){setStatus("Please sign in through the administrator portal first.","error");return}
+  const {data:r,error}=await db.rpc("admin_get_my_role");if(error)throw error;
+  if(!["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"].includes(r))throw new Error("This register is restricted to authorised FrostTech administrators.");
+  role=r;$("heading").textContent=r==="super_admin"?"Super Administrator — Business Workflow Register":"Departmental Business Workflow Register";
+  const {data:definitions,error:de}=await db.from("ft_workflow_definitions").select("workflow_code,workflow_name,applies_to_entity,status,effective_from,effective_to");
+  if(de)throw de;defs={};(definitions||[]).forEach(d=>defs[d.workflow_code]=d);
+  $("register").classList.remove("hidden");$("tools").classList.remove("hidden");setStatus("Administrator access verified. Source records are displayed according to your existing database permissions.","success");
+  if($("category").value)await loadCategory();
+ }catch(e){setStatus(e.message||"Could not load the workflow register.","error")}
+}
+$("category").addEventListener("change",loadCategory);$("refresh").addEventListener("click",refresh);refresh();
+</script></body></html>
