@@ -58,6 +58,20 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="actions"><button id="saveFiling" type="submit">Save filing record</button></div>
 <div class="actions" style="margin-top:10px"><button id="closeFiling" type="button" hidden>Close filing as complete</button></div>
 <p class="muted" id="closureState">Completion closure is available only after acceptance and evidence reconciliation.</p>
+<div class="note" style="margin-top:14px">
+<h3 style="margin:0 0 6px">Statutory payment reconciliation</h3>
+<p class="muted">Select the actual expense, bank debit and confirmed treasury execution. The database validates the posted journal, matching amounts, bank reference and active receipt evidence. This records reconciliation only; it does not initiate payment.</p>
+<div class="grid">
+<div class="field"><label for="reconFee">Actual statutory filing fee (₦)</label><input id="reconFee" type="number" min="0.01" step="0.01" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="reconExpense">Approved / paid expense register entry</label><select id="reconExpense" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Load filing first</option></select></div>
+<div class="field"><label for="reconBank">Corresponding bank debit</label><select id="reconBank" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Load filing first</option></select></div>
+<div class="field"><label for="reconExecution">Confirmed statutory treasury execution</label><select id="reconExecution" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Load filing first</option></select></div>
+</div>
+<div class="field" style="margin-top:10px"><label for="reconVariance">Variance explanation (required only if amounts differ)</label><textarea id="reconVariance" rows="2" maxlength="1500" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea></div>
+<div class="actions"><button id="saveReconciliation" type="button">Save payment reconciliation</button></div>
+<div id="reconStatus" class="status" role="status">Select a filing to load eligible payment evidence.</div>
+<div id="reconHistory" class="muted" style="margin-top:8px"></div>
+</div>
 <div id="filingActionStatus" class="status" role="status">Select a filing record to begin.</div>
 </form>
 </section>
@@ -101,26 +115,64 @@ function populateFilingActions(){
  filingForm.hidden=true;
  actionStatus.textContent=filings.length+" statutory filing record(s) available for authorised update.";
 }
-function selectFiling(){
+async function loadReconciliationChoices(filingId){
+ const status=field("reconStatus");status.textContent="Loading eligible accounting and payment evidence…";
+ field("reconHistory").textContent="";
+ const fill= (id,items,label)=>{field(id).innerHTML='<option value="">Select a record…</option>'+items.map(x=>'<option value="'+esc(x.id)+'">'+esc(label(x))+'</option>').join("");};
+ try{
+  const [expenses,banks,requests,recs]=await Promise.all([
+   db.from("ft_bookkeeping_expenses").select("id,expense_date,payee,description,amount,status,journal_id,bank_transaction_id").in("status",["approved","paid","posted"]).not("journal_id","is",null).order("expense_date",{ascending:false}).limit(200),
+   db.from("ft_bookkeeping_bank_transactions").select("id,transaction_date,description,reference,debit").gt("debit",0).order("transaction_date",{ascending:false}).limit(300),
+   db.from("ft_treasury_payment_requests").select("id,payment_request_ref,request_status,amount").eq("statutory_filing_id",filingId).eq("request_status","paid"),
+   db.from("ft_statutory_payment_reconciliations").select("id,expense_id,bank_transaction_id,payment_execution_id,filing_fee_amount,expense_amount,bank_debit_amount,reconciliation_status,variance_note,payment_reference,reconciled_at").eq("filing_id",filingId).order("created_at",{ascending:false})
+  ]);
+  for(const x of [expenses,banks,requests,recs])if(x.error)throw x.error;
+  const reqIds=(requests.data||[]).map(x=>x.id);
+  let executions={data:[],error:null};
+  if(reqIds.length)executions=await db.from("ft_treasury_payment_executions").select("id,payment_request_id,execution_reference,executed_amount,execution_date,bank_reference,execution_status").in("payment_request_id",reqIds).eq("execution_status","confirmed").order("execution_date",{ascending:false});
+  if(executions.error)throw executions.error;
+  fill("reconExpense",expenses.data||[],x=>[x.expense_date,x.payee||x.description,"₦"+Number(x.amount).toLocaleString("en-NG"),x.status].filter(Boolean).join(" · "));
+  fill("reconBank",banks.data||[],x=>[x.transaction_date,x.description,x.reference,"Debit ₦"+Number(x.debit).toLocaleString("en-NG")].filter(Boolean).join(" · "));
+  fill("reconExecution",executions.data||[],x=>[x.execution_date,x.execution_reference,"₦"+Number(x.executed_amount).toLocaleString("en-NG"),x.bank_reference].filter(Boolean).join(" · "));
+  const history=recs.data||[];
+  field("reconHistory").textContent=history.length?"Existing reconciliation(s): "+history.map(x=>x.reconciliation_status+" · fee ₦"+Number(x.filing_fee_amount).toLocaleString("en-NG")+" · expense ₦"+Number(x.expense_amount).toLocaleString("en-NG")+" · bank ₦"+Number(x.bank_debit_amount||0).toLocaleString("en-NG")).join(" | "):"No reconciliation records exist for this filing yet.";
+  status.textContent=(expenses.data||[]).length+" eligible expense(s), "+(banks.data||[]).length+" bank debit(s), "+(executions.data||[]).length+" confirmed statutory execution(s) loaded. Receipt must be linked in the filing evidence field above.";
+ }catch(e){status.textContent="Payment evidence could not be loaded: "+(e.message||"Database access was denied.");}
+}
+async function selectFiling(){
  const r=rows.find(x=>x.record_type==="statutory_filing"&&x.record_id===filingSelect.value);
  filingForm.hidden=!r;
  if(!r)return;
  const d=r.details||{};
- setVal("filingStatus",r.record_status);
- setVal("filedDate",d.filed_date);
- setVal("filingReference",r.record_reference && r.record_reference!=="—"?r.record_reference:"");
- setVal("ackReference",d.acknowledgement_reference);
- setVal("paymentReference",d.payment_reference);
- setVal("submissionChannel",d.submission_channel);
- setVal("ackDocument",d.acknowledgement_document_id);
- setVal("supportDocument",d.supporting_document_id);
- setVal("receiptDocument",d.payment_receipt_document_id);
- setVal("filingNotes",d.notes);
+ setVal("filingStatus",r.record_status);setVal("filedDate",d.filed_date);
+ setVal("filingReference",r.record_reference&&r.record_reference!=="—"?r.record_reference:"");
+ setVal("ackReference",d.acknowledgement_reference);setVal("paymentReference",d.payment_reference);
+ setVal("submissionChannel",d.submission_channel);setVal("ackDocument",d.acknowledgement_document_id);
+ setVal("supportDocument",d.supporting_document_id);setVal("receiptDocument",d.payment_receipt_document_id);
+ setVal("filingNotes",d.notes);setVal("reconFee",d.fee_amount||"");
  actionStatus.textContent="Selected "+(d.authority_name||"statutory authority")+" · "+(r.record_title||"filing")+" · period "+(d.reporting_period_start||"—")+" to "+(d.reporting_period_end||"—")+". Updates are audited in the statutory filing register.";
  const closed=Boolean(d.completion_closed_at);
- field("closeFiling").hidden=!(r.record_status==="accepted"&&!closed);
- field("closeFiling").disabled=closed;
+ field("closeFiling").hidden=!(r.record_status==="accepted"&&!closed);field("closeFiling").disabled=closed;
  field("closureState").textContent=closed?"Completion closed at "+new Date(d.completion_closed_at).toLocaleString()+"; closure is permanent and audited.":(r.record_status==="accepted"?"Accepted filing: closure will recheck active acknowledgement evidence and matched payment records before locking completion.":"Filing must be marked accepted before it can be closed as complete.");
+ await loadReconciliationChoices(r.record_id);
+}
+async function saveReconciliation(){
+ const filingId=filingSelect.value;
+ if(!filingId){field("reconStatus").textContent="Select a filing first.";return;}
+ const fee=Number(val("reconFee"));
+ if(!Number.isFinite(fee)||fee<=0){field("reconStatus").textContent="Enter the actual statutory fee.";return;}
+ if(!val("receiptDocument")){field("reconStatus").textContent="Enter the active Document Vault receipt UUID in the filing evidence field above.";return;}
+ const args={p_filing_id:filingId,p_filing_fee:fee,p_expense_id:val("reconExpense"),p_bank_transaction_id:val("reconBank"),p_payment_reference:val("paymentReference")||null,p_receipt_document_id:val("receiptDocument"),p_variance_note:val("reconVariance")||null,p_payment_execution_id:val("reconExecution")};
+ if(!args.p_expense_id||!args.p_bank_transaction_id||!args.p_payment_execution_id){field("reconStatus").textContent="Select an expense, bank debit and confirmed treasury execution.";return;}
+ const btn=field("saveReconciliation");btn.disabled=true;btn.textContent="Saving…";
+ field("reconStatus").textContent="Validating treasury execution, posted journal, bank debit and receipt evidence…";
+ try{
+  const {data,error}=await db.rpc("ft_save_statutory_payment_reconciliation_v2",args);
+  if(error)throw error;
+  field("reconStatus").textContent="Reconciliation saved: "+(data?.status||"recorded")+". Refreshing filing and payment evidence…";
+  await load();filingSelect.value=filingId;await selectFiling();
+ }catch(e){field("reconStatus").textContent="Reconciliation not saved: "+(e.message||"The database rejected the evidence.");}
+ finally{btn.disabled=false;btn.textContent="Save payment reconciliation";}
 }
 function askClosureConfirmation(){
  const modal=field("closureConfirm");
@@ -231,6 +283,7 @@ async function init(){
 filingSelect.addEventListener("change",selectFiling);
 filingForm.addEventListener("submit",saveFiling);
 field("closeFiling").addEventListener("click",closeFiling);
+field("saveReconciliation").addEventListener("click",saveReconciliation);
 document.getElementById("refresh").addEventListener("click",()=>load().catch(e=>reportStatus.textContent="Refresh failed: "+e.message));
 document.getElementById("csv").addEventListener("click",csv);
 document.getElementById("print").addEventListener("click",()=>window.print());
