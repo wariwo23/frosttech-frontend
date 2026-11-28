@@ -96,7 +96,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="distributionNote">Distribution note</label><textarea id="distributionNote" rows="2" maxlength="1000"></textarea></div>
 <button type="submit">Record Report Distribution</button>
 </form>
-<div id="distributionLog" class="table-wrap"></div>\n<div id="reportDeliveryAudit" class="table-wrap"></div>
+<div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
@@ -244,10 +244,29 @@ async function exportPerformancePeriod(p){
  $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
 }
 async function loadReportDeliveryAudit(){
- const {data,error}=await db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,provider_delivery_status,provider_event_at,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(100);
- if(error)throw error;
- table($("reportDeliveryAudit"),["Recipient","Provider","Submission","Provider Event","Attempted","Delivered","Failure"],data||[],(tr,r)=>{
-  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status==="sent"?"Accepted by Brevo":r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
+ const [attemptsResult,archivesResult,eventsResult]=await Promise.all([
+  db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,provider_delivery_status,provider_event_at,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(250),
+  db.from("ft_management_report_archive").select("id,archive_reference"),
+  db.from("ft_management_report_provider_events").select("delivery_attempt_id,event_type").limit(1000)
+ ]);
+ if(attemptsResult.error)throw attemptsResult.error;
+ if(archivesResult.error)throw archivesResult.error;
+ if(eventsResult.error)throw eventsResult.error;
+ const attempts=attemptsResult.data||[], archives=new Map((archivesResult.data||[]).map(a=>[a.id,a.archive_reference]));
+ const events=eventsResult.data||[];
+ const count=(types)=>events.filter(e=>types.includes(e.event_type)).length;
+ const metrics=[
+  ["Email attempts",attempts.length],
+  ["Provider delivered",attempts.filter(a=>a.provider_delivery_status==="delivered").length],
+  ["Bounced / blocked",attempts.filter(a=>["soft_bounced","hard_bounced","blocked","invalid_email","spam","error"].includes(a.provider_delivery_status)).length],
+  ["Opened events",count(["opened"])],
+  ["Clicked events",count(["clicked"])],
+  ["Unmatched events",events.filter(e=>!e.delivery_attempt_id).length]
+ ];
+ $("reportDeliveryMetrics").replaceChildren();
+ metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("reportDeliveryMetrics").appendChild(box)});
+ table($("reportDeliveryAudit"),["Report Archive","Recipient","Provider","Submission","Latest Provider Event","Attempted","Delivered","Failure"],attempts,(tr,r)=>{
+  cell(tr,archives.get(r.archive_id)||"Archive unavailable");cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status==="sent"?"Accepted by Brevo":r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
  });
 }
 async function loadReportProviderEvents(){
