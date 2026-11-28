@@ -367,7 +367,7 @@ async function fetchExceptionDossierRows(){
  if(from&&to&&from>to)throw new Error("The start date cannot be later than the end date.");
  let query=db.from("ft_management_report_exception_case_history").select("id,source_table,source_record_id,exception_id,action,actor_user_id,event_at,before_snapshot,after_snapshot").order("event_at",{ascending:true}).limit(5000);
  if(from)query=query.gte("event_at",from+"T00:00:00.000Z");
- if(to)query=query.lt("event_at",new Date(new Date(to+"T00:00:00.000Z").getTime()+86400000).toISOString());
+ if(to)query=query.lt("event_at",new Date(to+"T00:00:00.000Z").toISOString().slice(0,10)+"T23:59:59.999Z");
  if(caseId)query=query.eq("exception_id",caseId);
  const {data,error}=await query;if(error)throw error;
  return {rows:data||[],from,to,caseId};
