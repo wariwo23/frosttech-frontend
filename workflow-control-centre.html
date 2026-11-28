@@ -99,7 +99,12 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
-<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Exception Investigation Dossier</h3>
+<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Monthly Exception Performance Report</h3>
+<p class="muted">Management summary of exception volumes, resolutions, outstanding cases, escalation activity and resolution time. Select a reporting period before generating.</p>
+<div class="form-grid"><label>Report from <input type="date" id="exceptionPerformanceFrom"></label><label>Report to <input type="date" id="exceptionPerformanceTo"></label></div>
+<div class="actions"><button type="button" id="generateExceptionPerformance">Generate Monthly Report</button><button type="button" class="secondary" id="exportExceptionPerformance">Export Management CSV</button></div>
+<div id="exceptionPerformanceMetrics" class="metrics"></div><div id="exceptionPerformanceBreakdown" class="table-wrap"></div><div id="exceptionPerformanceStatus" class="muted" aria-live="polite"></div>
+<h3>Exception Investigation Dossier</h3>
 <p class="muted">Generate a printable, date-filtered investigation dossier from the immutable case history. Leave the exception reference blank to include all cases in the selected period.</p>
 <div class="form-grid">
  <label>From date <input type="date" id="exceptionDossierFrom"></label>
@@ -359,6 +364,49 @@ async function submitExceptionModal(){
  finally{$("exceptionModalSave").disabled=false}
 }
 async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
+let currentExceptionPerformanceReport=null;
+async function buildExceptionPerformanceReport(){
+ const from=$("exceptionPerformanceFrom").value,to=$("exceptionPerformanceTo").value;
+ if(from&&to&&from>to)throw new Error("The report start date cannot be later than its end date.");
+ let historyQuery=db.from("ft_management_report_exception_case_history").select("id,source_table,source_record_id,exception_id,action,actor_user_id,event_at,before_snapshot,after_snapshot").order("event_at",{ascending:true}).limit(5000);
+ if(from)historyQuery=historyQuery.gte("event_at",from+"T00:00:00.000Z");
+ if(to)historyQuery=historyQuery.lte("event_at",to+"T23:59:59.999Z");
+ let exceptionsQuery=db.from("ft_management_report_delivery_exceptions").select("id,exception_type,exception_status,created_at,resolution_note").order("created_at",{ascending:false}).limit(5000);
+ const [h,e]=await Promise.all([historyQuery,exceptionsQuery]);
+ if(h.error)throw h.error;if(e.error)throw e.error;
+ const history=h.data||[],allCases=e.data||[];
+ const start=from?new Date(from+"T00:00:00.000Z"):new Date(0),end=to?new Date(to+"T23:59:59.999Z"):new Date();
+ const caseIds=new Set(history.map(x=>x.exception_id).filter(Boolean));
+ const opened=history.filter(x=>x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="insert");
+ const createdIds=new Set(opened.map(x=>x.source_record_id));
+ const resolved=history.filter(x=>x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="update"&&x.after_snapshot?.exception_status==="resolved"&&x.before_snapshot?.exception_status!=="resolved");
+ const escalations=history.filter(x=>x.source_table==="ft_management_report_exception_escalations"&&x.action==="insert");
+ const notifications=history.filter(x=>x.source_table==="ft_management_report_exception_notifications"&&x.action==="insert");
+ const unresolved=allCases.filter(x=>["open","investigating"].includes(x.exception_status));
+ const resolutionDurations=resolved.map(x=>{const before=history.find(y=>y.source_record_id===x.source_record_id&&y.source_table===x.source_table&&y.action==="insert");return before?(new Date(x.event_at)-new Date(before.event_at))/3600000:null}).filter(x=>x!==null&&x>=0);
+ const avg=resolutionDurations.length?resolutionDurations.reduce((a,b)=>a+b,0)/resolutionDurations.length:null;
+ const metrics=[["New cases in period",opened.length],["Resolved in period",resolved.length],["Currently outstanding",unresolved.length],["Escalations created",escalations.length],["Notifications created",notifications.length],["Average resolution hours",avg===null?"—":avg.toFixed(1)]];
+ const groups={};history.forEach(x=>{const month=x.event_at.slice(0,7);groups[month]??={month,created:0,resolved:0,escalations:0,notifications:0};const g=groups[month];if(x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="insert")g.created++;if(x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="update"&&x.after_snapshot?.exception_status==="resolved"&&x.before_snapshot?.exception_status!=="resolved")g.resolved++;if(x.source_table==="ft_management_report_exception_escalations"&&x.action==="insert")g.escalations++;if(x.source_table==="ft_management_report_exception_notifications"&&x.action==="insert")g.notifications++});
+ const monthRows=Object.values(groups).sort((a,b)=>a.month.localeCompare(b.month));
+ const report={from,to,metrics,monthRows,history,unresolved,allCasesCount:allCases.length,createdIds:[...createdIds],caseIds:[...caseIds]};
+ currentExceptionPerformanceReport=report;
+ const metricsBox=$("exceptionPerformanceMetrics");metricsBox.replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=String(value);box.append(s,strong);metricsBox.appendChild(box)});
+ table($("exceptionPerformanceBreakdown"),["Month","New cases","Resolved","Escalations","Notifications"],monthRows,(tr,r)=>{cell(tr,r.month);cell(tr,r.created);cell(tr,r.resolved);cell(tr,r.escalations);cell(tr,r.notifications)});
+ $("exceptionPerformanceStatus").textContent="Report generated from "+history.length+" immutable event records. Outstanding cases reflect current case status.";
+ return report;
+}
+async function generateExceptionPerformance(){try{await buildExceptionPerformanceReport()}catch(e){$("exceptionPerformanceStatus").textContent="Report generation failed: "+e.message;setStatus("Exception performance report failed: "+e.message,"error")}}
+async function exportExceptionPerformance(){
+ try{
+  const r=currentExceptionPerformanceReport||await buildExceptionPerformanceReport();
+  const rows=[["Report period",r.from||"All available",r.to||"Present"],["Metric","Value",""],...r.metrics.map(x=>[x[0],x[1],""]),["Month","New cases","Resolved","Escalations","Notifications"],...r.monthRows.map(x=>[x.month,x.created,x.resolved,x.escalations,x.notifications])];
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-monthly-exception-performance-"+(r.from||"all")+"-"+(r.to||"present")+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  $("exceptionPerformanceStatus").textContent="Management CSV exported.";
+ }catch(e){$("exceptionPerformanceStatus").textContent="CSV export failed: "+e.message;setStatus("Exception performance export failed: "+e.message,"error")}
+}
+$("generateExceptionPerformance").addEventListener("click",generateExceptionPerformance);
+$("exportExceptionPerformance").addEventListener("click",exportExceptionPerformance);
 function escapeDossierHtml(value){
  return String(value??"—").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
 }
