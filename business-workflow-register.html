@@ -10,7 +10,7 @@
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
-const $=id=>document.getElementById(id);let role=null,defs={};
+const $=id=>document.getElementById(id);let role=null,defs={},definitionById={},linkedInstances={};
 const configs={
  CUSTOMER_REQUEST:{code:"CUSTOMER_REQUEST",entity:"customer_request",table:"customer_requests",id:"id",ref:"request_number",title:"title",status:"status",label:"Customer request"},
  STANDARD_QUOTATION:{code:"STANDARD_QUOTATION",entity:"quotation",table:"admin_quotations",id:"id",ref:"quotation_number",title:"product_description",status:"status",label:"Standard quotation"},
