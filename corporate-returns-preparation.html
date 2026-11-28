@@ -68,6 +68,13 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="yearEndReadinessStatus" class="status" role="status">Loading accounting readiness…</div>
 <div id="yearEndReadinessResults"></div>
 </section>
+<section class="card" id="yearEndAdjustmentsCard">
+<h2>Year-End Adjustment Register</h2>
+<p class="muted">Super Administrator read-only oversight of adjustments prepared through the bookkeeping workflow. This panel does not create, approve, reject or post journals.</p>
+<div class="actions"><button id="refreshYearEndAdjustments" type="button">Refresh adjustment register</button></div>
+<div id="yearEndAdjustmentsStatus" class="status" role="status">Loading adjustment register…</div>
+<div id="yearEndAdjustmentsResults"></div>
+</section>
 <section class="card" id="annualPackCard">
 <h2>Annual Corporate Compliance Pack</h2>
 <p class="muted">Prepare a year-specific frozen evidence pack covering statutory filings, board meetings, resolutions and governance archive entries. Preparation is not approval, legal certification or regulatory submission.</p>
@@ -449,6 +456,17 @@ async function approveAnnualReview(){
  }catch(e){field("annualPackStatus").textContent="Approval not completed: "+(e.message||"The database rejected the request.");}
  finally{btn.disabled=false;btn.textContent="Approve annual pack";}
 }
+async function loadYearEndAdjustments(){
+ const status=field("yearEndAdjustmentsStatus"),host=field("yearEndAdjustmentsResults");
+ status.textContent="Loading adjustment records through the protected Super Administrator function…";host.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_year_end_adjustment_register");if(error)throw error;
+  const items=Array.isArray(data)?data:[];
+  if(!items.length){host.innerHTML='<p class="muted">No year-end adjustment records are currently registered.</p>';status.textContent="Loaded successfully. No adjustment records found.";return;}
+  host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Period</th><th>Journal</th><th>Date</th><th>Type</th><th>Description</th><th>Status</th><th>Evidence</th><th>Prepared / approved</th></tr></thead><tbody>'+items.map(a=>'<tr><td>'+esc(a.period_name)+'</td><td>'+esc(a.journal_reference||a.journal_id)+'</td><td>'+esc(date(a.journal_date))+'</td><td>'+esc(a.adjustment_type)+'</td><td>'+esc(a.description)+'</td><td><span class="pill">'+esc(a.adjustment_status)+'</span></td><td>'+esc(a.supporting_document_id||"Not linked")+'</td><td>'+esc(a.prepared_by||"Not recorded")+' / '+esc(a.approved_by||"Not approved")+'</td></tr>').join("")+'</tbody></table></div>';
+  status.textContent="Loaded "+items.length+" adjustment record(s). This is read-only oversight.";
+ }catch(e){status.textContent="Adjustment register unavailable: "+(e.message||"Access denied.");}
+}
 async function loadYearEndReadiness(){
  const status=field("yearEndReadinessStatus"),host=field("yearEndReadinessResults");
  status.textContent="Retrieving protected accounting readiness summary…";host.innerHTML="";
@@ -508,7 +526,7 @@ async function init(){
   authCard.hidden=true;reportCard.hidden=false;await load();
  }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
 }
-filingSelect.addEventListener("change",selectFiling);\nfield("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
+filingSelect.addEventListener("change",selectFiling);\nfield("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);\nfield("refreshYearEndAdjustments").addEventListener("click",loadYearEndAdjustments);
 field("annualReviewYear").value=new Date().getFullYear();
 field("calendarSelect").addEventListener("change",async()=>{const logs=await db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").order("created_at",{ascending:false}).limit(200);selectCalendarItem(logs.data||[]);});
 field("saveCalendarItem").addEventListener("click",saveCalendarItem);
