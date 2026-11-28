@@ -100,6 +100,16 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="actions"><button id="saveFiling" type="submit">Save filing record</button></div>
 <div class="actions" style="margin-top:10px"><button id="closeFiling" type="button" hidden>Close filing as complete</button></div>
 <p class="muted" id="closureState">Completion closure is available only after acceptance and evidence reconciliation.</p>
+<div class="note" id="complianceLinkPanel" style="margin-top:14px">
+<h3 style="margin:0 0 6px">Linked compliance obligation & deadline</h3>
+<p class="muted">Connect this filing to its underlying compliance obligation and one calendar deadline. Due dates must match. A calendar deadline can belong to only one filing; recurring obligations may have separate filing periods.</p>
+<div class="grid">
+<div class="field"><label for="filingObligationLink">Compliance obligation</label><select id="filingObligationLink" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">No obligation selected</option></select></div>
+<div class="field"><label for="filingCalendarLink">Calendar deadline</label><select id="filingCalendarLink" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">No deadline selected</option></select></div>
+</div>
+<div class="actions"><button id="saveComplianceLinks" type="button">Save compliance links</button></div>
+<div id="complianceLinkStatus" class="status" role="status">Select a filing to view or connect its compliance records.</div>
+</div>
 <div class="note" style="margin-top:14px">
 <h3 style="margin:0 0 6px">Statutory payment reconciliation</h3>
 <p class="muted">Select the actual expense, bank debit and confirmed treasury execution. The database validates the posted journal, matching amounts, bank reference and active receipt evidence. This records reconciliation only; it does not initiate payment.</p>
@@ -181,6 +191,41 @@ async function loadReconciliationChoices(filingId){
   status.textContent=(expenses.data||[]).length+" eligible expense(s), "+(banks.data||[]).length+" bank debit(s), "+(executions.data||[]).length+" confirmed statutory execution(s) loaded. Receipt must be linked in the filing evidence field above.";
  }catch(e){status.textContent="Payment evidence could not be loaded: "+(e.message||"Database access was denied.");}
 }
+async function loadComplianceLinks(filingId){
+ const status=field("complianceLinkStatus");
+ status.textContent="Loading compliance obligation and deadline links…";
+ try{
+  const [link,obligations,calendar]=await Promise.all([
+   db.from("ft_compliance_filing_link_v").select("*").eq("filing_id",filingId).maybeSingle(),
+   db.from("ft_compliance_obligations").select("id,obligation_ref,obligation_name,due_date,applicability_status,compliance_status").order("obligation_ref",{ascending:true}).limit(300),
+   db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").order("due_date",{ascending:true}).limit(500)
+  ]);
+  if(link.error)throw link.error;if(obligations.error)throw obligations.error;if(calendar.error)throw calendar.error;
+  const current=link.data||{};
+  field("filingObligationLink").innerHTML='<option value="">No obligation selected</option>'+(obligations.data||[]).map(x=>'<option value="'+esc(x.id)+'">'+esc(x.obligation_ref+" · "+x.obligation_name+" · due "+(x.due_date||"not set")+" · "+x.applicability_status)+'</option>').join("");
+  field("filingCalendarLink").innerHTML='<option value="">No deadline selected</option>'+(calendar.data||[]).filter(x=>x.status!=="cancelled").map(x=>'<option value="'+esc(x.id)+'">'+esc(x.calendar_ref+" · "+x.title+" · "+x.due_date+" · "+x.status)+'</option>').join("");
+  field("filingObligationLink").value=current.obligation_id||"";
+  field("filingCalendarLink").value=current.compliance_calendar_item_id||"";
+  status.textContent="Link status: "+(current.link_status||"unlinked")+". Filing due "+(current.filing_due_date||"not set")+". Obligation due "+(current.obligation_due_date||"not set")+". Calendar due "+(current.calendar_due_date||"not set")+".";
+ }catch(e){status.textContent="Compliance links could not be loaded: "+(e.message||"Access denied.");}
+}
+async function saveComplianceLinks(){
+ const filingId=filingSelect.value;
+ if(!filingId){field("complianceLinkStatus").textContent="Select a statutory filing first.";return;}
+ const obligationId=field("filingObligationLink").value||null;
+ const calendarId=field("filingCalendarLink").value||null;
+ if(!obligationId&&!calendarId){field("complianceLinkStatus").textContent="Select at least one obligation or calendar deadline.";return;}
+ const btn=field("saveComplianceLinks");btn.disabled=true;btn.textContent="Saving…";
+ try{
+  const {data,error}=await db.rpc("ft_link_compliance_filing",{p_filing_id:filingId,p_obligation_id:obligationId,p_calendar_item_id:calendarId});
+  if(error)throw error;
+  await load();
+  filingSelect.value=filingId;
+  await selectFiling();
+  field("complianceLinkStatus").textContent="Compliance links saved. Filing, obligation and deadline now share one traceable relationship.";
+ }catch(e){field("complianceLinkStatus").textContent="Links not saved: "+(e.message||"The database rejected the relationship.");}
+ finally{btn.disabled=false;btn.textContent="Save compliance links";}
+}
 async function selectFiling(){
  const r=rows.find(x=>x.record_type==="statutory_filing"&&x.record_id===filingSelect.value);
  filingForm.hidden=!r;
@@ -197,6 +242,7 @@ async function selectFiling(){
  field("closeFiling").hidden=!(r.record_status==="accepted"&&!closed);field("closeFiling").disabled=closed;
  field("closureState").textContent=closed?"Completion closed at "+new Date(d.completion_closed_at).toLocaleString()+"; closure is permanent and audited.":(r.record_status==="accepted"?"Accepted filing: closure will recheck active acknowledgement evidence and matched payment records before locking completion.":"Filing must be marked accepted before it can be closed as complete.");
  await loadReconciliationChoices(r.record_id);
+ await loadComplianceLinks(r.record_id);
 }
 async function saveReconciliation(){
  const filingId=filingSelect.value;
@@ -440,6 +486,7 @@ field("createAnnualReview").addEventListener("click",createAnnualReview);
 field("approveAnnualReview").addEventListener("click",approveAnnualReview);
 field("printAnnualPack").addEventListener("click",()=>{if(!field("annualReviewSelect").value){field("annualPackStatus").textContent="Select an annual pack before printing.";return;}document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 filingForm.addEventListener("submit",saveFiling);
+field("saveComplianceLinks").addEventListener("click",saveComplianceLinks);
 field("closeFiling").addEventListener("click",closeFiling);
 field("saveReconciliation").addEventListener("click",saveReconciliation);
 document.getElementById("refresh").addEventListener("click",()=>load().catch(e=>reportStatus.textContent="Refresh failed: "+e.message));
