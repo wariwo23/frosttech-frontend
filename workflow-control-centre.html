@@ -83,6 +83,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="complianceCalendarStatus" class="muted" aria-live="polite"></div>
 <div class="actions"><button type="button" class="secondary" id="refreshComplianceCalendar">Refresh Calendar</button><button type="button" class="secondary" id="exportComplianceCalendar">Export Calendar CSV</button></div>
 <div id="complianceCalendarRegister" class="table-wrap"></div>
+<h3>Automated Reminder and Overdue Escalation History</h3><p class="muted">Advance reminders are scheduled 30, 14, 7 and 1 day before the deadline, followed by due-day and 1-, 7- and 30-day overdue alerts. Notifications are in-app; no email or SMS is sent by this process.</p><div id="complianceReminderHistory" class="table-wrap"></div>
 </section>
 <section id="reportingCard" class="card hidden">
 <h2>Management Reporting Periods and Official Reports</h2>
@@ -1047,6 +1048,9 @@ async function loadComplianceCalendar(){
   tr.appendChild(td);
  });
  window.__ftComplianceCalendarExport=rows;
+ const {data:reminders,error:reminderError}=await db.from("ft_compliance_calendar_reminder_log").select("source_type,source_id,due_date,reminder_stage,recipient_user_id,created_at,notification_id").order("created_at",{ascending:false}).limit(300);
+ if(reminderError)throw reminderError;
+ table($("complianceReminderHistory"),["Created","Reminder stage","Source","Due date","Recipient","Notification reference"],reminders||[],(tr,r)=>{cell(tr,date(r.created_at));cell(tr,r.reminder_stage.replaceAll("_"," "));cell(tr,r.source_type.replaceAll("_"," "));cell(tr,date(r.due_date));cell(tr,r.recipient_user_id);cell(tr,r.notification_id||"—")});
 }
 async function createComplianceCalendarItem(e){
  e.preventDefault();const title=$("calendarTitle").value.trim(),due=$("calendarDueDate").value,raw=$("calendarReminderDays").value.trim();
