@@ -305,6 +305,25 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="exceptionModalNote">Notes</label><textarea id="exceptionModalNote" rows="4" maxlength="2000" required></textarea></div>
 <div class="modal-actions"><button id="exceptionModalCancel" type="button" class="secondary">Cancel</button><button id="exceptionModalSave" type="button">Save</button></div>
 </div></div>
+
+<div id="statPayDecisionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="statPayDecisionTitle"><div class="modal">
+<h2 id="statPayDecisionTitle">Payment authorisation</h2><p id="statPayDecisionDescription" class="muted"></p>
+<div class="field"><label for="statPayDecisionNote">Decision note</label><textarea id="statPayDecisionNote" rows="3" maxlength="2000" required></textarea></div>
+<div class="modal-actions"><button id="statPayDecisionCancel" type="button" class="secondary">Cancel</button><button id="statPayDecisionApprove" type="button">Approve</button><button id="statPayDecisionReject" type="button" class="secondary">Reject</button></div>
+</div></div>
+<div id="statPayExecutionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="statPayExecutionTitle"><div class="modal">
+<h2 id="statPayExecutionTitle">Record actual payment execution</h2><p class="muted">This records an external bank action only. FrostTech will not initiate a transfer.</p>
+<div class="form-grid">
+<div class="field"><label for="statExecAmount">Actual amount (₦)</label><input id="statExecAmount" type="number" min="0.01" step="0.01"></div>
+<div class="field"><label for="statExecDate">Execution date</label><input id="statExecDate" type="date"></div>
+<div class="field"><label for="statExecChannel">Payment channel</label><input id="statExecChannel" maxlength="80" placeholder="Bank transfer"></div>
+<div class="field"><label for="statExecReference">Bank reference</label><input id="statExecReference" maxlength="180"></div>
+<div class="field"><label for="statExecEvidence">Payment evidence Document Vault UUID</label><input id="statExecEvidence" maxlength="36"></div>
+<div class="field"><label for="statExecStatus">Execution status</label><select id="statExecStatus"><option value="submitted_to_bank">Submitted to bank — not yet confirmed</option><option value="confirmed">Confirmed paid — bank reference and evidence required</option></select></div>
+</div>
+<div class="modal-actions"><button id="statExecCancel" type="button" class="secondary">Cancel</button><button id="statExecSave" type="button">Save execution record</button></div>
+</div></div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -316,6 +335,7 @@ let currentUserId=null;
 let activeWorkflows=[];
 let pendingAction=null;
 let pendingExceptionAction=null;
+let pendingStatPayRequestId=null;
 const allowedRoles=["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"];
 function cell(row,value){const td=document.createElement("td");td.textContent=value??"—";row.appendChild(td);return td}
 function empty(container,message){container.replaceChildren();const p=document.createElement("p");p.className="muted";p.textContent=message;container.appendChild(p)}
@@ -1104,6 +1124,33 @@ async function loadRecipientReports(){
  });
 }
 
+
+function openStatPayDecision(id,decision,reference){
+ pendingStatPayRequestId=id;$("statPayDecisionModal").dataset.decision=decision;
+ $("statPayDecisionTitle").textContent=decision==="approved"?"Approve statutory payment":"Reject statutory payment";
+ $("statPayDecisionDescription").textContent="Request "+reference+". This decision is permanent and recorded in the treasury audit trail.";
+ $("statPayDecisionNote").value="";$("statPayDecisionApprove").classList.toggle("hidden",decision!=="approved");$("statPayDecisionReject").classList.toggle("hidden",decision!=="rejected");
+ $("statPayDecisionModal").classList.remove("hidden");
+}
+async function saveStatPayDecision(decision){
+ const note=$("statPayDecisionNote").value.trim();if(!note){$("statPayDecisionDescription").textContent="A decision note is required.";return}
+ const {error}=await db.rpc("ft_decide_statutory_payment_request",{p_request_id:pendingStatPayRequestId,p_decision:decision,p_note:note});
+ if(error){$("statPayDecisionDescription").textContent="Decision failed: "+error.message;return}
+ $("statPayDecisionModal").classList.add("hidden");$("statPayStatus").textContent="Payment request "+decision+" and audit-recorded.";await loadStatutoryPaymentAuthorisation();
+}
+function openStatPayExecution(id,amount){
+ pendingStatPayRequestId=id;$("statExecAmount").value=amount;$("statExecDate").value=new Date().toISOString().slice(0,10);
+ $("statExecChannel").value="";$("statExecReference").value="";$("statExecEvidence").value="";$("statExecStatus").value="submitted_to_bank";
+ $("statPayExecutionModal").classList.remove("hidden");
+}
+async function saveStatPayExecution(){
+ const amount=Number($("statExecAmount").value),dateValue=$("statExecDate").value,channel=$("statExecChannel").value.trim();
+ if(!Number.isFinite(amount)||amount<=0||!dateValue||!channel){$("statPayStatus").textContent="Enter a valid amount, date and payment channel.";return}
+ const {error}=await db.rpc("ft_record_statutory_payment_execution",{p_request_id:pendingStatPayRequestId,p_executed_amount:amount,p_execution_date:dateValue,p_payment_channel:channel,p_bank_reference:$("statExecReference").value.trim()||null,p_execution_status:$("statExecStatus").value,p_evidence_document_id:$("statExecEvidence").value.trim()||null});
+ if(error){$("statPayStatus").textContent="Execution record failed: "+error.message;return}
+ $("statPayExecutionModal").classList.add("hidden");$("statPayStatus").textContent="Execution record saved. No transfer was initiated by FrostTech.";await loadStatutoryPaymentAuthorisation();
+}
+
 async function loadStatutoryPaymentAuthorisation(){
  const status=$("statPayStatus");
  try{
@@ -1131,18 +1178,10 @@ async function loadStatutoryPaymentAuthorisation(){
    cell(tr,(r.executions||[]).map(e=>e.execution_status+" · ₦"+Number(e.executed_amount).toLocaleString()+" · "+(e.bank_reference||"no bank reference")+" · "+(e.evidence_document_id||"no evidence")).join(" | ")||"No execution recorded");
    const td=cell(tr,"");const wrap=document.createElement("div");wrap.className="actions";
    if(currentRole==="super_admin"&&["submitted","under_review"].includes(r.request_status)){
-    [["Approve","approved"],["Reject","rejected"]].forEach(([label,decision])=>{const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";b.addEventListener("click",async()=>{const note=window.prompt("Enter the Super Administrator decision note:");if(!note||!note.trim())return;try{const out=await db.rpc("ft_decide_statutory_payment_request",{p_request_id:r.id,p_decision:decision,p_note:note.trim()});if(out.error)throw out.error;status.textContent="Payment request "+decision+" and audit-recorded.";await loadStatutoryPaymentAuthorisation()}catch(e){status.textContent="Decision failed: "+e.message}});wrap.appendChild(b)});
+    [["Approve","approved"],["Reject","rejected"]].forEach(([label,decision])=>{const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";b.addEventListener("click",()=>openStatPayDecision(r.id,decision,r.payment_request_ref));wrap.appendChild(b)});
    }
    if(currentRole==="finance_admin"&&["approved","scheduled"].includes(r.request_status)){
-    const b=document.createElement("button");b.type="button";b.textContent="Record execution";b.addEventListener("click",async()=>{
-     const amount=window.prompt("Actual amount executed (₦):",String(r.amount));if(!amount)return;
-     const dateValue=window.prompt("Actual execution date (YYYY-MM-DD):",new Date().toISOString().slice(0,10));if(!dateValue)return;
-     const channel=window.prompt("Payment channel (e.g. bank transfer):");if(!channel)return;
-     const ref=window.prompt("Bank/payment reference (required for confirmed payment):");if(ref===null)return;
-     const doc=window.prompt("Payment evidence Document Vault UUID (required for confirmed payment):");if(doc===null)return;
-     const mode=window.confirm("Has the bank payment actually been confirmed? OK = confirmed; Cancel = submitted to bank only.")?"confirmed":"submitted_to_bank";
-     try{const out=await db.rpc("ft_record_statutory_payment_execution",{p_request_id:r.id,p_executed_amount:Number(amount),p_execution_date:dateValue,p_payment_channel:channel,p_bank_reference:ref||null,p_execution_status:mode,p_evidence_document_id:doc||null});if(out.error)throw out.error;status.textContent="Execution record saved. No transfer was initiated by FrostTech.";await loadStatutoryPaymentAuthorisation()}catch(e){status.textContent="Execution record failed: "+e.message}
-    });wrap.appendChild(b);
+    const b=document.createElement("button");b.type="button";b.textContent="Record execution";b.addEventListener("click",()=>openStatPayExecution(r.id,r.amount));wrap.appendChild(b);
    }
    td.appendChild(wrap);
   });
@@ -1491,7 +1530,12 @@ async function start(){
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("statPaySubmit").addEventListener("click",submitStatutoryPaymentRequest);$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("saveStatutoryReconciliation").addEventListener("click",saveStatutoryPaymentReconciliation);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
+$("statPaySubmit").addEventListener("click",submitStatutoryPaymentRequest);
+$("statPayDecisionCancel").addEventListener("click",()=>$("statPayDecisionModal").classList.add("hidden"));
+$("statPayDecisionApprove").addEventListener("click",()=>saveStatPayDecision("approved"));
+$("statPayDecisionReject").addEventListener("click",()=>saveStatPayDecision("rejected"));
+$("statExecCancel").addEventListener("click",()=>$("statPayExecutionModal").classList.add("hidden"));
+$("statExecSave").addEventListener("click",saveStatPayExecution);$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("saveStatutoryReconciliation").addEventListener("click",saveStatutoryPaymentReconciliation);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
