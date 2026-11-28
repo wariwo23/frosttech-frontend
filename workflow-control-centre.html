@@ -124,7 +124,10 @@ async function loadTasks(){
   const td=cell(tr,r.is_overdue?"Overdue":r.escalation_due?"Escalation due":"—");
   if(r.is_overdue){const b=document.createElement("span");b.className="pill overdue";b.textContent="Overdue";td.replaceChildren(b)}
   const action=document.createElement("td"),wrap=document.createElement("div");wrap.className="actions";
-  if(["pending","accepted","in_progress","awaiting_input"].includes(r.task_status)){const b=document.createElement("button");b.type="button";b.textContent="Complete / Advance";b.addEventListener("click",()=>openAction("complete",r.task_id,"Complete current stage", "This submits the current task for completion. If the stage requires approval, the workflow will pause until approval is granted."));wrap.appendChild(b)}
+  if(["pending","accepted","in_progress","awaiting_input"].includes(r.task_status)){
+   const ack=document.createElement("button");ack.type="button";ack.className="secondary";ack.textContent="Acknowledge";ack.addEventListener("click",async()=>{ack.disabled=true;try{const {data,error}=await db.rpc("ft_acknowledge_workflow_task",{p_task_id:r.task_id,p_note:"Acknowledged from Workflow Control Centre"});if(error)throw error;setStatus(data?.already_acknowledged?"Task was already acknowledged.":"Task acknowledgement recorded.","success");await refresh()}catch(e){setStatus("Task acknowledgement failed: "+(e.message||"Permission denied."),"error");ack.disabled=false}});wrap.appendChild(ack);
+   const b=document.createElement("button");b.type="button";b.textContent="Complete / Advance";b.addEventListener("click",()=>openAction("complete",r.task_id,"Complete current stage", "This submits the current task for completion. If the stage requires approval, the workflow will pause until approval is granted."));wrap.appendChild(b)
+  }
   action.appendChild(wrap);tr.appendChild(action);
  });
 }
