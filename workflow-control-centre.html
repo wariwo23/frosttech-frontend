@@ -121,6 +121,22 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </div>
 <div id="statutoryAnnualReviewStatus" class="muted" aria-live="polite"></div>
 <div id="statutoryAnnualReviewRegister" class="table-wrap"></div>
+<h4>Corporate Governance &amp; Statutory Records Archive</h4>
+<p class="muted">Index existing approved annual reviews, statutory filings and active private-vault documents. Files remain in their existing private storage location. Archive entries are immutable; create a new linked entry to supplement a record.</p>
+<div class="form-grid">
+ <label>Archive category<select id="governanceArchiveCategory"><option value="annual_review">Annual review</option><option value="board_approval">Board approval</option><option value="statutory_filing">Statutory filing</option><option value="management_declaration">Management declaration</option><option value="supporting_evidence">Supporting evidence</option><option value="corporate_record">Corporate record</option></select></label>
+ <label>Archive title<input id="governanceArchiveTitle" maxlength="240" placeholder="Descriptive record title"></label>
+ <label>Link annual review<select id="governanceArchiveReview"><option value="">No annual review link</option></select></label>
+ <label>Link statutory filing<select id="governanceArchiveFiling"><option value="">No filing link</option></select></label>
+ <label>Link existing private document<select id="governanceArchiveDocument"><option value="">No document link</option></select></label>
+ <label>Archive year<input id="governanceArchiveYear" type="number" min="1900" max="2200" placeholder="Calendar year"></label>
+ <label>Confidentiality<select id="governanceArchiveConfidentiality"><option value="restricted">Restricted</option><option value="confidential">Confidential</option><option value="highly_confidential">Highly confidential</option></select></label>
+ <label>Description<textarea id="governanceArchiveDescription" rows="2" placeholder="Purpose, approval context or record note"></textarea></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="addGovernanceArchiveEntry">Add to Governance Archive</button></div>
+<div id="governanceArchiveStatus" class="muted" aria-live="polite"></div>
+<div id="governanceArchiveRegister" class="table-wrap"></div>
+<h4>Archive Audit History</h4><div id="governanceArchiveEvents" class="table-wrap"></div>
 <div class="form-grid">
  <label>Draft review to approve<select id="statutoryAnnualReviewSelect"><option value="">Select an annual review</option></select></label>
  <label>Management declaration<textarea id="statutoryAnnualReviewDeclaration" rows="3" placeholder="Declare the review position, including all known unresolved matters and limitations."></textarea></label>
@@ -1264,7 +1280,7 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport,annualReviews]=await Promise.all([
+ const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport,annualReviews,archiveEntries,archiveEvents,archiveDocuments]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
@@ -1272,9 +1288,12 @@ async function loadStatutoryFilingRegister(){
   db.from("ft_statutory_filing_monitoring_v").select("*").order("due_date",{ascending:true}).limit(500),
   db.from("ft_statutory_risk_escalation_log").select("id,filing_id,risk_type,escalation_stage,recipient_user_id,reason,notification_id,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_statutory_compliance_board_report_v").select("*").order("due_date",{ascending:true}).limit(1000),
-  db.from("ft_statutory_annual_reviews").select("id,review_year,review_status,snapshot,snapshot_created_at,prepared_by,approved_by,approved_at,management_declaration,created_at").order("review_year",{ascending:false})
+  db.from("ft_statutory_annual_reviews").select("id,review_year,review_status,snapshot,snapshot_created_at,prepared_by,approved_by,approved_at,management_declaration,created_at").order("review_year",{ascending:false}),
+  db.from("ft_corporate_governance_archive").select("id,archive_ref,archive_category,title,description,annual_review_id,filing_id,document_id,archive_year,confidentiality,indexed_by,indexed_at").order("indexed_at",{ascending:false}).limit(1000),
+  db.from("ft_corporate_governance_archive_events").select("id,archive_id,event_type,actor_user_id,event_snapshot,created_at").order("created_at",{ascending:false}).limit(1000),
+  db.from("ft_document_records").select("id,document_ref,title,document_category,record_status,disposed_at").eq("record_status","active").is("disposed_at",null).order("created_at",{ascending:false}).limit(500)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;if(annualReviews.error)throw annualReviews.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;if(annualReviews.error)throw annualReviews.error;if(archiveEntries.error)throw archiveEntries.error;if(archiveEvents.error)throw archiveEvents.error;if(archiveDocuments.error)throw archiveDocuments.error;
  const rows=filings.data||[];
  const monitorRows=monitoring.data||[];
  const monitorCounts=[["Overdue",monitorRows.filter(x=>x.monitoring_status==="overdue").length],["Due within 30 days",monitorRows.filter(x=>x.monitoring_status==="due_within_30_days").length],["Awaiting acknowledgement",monitorRows.filter(x=>x.monitoring_status==="awaiting_acknowledgement").length],["Accepted / awaiting closure",monitorRows.filter(x=>x.monitoring_status==="accepted_awaiting_closure").length],["Completed",monitorRows.filter(x=>x.monitoring_status==="completed").length],["Missing acknowledgement evidence",monitorRows.filter(x=>!x.has_active_acknowledgement||!x.has_acknowledgement_reference).length],["Missing payment receipt",monitorRows.filter(x=>!x.has_active_payment_receipt).length]];
@@ -1364,6 +1383,29 @@ async function loadStatutoryFilingRegister(){
  const csv=[exportFields.join(","),...boardRows.map(x=>exportFields.map(k=>csvEscape(x[k])).join(","))].join("\r\n");
  $("exportStatutoryBoardCsv").onclick=()=>{const blob=new Blob(["\\ufeff",csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="FrostTech-Statutory-Compliance-Board-Report-"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(url);$("statutoryBoardReportStatus").textContent="CSV generated from "+boardRows.length+" statutory records."};
  $("printStatutoryBoardPack").onclick=()=>{const w=window.open("","_blank");if(!w){$("statutoryBoardReportStatus").textContent="Allow pop-ups to print the board pack.";return}const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));const rows=boardRows.map(x=>"<tr>"+[date(x.due_date),x.filing_type+" · "+x.authority_name,x.monitoring_status,x.payment_reconciliation_status,x.accounting_journal_id||"Not linked",String(x.escalation_count||0)].map(v=>"<td>"+esc(v)+"</td>").join("")+"</tr>").join("");w.document.write("<!doctype html><html><head><title>FrostTech Statutory Compliance Board Pack</title><style>body{font:12px Arial;margin:28px;color:#172b4d}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccd4df;padding:7px;text-align:left}th{background:#eef3f9}.meta{color:#526477}</style></head><body><h1>FrostTech — Statutory Compliance Management Report</h1><p class='meta'>Generated: "+esc(new Date().toLocaleString())+" · Records: "+boardRows.length+"</p><p>Management snapshot of recorded statutory obligations, filing status, payment reconciliation, accounting linkage and escalation history. This report does not establish legal applicability or confirm external filing beyond the recorded evidence.</p><table><thead><tr><th>Due date</th><th>Filing / Authority</th><th>Status</th><th>Payment reconciliation</th><th>Accounting journal</th><th>Escalations</th></tr></thead><tbody>"+(rows||"<tr><td colspan='6'>No statutory filing records are currently recorded.</td></tr>")+"</tbody></table><p class='meta'>Source: FrostTech statutory filing and compliance registers. Preserve this report with the relevant supporting evidence.</p><script>window.onload=()=>window.print()<\\/script></body></html>");w.document.close()};
+ const archiveRows=archiveEntries.data||[],archiveEventRows=archiveEvents.data||[],archiveDocRows=archiveDocuments.data||[],filingRows=filings.data||[],reviewRows=annualReviews.data||[];
+ const fillArchiveSelect=(id,items,label)=>{const el=$(id);el.replaceChildren(new Option(id==="governanceArchiveReview"?"No annual review link":id==="governanceArchiveFiling"?"No filing link":"No document link",""));items.forEach(x=>el.appendChild(new Option(label(x),x.id)))};
+ fillArchiveSelect("governanceArchiveReview",reviewRows,x=>x.review_year+" · "+x.review_status);
+ fillArchiveSelect("governanceArchiveFiling",filingRows,x=>x.filing_type+" · "+x.authority_name+" · "+(x.filing_reference||x.id.slice(0,8)));
+ fillArchiveSelect("governanceArchiveDocument",archiveDocRows,x=>x.document_ref+" · "+x.title+" · "+x.document_category);
+ table($("governanceArchiveRegister"),["Archive ref","Category","Title","Year","Confidentiality","Linked records","Indexed"],archiveRows,(tr,x)=>{
+  cell(tr,x.archive_ref);cell(tr,x.archive_category.replaceAll("_"," "));cell(tr,x.title);cell(tr,x.archive_year||"—");cell(tr,x.confidentiality.replaceAll("_"," "));
+  cell(tr,[x.annual_review_id?"Annual review":"",x.filing_id?"Filing":"",x.document_id?"Private document":""].filter(Boolean).join(", "));
+  cell(tr,date(x.indexed_at));
+ });
+ table($("governanceArchiveEvents"),["Recorded","Archive entry","Event","Actor","Snapshot"],archiveEventRows,(tr,x)=>{
+  cell(tr,date(x.created_at));cell(tr,archiveRows.find(a=>a.id===x.archive_id)?.archive_ref||x.archive_id);cell(tr,x.event_type.replaceAll("_"," "));cell(tr,x.actor_user_id);cell(tr,JSON.stringify(x.event_snapshot));
+ });
+ $("addGovernanceArchiveEntry").onclick=async()=>{
+  const reviewId=$("governanceArchiveReview").value||null,filingId=$("governanceArchiveFiling").value||null,documentId=$("governanceArchiveDocument").value||null;
+  const yearRaw=$("governanceArchiveYear").value,year=yearRaw?Number(yearRaw):null;
+  if(!reviewId&&!filingId&&!documentId){$("governanceArchiveStatus").textContent="Link at least one existing review, filing or active document.";return}
+  if(yearRaw&&(!Number.isInteger(year)||year<1900||year>2200)){$("governanceArchiveStatus").textContent="Enter a valid archive year.";return}
+  const b=$("addGovernanceArchiveEntry");b.disabled=true;
+  try{const {data,error}=await db.rpc("ft_add_governance_archive_entry",{p_archive_category:$("governanceArchiveCategory").value,p_title:$("governanceArchiveTitle").value.trim(),p_description:$("governanceArchiveDescription").value.trim()||null,p_annual_review_id:reviewId,p_filing_id:filingId,p_document_id:documentId,p_archive_year:year,p_confidentiality:$("governanceArchiveConfidentiality").value});if(error)throw error;$("governanceArchiveStatus").textContent="Archive entry created: "+data; $("governanceArchiveTitle").value="";$("governanceArchiveDescription").value="";await loadStatutoryFilingRegister()}
+  catch(error){$("governanceArchiveStatus").textContent="Archive entry not created: "+error.message}
+  finally{b.disabled=false}
+ };
  const annualRows=annualReviews.data||[];
  const reviewSelect=$("statutoryAnnualReviewSelect");reviewSelect.replaceChildren(new Option("Select an annual review",""));
  annualRows.forEach(x=>{const opt=new Option(x.review_year+" · "+x.review_status,x.id);reviewSelect.appendChild(opt)});
