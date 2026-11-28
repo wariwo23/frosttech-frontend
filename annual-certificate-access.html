@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FrostTech · Secure Certificate Access</title>
+<style>
+:root{--blue:#0757a6;--line:#d9e2ec;--ink:#183047;--muted:#607286}
+*{box-sizing:border-box}body{margin:0;background:#f3f7fb;color:var(--ink);font:16px system-ui,-apple-system,Segoe UI,sans-serif}
+header,footer{background:#0757a6;color:#fff;padding:18px 5vw}main{max-width:760px;margin:28px auto;padding:0 16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:22px;box-shadow:0 4px 18px #1830470c}
+h1{font-size:1.45rem;margin:0 0 8px}p{line-height:1.5}.muted{color:var(--muted);font-size:.92rem}
+label{display:block;font-weight:650;margin:14px 0 6px}input{width:100%;padding:13px;border:1px solid #bccbda;border-radius:8px;font:inherit}
+button{margin-top:18px;background:var(--blue);color:#fff;border:0;border-radius:8px;padding:13px 18px;font-weight:700;font:inherit;cursor:pointer}
+.status{margin-top:16px;padding:12px;border-radius:8px;background:#eef4fa;overflow-wrap:anywhere}
+.file{border:1px solid var(--line);border-radius:9px;padding:14px;margin:10px 0}.file a{color:var(--blue);font-weight:700}
+.warning{background:#fff6e7;border-left:4px solid #c58a22;padding:12px;margin-top:16px}
+</style>
+</head>
+<body>
+<header><strong>FrostTech HVAC &amp; Refrigeration</strong></header>
+<main><section class="card">
+<h1>Secure Annual Certificate Access</h1>
+<p class="muted">This page redeems a one-time access token issued by FrostTech's Super Administrator for an authorized recipient.</p>
+<label for="accessToken">One-time access token</label><input id="accessToken" autocomplete="one-time-code" spellcheck="false" placeholder="Paste the access token">
+<label for="recipientEmail">Authorized recipient email</label><input id="recipientEmail" type="email" autocomplete="email" placeholder="name@example.com">
+<button id="redeem" type="button">Verify and access documents</button>
+<div id="status" class="status" role="status">Access tokens expire after 15 minutes, can be redeemed once, and are invalidated by revoked or expired distribution authorizations.</div>
+<div id="result"></div>
+<div class="warning"><strong>Privacy notice:</strong> Entering the authorized email address matches the distribution record but does not independently verify ownership of that mailbox. Do not use a shared or public device. Temporary document links expire after 10 minutes.</div>
+</section></main>
+<footer>FrostTech · Confidential corporate records</footer>
+<script>
+(function(){
+ const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+ const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+ const status=document.getElementById("status"),result=document.getElementById("result");
+ const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+ document.getElementById("redeem").addEventListener("click",async()=>{
+  const token=document.getElementById("accessToken").value.trim();
+  const email=document.getElementById("recipientEmail").value.trim().toLowerCase();
+  result.innerHTML="";
+  if(!token||!email||!email.includes("@")){status.textContent="Enter the access token and authorized recipient email.";return;}
+  status.textContent="Verifying token and authorization…";
+  try{
+   const response=await fetch(SUPABASE_URL+"/functions/v1/annual-certificate-access",{
+    method:"POST",headers:{"Content-Type":"application/json","apikey":KEY},
+    body:JSON.stringify({access_token:token,recipient_email:email})
+   });
+   const data=await response.json();
+   if(!response.ok)throw new Error(data.error||"Access denied.");
+   status.textContent="One-time token redeemed. Certificate "+data.certificate_reference+" · reporting year "+data.reporting_year+" · version "+data.version_number+".";
+   const files=Array.isArray(data.files)?data.files:[];
+   result.innerHTML=(files.length?files.map(f=>'<div class="file"><strong>'+esc(f.title||f.document_ref)+'</strong><p class="muted">'+esc(f.document_ref)+'</p><a href="'+esc(f.download_url)+'" target="_blank" rel="noopener noreferrer">Open temporary document link</a><p class="muted">Expires in 10 minutes.</p></div>').join(""):"<p>No linked supporting documents were found for this certificate.</p>")+'<p class="muted">'+esc(data.notice||"")+'</p>';
+   document.getElementById("accessToken").value="";
+   document.getElementById("redeem").disabled=true;
+   document.getElementById("redeem").textContent="Token already redeemed";
+  }catch(e){status.textContent=e.message||"Access could not be completed.";}
+ });
+})();
+</script>
+</body></html>
