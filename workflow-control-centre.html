@@ -149,6 +149,11 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <p class="muted">Personal notification queue. This page is read-only; queued notifications are not marked as read or sent by opening this page.</p>
 <div id="notifications"></div>
 </section>
+<section id="recipientReportsCard" class="card hidden">
+<h2>Reports Sent to My Account</h2>
+<p class="muted">Review official management reports delivered to your signed-in FrostTech account. Acknowledging confirms receipt only; it does not mean approval of the report contents.</p>
+<div id="recipientReports" class="table-wrap"></div>
+</section>
 </main>
 <div id="actionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
 <div class="modal"><h2 id="modalTitle">Confirm action</h2><p id="modalDescription" class="muted"></p>
@@ -451,11 +456,41 @@ async function loadNotifications(){
 async function queueOverdueReminders(){
  const btn=$("queueReminders");btn.disabled=true;try{const {data,error}=await db.rpc("ft_queue_overdue_workflow_reminders",{p_limit:50});if(error)throw error;setStatus("Overdue reminders queued. Records considered: "+(data?.reminders_considered??0)+".","success");await loadNotifications()}catch(e){setStatus("Reminder queueing was not authorised or failed: "+(e.message||"Permission denied."),"error")}finally{btn.disabled=false}
 }
+async function loadRecipientReports(){
+ const box=$("recipientReports");box.replaceChildren();
+ const {data,error}=await db.functions.invoke("management-report-recipient",{method:"GET"});
+ if(error)throw error;
+ if(!data?.ok)throw new Error(data?.error||"Recipient report records unavailable.");
+ const reports=data.reports||[];
+ if(!reports.length){empty(box,"No approved reports have been emailed to this account.");return}
+ reports.forEach(r=>{
+  const item=document.createElement("article");item.className="item";
+  const title=document.createElement("strong");title.textContent=r.archive?.archive_reference||"Archived report";
+  const meta=document.createElement("p");meta.className="muted";meta.textContent="Received: "+date(r.sent_at)+" · Recipient: "+(r.recipient_email||"signed-in account");
+  const pre=document.createElement("pre");pre.style.whiteSpace="pre-wrap";pre.style.overflowWrap="anywhere";pre.style.background="#f4f6f8";pre.style.padding="12px";pre.style.borderRadius="7px";pre.textContent=JSON.stringify(r.archive?.archive_snapshot??{},null,2);
+  item.append(title,meta,pre);
+  if(r.acknowledgement){
+   const done=document.createElement("p");done.className="status success";done.textContent="Receipt acknowledged: "+date(r.acknowledgement.acknowledged_at)+(r.acknowledgement.acknowledgement_note?" · "+r.acknowledgement.acknowledgement_note:"");item.appendChild(done);
+  }else{
+   const note=document.createElement("textarea");note.maxLength=1000;note.rows=2;note.placeholder="Optional receipt note (not an approval)";
+   note.style.width="100%";note.style.margin="8px 0";note.style.padding="10px";note.style.border="1px solid #cbd6e2";note.style.borderRadius="7px";
+   const button=document.createElement("button");button.type="button";button.textContent="Acknowledge Receipt";
+   button.addEventListener("click",async()=>{
+    button.disabled=true;
+    const result=await db.functions.invoke("management-report-recipient",{body:{delivery_attempt_id:r.delivery_attempt_id,acknowledgement_note:note.value.trim()}});
+    if(result.error||!result.data?.ok){setStatus(result.error?.message||result.data?.error||"Acknowledgement was not recorded.","error");button.disabled=false;return}
+    setStatus("Report receipt acknowledged and recorded.","success");await loadRecipientReports();
+   });
+   item.append(note,button);
+  }
+  box.appendChild(item);
+ });
+}
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
   if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit()])}
-  await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
+  await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
  finally{$("refresh").disabled=false}
@@ -470,7 +505,7 @@ async function start(){
   currentRole=role;
   currentUserId=userData.user.id;
   $("heading").textContent=role==="super_admin"?"Super Administrator — Workflow Oversight":"Departmental Workflow and Notifications";
-  $("sessionTools").classList.remove("hidden");
+  $("sessionTools").classList.remove("hidden");$("recipientReportsCard").classList.remove("hidden");
   $("tasksCard").classList.remove("hidden");
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
