@@ -94,7 +94,8 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="distributionNote">Distribution note</label><textarea id="distributionNote" rows="2" maxlength="1000"></textarea></div>
 <button type="submit">Record Report Distribution</button>
 </form>
-<div id="distributionLog" class="table-wrap"></div>
+<div id="distributionLog" class="table-wrap"></div>\n<div id="reportDeliveryAudit" class="table-wrap"></div>
+<p class="muted">Email delivery is not enabled until a transactional provider credential and approved sender are configured. This register shows delivery attempts only.</p>
 
 </section>
 <section id="definitionsCard" class="card hidden">
@@ -233,6 +234,13 @@ async function exportPerformancePeriod(p){
  const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
  a.href=url;a.download="FrostTech_"+p.period_name.replace(/[^a-z0-9_-]+/gi,"_")+"_Departmental_Performance.csv";a.click();URL.revokeObjectURL(url);
  $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
+}
+async function loadReportDeliveryAudit(){
+ const {data,error}=await db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(100);
+ if(error)throw error;
+ table($("reportDeliveryAudit"),["Recipient","Provider","Status","Attempted","Delivered","Failure"],data||[],(tr,r)=>{
+  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status);cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
+ });
 }
 async function loadReportArchive(){
  const [archives,logs]=await Promise.all([
@@ -427,7 +435,7 @@ async function queueOverdueReminders(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
