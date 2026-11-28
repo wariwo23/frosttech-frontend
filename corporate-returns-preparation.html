@@ -37,6 +37,24 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <p class="muted">Read-only Super Administrator preparation report covering board meetings, resolutions, statutory filings, annual reviews, governance archive and filing-readiness evidence including acknowledgements, payment reconciliation and escalations. Source registers remain authoritative. Applicability, filing accuracy and statutory submission must be confirmed by management and the relevant professional adviser.</p>
 <div id="statusReport" class="status" role="status">Loading records…</div>
 <div class="grid" id="metrics"></div>
+<section class="card" id="annualPackCard">
+<h2>Annual Corporate Compliance Pack</h2>
+<p class="muted">Prepare a year-specific frozen evidence pack covering statutory filings, board meetings, resolutions and governance archive entries. Preparation is not approval, legal certification or regulatory submission.</p>
+<div class="grid">
+<div class="field"><label for="annualReviewYear">Reporting year</label><input id="annualReviewYear" type="number" min="2000" max="2200" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="annualReviewSelect">Existing annual pack</label><select id="annualReviewSelect" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Select annual pack…</option></select></div>
+</div>
+<div class="actions"><button id="createAnnualReview" type="button">Prepare annual evidence pack</button><button id="printAnnualPack" type="button" class="secondary">Print / Save Annual Pack</button></div>
+<div id="annualPackStatus" class="status" role="status">Select a year to prepare or inspect an existing annual pack.</div>
+<div id="annualPackSnapshot" style="margin-top:12px"></div>
+<div id="annualApprovalPanel" hidden style="border-top:1px solid var(--line);margin-top:16px;padding-top:14px">
+<h3>Super Administrator approval</h3>
+<p class="muted">Approval records the management declaration against the frozen snapshot. Review the source evidence and professional advice before approving.</p>
+<label for="annualManagementDeclaration">Management declaration</label>
+<textarea id="annualManagementDeclaration" rows="4" maxlength="5000" placeholder="Record the management declaration and any qualifications or outstanding matters…" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea>
+<div class="actions"><button id="approveAnnualReview" type="button">Approve annual pack</button></div>
+</div>
+</section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
@@ -247,12 +265,63 @@ async function saveFiling(event){
  }catch(e){actionStatus.textContent="Update not completed: "+(e.message||"The database rejected the request.");}
  finally{save.disabled=false;save.textContent="Save filing record";}
 }
+function annualRows(){return rows.filter(r=>r.record_type==="annual_compliance_review");}
+function populateAnnualReviews(selectedId){
+ const items=annualRows();
+ field("annualReviewSelect").innerHTML='<option value="">Select annual pack…</option>'+items.map(r=>'<option value="'+esc(r.record_id)+'">'+esc(r.record_reference+' · '+r.record_status)+'</option>').join("");
+ if(selectedId)field("annualReviewSelect").value=selectedId;
+ renderAnnualReview();
+}
+function renderAnnualReview(){
+ const id=field("annualReviewSelect").value;
+ const r=annualRows().find(x=>x.record_id===id);
+ const box=field("annualPackSnapshot"),approval=field("annualApprovalPanel");
+ if(!r){box.innerHTML="";approval.hidden=true;return;}
+ const d=r.details||{},s=d.snapshot||{};
+ const counts=["filing_count","board_meeting_count","board_resolution_count","archive_count"];
+ box.innerHTML='<div class="grid">'+counts.map(k=>'<div class="metric">'+esc(k.replaceAll("_"," "))+'<strong>'+Number(s[k]||0)+'</strong></div>').join("")+'</div><p><strong>Snapshot created:</strong> '+esc(date(d.snapshot_created_at))+' · <strong>Status:</strong> '+esc(r.record_status)+'</p><details open><summary>View frozen annual evidence</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere;max-height:420px;overflow:auto">'+esc(JSON.stringify(s,null,2))+'</pre></details>';
+ const draft=r.record_status==="draft";
+ approval.hidden=!draft;
+ field("annualManagementDeclaration").value=d.management_declaration||"";
+ field("approveAnnualReview").disabled=!draft;
+ field("annualPackStatus").textContent=draft?"Draft snapshot selected. Review the frozen evidence before entering the management declaration and approving.":("This annual pack is "+r.record_status+". Its snapshot is retained as an approved historical record.");
+}
+async function createAnnualReview(){
+ const year=Number(val("annualReviewYear"));
+ if(!Number.isInteger(year)||year<2000||year>2200){field("annualPackStatus").textContent="Enter a valid reporting year.";return;}
+ const btn=field("createAnnualReview");btn.disabled=true;btn.textContent="Preparing…";
+ field("annualPackStatus").textContent="Creating a frozen year-specific evidence snapshot. Existing snapshots are never overwritten.";
+ try{
+  const {data,error}=await db.rpc("ft_create_statutory_annual_review",{p_review_year:year});
+  if(error)throw error;
+  await load();
+  populateAnnualReviews(data);
+  field("annualReviewSelect").value=data;
+  renderAnnualReview();
+  field("annualPackStatus").textContent="Annual evidence pack prepared for "+year+". It remains a draft and has not been approved or filed.";
+ }catch(e){field("annualPackStatus").textContent="Pack not created: "+(e.message||"The database rejected the request. If a snapshot already exists, select it instead.");}
+ finally{btn.disabled=false;btn.textContent="Prepare annual evidence pack";}
+}
+async function approveAnnualReview(){
+ const id=field("annualReviewSelect").value, declaration=val("annualManagementDeclaration");
+ if(!id){field("annualPackStatus").textContent="Select a draft annual pack first.";return;}
+ if(declaration.length<20){field("annualPackStatus").textContent="Enter a substantive management declaration of at least 20 characters.";return;}
+ const btn=field("approveAnnualReview");btn.disabled=true;btn.textContent="Approving…";
+ try{
+  const {data,error}=await db.rpc("ft_approve_statutory_annual_review",{p_review_id:id,p_management_declaration:declaration});
+  if(error)throw error;
+  await load();populateAnnualReviews(id);
+  field("annualPackStatus").textContent="Annual pack approved. The declaration and approval event have been recorded. No regulatory submission has occurred.";
+ }catch(e){field("annualPackStatus").textContent="Approval not completed: "+(e.message||"The database rejected the request.");}
+ finally{btn.disabled=false;btn.textContent="Approve annual pack";}
+}
 async function load(){
  reportStatus.textContent="Loading governance and statutory records…";
  const {data,error}=await db.rpc("ft_get_corporate_returns_preparation");
  if(error)throw error;
  rows=data||[];
  populateFilingActions();
+ populateAnnualReviews();
  const types=[...new Set(rows.map(r=>r.record_type))];
  const readiness=rows.filter(r=>r.record_type==="filing_readiness");
  const count=(fn)=>readiness.filter(fn).length;
@@ -281,6 +350,11 @@ async function init(){
  }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
 }
 filingSelect.addEventListener("change",selectFiling);
+field("annualReviewYear").value=new Date().getFullYear();
+field("annualReviewSelect").addEventListener("change",renderAnnualReview);
+field("createAnnualReview").addEventListener("click",createAnnualReview);
+field("approveAnnualReview").addEventListener("click",approveAnnualReview);
+field("printAnnualPack").addEventListener("click",()=>{if(!field("annualReviewSelect").value){field("annualPackStatus").textContent="Select an annual pack before printing.";return;}window.print();});
 filingForm.addEventListener("submit",saveFiling);
 field("closeFiling").addEventListener("click",closeFiling);
 field("saveReconciliation").addEventListener("click",saveReconciliation);
