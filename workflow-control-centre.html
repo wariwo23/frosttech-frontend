@@ -84,6 +84,15 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="actions"><button type="button" class="secondary" id="refreshComplianceCalendar">Refresh Calendar</button><button type="button" class="secondary" id="exportComplianceCalendar">Export Calendar CSV</button></div>
 <div id="complianceCalendarRegister" class="table-wrap"></div>
 <h3>Automated Reminder and Overdue Escalation History</h3><p class="muted">Advance reminders are scheduled 30, 14, 7 and 1 day before the deadline, followed by due-day and 1-, 7- and 30-day overdue alerts. Notifications are in-app; no email or SMS is sent by this process.</p><div id="complianceReminderHistory" class="table-wrap"></div>
+<h3>Completion Evidence Submission</h3><p class="muted">Assigned administrators submit a completion summary and evidence reference for Super Administrator review. Do not mark an obligation complete until the evidence is approved.</p>
+<form id="complianceCompletionForm"><div class="form-grid">
+<div class="field"><label for="completionSourceType">Register type</label><select id="completionSourceType"><option value="calendar_item">Managed calendar</option><option value="compliance_obligation">Compliance obligation</option></select></div>
+<div class="field"><label for="completionSourceId">Obligation record UUID</label><input id="completionSourceId" required placeholder="Record UUID"></div>
+<div class="field"><label for="completionSummary">Completion summary</label><textarea id="completionSummary" required minlength="10" maxlength="4000" rows="2"></textarea></div>
+<div class="field"><label for="completionEvidence">Evidence reference / document location</label><input id="completionEvidence" required minlength="3" maxlength="1000" placeholder="Filing receipt, document reference…"></div>
+</div><button type="submit">Submit for Super Admin Review</button></form>
+<div id="complianceSubmissionStatus" class="muted" aria-live="polite"></div>
+<h3>Completion Submissions and Review</h3><div id="complianceSubmissionRegister" class="table-wrap"></div>
 </section>
 <section id="reportingCard" class="card hidden">
 <h2>Management Reporting Periods and Official Reports</h2>
@@ -1047,7 +1056,29 @@ async function loadComplianceCalendar(){
   if(r.source_type==="calendar_item"){const wrap=document.createElement("div");wrap.className="actions";const status=document.createElement("select");["scheduled","in_progress","completed","deferred","cancelled"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v.replaceAll("_"," ");status.appendChild(o)});status.value=r.status;const save=document.createElement("button");save.type="button";save.textContent="Update";save.addEventListener("click",async()=>{save.disabled=true;const patch={status:status.value,updated_at:new Date().toISOString(),completed_at:status.value==="completed"?new Date().toISOString():null};const {error}=await db.from("ft_compliance_calendar_items").update(patch).eq("id",r.source_id);if(error){setStatus("Calendar update failed: "+error.message,"error");save.disabled=false;return}setStatus("Calendar item updated.","success");await loadComplianceCalendar()});wrap.append(status,save);td.appendChild(wrap)}
   tr.appendChild(td);
  });
- window.__ftComplianceCalendarExport=rows;
+ async function loadComplianceSubmissions(){
+ const {data:rows,error}=await db.from("ft_compliance_completion_submissions").select("id,submission_ref,source_type,source_reference,submitted_by,submitted_at,completion_summary,evidence_reference,status,reviewed_by,reviewed_at,review_note").order("submitted_at",{ascending:false}).limit(300);
+ if(error)throw error;
+ table($("complianceSubmissionRegister"),["Submitted","Reference / source","Submitter","Summary / evidence","Status","Review"],rows||[],(tr,r)=>{
+  cell(tr,date(r.submitted_at));cell(tr,r.submission_ref+" · "+r.source_type.replaceAll("_"," ")+" · "+r.source_reference);cell(tr,r.submitted_by);cell(tr,r.completion_summary+" | Evidence: "+r.evidence_reference);cell(tr,r.status);
+  const td=document.createElement("td");
+  if(currentRole==="super_admin"&&r.status==="pending_review"){
+   const note=document.createElement("input");note.placeholder="Review note (required for rejection / resubmission)";
+   const actions=document.createElement("div");actions.className="actions";
+   ["approved","rejected","resubmission_required"].forEach(decision=>{const b=document.createElement("button");b.type="button";b.textContent=decision.replaceAll("_"," ");b.addEventListener("click",async()=>{b.disabled=true;const {data,error}=await db.rpc("ft_review_compliance_completion_submission",{p_submission_id:r.id,p_decision:decision,p_note:note.value||null});if(error){setStatus("Review failed: "+error.message,"error");b.disabled=false;return}setStatus("Completion submission "+decision.replaceAll("_"," ")+".","success");await Promise.all([loadComplianceCalendar(),loadComplianceSubmissions()])});actions.appendChild(b)});
+   td.append(note,actions);
+  }else{td.textContent=(r.review_note||"Awaiting review")+" · "+(r.reviewed_at?date(r.reviewed_at):"");}
+  tr.appendChild(td);
+ });
+}
+async function submitComplianceCompletion(e){
+ e.preventDefault();const sourceType=$("completionSourceType").value,sourceId=$("completionSourceId").value.trim();
+ const {data,error}=await db.rpc("ft_submit_compliance_completion",{p_source_type:sourceType,p_source_id:sourceId,p_completion_summary:$("completionSummary").value.trim(),p_evidence_reference:$("completionEvidence").value.trim(),p_evidence_document_id:null});
+ if(error){$("complianceSubmissionStatus").textContent="Submission failed: "+error.message;return}
+ $("complianceCompletionForm").reset();$("complianceSubmissionStatus").textContent="Completion evidence submitted for Super Administrator review. Reference: "+data;
+ await loadComplianceSubmissions();
+}
+window.__ftComplianceCalendarExport=rows;
  const {data:reminders,error:reminderError}=await db.from("ft_compliance_calendar_reminder_log").select("source_type,source_id,due_date,reminder_stage,recipient_user_id,created_at,notification_id").order("created_at",{ascending:false}).limit(300);
  if(reminderError)throw reminderError;
  table($("complianceReminderHistory"),["Created","Reminder stage","Source","Due date","Recipient","Notification reference"],reminders||[],(tr,r)=>{cell(tr,date(r.created_at));cell(tr,r.reminder_stage.replaceAll("_"," "));cell(tr,r.source_type.replaceAll("_"," "));cell(tr,date(r.due_date));cell(tr,r.recipient_user_id);cell(tr,r.notification_id||"—")});
@@ -1071,7 +1102,7 @@ function exportComplianceCalendar(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel(),loadExceptionCaseHistory(),loadComplianceCalendar()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel(),loadExceptionCaseHistory(),loadComplianceCalendar(),loadComplianceSubmissions()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -1096,7 +1127,7 @@ async function start(){
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
+$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
