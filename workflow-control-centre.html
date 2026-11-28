@@ -77,6 +77,22 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <p class="muted">Approval decisions are recorded against your authenticated account and are subject to stage permissions and separation-of-duties rules.</p>
 <div id="approvals" class="table-wrap"></div>
 </section>
+<section id="escalationsCard" class="card hidden">
+<h2>Super Administrator — Formal Escalations</h2>
+<p class="muted">Only the Super Administrator can create or resolve formal escalations. Departmental administrators cannot override this authority.</p>
+<form id="escalationForm">
+<div class="form-grid">
+<div class="field"><label for="escalationInstance">Workflow instance</label><select id="escalationInstance" required><option value="">Select workflow instance</option></select></div>
+<div class="field"><label for="escalationTask">Related task (optional)</label><select id="escalationTask"><option value="">No specific task</option></select></div>
+<div class="field"><label for="escalationLevel">Escalation level</label><select id="escalationLevel"><option value="level_1">Level 1</option><option value="level_2">Level 2</option><option value="critical">Critical</option><option value="executive">Executive</option></select></div>
+<div class="field"><label for="escalationDepartment">Escalate to department</label><input id="escalationDepartment" maxlength="100" placeholder="Department code or name"></div>
+<div class="field"><label for="escalationUser">Escalate to user ID (optional)</label><input id="escalationUser" maxlength="36" placeholder="Authenticated user UUID"></div>
+</div>
+<div class="field"><label for="escalationReason">Reason for escalation</label><textarea id="escalationReason" rows="3" maxlength="2000" required></textarea></div>
+<button id="createEscalation" type="submit">Create Formal Escalation</button>
+</form>
+<div id="escalations" class="table-wrap"></div>
+</section>
 <section id="notificationsCard" class="card hidden">
 <h2>My Workflow Notifications</h2>
 <p class="muted">Personal notification queue. This page is read-only; queued notifications are not marked as read or sent by opening this page.</p>
@@ -158,7 +174,9 @@ async function submitAction(){
  if(!pendingAction)return;
  const action=pendingAction,notes=$("actionNotes").value.trim();$("modalConfirm").disabled=true;
  try{
-  if(action.type==="complete"){
+  if(action.type==="resolve_escalation"){
+   const {error}=await db.rpc("ft_resolve_workflow_escalation",{p_escalation_id:action.id,p_resolution_notes:notes});if(error)throw error;setStatus("Formal escalation resolved and recorded.","success");
+  }else if(action.type==="complete"){
    const {data,error}=await db.rpc("ft_advance_workflow_task",{p_task_id:action.id,p_completion_notes:notes||null});
    if(error)throw error;
    setStatus("Workflow task action recorded: "+(data?.result||"completed")+".","success");
@@ -185,6 +203,34 @@ async function launchWorkflow(event){
  }catch(e){$("launchStatus").textContent="Workflow not started: "+(e.message||"Permission or database error.");}
  finally{$("launchButton").disabled=activeWorkflows.length===0}
 }
+async function loadEscalations(){
+ const {data,error}=await db.from("ft_workflow_escalations").select("id,instance_id,task_id,escalation_level,reason,escalated_to_department,status,escalated_at,resolution_notes").order("escalated_at",{ascending:false}).limit(100);
+ if(error)throw error;
+ table($("escalations"),["Level","Workflow","Reason","Recipient department","Status","Raised","Resolution / Action"],data,(tr,r)=>{
+  cell(tr,r.escalation_level);cell(tr,r.instance_id);cell(tr,r.reason);cell(tr,r.escalated_to_department);cell(tr,r.status);cell(tr,date(r.escalated_at));
+  const td=cell(tr,r.resolution_notes||"");if(r.status==="open"){const b=document.createElement("button");b.type="button";b.textContent="Resolve";b.addEventListener("click",()=>openAction("resolve_escalation",r.id,"Resolve escalation","Enter the resolution notes. This action is restricted to the Super Administrator."));td.appendChild(document.createElement("br"));td.appendChild(b)}
+ });
+}
+async function loadEscalationChoices(){
+ const [instances,tasks]=await Promise.all([
+  db.from("ft_workflow_instances").select("id,instance_reference,status").in("status",["pending","in_progress","awaiting_approval","on_hold"]).order("created_at",{ascending:false}).limit(100),
+  db.from("ft_workflow_tasks").select("id,task_reference,task_title,instance_id").in("status",["pending","in_progress"]).order("created_at",{ascending:false}).limit(200)
+ ]);
+ if(instances.error)throw instances.error;if(tasks.error)throw tasks.error;
+ const si=$("escalationInstance"),st=$("escalationTask");si.replaceChildren();st.replaceChildren();
+ const blank=document.createElement("option");blank.value="";blank.textContent="Select workflow instance";si.appendChild(blank);
+ (instances.data||[]).forEach(x=>{const o=document.createElement("option");o.value=x.id;o.textContent=x.instance_reference+" · "+x.status;si.appendChild(o)});
+ const noTask=document.createElement("option");noTask.value="";noTask.textContent="No specific task";st.appendChild(noTask);
+ (tasks.data||[]).forEach(x=>{const o=document.createElement("option");o.value=x.id;o.dataset.instance=x.instance_id;o.textContent=x.task_reference+" · "+x.task_title;st.appendChild(o)});
+ si.addEventListener("change",()=>{Array.from(st.options).forEach(o=>{o.hidden=!!(o.value&&o.dataset.instance!==si.value)});st.value=""});
+}
+async function createEscalation(e){
+ e.preventDefault();const instance=$("escalationInstance").value,department=$("escalationDepartment").value.trim(),user=$("escalationUser").value.trim(),reason=$("escalationReason").value.trim();
+ if(!instance||!reason||(!department&&!user)){setStatus("Select a workflow, provide a reason and specify a recipient.","error");return}
+ const {error}=await db.rpc("ft_create_workflow_escalation",{p_instance_id:instance,p_reason:reason,p_escalation_level:$("escalationLevel").value,p_task_id:$("escalationTask").value||null,p_escalated_to_user_id:user||null,p_escalated_to_department:department||null});
+ if(error){setStatus("Escalation was not created: "+error.message,"error");return}
+ $("escalationForm").reset();setStatus("Formal escalation created and notification queued for a user recipient where applicable.","success");await loadEscalations();
+}
 async function loadNotifications(){
  const {data,error}=await db.from("ft_workflow_notification_outbox").select("notification_type,title,message,status,scheduled_at,created_at").order("created_at",{ascending:false}).limit(50);
  if(error)throw error;
@@ -199,7 +245,7 @@ async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
   if(currentRole==="super_admin"){await loadSummary();await loadDefinitions()}
-  await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows()]);
+  await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
  finally{$("refresh").disabled=false}
@@ -219,12 +265,12 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden")}
+  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);
+$("launchForm").addEventListener("submit",launchWorkflow);$("escalationForm").addEventListener("submit",createEscalation);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
