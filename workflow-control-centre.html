@@ -85,6 +85,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <h3>Official Report Archive and Distribution</h3>
 <p class="muted">Approved report snapshots are archived automatically and cannot be edited. Email delivery uses the configured Brevo service and records each attempt in the delivery audit.</p>
 <button id="checkReportEmailConfig" type="button" class="secondary">Check Email Configuration</button> <span id="reportEmailConfigStatus" class="muted" aria-live="polite"></span>
+<button id="registerBrevoWebhook" type="button" class="secondary">Register / Update Brevo Delivery Webhook</button> <span id="brevoWebhookStatus" class="muted" aria-live="polite"></span>
 <div id="reportArchive" class="table-wrap"></div>
 <form id="reportDistributionForm">
 <div class="form-grid">
@@ -96,6 +97,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <button type="submit">Record Report Distribution</button>
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<div id="reportDeliveryAudit" class="table-wrap"></div>
+<h3>Brevo Provider Events</h3><p class="muted">Provider delivery events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
 </section>
@@ -242,11 +244,29 @@ async function exportPerformancePeriod(p){
  $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
 }
 async function loadReportDeliveryAudit(){
- const {data,error}=await db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(100);
+ const {data,error}=await db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,provider_delivery_status,provider_event_at,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(100);
  if(error)throw error;
- table($("reportDeliveryAudit"),["Recipient","Provider","Status","Attempted","Delivered","Failure"],data||[],(tr,r)=>{
-  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status);cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
+ table($("reportDeliveryAudit"),["Recipient","Provider","Submission","Provider Event","Attempted","Delivered","Failure"],data||[],(tr,r)=>{
+  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
  });
+}
+async function loadReportProviderEvents(){
+ const {data,error}=await db.from("ft_management_report_provider_events").select("provider_message_id,recipient_email,event_type,event_at,event_reason,received_at").order("received_at",{ascending:false}).limit(100);
+ if(error)throw error;
+ table($("reportProviderEvents"),["Recipient","Event","Provider Event Time","Recorded","Reason"],data||[],(tr,r)=>{
+  cell(tr,r.recipient_email);cell(tr,r.event_type);cell(tr,r.event_at?date(r.event_at):"—");cell(tr,date(r.received_at));cell(tr,r.event_reason||"—");
+ });
+}
+async function registerBrevoReportWebhook(){
+ const button=$("registerBrevoWebhook"),status=$("brevoWebhookStatus");button.disabled=true;status.textContent="Registering secure Brevo webhook…";
+ try{
+  const {data,error}=await db.functions.invoke("register-brevo-report-webhook",{body:{}});
+  if(error)throw error;
+  if(!data?.ok)throw new Error(data?.error||"Brevo webhook registration failed.");
+  status.textContent="Brevo webhook "+data.action+" successfully. Reference: "+(data.webhook_id||"confirmed")+".";
+  await loadReportProviderEvents();
+ }catch(e){status.textContent="Webhook registration failed: "+(e.message||"Unknown error");}
+ finally{button.disabled=false}
 }
 async function loadReportArchive(){
  const [archives,logs]=await Promise.all([
@@ -489,7 +509,7 @@ async function loadRecipientReports(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -515,7 +535,7 @@ async function start(){
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
+$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
