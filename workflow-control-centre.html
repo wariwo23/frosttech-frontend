@@ -274,11 +274,22 @@ async function printReportSnapshot(id,reference){
  const pre=w.document.createElement("pre");pre.textContent=JSON.stringify(data,null,2);w.document.body.appendChild(pre);w.document.title=reference;w.print();
 }
 async function recordReportDistribution(e){
- e.preventDefault();const archive=$("distributionArchive").value,recipient=$("distributionRecipient").value.trim(),channel=$("distributionChannel").value,note=$("distributionNote").value.trim();
+ e.preventDefault();
+ const archive=$("distributionArchive").value,recipient=$("distributionRecipient").value.trim(),channel=$("distributionChannel").value,note=$("distributionNote").value.trim();
  if(!archive||!recipient){setStatus("Select an archive and enter a recipient account UUID.","error");return}
- const {data,error}=await db.rpc("ft_record_management_report_distribution",{p_archive_id:archive,p_recipient_user_id:recipient,p_channel:channel,p_note:note||null});
- if(error){setStatus(error.message,"error");return}
- setStatus("Distribution record created: "+data+". No email was sent.","success");$("reportDistributionForm").reset();await loadReportArchive();
+ if(channel==="email_pending"){
+  const result=await db.functions.invoke("send-management-report-email",{body:{archive_id:archive,recipient_user_id:recipient}});
+  if(result.error){setStatus(result.error.message,"error");await loadReportDeliveryAudit();return}
+  if(!result.data?.ok){setStatus(result.data?.error||"Email delivery was not completed.","error");await loadReportDeliveryAudit();return}
+  setStatus("Approved report sent. Provider message ID: "+(result.data.provider_message_id||"not supplied"),"success");
+ }else{
+  const result=await db.rpc("ft_record_management_report_distribution",{p_archive_id:archive,p_recipient_user_id:recipient,p_channel:channel,p_note:note||null});
+  if(result.error){setStatus(result.error.message,"error");return}
+  setStatus("Internal distribution record created: "+result.data,"success");
+ }
+ $("reportDistributionForm").reset();
+ await loadReportArchive();
+ await loadReportDeliveryAudit();
 }
 async function loadMonthlyPerformance(){
  const {data,error}=await db.from("ft_workflow_department_monthly_performance").select("*").order("reporting_month",{ascending:false}).order("department_code").limit(240);
