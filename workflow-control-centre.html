@@ -1202,7 +1202,7 @@ async function submitStatutoryPaymentRequest(){
 
 async function loadStatutoryPaymentReconciliation(){
  if(currentRole!=="super_admin")return;
- const [filings,expenses,banks,recons,events,executions]=await Promise.all([
+ const [filings,expenses,banks,recons,executions,events]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,due_date,fee_amount").order("due_date",{ascending:true}).limit(500),
   db.from("ft_bookkeeping_expenses").select("id,expense_date,payee,description,amount,status").in("status",["approved","paid","posted"]).order("expense_date",{ascending:false}).limit(500),
   db.from("ft_bookkeeping_bank_transactions").select("id,transaction_date,description,reference,debit,credit").gt("debit",0).order("transaction_date",{ascending:false}).limit(500),
@@ -1215,7 +1215,7 @@ async function loadStatutoryPaymentReconciliation(){
  fill("statReconFiling",(filings.data||[]).map(r=>({id:r.id,label:r.filing_type.replaceAll("_"," ")+" · "+r.authority_name+" · "+(r.fee_amount==null?"fee not set":"₦"+Number(r.fee_amount).toLocaleString())})),"filing");
  fill("statReconExpense",(expenses.data||[]).map(r=>({id:r.id,label:r.expense_date+" · "+r.payee+" · "+r.description+" · ₦"+Number(r.amount).toLocaleString()+" · "+r.status})),"expense");
  fill("statReconBank",(banks.data||[]).map(r=>({id:r.id,label:r.transaction_date+" · "+r.description+" · "+(r.reference||"no ref")+" · debit ₦"+Number(r.debit).toLocaleString()})),"bank transaction");
- const executionSelect=$("statReconExecution");executionSelect.replaceChildren();const noExecution=document.createElement("option");noExecution.value="";noExecution.textContent="No linked execution (legacy record)";executionSelect.appendChild(noExecution);
+ const executionSelect=$("statReconExecution");executionSelect.replaceChildren();const noExecution=document.createElement("option");noExecution.value="";noExecution.textContent="Select confirmed execution";executionSelect.appendChild(noExecution);
  (executions.data||[]).forEach(x=>{const req=Array.isArray(x.ft_treasury_payment_requests)?x.ft_treasury_payment_requests[0]:x.ft_treasury_payment_requests;if(!req?.statutory_filing_id)return;const o=document.createElement("option");o.value=x.id;o.dataset.filing=req.statutory_filing_id;o.textContent=req.payment_request_ref+" · "+x.execution_reference+" · "+x.execution_date+" · ₦"+Number(x.executed_amount).toLocaleString()+" · "+(x.bank_reference||"no bank reference");executionSelect.appendChild(o)});
  $("statReconFiling").onchange=()=>{const filingId=$("statReconFiling").value;[...executionSelect.options].forEach(o=>{if(o.value)o.hidden=o.dataset.filing!==filingId});if(executionSelect.selectedOptions[0]?.hidden)executionSelect.value=""};
  const summary=[["Reconciliations",recons.data.length],["Matched",recons.data.filter(r=>r.reconciliation_status==="matched").length],["Variance",recons.data.filter(r=>r.reconciliation_status==="variance").length],["Evidence missing",recons.data.filter(r=>r.reconciliation_status==="evidence_missing").length]];
