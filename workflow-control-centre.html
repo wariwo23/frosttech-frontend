@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Workflow Control Centre | FrostTech</title>
+<style>
+:root{--navy:#063b70;--blue:#0879c9;--bg:#f3f6fa;--line:#dce3eb;--ink:#172333}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px Arial,sans-serif}
+header{background:linear-gradient(120deg,#052b50,#075a9c);color:#fff;padding:20px 16px}
+header h1,header p{max-width:1180px;margin:0 auto}header h1{font-size:22px}header p{margin-top:6px;color:#dceeff}
+main{max-width:1180px;margin:auto;padding:16px}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:17px;margin:14px 0;box-shadow:0 3px 12px #0f28460a}
+h2{font-size:18px;color:var(--navy);margin:0 0 12px}
+.muted{color:#637487;font-size:13px;line-height:1.5}
+.status{padding:11px 13px;border-radius:8px;background:#e8f3ff;color:#06477c;line-height:1.5;overflow-wrap:anywhere}
+.error{background:#ffebee;color:#a11919}.success{background:#e8f5e9;color:#166534}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+button,.link{border:0;border-radius:7px;padding:10px 14px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none;cursor:pointer}
+button.secondary,.link.secondary{background:#536779}button:disabled{opacity:.6;cursor:wait}
+.metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.metric{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;padding:12px;background:#fff;min-width:0}
+.metric span{display:block;color:#526477;font-size:12px}.metric strong{display:block;color:var(--navy);font-size:24px;margin-top:8px;overflow-wrap:anywhere}
+.table-wrap{overflow-x:auto}table{width:100%;min-width:680px;border-collapse:collapse;font-size:13px}
+th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-align:top;overflow-wrap:anywhere}th{background:#edf3f8;color:#173b60;white-space:nowrap}
+.pill{display:inline-block;padding:4px 8px;border-radius:20px;background:#edf2f7;font-size:11px;font-weight:700}
+.pill.draft{background:#fff0c2;color:#805500}.pill.overdue{background:#ffe0e0;color:#a21d1d}
+.item{padding:12px;border:1px solid var(--line);border-radius:8px;margin:9px 0}.item strong{display:block;color:var(--navy);margin-bottom:5px}
+.hidden{display:none!important}
+@media(max-width:760px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}main{padding:10px}.card{padding:13px}}
+</style>
+</head>
+<body>
+<header><h1>FrostTech HVAC and Refrigeration</h1><p>Workflow Control Centre</p></header>
+<main>
+<section class="card">
+<h2 id="heading">Verifying administrator access</h2>
+<p id="accessStatus" class="status" role="status">Please wait while your administrator session is verified.</p>
+<div id="sessionTools" class="toolbar hidden">
+<button id="refresh" type="button">Refresh Records</button>
+<a class="link secondary" href="admin-portal.html">Administration Portal</a>
+<button id="logout" type="button" class="secondary">Sign Out</button>
+</div>
+</section>
+<section id="summaryCard" class="card hidden">
+<h2>Workflow Overview</h2>
+<p class="muted">Live counts from workflow records. Draft definitions are not active and do not start business processes.</p>
+<div id="metrics" class="metrics"></div>
+</section>
+<section id="definitionsCard" class="card hidden">
+<h2>Workflow Templates</h2>
+<p class="muted">Super Administrator view. Templates remain Draft until separately approved and activated. This page does not activate or edit templates.</p>
+<div id="definitions" class="table-wrap"></div>
+</section>
+<section id="tasksCard" class="card hidden">
+<h2>My Department's Workflow Tasks</h2>
+<p class="muted">Only records returned by the database's existing row-level security policies are displayed.</p>
+<div id="tasks" class="table-wrap"></div>
+</section>
+<section id="notificationsCard" class="card hidden">
+<h2>My Workflow Notifications</h2>
+<p class="muted">Personal notification queue. This page is read-only; queued notifications are not marked as read or sent by opening this page.</p>
+<div id="notifications"></div>
+</section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+const SUPABASE_KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $=id=>document.getElementById(id);
+let currentRole=null;
+const allowedRoles=["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"];
+function cell(row,value){const td=document.createElement("td");td.textContent=value??"—";row.appendChild(td);return td}
+function empty(container,message){container.replaceChildren();const p=document.createElement("p");p.className="muted";p.textContent=message;container.appendChild(p)}
+function table(container,headers,rows,render){container.replaceChildren();if(!rows.length){empty(container,"No records are currently available.");return;}const t=document.createElement("table"),thead=document.createElement("thead"),hr=document.createElement("tr");headers.forEach(h=>{const th=document.createElement("th");th.textContent=h;hr.appendChild(th)});thead.appendChild(hr);t.appendChild(thead);const body=document.createElement("tbody");rows.forEach(x=>{const tr=document.createElement("tr");render(tr,x);body.appendChild(tr)});t.appendChild(body);container.appendChild(t)}
+function date(v){if(!v)return"—";const d=new Date(v);return Number.isNaN(d.getTime())?"—":d.toLocaleString()}
+function setStatus(message,type){$("accessStatus").textContent=message;$("accessStatus").className="status"+(type?" "+type:"")}
+async function loadSummary(){
+ const {data,error}=await db.from("ft_workflow_monitoring_summary").select("*").order("workflow_name");
+ if(error)throw error;
+ const totals=data.reduce((a,r)=>({instances:a.instances+(r.open_instances||0),tasks:a.tasks+(r.open_tasks||0),overdue:a.overdue+(r.overdue_tasks||0),escalations:a.escalations+(r.open_escalations||0)}),{instances:0,tasks:0,overdue:0,escalations:0});
+ const values=[["Open instances",totals.instances],["Open tasks",totals.tasks],["Overdue tasks",totals.overdue],["Open escalations",totals.escalations],["Workflow templates",data.length]];
+ $("metrics").replaceChildren();values.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(s,strong);$("metrics").appendChild(box)});
+}
+async function loadDefinitions(){
+ const {data,error}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,department_code,status,version_number,effective_from").order("workflow_name");
+ if(error)throw error;
+ table($("definitions"),["Workflow","Department","Version","Status","Effective from"],data,(tr,r)=>{cell(tr,r.workflow_name+" ("+r.workflow_code+")");cell(tr,r.department_code);cell(tr,r.version_number);const td=cell(tr,r.status);const b=document.createElement("span");b.className="pill "+(r.status==="Draft"||r.status==="draft"?"draft":"");b.textContent=r.status;td.replaceChildren(b);cell(tr,date(r.effective_from))});
+}
+async function loadTasks(){
+ const {data,error}=await db.from("ft_workflow_task_monitoring").select("task_reference,task_title,instance_reference,workflow_name,stage_name,assigned_department,task_status,priority,due_at,is_overdue,escalation_due").order("created_at",{ascending:false}).limit(100);
+ if(error)throw error;
+ table($("tasks"),["Task","Workflow / Instance","Stage","Department","Status","Priority","Due","Attention"],data,(tr,r)=>{cell(tr,(r.task_reference||"")+" — "+(r.task_title||""));cell(tr,(r.workflow_name||"")+" / "+(r.instance_reference||""));cell(tr,r.stage_name);cell(tr,r.assigned_department);cell(tr,r.task_status);cell(tr,r.priority);cell(tr,date(r.due_at));const td=cell(tr,r.is_overdue?"Overdue":r.escalation_due?"Escalation due":"—");if(r.is_overdue){const b=document.createElement("span");b.className="pill overdue";b.textContent="Overdue";td.replaceChildren(b)}});
+}
+async function loadNotifications(){
+ const {data,error}=await db.from("ft_workflow_notification_outbox").select("notification_type,title,message,status,scheduled_at,created_at").order("created_at",{ascending:false}).limit(50);
+ if(error)throw error;
+ $("notifications").replaceChildren();
+ if(!data.length){empty($("notifications"),"No workflow notifications have been queued for this account.");return}
+ data.forEach(r=>{const item=document.createElement("article");item.className="item";const title=document.createElement("strong");title.textContent=r.title;const msg=document.createElement("p");msg.textContent=r.message;msg.className="muted";const meta=document.createElement("p");meta.className="muted";meta.textContent="Type: "+r.notification_type+" · Status: "+r.status+" · Scheduled: "+date(r.scheduled_at);item.append(title,msg,meta);$("notifications").appendChild(item)});
+}
+async function refresh(){
+ $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
+ try{
+  if(currentRole==="super_admin"){await loadSummary();await loadDefinitions()}
+  await Promise.all([loadTasks(),loadNotifications()]);
+  setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
+ }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
+ finally{$("refresh").disabled=false}
+}
+async function start(){
+ try{
+  const {data:userData,error:userError}=await db.auth.getUser();
+  if(userError||!userData.user){setStatus("Please sign in first through the FrostTech administrator portal. Redirecting…","error");setTimeout(()=>location.replace("admin-portal.html"),1200);return}
+  const {data:role,error}=await db.rpc("admin_get_my_role");
+  if(error)throw error;
+  if(!allowedRoles.includes(role))throw new Error("This workspace is restricted to authorised FrostTech administrators.");
+  currentRole=role;
+  $("heading").textContent=role==="super_admin"?"Super Administrator — Workflow Oversight":"Departmental Workflow and Notifications";
+  $("sessionTools").classList.remove("hidden");
+  $("tasksCard").classList.remove("hidden");
+  $("notificationsCard").classList.remove("hidden");
+  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden")}
+  await refresh();
+ }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
+}
+$("refresh").addEventListener("click",refresh);
+$("logout").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){setStatus(error.message,"error");return}location.href="admin-portal.html"});
+start();
+</script>
+</body>
+</html>
