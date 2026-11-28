@@ -201,10 +201,7 @@ async function createReportingPeriod(e){
  $("periodForm").reset();$("periodStatus").textContent="Reporting period created.";await loadReportingPeriods();
 }
 async function closeReportingPeriod(p){
- if(!window.confirm("Close reporting period "+p.period_name+"? This will make the period eligible for official report approval."))return;
- const {error}=await db.from("ft_management_reporting_periods").update({status:"closed",closed_by:currentUserId,closed_at:new Date().toISOString()}).eq("id",p.id).eq("status","open");
- if(error){$("periodStatus").textContent=error.message;return}
- $("periodStatus").textContent="Reporting period closed.";await loadReportingPeriods();
+ openAction("close_reporting_period",p.id,"Close reporting period","Close "+p.period_name+"? Add a note explaining why this reporting period is being closed.");
 }
 async function approveManagementReport(e){
  e.preventDefault();const periodId=$("approvalPeriod").value,note=$("approvalNote").value.trim();
@@ -291,7 +288,10 @@ async function submitAction(){
  if(!pendingAction)return;
  const action=pendingAction,notes=$("actionNotes").value.trim();$("modalConfirm").disabled=true;
  try{
-  if(action.type==="respond_escalation"){
+  if(action.type==="close_reporting_period"){
+   if(!notes)throw new Error("A closure note is required.");
+   const {error}=await db.from("ft_management_reporting_periods").update({status:"closed",closed_by:currentUserId,closed_at:new Date().toISOString()}).eq("id",action.id).eq("status","open");if(error)throw error;setStatus("Reporting period closed.","success");
+  }else if(action.type==="respond_escalation"){
    const {error}=await db.rpc("ft_respond_to_workflow_escalation",{p_escalation_id:action.id,p_response_note:notes});if(error)throw error;setStatus("Escalation response submitted.","success");
   }else if(action.type==="resolve_escalation"){
    const {error}=await db.rpc("ft_resolve_workflow_escalation",{p_escalation_id:action.id,p_resolution_notes:notes});if(error)throw error;setStatus("Formal escalation resolved and recorded.","success");
