@@ -89,7 +89,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="completionSourceType">Register type</label><select id="completionSourceType"><option value="calendar_item">Managed calendar</option><option value="compliance_obligation">Compliance obligation</option></select></div>
 <div class="field"><label for="completionSourceId">Obligation record UUID</label><input id="completionSourceId" required placeholder="Record UUID"></div>
 <div class="field"><label for="completionSummary">Completion summary</label><textarea id="completionSummary" required minlength="10" maxlength="4000" rows="2"></textarea></div>
-<div class="field"><label for="completionEvidence">Evidence reference / document location</label><input id="completionEvidence" required minlength="3" maxlength="1000" placeholder="Filing receipt, document reference…"></div>
+<div class="field"><label for="completionEvidence">Evidence description / reference</label><input id="completionEvidence" required minlength="3" maxlength="1000" placeholder="Filing receipt, signed document…"></div><div class="field"><label for="completionEvidenceFile">Upload evidence document (PDF, image, Word, Excel, CSV or text; max 25 MB)</label><input id="completionEvidenceFile" type="file" required accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.txt,.csv,application/pdf,image/jpeg,image/png,image/webp"></div>
 </div><button type="submit">Submit for Super Admin Review</button></form>
 <div id="complianceSubmissionStatus" class="muted" aria-live="polite"></div>
 <h3>Completion Submissions and Review</h3><div id="complianceSubmissionRegister" class="table-wrap"></div>
@@ -1072,10 +1072,25 @@ async function loadComplianceCalendar(){
  });
 }
 async function submitComplianceCompletion(e){
- e.preventDefault();const sourceType=$("completionSourceType").value,sourceId=$("completionSourceId").value.trim();
- const {data,error}=await db.rpc("ft_submit_compliance_completion",{p_source_type:sourceType,p_source_id:sourceId,p_completion_summary:$("completionSummary").value.trim(),p_evidence_reference:$("completionEvidence").value.trim(),p_evidence_document_id:null});
- if(error){$("complianceSubmissionStatus").textContent="Submission failed: "+error.message;return}
- $("complianceCompletionForm").reset();$("complianceSubmissionStatus").textContent="Completion evidence submitted for Super Administrator review. Reference: "+data;
+ e.preventDefault();
+ const sourceType=$("completionSourceType").value,sourceId=$("completionSourceId").value.trim(),file=$("completionEvidenceFile").files[0];
+ if(!file){$("complianceSubmissionStatus").textContent="Select an evidence document before submitting.";return}
+ if(file.size<1||file.size>25*1024*1024){$("complianceSubmissionStatus").textContent="Evidence file must be between 1 byte and 25 MB.";return}
+ const allowed=["application/pdf","image/jpeg","image/png","image/webp","application/vnd.openxmlformats-officedocument.wordprocessingml.document","application/vnd.openxmlformats-officedocument.spreadsheetml.sheet","application/msword","application/vnd.ms-excel","text/plain","text/csv"];
+ if(!allowed.includes(file.type)){ $("complianceSubmissionStatus").textContent="This evidence file type is not permitted.";return}
+ const safeName=file.name.replace(/[^a-zA-Z0-9._-]/g,"_").slice(-120);
+ const objectPath="compliance-evidence/"+sourceType+"/"+sourceId+"/"+crypto.randomUUID()+"-"+safeName;
+ $("complianceSubmissionStatus").textContent="Uploading private evidence document…";
+ const {data:uploaded,error:uploadError}=await db.storage.from("frosttech-private-documents").upload(objectPath,file,{contentType:file.type,upsert:false});
+ if(uploadError){$("complianceSubmissionStatus").textContent="Evidence upload failed: "+uploadError.message;return}
+ const {data,error}=await db.rpc("ft_submit_compliance_completion_with_evidence",{p_source_type:sourceType,p_source_id:sourceId,p_completion_summary:$("completionSummary").value.trim(),p_evidence_reference:$("completionEvidence").value.trim(),p_object_path:uploaded.path,p_original_filename:file.name,p_mime_type:file.type,p_file_size_bytes:file.size});
+ if(error){
+  const {error:cleanupError}=await db.storage.from("frosttech-private-documents").remove([uploaded.path]);
+  $("complianceSubmissionStatus").textContent="Submission registration failed: "+error.message+(cleanupError? " Uploaded file cleanup requires administrator attention.":" Uploaded file was removed.");
+  return;
+ }
+ $("complianceCompletionForm").reset();
+ $("complianceSubmissionStatus").textContent="Evidence securely uploaded and submitted for Super Administrator review. Submission: "+data.submission_id+" · Document: "+data.document_reference;
  await loadComplianceSubmissions();
 }
 window.__ftComplianceCalendarExport=rows;
