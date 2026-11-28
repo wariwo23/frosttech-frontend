@@ -1167,11 +1167,12 @@ async function submitComplianceCompletion(e){
 async function loadDocumentRetentionWorkspace(){
  if(currentRole!=="super_admin"){$("documentRetentionWorkspace").classList.add("hidden");return}
  $("documentRetentionWorkspace").classList.remove("hidden");
- const [docs,requests]=await Promise.all([
+ const [docs,requests,retentionEvents]=await Promise.all([
   db.from("ft_document_records").select("id,document_ref,title,related_entity_type,related_entity_id,record_status,retention_until,legal_hold,legal_hold_reason,disposed_at").like("related_entity_type","compliance_%").order("retention_until",{ascending:true}).limit(500),
-  db.from("ft_document_disposal_requests").select("id,request_ref,document_id,requested_by,requested_at,reason,status,first_approved_by,first_approved_at,second_approved_by,second_approved_at,completed_by,completed_at,completion_note").order("requested_at",{ascending:false}).limit(300)
+  db.from("ft_document_disposal_requests").select("id,request_ref,document_id,requested_by,requested_at,reason,status,first_approved_by,first_approved_at,second_approved_by,second_approved_at,completed_by,completed_at,completion_note").order("requested_at",{ascending:false}).limit(300),
+  db.from("ft_document_retention_events").select("id,document_id,event_type,actor_user_id,event_note,created_at,event_snapshot").order("created_at",{ascending:false}).limit(500)
  ]);
- if(docs.error)throw docs.error;if(requests.error)throw requests.error;
+ if(docs.error)throw docs.error;if(requests.error)throw requests.error;if(retentionEvents.error)throw retentionEvents.error;
  const versions=docs.data?.length?await db.from("ft_document_versions").select("id,document_id,bucket_id,object_path,version_number").in("document_id",docs.data.map(d=>d.id)): {data:[],error:null};
  if(versions.error)throw versions.error;
  const versionMap={};(versions.data||[]).forEach(v=>(versionMap[v.document_id]??=[]).push(v));
@@ -1181,7 +1182,7 @@ async function loadDocumentRetentionWorkspace(){
  const body=document.createElement("tbody");
  (docs.data||[]).forEach(d=>{
   const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=d.document_ref+" · "+d.title+" · "+d.record_status;tr.appendChild(title);
-  const retention=document.createElement("td");retention.textContent=d.retention_until||"No expiry set";const dateInput=document.createElement("input");dateInput.type="date";dateInput.value=d.retention_until||"";const reason=document.createElement("input");reason.placeholder="Retention reason (5+ characters)";
+  const retention=document.createElement("td");const expiry=document.createElement("div");const todayIso=new Date().toISOString().slice(0,10);const daysLeft=d.retention_until?Math.ceil((new Date(d.retention_until+"T00:00:00Z")-new Date(todayIso+"T00:00:00Z"))/86400000):null;expiry.textContent=!d.retention_until?"No expiry set":daysLeft<0?"EXPIRED · "+Math.abs(daysLeft)+" day(s) overdue":daysLeft<=30?"EXPIRING · "+daysLeft+" day(s) remaining":"Due "+d.retention_until;expiry.style.fontWeight="bold";retention.appendChild(expiry);const dateInput=document.createElement("input");dateInput.type="date";dateInput.value=d.retention_until||"";const reason=document.createElement("input");reason.placeholder="Retention reason (5+ characters)";
   const setDate=document.createElement("button");setDate.type="button";setDate.textContent="Set retention";setDate.addEventListener("click",async()=>{const {error}=await db.rpc("ft_set_document_retention",{p_document_id:d.id,p_retention_until:dateInput.value,p_note:reason.value.trim()});if(error){setStatus("Retention update failed: "+error.message,"error");return}setStatus("Retention date recorded.","success");await loadDocumentRetentionWorkspace()});retention.append(dateInput,reason,setDate);tr.appendChild(retention);
   const hold=document.createElement("td");hold.textContent=d.legal_hold?"ON · "+(d.legal_hold_reason||""): "Off";
   const holdReason=document.createElement("input");holdReason.placeholder="Legal hold reason (10+ characters)";
@@ -1226,6 +1227,9 @@ async function loadDocumentRetentionWorkspace(){
   tr.appendChild(action);rb.appendChild(tr);
  });
  reqTable.appendChild(rb);reqBox.appendChild(reqTable);
+ const audit=document.createElement("details");const auditSummary=document.createElement("summary");auditSummary.textContent="Permanent retention and disposal audit history ("+(retentionEvents.data||[]).length+")";audit.appendChild(auditSummary);
+ (retentionEvents.data||[]).forEach(ev=>{const line=document.createElement("div");line.textContent=date(ev.created_at)+" · "+ev.event_type.replaceAll("_"," ")+" · "+(ev.event_note||"")+" · Actor: "+(ev.actor_user_id||"system");audit.appendChild(line)});
+ reqBox.appendChild(audit);
 }
 window.__ftComplianceCalendarExport=rows;
  const {data:reminders,error:reminderError}=await db.from("ft_compliance_calendar_reminder_log").select("source_type,source_id,due_date,reminder_stage,recipient_user_id,created_at,notification_id").order("created_at",{ascending:false}).limit(300);
