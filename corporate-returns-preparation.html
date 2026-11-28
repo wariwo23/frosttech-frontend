@@ -169,7 +169,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <section class="card" id="certificateSecurityAlerts">
 <h2>Certificate Expiry &amp; Security Alerts</h2>
 <p class="muted">Automated alerts for access authorizations nearing expiry, expired authorizations and repeated failed access attempts. Alert review and acknowledgement are reserved for the Super Administrator.</p>
-<div class="actions"><button type="button" id="refreshCertificateSecurityAlerts">Refresh alerts</button><button type="button" class="secondary" id="printCertificateSecurityAlerts">Print alert register</button></div>
+<div class="actions"><button type="button" id="refreshCertificateSecurityAlerts">Refresh alerts</button><button type="button" class="secondary" id="printCertificateSecurityAlerts">Print alert register</button><button type="button" id="sendCertificateSecurityDigest">Email open alerts to Super Administrator</button></div>
 <div id="certificateSecurityAlertStatus" class="status" role="status">Alerts are scanned automatically every 15 minutes. Refresh to view the current register.</div>
 <div id="certificateSecurityAlertSummary" class="grid"></div>
 <div id="certificateSecurityAlertRows"></div>
@@ -655,6 +655,22 @@ async function loadCertificateMonitoring(){
   status.textContent="Monitoring refreshed at "+new Date().toLocaleString()+". "+grants.length+" authorization record(s) returned.";
  }catch(e){status.textContent="Monitoring unavailable: "+(e.message||"Super Administrator access required.");}
 }
+async function sendCertificateSecurityDigest(){
+ const status=field("certificateSecurityAlertStatus"),button=field("sendCertificateSecurityDigest");
+ button.disabled=true;status.textContent="Preparing and sending the alert digest…";
+ try{
+  const {data:{session},error:sessionError}=await db.auth.getSession();
+  if(sessionError||!session?.access_token)throw new Error("Please sign in again as Super Administrator.");
+  const r=await fetch(SUPABASE_URL+"/functions/v1/send-certificate-security-alert-digest",{
+   method:"POST",headers:{"Content-Type":"application/json","apikey":KEY,"Authorization":"Bearer "+session.access_token},body:"{}"
+  });
+  const d=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(d.error||"Alert email delivery failed.");
+  if(d.sent)status.textContent="Alert digest accepted by the email provider for "+d.recipient+" ("+d.alert_count+" open alert(s)).";
+  else status.textContent=d.message||"No alert email was sent.";
+ }catch(e){status.textContent="Alert digest not sent: "+(e.message||"Unknown delivery error.");}
+ finally{button.disabled=false;}
+}
 async function loadCertificateSecurityAlerts(){
  const status=field("certificateSecurityAlertStatus"),summary=field("certificateSecurityAlertSummary"),host=field("certificateSecurityAlertRows");
  status.textContent="Refreshing alert scan and loading the Super Administrator register…";summary.innerHTML="";host.innerHTML="";
@@ -915,6 +931,7 @@ field("grantCertificateDistribution").addEventListener("click",grantCertificateD
 field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
 field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMonitoring);
 field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
+field("sendCertificateSecurityDigest").addEventListener("click",sendCertificateSecurityDigest);
 field("printCertificateSecurityAlerts").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
 field("certificateSecurityAlertRows").addEventListener("click",async e=>{const b=e.target.closest(".acknowledge-certificate-alert");if(!b)return;b.disabled=true;try{const {error}=await db.rpc("ft_acknowledge_annual_certificate_security_alert",{p_alert_id:b.dataset.alert,p_resolution_note:"Reviewed by Super Administrator"});if(error)throw error;await loadCertificateSecurityAlerts();}catch(err){b.disabled=false;field("certificateSecurityAlertStatus").textContent="Acknowledgement failed: "+(err.message||"Authorization error.");}});
 
