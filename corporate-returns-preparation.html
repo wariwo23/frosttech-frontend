@@ -125,6 +125,16 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="actions"><button id="recordActualSubmission" type="button">Record actual submission evidence</button></div>
 <div id="actualSubmissionStatus" class="status" role="status">Select a filing marked Ready for submission.</div>
 </div>
+<div class="annual-evidence-section" id="acceptanceEvidencePanel">
+<h3>Official acceptance evidence</h3>
+<p class="muted">Record acceptance only after the authority has actually accepted the submitted filing. The acknowledgement must already exist as an active Document Vault record. Payment reconciliation and final completion remain separate steps.</p>
+<div class="grid">
+<div class="field"><label for="officialAcceptanceReference">Official acknowledgement reference</label><input id="officialAcceptanceReference" maxlength="160" placeholder="Reference issued by authority"></div>
+<div class="field"><label for="officialAcceptanceDocument">Acknowledgement document UUID</label><input id="officialAcceptanceDocument" placeholder="Active Document Vault UUID"></div>
+</div>
+<div class="actions"><button id="recordOfficialAcceptance" type="button">Record official acceptance</button></div>
+<div id="officialAcceptanceStatus" class="status" role="status">Select a filing already recorded as submitted.</div>
+</div>
 <div class="field"><label for="filingSelect">Select statutory filing</label><select id="filingSelect" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Select a filing record…</option></select></div>
 <form id="filingActionForm" hidden>
 <div class="grid" style="margin-top:12px">
@@ -335,6 +345,22 @@ async function closeFiling(){
   actionStatus.textContent=data?.already_closed?"This filing was already closed as complete.":"Filing successfully closed as complete. The closure event has been recorded.";
  }catch(e){actionStatus.textContent="Closure not completed: "+(e.message||"The database rejected the request.");}
  finally{btn.disabled=false;btn.textContent="Close filing as complete";}
+}
+async function recordOfficialStatutoryAcceptance(){
+ const id=filingSelect.value,status=field("officialAcceptanceStatus"),btn=field("recordOfficialAcceptance");
+ const selected=rows.find(x=>x.record_type==="statutory_filing"&&x.record_id===id);
+ if(!selected){status.textContent="Select a statutory filing first.";return;}
+ if(selected.record_status!=="submitted"){status.textContent="Only a filing already recorded as submitted can be accepted.";return;}
+ const reference=val("officialAcceptanceReference").trim(),documentId=val("officialAcceptanceDocument").trim();
+ if(!reference||!documentId){status.textContent="Enter the official acknowledgement reference and active Document Vault UUID.";return;}
+ btn.disabled=true;status.textContent="Verifying Super Administrator authority, submitted status and active acknowledgement evidence…";
+ try{
+  const {data,error}=await db.rpc("ft_record_statutory_filing_acceptance",{p_filing_id:id,p_acknowledgement_reference:reference,p_acknowledgement_document_id:documentId});
+  if(error)throw error;
+  status.textContent="Official acceptance recorded. Payment reconciliation remains required; filing completion has not been closed.";
+  await load();filingSelect.value=id;await selectFiling();
+ }catch(e){status.textContent="Acceptance not recorded: "+(e.message||"Database validation failed.");}
+ finally{btn.disabled=false;}
 }
 async function recordActualStatutorySubmission(){
  const filingId=filingSelect.value,status=field("actualSubmissionStatus"),btn=field("recordActualSubmission");
@@ -684,6 +710,7 @@ field("createAnnualReview").addEventListener("click",()=>setTimeout(loadAnnualBo
 field("printAnnualPack").addEventListener("click",()=>{if(!field("annualReviewSelect").value){field("annualPackStatus").textContent="Select an annual pack before printing.";return;}document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 filingForm.addEventListener("submit",saveFiling);
 field("recordActualSubmission").addEventListener("click",recordActualStatutorySubmission);
+field("recordOfficialAcceptance").addEventListener("click",recordOfficialStatutoryAcceptance);
 field("saveComplianceLinks").addEventListener("click",saveComplianceLinks);
 field("closeFiling").addEventListener("click",closeFiling);
 field("saveReconciliation").addEventListener("click",saveReconciliation);
