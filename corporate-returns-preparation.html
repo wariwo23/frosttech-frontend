@@ -43,9 +43,9 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 </main>
 <script>
 (function(){
-const URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
 const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
-const db=window.supabase.createClient(URL,KEY);
+const db=window.supabase.createClient(SUPABASE_URL,KEY);
 const authCard=document.getElementById("authCard"), reportCard=document.getElementById("reportCard");
 const status=document.getElementById("status"), reportStatus=document.getElementById("statusReport");
 const host=document.getElementById("records"), metrics=document.getElementById("metrics");
@@ -57,11 +57,11 @@ function csv(){
  const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
  const lines=[cols.join(","),...rows.map(r=>cols.map(k=>quote(typeof r[k]==="object"?JSON.stringify(r[k]):r[k])).join(","))];
  const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
- const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-corporate-returns-preparation.csv";a.click();URL.revokeObjectURL(url);
+ const csvUrl=window.URL.createObjectURL(blob),a=document.createElement("a");a.href=csvUrl;a.download="frosttech-corporate-returns-preparation.csv";a.click();window.URL.revokeObjectURL(csvUrl);
 }
 async function load(){
  reportStatus.textContent="Loading governance and statutory records…";
- const {data,error}=await db.from("ft_corporate_returns_preparation_v").select("*").order("recorded_at",{ascending:false});
+ const {data,error}=await db.rpc("ft_get_corporate_returns_preparation");
  if(error)throw error;
  rows=data||[];
  const types=[...new Set(rows.map(r=>r.record_type))];
