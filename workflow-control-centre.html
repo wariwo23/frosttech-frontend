@@ -103,6 +103,11 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <p class="muted">Live status derived from the statutory filing register, compliance obligations, payment reconciliation and active evidence records. Deadlines are shown as recorded; confirm legal applicability and due dates with the relevant authority or qualified adviser.</p>
 <div id="statutoryMonitoringMetrics" class="metrics-grid"></div>
 <div id="statutoryMonitoringRegister" class="table-wrap"></div>
+<h4>Regulatory Risk Escalations</h4>
+<p class="muted">Daily automated escalation history. Alerts are deduplicated by filing, risk and escalation stage, and are delivered through the existing in-app notification centre to the filing owner and Super Administrator.</p>
+<div id="statutoryRiskEscalationMetrics" class="metrics-grid"></div>
+<div id="statutoryRiskEscalationRegister" class="table-wrap"></div>
+
 <div id="statutoryFilingMetrics" class="metrics-grid"></div>
 <div id="statutoryFilingStatus" class="muted" aria-live="polite"></div>
 <h4>Automated statutory and tax deadline reminders</h4><div id="statutoryReminderAudit" class="table-wrap"></div>
@@ -1240,14 +1245,15 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders,calendarItems,monitoring]=await Promise.all([
+ const [filings,events,reminders,calendarItems,monitoring,riskEscalations]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
   db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").in("status",["scheduled","in_progress","deferred"]).order("due_date",{ascending:true}).limit(500),
-  db.from("ft_statutory_filing_monitoring_v").select("*").order("due_date",{ascending:true}).limit(500)
+  db.from("ft_statutory_filing_monitoring_v").select("*").order("due_date",{ascending:true}).limit(500),
+  db.from("ft_statutory_risk_escalation_log").select("id,filing_id,risk_type,escalation_stage,recipient_user_id,reason,notification_id,created_at").order("created_at",{ascending:false}).limit(500)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;
  const rows=filings.data||[];
  const monitorRows=monitoring.data||[];
  const monitorCounts=[["Overdue",monitorRows.filter(x=>x.monitoring_status==="overdue").length],["Due within 30 days",monitorRows.filter(x=>x.monitoring_status==="due_within_30_days").length],["Awaiting acknowledgement",monitorRows.filter(x=>x.monitoring_status==="awaiting_acknowledgement").length],["Accepted / awaiting closure",monitorRows.filter(x=>x.monitoring_status==="accepted_awaiting_closure").length],["Completed",monitorRows.filter(x=>x.monitoring_status==="completed").length],["Missing acknowledgement evidence",monitorRows.filter(x=>!x.has_active_acknowledgement||!x.has_acknowledgement_reference).length],["Missing payment receipt",monitorRows.filter(x=>!x.has_active_payment_receipt).length]];
@@ -1259,6 +1265,12 @@ async function loadStatutoryFilingRegister(){
   cell(tr,"Filing: "+(x.has_filing_reference?"recorded":"missing")+" · Ack: "+(x.has_acknowledgement_reference?"recorded":"missing"));
   cell(tr,"Acknowledgement: "+(x.has_active_acknowledgement?"active":"missing/inactive")+" · Receipt: "+(x.has_active_payment_receipt?"active":"missing/inactive"));
   cell(tr,x.completion_closed_at?date(x.completion_closed_at):"Not closed");
+ });
+ const riskRows=riskEscalations.data||[];
+ const riskMetrics=[["Escalations recorded",riskRows.length],["Overdue filing alerts",riskRows.filter(x=>x.risk_type==="overdue_filing").length],["Missing closure evidence",riskRows.filter(x=>x.risk_type==="missing_acknowledgement").length],["Payment variances",riskRows.filter(x=>x.risk_type==="payment_reconciliation_variance").length],["Missing reconciliations",riskRows.filter(x=>x.risk_type==="missing_payment_reconciliation").length]];
+ $("statutoryRiskEscalationMetrics").replaceChildren();riskMetrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("statutoryRiskEscalationMetrics").appendChild(box)});
+ table($("statutoryRiskEscalationRegister"),["Raised","Filing","Risk","Escalation stage","Recipient user","Alert","Details"],riskRows,(tr,x)=>{
+  cell(tr,date(x.created_at));cell(tr,x.filing_id);cell(tr,x.risk_type.replaceAll("_"," "));cell(tr,x.escalation_stage.replaceAll("_"," "));cell(tr,x.recipient_user_id);cell(tr,x.notification_id?"In-app notice created":"Notice not linked");cell(tr,x.reason);
  });
  const todayIso=new Date().toISOString().slice(0,10);
  const openRows=rows.filter(r=>!["accepted","not_applicable","cancelled"].includes(r.status));
