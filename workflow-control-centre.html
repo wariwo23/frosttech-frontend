@@ -113,6 +113,19 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="statutoryBoardReportStatus" class="muted" aria-live="polite"></div>
 <div id="statutoryBoardReportMetrics" class="metrics-grid"></div>
 <div id="statutoryBoardReportTable" class="table-wrap"></div>
+<h4>Annual Statutory Review &amp; Year-End Certification</h4>
+<p class="muted">Create a year-specific immutable snapshot of recorded statutory filing data, then record formal Super Administrator approval with a management declaration. A snapshot does not itself certify legal compliance or replace official filing evidence.</p>
+<div class="form-grid">
+ <label>Review year<input id="statutoryAnnualReviewYear" type="number" min="2000" max="2200" value="2026"></label>
+ <div class="actions"><button type="button" class="secondary" id="createStatutoryAnnualReview">Create Year-End Snapshot</button></div>
+</div>
+<div id="statutoryAnnualReviewStatus" class="muted" aria-live="polite"></div>
+<div id="statutoryAnnualReviewRegister" class="table-wrap"></div>
+<div class="form-grid">
+ <label>Draft review to approve<select id="statutoryAnnualReviewSelect"><option value="">Select an annual review</option></select></label>
+ <label>Management declaration<textarea id="statutoryAnnualReviewDeclaration" rows="3" placeholder="Declare the review position, including all known unresolved matters and limitations."></textarea></label>
+ <div class="actions"><button type="button" class="secondary" id="approveStatutoryAnnualReview">Approve Annual Review</button></div>
+</div>
 
 <div id="statutoryFilingMetrics" class="metrics-grid"></div>
 <div id="statutoryFilingStatus" class="muted" aria-live="polite"></div>
@@ -1251,16 +1264,17 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport]=await Promise.all([
+ const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport,annualReviews]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
   db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").in("status",["scheduled","in_progress","deferred"]).order("due_date",{ascending:true}).limit(500),
   db.from("ft_statutory_filing_monitoring_v").select("*").order("due_date",{ascending:true}).limit(500),
   db.from("ft_statutory_risk_escalation_log").select("id,filing_id,risk_type,escalation_stage,recipient_user_id,reason,notification_id,created_at").order("created_at",{ascending:false}).limit(500),
-  db.from("ft_statutory_compliance_board_report_v").select("*").order("due_date",{ascending:true}).limit(1000)
+  db.from("ft_statutory_compliance_board_report_v").select("*").order("due_date",{ascending:true}).limit(1000),
+  db.from("ft_statutory_annual_reviews").select("id,review_year,review_status,snapshot,snapshot_created_at,prepared_by,approved_by,approved_at,management_declaration,created_at").order("review_year",{ascending:false})
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;if(annualReviews.error)throw annualReviews.error;
  const rows=filings.data||[];
  const monitorRows=monitoring.data||[];
  const monitorCounts=[["Overdue",monitorRows.filter(x=>x.monitoring_status==="overdue").length],["Due within 30 days",monitorRows.filter(x=>x.monitoring_status==="due_within_30_days").length],["Awaiting acknowledgement",monitorRows.filter(x=>x.monitoring_status==="awaiting_acknowledgement").length],["Accepted / awaiting closure",monitorRows.filter(x=>x.monitoring_status==="accepted_awaiting_closure").length],["Completed",monitorRows.filter(x=>x.monitoring_status==="completed").length],["Missing acknowledgement evidence",monitorRows.filter(x=>!x.has_active_acknowledgement||!x.has_acknowledgement_reference).length],["Missing payment receipt",monitorRows.filter(x=>!x.has_active_payment_receipt).length]];
@@ -1350,6 +1364,30 @@ async function loadStatutoryFilingRegister(){
  const csv=[exportFields.join(","),...boardRows.map(x=>exportFields.map(k=>csvEscape(x[k])).join(","))].join("\r\n");
  $("exportStatutoryBoardCsv").onclick=()=>{const blob=new Blob(["\\ufeff",csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="FrostTech-Statutory-Compliance-Board-Report-"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(url);$("statutoryBoardReportStatus").textContent="CSV generated from "+boardRows.length+" statutory records."};
  $("printStatutoryBoardPack").onclick=()=>{const w=window.open("","_blank");if(!w){$("statutoryBoardReportStatus").textContent="Allow pop-ups to print the board pack.";return}const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));const rows=boardRows.map(x=>"<tr>"+[date(x.due_date),x.filing_type+" · "+x.authority_name,x.monitoring_status,x.payment_reconciliation_status,x.accounting_journal_id||"Not linked",String(x.escalation_count||0)].map(v=>"<td>"+esc(v)+"</td>").join("")+"</tr>").join("");w.document.write("<!doctype html><html><head><title>FrostTech Statutory Compliance Board Pack</title><style>body{font:12px Arial;margin:28px;color:#172b4d}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccd4df;padding:7px;text-align:left}th{background:#eef3f9}.meta{color:#526477}</style></head><body><h1>FrostTech — Statutory Compliance Management Report</h1><p class='meta'>Generated: "+esc(new Date().toLocaleString())+" · Records: "+boardRows.length+"</p><p>Management snapshot of recorded statutory obligations, filing status, payment reconciliation, accounting linkage and escalation history. This report does not establish legal applicability or confirm external filing beyond the recorded evidence.</p><table><thead><tr><th>Due date</th><th>Filing / Authority</th><th>Status</th><th>Payment reconciliation</th><th>Accounting journal</th><th>Escalations</th></tr></thead><tbody>"+(rows||"<tr><td colspan='6'>No statutory filing records are currently recorded.</td></tr>")+"</tbody></table><p class='meta'>Source: FrostTech statutory filing and compliance registers. Preserve this report with the relevant supporting evidence.</p><script>window.onload=()=>window.print()<\\/script></body></html>");w.document.close()};
+ const annualRows=annualReviews.data||[];
+ const reviewSelect=$("statutoryAnnualReviewSelect");reviewSelect.replaceChildren(new Option("Select an annual review",""));
+ annualRows.forEach(x=>{const opt=new Option(x.review_year+" · "+x.review_status,x.id);reviewSelect.appendChild(opt)});
+ table($("statutoryAnnualReviewRegister"),["Year","Status","Snapshot records","Unresolved items","Prepared by","Approved by","Approved at"],annualRows,(tr,x)=>{
+  cell(tr,String(x.review_year));cell(tr,x.review_status);cell(tr,String(x.snapshot?.filing_count??0));cell(tr,String(x.snapshot?.unresolved_count??0));cell(tr,x.prepared_by);cell(tr,x.approved_by||"Not approved");cell(tr,x.approved_at?date(x.approved_at):"—");
+ });
+ $("createStatutoryAnnualReview").onclick=async()=>{
+  const yr=Number($("statutoryAnnualReviewYear").value);
+  if(!Number.isInteger(yr)||yr<2000||yr>2200){$("statutoryAnnualReviewStatus").textContent="Enter a valid review year.";return}
+  $("createStatutoryAnnualReview").disabled=true;
+  try{const {data,error}=await db.rpc("ft_create_statutory_annual_review",{p_review_year:yr});if(error)throw error;$("statutoryAnnualReviewStatus").textContent="Immutable snapshot created for "+yr+". Review reference: "+data;await loadStatutoryFilingRegister()}
+  catch(error){$("statutoryAnnualReviewStatus").textContent="Snapshot not created: "+error.message}
+  finally{$("createStatutoryAnnualReview").disabled=false}
+ };
+ $("approveStatutoryAnnualReview").onclick=async()=>{
+  const id=$("statutoryAnnualReviewSelect").value,decl=$("statutoryAnnualReviewDeclaration").value.trim();
+  if(!id){$("statutoryAnnualReviewStatus").textContent="Select a draft annual review.";return}
+  if(!decl){$("statutoryAnnualReviewStatus").textContent="Enter the management declaration before approval.";return}
+  if(!confirm("Approve this annual statutory review? The approval will be permanently recorded."))return;
+  $("approveStatutoryAnnualReview").disabled=true;
+  try{const {data,error}=await db.rpc("ft_approve_statutory_annual_review",{p_review_id:id,p_management_declaration:decl});if(error)throw error;$("statutoryAnnualReviewStatus").textContent="Annual review approved and recorded."; $("statutoryAnnualReviewDeclaration").value="";await loadStatutoryFilingRegister()}
+  catch(error){$("statutoryAnnualReviewStatus").textContent="Approval not recorded: "+error.message}
+  finally{$("approveStatutoryAnnualReview").disabled=false}
+ };
  $("statutoryBoardReportStatus").textContent="Report refreshed from "+boardRows.length+" statutory filing records.";
  await loadStatutoryPaymentReconciliation();
 }
