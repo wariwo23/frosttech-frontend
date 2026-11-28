@@ -99,7 +99,15 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
-<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><p class="muted">Single Super Administrator workspace combining delivery exceptions, notification acknowledgements and escalation actions. Actions remain separately audited; acknowledging an alert never resolves its exception.</p><div id="exceptionCommandMetrics" class="metrics"></div><div id="exceptionCommandPanel" class="table-wrap"></div>
+<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Exception Investigation Dossier</h3>
+<p class="muted">Generate a printable, date-filtered investigation dossier from the immutable case history. Leave the exception reference blank to include all cases in the selected period.</p>
+<div class="form-grid">
+ <label>From date <input type="date" id="exceptionDossierFrom"></label>
+ <label>To date <input type="date" id="exceptionDossierTo"></label>
+ <label>Exception reference <input type="text" id="exceptionDossierCase" placeholder="Optional exception UUID"></label>
+</div>
+<div class="actions"><button type="button" id="generateExceptionDossier">Generate / Print Dossier</button><button type="button" class="secondary" id="exportExceptionDossierCsv">Export History CSV</button></div>
+<div id="exceptionDossierStatus" class="muted" aria-live="polite"></div><p class="muted">Single Super Administrator workspace combining delivery exceptions, notification acknowledgements and escalation actions. Actions remain separately audited; acknowledging an alert never resolves its exception.</p><div id="exceptionCommandMetrics" class="metrics"></div><div id="exceptionCommandPanel" class="table-wrap"></div>
 <h3>Escalation History</h3><p class="muted">Unacknowledged exceptions are escalated automatically after 24, 48 and 72 hours. Escalation notices are separate from the original alert. Acknowledging an escalation does not close the underlying exception.</p><div id="reportExceptionEscalations" class="table-wrap"></div>
 <h3>Delivery Exception Register</h3><p class="muted">Exceptions are opened automatically when report email submissions fail or Brevo reports bounced, blocked, invalid-recipient, spam or unmatched events. Super Administrator can investigate, add follow-up notes and resolve each exception with a mandatory resolution note. Archived reports are never edited or deleted.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
@@ -351,6 +359,43 @@ async function submitExceptionModal(){
  finally{$("exceptionModalSave").disabled=false}
 }
 async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
+function escapeDossierHtml(value){
+ return String(value??"—").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));
+}
+async function fetchExceptionDossierRows(){
+ const from=$("exceptionDossierFrom").value,to=$("exceptionDossierTo").value,caseId=$("exceptionDossierCase").value.trim();
+ if(from&&to&&from>to)throw new Error("The start date cannot be later than the end date.");
+ let query=db.from("ft_management_report_exception_case_history").select("id,source_table,source_record_id,exception_id,action,actor_user_id,event_at,before_snapshot,after_snapshot").order("event_at",{ascending:true}).limit(5000);
+ if(from)query=query.gte("event_at",from+"T00:00:00.000Z");
+ if(to)query=query.lt("event_at",new Date(new Date(to+"T00:00:00.000Z").getTime()+86400000).toISOString());
+ if(caseId)query=query.eq("exception_id",caseId);
+ const {data,error}=await query;if(error)throw error;
+ return {rows:data||[],from,to,caseId};
+}
+function exceptionDossierHtml(result){
+ const rows=result.rows.map(r=>{
+  const before=r.before_snapshot||{},after=r.after_snapshot||{};
+  return "<tr><td>"+escapeDossierHtml(date(r.event_at))+"</td><td>"+escapeDossierHtml(r.source_table)+"</td><td>"+escapeDossierHtml(r.action)+"</td><td>"+escapeDossierHtml(r.exception_id||r.source_record_id)+"</td><td>"+escapeDossierHtml(r.actor_user_id||"System-generated")+"</td><td><pre>"+escapeDossierHtml(JSON.stringify({before,after},null,2))+"</pre></td></tr>";
+ }).join("");
+ return "<!doctype html><html><head><meta charset='utf-8'><title>FrostTech Exception Investigation Dossier</title><style>body{font:14px Arial,sans-serif;margin:28px;color:#172033}h1,h2{color:#174b83}table{width:100%;border-collapse:collapse}th,td{border:1px solid #ccd4df;padding:8px;text-align:left;vertical-align:top}pre{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;margin:0}.meta{color:#526174;margin-bottom:18px}@media print{button{display:none}body{margin:12mm}tr{break-inside:avoid}}</style></head><body><h1>FrostTech HVAC and Refrigeration</h1><h2>Exception Investigation Dossier</h2><p class='meta'>Generated: "+escapeDossierHtml(new Date().toLocaleString())+"<br>Period: "+escapeDossierHtml(result.from||"All available")+" to "+escapeDossierHtml(result.to||"Present")+"<br>Exception: "+escapeDossierHtml(result.caseId||"All cases")+"<br>Records: "+result.rows.length+"</p><button onclick='window.print()'>Print / Save as PDF</button><table><thead><tr><th>Event time</th><th>Source</th><th>Action</th><th>Exception reference</th><th>Actor</th><th>Before / after evidence</th></tr></thead><tbody>"+(rows||"<tr><td colspan='6'>No history records found for the selected filters.</td></tr>")+"</tbody></table><p class='meta'>This dossier reproduces immutable history records. It does not modify archived reports or exception case history.</p></body></html>";
+}
+async function generateExceptionDossier(){
+ const status=$("exceptionDossierStatus");status.textContent="Preparing dossier…";
+ try{const result=await fetchExceptionDossierRows();const w=window.open("","_blank");if(!w)throw new Error("Allow pop-ups to generate the dossier.");w.document.open();w.document.write(exceptionDossierHtml(result));w.document.close();status.textContent=result.rows.length+" history records included. Use Print / Save as PDF in the dossier window."}
+ catch(e){status.textContent="Dossier generation failed: "+e.message;setStatus(status.textContent,"error")}
+}
+async function exportExceptionDossierCsv(){
+ const status=$("exceptionDossierStatus");status.textContent="Preparing CSV…";
+ try{
+  const result=await fetchExceptionDossierRows();
+  const columns=["event_at","source_table","source_record_id","exception_id","action","actor_user_id","before_snapshot","after_snapshot"];
+  const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+  const csv=[columns.join(","),...result.rows.map(r=>columns.map(k=>quote(typeof r[k]==="object"?JSON.stringify(r[k]):r[k])).join(","))].join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"});
+  const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-exception-history-"+(result.from||"all")+"-"+(result.to||"present")+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  status.textContent=result.rows.length+" history records exported.";
+ }catch(e){status.textContent="CSV export failed: "+e.message;setStatus(status.textContent,"error")}
+}
 async function loadExceptionCaseHistory(){
  const {data,error}=await db.from("ft_management_report_exception_case_history")
   .select("id,source_table,source_record_id,exception_id,action,actor_user_id,event_at,before_snapshot,after_snapshot")
@@ -371,6 +416,8 @@ async function loadExceptionCaseHistory(){
   td.appendChild(b);
  });
 }
+$("generateExceptionDossier").addEventListener("click",generateExceptionDossier);
+$("exportExceptionDossierCsv").addEventListener("click",exportExceptionDossierCsv);
 async function loadExceptionCommandPanel(){
  const [exceptionsResult,notificationsResult,escalationsResult]=await Promise.all([
   db.from("ft_management_report_delivery_exceptions").select("id,exception_type,exception_status,exception_summary,created_at,resolution_note").order("created_at",{ascending:false}).limit(250),
