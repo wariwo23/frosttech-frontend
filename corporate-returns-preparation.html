@@ -107,7 +107,7 @@ function selectFiling(){
  setVal("supportDocument",d.supporting_document_id);
  setVal("receiptDocument",d.payment_receipt_document_id);
  setVal("filingNotes",d.notes);
- actionStatus.textContent="Selected "+(r.record_reference||"filing record")+". Updates are audited in the statutory filing register.";
+ actionStatus.textContent="Selected "+(d.authority_name||"statutory authority")+" · "+(r.record_title||"filing")+" · period "+(d.reporting_period_start||"—")+" to "+(d.reporting_period_end||"—")+". Updates are audited in the statutory filing register.";
 }
 async function saveFiling(event){
  event.preventDefault();
@@ -119,6 +119,9 @@ async function saveFiling(event){
  }
  if(statusValue==="accepted"&&(!val("ackReference")||!val("ackDocument"))){
   actionStatus.textContent="Acceptance requires an acknowledgement reference and active document-vault record UUID.";return;
+ }
+ if(statusValue==="not_applicable"&&val("filingNotes").length<10){
+  actionStatus.textContent="Enter a clear reason of at least 10 characters before marking this filing not applicable.";return;
  }
  const uuidOrNull=id=>id? id:null;
  const args={
