@@ -127,6 +127,9 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="actions"><button id="issueAnnualCertificate" type="button">Issue eligible annual certificate</button><button id="refreshAnnualCertificateRegister" type="button" class="secondary">Refresh certificate register</button></div>
 <div id="annualCertificateRegisterStatus" class="status" role="status">Certificates are issued only after a fresh eligibility check.</div>
 <div id="annualCertificateRegisterOutput"></div>
+<div class="field" style="margin-top:14px"><label for="verifyAnnualCertificateRef">Verify certificate reference</label><input id="verifyAnnualCertificateRef" type="text" placeholder="FT-ACC-YYYY-001-XXXXXXXX" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="actions"><button id="verifyAnnualCertificate" type="button" class="secondary">Verify certificate and linked documents</button></div>
+<div id="annualCertificateVerificationOutput" class="status" role="status"></div>
 </section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
 <section class="card" id="filingActionCard">
@@ -590,6 +593,19 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
 }
 
 
+
+async function verifyAnnualComplianceCertificate(){
+ const ref=field("verifyAnnualCertificateRef").value.trim(),host=field("annualCertificateVerificationOutput");
+ host.textContent="Verifying certificate snapshot and linked document records…";
+ if(!ref){host.textContent="Enter a certificate reference.";return;}
+ try{
+  const {data,error}=await db.rpc("ft_verify_annual_compliance_certificate",{p_certificate_reference:ref});
+  if(error)throw error;
+  if(!data||data.found!==true){host.textContent="No certificate was found for that reference.";return;}
+  const docs=Array.isArray(data.linked_documents)?data.linked_documents:[];
+  host.innerHTML='<div class="annual-evidence-section"><h3>Certificate verification result</h3><p><strong>Reference:</strong> '+esc(data.certificate_reference)+'</p><p><strong>Reporting year:</strong> '+esc(data.reporting_year)+' · <strong>Version:</strong> '+esc(data.version_number)+'</p><p><strong>Status:</strong> '+esc(data.certificate_status)+'</p><p><strong>Snapshot checksum:</strong> '+(data.checksum_valid?'<span class="pill">Valid</span>':'<span class="pill">Mismatch — investigate</span>')+'</p><p><code>'+esc(data.recomputed_evidence_hash)+'</code></p><h3>Linked document-vault records ('+docs.length+')</h3>'+(docs.length?'<div class="table-wrap"><table><thead><tr><th>Document reference</th><th>Title</th><th>Category</th><th>Status</th><th>Current version</th><th>File checksum</th></tr></thead><tbody>'+docs.map(d=>'<tr><td>'+esc(d.document_ref)+'</td><td>'+esc(d.title)+'</td><td>'+esc(d.document_category)+'</td><td>'+esc(d.record_status)+'</td><td>'+esc(d.version_number)+'</td><td><code>'+esc(d.checksum_sha256)+'</code></td></tr>').join('')+'</tbody></table></div>':'<p>No document-vault links are registered against this certificate.</p>')+'<p class="muted">'+esc(data.verification_scope)+'</p><details><summary>View frozen evidence snapshot</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(data.evidence_snapshot,null,2))+'</pre></details></div>';
+ }catch(e){host.textContent="Verification failed: "+(e.message||"Access denied.");}
+}
 async function loadAnnualCertificateRegister(){
  const status=field("annualCertificateRegisterStatus"),host=field("annualCertificateRegisterOutput");
  status.textContent="Loading immutable certificate register…";host.innerHTML="";
@@ -762,6 +778,8 @@ field("refreshPostClosePacks").addEventListener("click",loadPostClosePackOptions
 field("generateAnnualCertificate").addEventListener("click",generateAnnualReturnsCertificate);
 field("issueAnnualCertificate").addEventListener("click",issueAnnualComplianceCertificate);
 field("refreshAnnualCertificateRegister").addEventListener("click",loadAnnualCertificateRegister);
+field("verifyAnnualCertificate").addEventListener("click",verifyAnnualComplianceCertificate);
+
 
 field("printAnnualCertificate").addEventListener("click",()=>{document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 field("annualCertificateYear").value=new Date().getFullYear();
