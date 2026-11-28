@@ -121,6 +121,50 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </div>
 <div id="statutoryAnnualReviewStatus" class="muted" aria-live="polite"></div>
 <div id="statutoryAnnualReviewRegister" class="table-wrap"></div>
+<h4>Corporate Board Meetings &amp; Resolutions</h4>
+<p class="muted">Manage formal meetings, notices, agendas, attendance, minutes and resolutions. Resolution execution is recorded separately from approval.</p>
+<div class="form-grid">
+ <label>Meeting title<input id="boardMeetingTitle" maxlength="240" placeholder="Board / committee meeting title"></label>
+ <label>Meeting type<select id="boardMeetingType"><option value="board">Board</option><option value="management">Management</option><option value="committee">Committee</option><option value="special">Special</option></select></label>
+ <label>Scheduled date and time<input id="boardMeetingDate" type="datetime-local"></label>
+ <label>Venue or meeting link<input id="boardMeetingVenue" maxlength="500"></label>
+ <label>Notice issued at<input id="boardMeetingNotice" type="datetime-local"></label>
+ <label>Agenda items<textarea id="boardMeetingAgenda" rows="3" placeholder="One agenda item per line"></textarea></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="createBoardMeeting">Create Meeting Record</button></div>
+<div id="boardMeetingStatus" class="muted" aria-live="polite"></div>
+<div id="boardMeetingRegister" class="table-wrap"></div>
+<div class="form-grid">
+ <label>Meeting<select id="boardMeetingSelect"><option value="">Select meeting</option></select></label>
+ <label>Attendee name<input id="boardAttendeeName" maxlength="160"></label>
+ <label>Attendee role<input id="boardAttendeeRole" maxlength="160"></label>
+ <label>Attendance<select id="boardAttendeeStatus"><option value="invited">Invited</option><option value="present">Present</option><option value="absent">Absent</option><option value="apology">Apology</option></select></label>
+ <label>Attendance note<input id="boardAttendeeNote" maxlength="500"></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="recordBoardAttendee">Record Attendee</button><button type="button" class="secondary" id="markBoardMeetingHeld">Mark Meeting Held</button></div>
+<div id="boardAttendeeRegister" class="table-wrap"></div>
+<div class="form-grid">
+ <label>Meeting minutes<textarea id="boardMeetingMinutes" rows="4" placeholder="Record the meeting minutes"></textarea></label>
+ <label>Minutes document ID (optional)<input id="boardMinutesDocument" placeholder="Existing private document UUID"></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="approveBoardMinutes">Approve Minutes</button></div>
+<div class="form-grid">
+ <label>Resolution meeting<select id="boardResolutionMeeting"><option value="">Select held meeting</option></select></label>
+ <label>Resolution title<input id="boardResolutionTitle" maxlength="240"></label>
+ <label>Resolution text<textarea id="boardResolutionText" rows="3"></textarea></label>
+ <label>Supporting document ID (optional)<input id="boardResolutionDocument" placeholder="Existing private document UUID"></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="proposeBoardResolution">Record Proposed Resolution</button></div>
+<div id="boardResolutionRegister" class="table-wrap"></div>
+<div class="form-grid">
+ <label>Resolution<select id="boardResolutionSelect"><option value="">Select proposed resolution</option></select></label>
+ <label>Decision<select id="boardResolutionDecision"><option value="approved">Approve</option><option value="rejected">Reject</option><option value="deferred">Defer</option></select></label>
+ <label>Decision reason / note<textarea id="boardResolutionReason" rows="2"></textarea></label>
+ <label>Execution evidence (only after approval)<textarea id="boardResolutionExecution" rows="2"></textarea></label>
+ <label>Governance archive entry ID (optional)<input id="boardResolutionArchiveEntry" placeholder="Existing archive UUID"></label>
+</div>
+<div class="actions"><button type="button" class="secondary" id="decideBoardResolution">Record Decision</button><button type="button" class="secondary" id="recordBoardResolutionExecution">Record Execution</button></div>
+<h4>Board Governance Audit History</h4><div id="boardGovernanceEvents" class="table-wrap"></div>
 <h4>Corporate Governance &amp; Statutory Records Archive</h4>
 <p class="muted">Index existing approved annual reviews, statutory filings and active private-vault documents. Files remain in their existing private storage location. Archive entries are immutable; create a new linked entry to supplement a record.</p>
 <div class="form-grid">
@@ -1280,7 +1324,7 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport,annualReviews,archiveEntries,archiveEvents,archiveDocuments]=await Promise.all([
+ const [filings,events,reminders,calendarItems,monitoring,riskEscalations,boardReport,annualReviews,archiveEntries,archiveEvents,archiveDocuments,boardMeetings,boardAttendees,boardResolutions,boardEvents]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
@@ -1291,9 +1335,13 @@ async function loadStatutoryFilingRegister(){
   db.from("ft_statutory_annual_reviews").select("id,review_year,review_status,snapshot,snapshot_created_at,prepared_by,approved_by,approved_at,management_declaration,created_at").order("review_year",{ascending:false}),
   db.from("ft_corporate_governance_archive").select("id,archive_ref,archive_category,title,description,annual_review_id,filing_id,document_id,archive_year,confidentiality,indexed_by,indexed_at").order("indexed_at",{ascending:false}).limit(1000),
   db.from("ft_corporate_governance_archive_events").select("id,archive_id,event_type,actor_user_id,event_snapshot,created_at").order("created_at",{ascending:false}).limit(1000),
-  db.from("ft_document_records").select("id,document_ref,title,document_category,record_status,disposed_at").eq("record_status","active").is("disposed_at",null).order("created_at",{ascending:false}).limit(500)
+  db.from("ft_document_records").select("id,document_ref,title,document_category,record_status,disposed_at").eq("record_status","active").is("disposed_at",null).order("created_at",{ascending:false}).limit(500),
+  db.from("ft_board_meetings").select("*").order("scheduled_at",{ascending:false}).limit(500),
+  db.from("ft_board_meeting_attendees").select("*").order("recorded_at",{ascending:false}).limit(2000),
+  db.from("ft_board_resolutions").select("*").order("created_at",{ascending:false}).limit(1000),
+  db.from("ft_board_governance_events").select("*").order("created_at",{ascending:false}).limit(2000)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;if(annualReviews.error)throw annualReviews.error;if(archiveEntries.error)throw archiveEntries.error;if(archiveEvents.error)throw archiveEvents.error;if(archiveDocuments.error)throw archiveDocuments.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;if(riskEscalations.error)throw riskEscalations.error;if(boardReport.error)throw boardReport.error;if(annualReviews.error)throw annualReviews.error;if(archiveEntries.error)throw archiveEntries.error;if(archiveEvents.error)throw archiveEvents.error;if(archiveDocuments.error)throw archiveDocuments.error;if(boardMeetings.error)throw boardMeetings.error;if(boardAttendees.error)throw boardAttendees.error;if(boardResolutions.error)throw boardResolutions.error;if(boardEvents.error)throw boardEvents.error;
  const rows=filings.data||[];
  const monitorRows=monitoring.data||[];
  const monitorCounts=[["Overdue",monitorRows.filter(x=>x.monitoring_status==="overdue").length],["Due within 30 days",monitorRows.filter(x=>x.monitoring_status==="due_within_30_days").length],["Awaiting acknowledgement",monitorRows.filter(x=>x.monitoring_status==="awaiting_acknowledgement").length],["Accepted / awaiting closure",monitorRows.filter(x=>x.monitoring_status==="accepted_awaiting_closure").length],["Completed",monitorRows.filter(x=>x.monitoring_status==="completed").length],["Missing acknowledgement evidence",monitorRows.filter(x=>!x.has_active_acknowledgement||!x.has_acknowledgement_reference).length],["Missing payment receipt",monitorRows.filter(x=>!x.has_active_payment_receipt).length]];
@@ -1383,6 +1431,47 @@ async function loadStatutoryFilingRegister(){
  const csv=[exportFields.join(","),...boardRows.map(x=>exportFields.map(k=>csvEscape(x[k])).join(","))].join("\r\n");
  $("exportStatutoryBoardCsv").onclick=()=>{const blob=new Blob(["\\ufeff",csv],{type:"text/csv;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="FrostTech-Statutory-Compliance-Board-Report-"+new Date().toISOString().slice(0,10)+".csv";a.click();URL.revokeObjectURL(url);$("statutoryBoardReportStatus").textContent="CSV generated from "+boardRows.length+" statutory records."};
  $("printStatutoryBoardPack").onclick=()=>{const w=window.open("","_blank");if(!w){$("statutoryBoardReportStatus").textContent="Allow pop-ups to print the board pack.";return}const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));const rows=boardRows.map(x=>"<tr>"+[date(x.due_date),x.filing_type+" · "+x.authority_name,x.monitoring_status,x.payment_reconciliation_status,x.accounting_journal_id||"Not linked",String(x.escalation_count||0)].map(v=>"<td>"+esc(v)+"</td>").join("")+"</tr>").join("");w.document.write("<!doctype html><html><head><title>FrostTech Statutory Compliance Board Pack</title><style>body{font:12px Arial;margin:28px;color:#172b4d}h1{font-size:20px}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccd4df;padding:7px;text-align:left}th{background:#eef3f9}.meta{color:#526477}</style></head><body><h1>FrostTech — Statutory Compliance Management Report</h1><p class='meta'>Generated: "+esc(new Date().toLocaleString())+" · Records: "+boardRows.length+"</p><p>Management snapshot of recorded statutory obligations, filing status, payment reconciliation, accounting linkage and escalation history. This report does not establish legal applicability or confirm external filing beyond the recorded evidence.</p><table><thead><tr><th>Due date</th><th>Filing / Authority</th><th>Status</th><th>Payment reconciliation</th><th>Accounting journal</th><th>Escalations</th></tr></thead><tbody>"+(rows||"<tr><td colspan='6'>No statutory filing records are currently recorded.</td></tr>")+"</tbody></table><p class='meta'>Source: FrostTech statutory filing and compliance registers. Preserve this report with the relevant supporting evidence.</p><script>window.onload=()=>window.print()<\\/script></body></html>");w.document.close()};
+ const meetingRows=boardMeetings.data||[],attendeeRows=boardAttendees.data||[],resolutionRows=boardResolutions.data||[],boardEventRows=boardEvents.data||[];
+ const meetingSelect=$("boardMeetingSelect"),resolutionMeeting=$("boardResolutionMeeting");
+ meetingSelect.replaceChildren(new Option("Select meeting",""));resolutionMeeting.replaceChildren(new Option("Select held meeting",""));
+ meetingRows.forEach(x=>{const label=x.meeting_ref+" · "+x.meeting_title+" · "+x.meeting_status;meetingSelect.appendChild(new Option(label,x.id));if(["held","minutes_approved"].includes(x.meeting_status))resolutionMeeting.appendChild(new Option(label,x.id))});
+ table($("boardMeetingRegister"),["Reference","Meeting","Type","Scheduled","Status","Notice","Minutes approved"],meetingRows,(tr,x)=>{cell(tr,x.meeting_ref);cell(tr,x.meeting_title);cell(tr,x.meeting_type);cell(tr,x.scheduled_at?date(x.scheduled_at):"—");cell(tr,x.meeting_status);cell(tr,x.notice_issued_at?date(x.notice_issued_at):"—");cell(tr,x.minutes_approved_at?date(x.minutes_approved_at):"—")});
+ table($("boardAttendeeRegister"),["Meeting","Attendee","Role","Attendance","Note"],attendeeRows,(tr,x)=>{cell(tr,meetingRows.find(m=>m.id===x.meeting_id)?.meeting_ref||x.meeting_id);cell(tr,x.attendee_name);cell(tr,x.attendee_role||"—");cell(tr,x.attendance_status);cell(tr,x.attendance_note||"—")});
+ const resolutionSelect=$("boardResolutionSelect");resolutionSelect.replaceChildren(new Option("Select resolution",""));
+ resolutionRows.forEach(x=>{resolutionSelect.appendChild(new Option(x.resolution_ref+" · "+x.resolution_title+" · "+x.resolution_status,x.id))});
+ table($("boardResolutionRegister"),["Reference","Meeting","Resolution","Status","Decided at","Execution recorded"],resolutionRows,(tr,x)=>{cell(tr,x.resolution_ref);cell(tr,meetingRows.find(m=>m.id===x.meeting_id)?.meeting_ref||x.meeting_id);cell(tr,x.resolution_title);cell(tr,x.resolution_status);cell(tr,x.decided_at?date(x.decided_at):"—");cell(tr,x.execution_recorded_at?date(x.execution_recorded_at):"—")});
+ table($("boardGovernanceEvents"),["Recorded","Meeting","Resolution","Event","Actor","Evidence snapshot"],boardEventRows,(tr,x)=>{cell(tr,date(x.created_at));cell(tr,x.meeting_id?meetingRows.find(m=>m.id===x.meeting_id)?.meeting_ref||x.meeting_id:"—");cell(tr,x.resolution_id?resolutionRows.find(r=>r.id===x.resolution_id)?.resolution_ref||x.resolution_id:"—");cell(tr,x.event_type.replaceAll("_"," "));cell(tr,x.actor_user_id);cell(tr,JSON.stringify(x.event_snapshot))});
+ const runBoardAction=async(buttonId,statusId,fn)=>{const b=$(buttonId);b.disabled=true;try{const result=await fn();$(statusId).textContent=result;await loadStatutoryFilingRegister()}catch(error){$(statusId).textContent="Action not completed: "+error.message}finally{b.disabled=false}};
+ $("createBoardMeeting").onclick=()=>runBoardAction("createBoardMeeting","boardMeetingStatus",async()=>{
+  const title=$("boardMeetingTitle").value.trim(),agenda=$("boardMeetingAgenda").value.split("\n").map(x=>x.trim()).filter(Boolean);
+  if(!title)throw new Error("Meeting title is required");
+  const {data,error}=await db.rpc("ft_board_create_meeting",{p_title:title,p_type:$("boardMeetingType").value,p_scheduled_at:$("boardMeetingDate").value?new Date($("boardMeetingDate").value).toISOString():null,p_venue_or_link:$("boardMeetingVenue").value.trim()||null,p_notice_issued_at:$("boardMeetingNotice").value?new Date($("boardMeetingNotice").value).toISOString():null,p_agenda:agenda});if(error)throw error;
+  $("boardMeetingTitle").value="";$("boardMeetingAgenda").value="";return "Meeting record created: "+data;
+ });
+ $("recordBoardAttendee").onclick=()=>runBoardAction("recordBoardAttendee","boardMeetingStatus",async()=>{
+  const meetingId=meetingSelect.value;if(!meetingId)throw new Error("Select a meeting");
+  const {data,error}=await db.rpc("ft_board_record_attendee",{p_meeting_id:meetingId,p_name:$("boardAttendeeName").value.trim(),p_role:$("boardAttendeeRole").value.trim(),p_status:$("boardAttendeeStatus").value,p_note:$("boardAttendeeNote").value.trim()||null});if(error)throw error;return "Attendance recorded: "+data;
+ });
+ $("markBoardMeetingHeld").onclick=()=>runBoardAction("markBoardMeetingHeld","boardMeetingStatus",async()=>{
+  if(!meetingSelect.value)throw new Error("Select a meeting");
+  const {data,error}=await db.rpc("ft_board_set_meeting_status",{p_meeting_id:meetingSelect.value,p_status:"held"});if(error)throw error;return "Meeting marked held: "+data.meeting_ref;
+ });
+ $("approveBoardMinutes").onclick=()=>runBoardAction("approveBoardMinutes","boardMeetingStatus",async()=>{
+  if(!meetingSelect.value)throw new Error("Select a meeting");
+  const {data,error}=await db.rpc("ft_board_approve_minutes",{p_meeting_id:meetingSelect.value,p_minutes_text:$("boardMeetingMinutes").value.trim(),p_minutes_document_id:$("boardMinutesDocument").value.trim()||null});if(error)throw error;return "Minutes approved: "+data.meeting_ref;
+ });
+ $("proposeBoardResolution").onclick=()=>runBoardAction("proposeBoardResolution","boardMeetingStatus",async()=>{
+  const meetingId=resolutionMeeting.value;if(!meetingId)throw new Error("Select a held meeting");
+  const {data,error}=await db.rpc("ft_board_propose_resolution",{p_meeting_id:meetingId,p_title:$("boardResolutionTitle").value.trim(),p_text:$("boardResolutionText").value.trim(),p_supporting_document_id:$("boardResolutionDocument").value.trim()||null});if(error)throw error;return "Proposed resolution recorded: "+data;
+ });
+ $("decideBoardResolution").onclick=()=>runBoardAction("decideBoardResolution","boardMeetingStatus",async()=>{
+  const id=resolutionSelect.value;if(!id)throw new Error("Select a proposed resolution");
+  const {data,error}=await db.rpc("ft_board_decide_resolution",{p_resolution_id:id,p_decision:$("boardResolutionDecision").value,p_reason:$("boardResolutionReason").value.trim()||null});if(error)throw error;return "Resolution decision recorded: "+data.resolution_ref+" · "+data.status;
+ });
+ $("recordBoardResolutionExecution").onclick=()=>runBoardAction("recordBoardResolutionExecution","boardMeetingStatus",async()=>{
+  const id=resolutionSelect.value;if(!id)throw new Error("Select an approved resolution");
+  const {data,error}=await db.rpc("ft_board_record_resolution_execution",{p_resolution_id:id,p_execution_note:$("boardResolutionExecution").value.trim(),p_archive_entry_id:$("boardResolutionArchiveEntry").value.trim()||null});if(error)throw error;return "Resolution execution recorded: "+data.resolution_ref;
+ });
  const archiveRows=archiveEntries.data||[],archiveEventRows=archiveEvents.data||[],archiveDocRows=archiveDocuments.data||[],filingRows=filings.data||[],reviewRows=annualReviews.data||[];
  const fillArchiveSelect=(id,items,label)=>{const el=$(id);el.replaceChildren(new Option(id==="governanceArchiveReview"?"No annual review link":id==="governanceArchiveFiling"?"No filing link":"No document link",""));items.forEach(x=>el.appendChild(new Option(label(x),x.id)))};
  fillArchiveSelect("governanceArchiveReview",reviewRows,x=>x.review_year+" · "+x.review_status);
