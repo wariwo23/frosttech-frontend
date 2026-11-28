@@ -120,6 +120,14 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="annualCertificateStatus" class="status" role="status">Select a reporting year and generate the assessment.</div>
 <div id="annualCertificateOutput"></div>
 </section>
+
+<section class="card" id="annualCertificateRegisterCard">
+<h2>Immutable Annual Compliance Certificate Register</h2>
+<p class="muted">Issue an internal annual compliance certificate only after the database reruns the completion gate and confirms there are no blockers. Each issued version preserves the assessment snapshot and cannot be edited or deleted through normal application access. This is not an auditor's opinion or regulator-issued certificate.</p>
+<div class="actions"><button id="issueAnnualCertificate" type="button">Issue eligible annual certificate</button><button id="refreshAnnualCertificateRegister" type="button" class="secondary">Refresh certificate register</button></div>
+<div id="annualCertificateRegisterStatus" class="status" role="status">Certificates are issued only after a fresh eligibility check.</div>
+<div id="annualCertificateRegisterOutput"></div>
+</section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
@@ -581,6 +589,34 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
  }catch(e){status.textContent="Period was not closed: "+(e.message||"Authorization failed.");}
 }
 
+
+async function loadAnnualCertificateRegister(){
+ const status=field("annualCertificateRegisterStatus"),host=field("annualCertificateRegisterOutput");
+ status.textContent="Loading immutable certificate register…";host.innerHTML="";
+ try{
+  const {data,error}=await db.from("ft_annual_compliance_certificates").select("id,certificate_reference,reporting_year,version_number,issued_at,certificate_status,evidence_snapshot_hash").order("issued_at",{ascending:false}).limit(100);
+  if(error)throw error;
+  if(!data||!data.length){host.innerHTML="<p>No annual compliance certificates have been issued.</p>";}
+  else host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Certificate</th><th>Year</th><th>Version</th><th>Issued</th><th>Status</th><th>Snapshot checksum</th></tr></thead><tbody>'+data.map(x=>'<tr><td>'+esc(x.certificate_reference)+'</td><td>'+esc(x.reporting_year)+'</td><td>'+esc(x.version_number)+'</td><td>'+esc(date(x.issued_at))+'</td><td>'+esc(x.certificate_status)+'</td><td><code>'+esc(x.evidence_snapshot_hash)+'</code></td></tr>').join('')+'</tbody></table></div>';
+  status.textContent="Register loaded. Records are read-only.";
+ }catch(e){status.textContent="Could not load certificate register: "+(e.message||"Access denied.");}
+}
+async function issueAnnualComplianceCertificate(){
+ const status=field("annualCertificateRegisterStatus"),year=Number(field("annualCertificateYear").value);
+ if(!Number.isInteger(year)||year<2000||year>new Date().getFullYear()+1){status.textContent="Enter a valid reporting year in the completion assessment section.";return;}
+ if(!window.confirm("Issue an immutable internal annual compliance certificate for "+year+"? The database will rerun all eligibility checks.")){return;}
+ status.textContent="Rechecking eligibility and issuing certificate…";
+ try{
+  const {data,error}=await db.rpc("ft_issue_annual_compliance_certificate",{p_reporting_year:year});
+  if(error)throw error;
+  const cert=data||{};
+  status.textContent="Issued "+(cert.certificate_reference||"certificate")+" · version "+(cert.version_number||"")+" · "+date(cert.issued_at)+". This is an internal evidence certificate, not a regulatory submission.";
+  await loadAnnualCertificateRegister();
+  const out=field("annualCertificateRegisterOutput");
+  out.insertAdjacentHTML("afterbegin",'<div class="annual-evidence-section"><h3>New certificate issued</h3><p><strong>Reference:</strong> '+esc(cert.certificate_reference)+'</p><p><strong>Reporting year:</strong> '+esc(cert.reporting_year)+'</p><p><strong>Version:</strong> '+esc(cert.version_number)+'</p><p><strong>Snapshot checksum:</strong> <code>'+esc(cert.evidence_snapshot_hash)+'</code></p><p><strong>Issued:</strong> '+esc(date(cert.issued_at))+'</p><p>Regulatory submission performed: No.</p><details><summary>View frozen evidence snapshot</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(cert.evidence_snapshot,null,2))+'</pre></details><button id="printIssuedAnnualCertificate" type="button">Print / Save PDF</button></div>');
+  field("printIssuedAnnualCertificate").addEventListener("click",()=>window.print());
+ }catch(e){status.textContent="Certificate not issued: "+(e.message||"Eligibility check failed. Resolve all blockers and retry.");}
+}
 async function generateAnnualReturnsCertificate(){
  const status=field("annualCertificateStatus"),host=field("annualCertificateOutput");
  const year=Number(field("annualCertificateYear").value);
@@ -724,6 +760,9 @@ field("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
 field("refreshYearEndCloseGate").addEventListener("click",loadYearEndCloseGate);
 field("refreshPostClosePacks").addEventListener("click",loadPostClosePackOptions);
 field("generateAnnualCertificate").addEventListener("click",generateAnnualReturnsCertificate);
+field("issueAnnualCertificate").addEventListener("click",issueAnnualComplianceCertificate);
+field("refreshAnnualCertificateRegister").addEventListener("click",loadAnnualCertificateRegister);
+
 field("printAnnualCertificate").addEventListener("click",()=>{document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 field("annualCertificateYear").value=new Date().getFullYear();
 
