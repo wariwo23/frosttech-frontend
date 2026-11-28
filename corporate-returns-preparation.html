@@ -203,7 +203,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <section class="card" id="governanceDeliveryAudit">
 <h2>Governance Notification Delivery Audit</h2>
 <p class="muted">Super Administrator-only history of Brevo send attempts and provider events. “Accepted by provider” means Brevo accepted the message for processing; a separate delivered event is required before treating it as delivered. This register is read-only.</p>
-<div class="actions"><button type="button" id="registerGovernanceBrevoWebhook">Connect / refresh Brevo webhook</button><button type="button" id="refreshGovernanceDeliveryAudit">Refresh delivery audit</button><button type="button" class="secondary" id="printGovernanceDeliveryAudit">Print delivery audit</button></div><p id="governanceBrevoWebhookStatus" class="status" role="status">Webhook registration is controlled by the Super Administrator.</p>
+<div class="actions"><button type="button" id="registerGovernanceBrevoWebhook">Connect / refresh Brevo webhook</button><button type="button" id="refreshGovernanceDeliveryAudit">Refresh delivery audit</button><button type="button" class="secondary" id="reconcileGovernanceReceipts">Reconcile unmatched receipts now</button><button type="button" class="secondary" id="printGovernanceDeliveryAudit">Print delivery audit</button></div><p id="governanceReconciliationStatus" class="status" role="status">Automatic reconciliation runs every 15 minutes and after relevant delivery events.</p><div id="governanceReconciliationSummary" class="grid"></div><p id="governanceBrevoWebhookStatus" class="status" role="status">Webhook registration is controlled by the Super Administrator.</p>
 <div id="governanceDeliveryAuditStatus" class="status" role="status">Refresh to load the protected delivery audit.</div>
 <div id="governanceDeliveryAuditSummary" class="grid"></div>
 <div id="governanceDeliveryAuditRows"></div>
@@ -753,15 +753,22 @@ async function loadGovernanceDeliveryAudit(){
  const status=field("governanceDeliveryAuditStatus"),summary=field("governanceDeliveryAuditSummary"),host=field("governanceDeliveryAuditRows"),unmatched=field("governanceDeliveryUnmatchedRows");
  status.textContent="Loading protected Brevo delivery history…";summary.innerHTML="";host.innerHTML="";unmatched.innerHTML="";
  try{
-  const {data,error}=await db.rpc("ft_get_governance_delivery_audit");if(error)throw error;
-  const s=data?.summary||{},attempts=Array.isArray(data?.attempts)?data.attempts:[],orphans=Array.isArray(data?.unmatched_receipts)?data.unmatched_receipts:[];
+  const [audit,reconciliation]=await Promise.all([
+   db.rpc("ft_get_governance_delivery_audit"),
+   db.rpc("ft_get_governance_delivery_reconciliation_status")
+  ]);
+  if(audit.error)throw audit.error;if(reconciliation.error)throw reconciliation.error;
+  const data=audit.data||{},rs=reconciliation.data?.summary||{};
+  const s=data?.summary||{},attempts=Array.isArray(data?.attempts)?data.attempts:[],orphans=Array.isArray(reconciliation.data?.unmatched)?reconciliation.data.unmatched:(Array.isArray(data?.unmatched_receipts)?data.unmatched_receipts:[]);
   const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
-  summary.innerHTML=metric("Send attempts",s.attempts)+metric("Accepted by Brevo",s.accepted_by_provider)+metric("Failed attempts",s.failed)+metric("Provider events",s.provider_events)+metric("Delivered events",s.delivered_events)+metric("Bounces / blocked",s.bounce_events)+metric("Spam complaints",s.complaint_events)+metric("Opened",s.opened_events)+metric("Clicked",s.clicked_events)+metric("Deferred",s.deferred_events)+metric("Unmatched events",s.unmatched_events);
+  field("governanceReconciliationSummary").innerHTML=metric("Total receipts",rs.total_receipts)+metric("Matched receipts",rs.matched_receipts)+metric("Unmatched receipts",rs.unmatched_receipts)+metric("Ambiguous matches",rs.ambiguous_receipts);
+  field("governanceReconciliationStatus").textContent="Reconciliation oversight refreshed. Matched "+(rs.matched_receipts??0)+" · unmatched "+(rs.unmatched_receipts??0)+" · ambiguous "+(rs.ambiguous_receipts??0)+". Ambiguous matches are deliberately left unlinked.";
+  summary.innerHTML=metric("Send attempts",s.attempts)+metric("Accepted by Brevo",s.accepted_by_provider)+metric("Failed attempts",s.failed)+metric("Provider events",s.provider_events)+metric("Delivered events",s.delivered_events)+metric("Bounces / blocked",s.bounce_events)+metric("Spam complaints",s.complaint_events)+metric("Opened",s.opened_events)+metric("Clicked",s.clicked_events)+metric("Deferred",s.deferred_events)+metric("Unmatched events",rs.unmatched_receipts??s.unmatched_events);
   host.innerHTML=attempts.length?'<h3>Recent delivery attempts (latest 200)</h3><div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Notice</th><th>Recipient</th><th>Attempt</th><th>Send status</th><th>Provider message ID</th><th>Provider events</th><th>Error</th></tr></thead><tbody>'+attempts.map(a=>{
    const receipts=Array.isArray(a.receipts)?a.receipts:[];
    return '<tr><td>'+esc(date(a.attempted_at))+'<br><span class="muted">Completed: '+esc(date(a.completed_at))+'</span></td><td>'+esc(a.notice_title||a.notice_type||a.notice_id)+'</td><td>'+esc(a.recipient_email||"—")+'</td><td>'+esc(a.attempt_number)+'</td><td><span class="pill">'+esc(a.status)+'</span></td><td><code>'+esc(a.provider_message_id||"Not returned")+'</code></td><td>'+(receipts.length?receipts.map(r=>'<div><strong>'+esc(r.provider_event)+'</strong><br>'+esc(date(r.provider_event_at||r.received_at))+'</div>').join(""):'No provider receipt recorded')+'</td><td>'+esc(a.error_detail||"—")+'</td></tr>';
   }).join("")+'</tbody></table></div>':'<p>No delivery attempts are recorded yet.</p>';
-  unmatched.innerHTML='<h3>Unmatched provider events ('+orphans.length+')</h3>'+(orphans.length?'<div class="table-wrap"><table><thead><tr><th>Received</th><th>Provider message ID</th><th>Event</th><th>Recipient</th><th>Provider event time</th></tr></thead><tbody>'+orphans.map(r=>'<tr><td>'+esc(date(r.received_at))+'</td><td><code>'+esc(r.provider_message_id)+'</code></td><td>'+esc(r.provider_event)+'</td><td>'+esc(r.recipient_email||"—")+'</td><td>'+esc(date(r.provider_event_at))+'</td></tr>').join("")+'</tbody></table></div>':'<p>No unmatched provider events.</p>');
+  unmatched.innerHTML='<h3>Unmatched provider events ('+orphans.length+')</h3>'+(orphans.length?'<div class="table-wrap"><table><thead><tr><th>Received</th><th>Provider message ID</th><th>Event</th><th>Recipient</th><th>Possible matches</th></tr></thead><tbody>'+orphans.map(r=>'<tr><td>'+esc(date(r.received_at))+'</td><td><code>'+esc(r.provider_message_id)+'</code></td><td>'+esc(r.provider_event)+'</td><td>'+esc(r.recipient_email||"—")+'</td><td><span class="pill">'+(Number(r.possible_matches||0)>1?'Ambiguous ('+Number(r.possible_matches)+')':Number(r.possible_matches||0)===1?'Ready to reconcile':'No attempt yet')+'</span></td></tr>').join("")+'</tbody></table></div>':'<p>No unmatched provider events.</p>');
   status.textContent="Delivery audit refreshed at "+new Date().toLocaleString()+". "+attempts.length+" attempt(s) and "+orphans.length+" unmatched event(s) shown.";
  }catch(e){status.textContent="Delivery audit unavailable: "+(e.message||"Super Administrator authorization required.");}
 }
@@ -1082,6 +1089,17 @@ field("registerGovernanceBrevoWebhook").addEventListener("click",async()=>{
  finally{button.disabled=false;}
 });
 field("refreshGovernanceDeliveryAudit").addEventListener("click",loadGovernanceDeliveryAudit);
+field("reconcileGovernanceReceipts").addEventListener("click",async()=>{
+ const button=field("reconcileGovernanceReceipts"),status=field("governanceReconciliationStatus");
+ button.disabled=true;status.textContent="Running a protected Super Administrator reconciliation pass…";
+ try{
+  const {data,error}=await db.rpc("ft_admin_reconcile_governance_delivery_receipts",{p_limit:500});
+  if(error)throw error;
+  status.textContent="Reconciliation complete. Newly matched: "+(data?.reconciled_count??0)+" · Remaining unmatched: "+(data?.remaining_unmatched_count??0)+" · Ambiguous (left untouched): "+(data?.ambiguous_count??0)+".";
+  await loadGovernanceDeliveryAudit();
+ }catch(e){status.textContent="Reconciliation could not be completed: "+(e.message||"Super Administrator authorization required.");}
+ finally{button.disabled=false;}
+});
 field("printGovernanceDeliveryAudit").addEventListener("click",()=>{document.body.classList.add("governance-delivery-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-delivery-printing"),{once:true});window.print();});
 field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("governance-action-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-action-printing"),{once:true});window.print();});
 field("generateGovernanceNotices").addEventListener("click",generateGovernanceNotices);
