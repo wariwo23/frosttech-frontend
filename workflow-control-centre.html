@@ -111,10 +111,13 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="exceptionAnnualArchiveRegister" class="table-wrap"></div>
 <h4>Archived Review Distribution Register</h4>
 <label>Archive reference <select id="exceptionAnnualArchiveSelect"><option value="">Select an archived review</option></select></label>
-<div class="form-grid"><label>Recipient email <input type="email" id="exceptionAnnualRecipient" placeholder="recipient@example.com"></label><label>Channel <select id="exceptionAnnualChannel"><option value="email">Email</option><option value="internal">Internal</option></select></label><label>Distribution status <select id="exceptionAnnualDistributionStatus"><option value="prepared">Prepared</option><option value="sent">Sent</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select></label></div>
-<label>Distribution note <textarea id="exceptionAnnualDistributionNote" rows="2" placeholder="Record dispatch reference or reason for failure"></textarea></label>
-<button type="button" id="recordExceptionAnnualDistribution">Record Distribution Outcome</button>
+<div class="form-grid"><label>Recipient account UUID <input type="text" id="exceptionAnnualRecipientUserId" placeholder="Registered FrostTech account UUID"></label><label>Recipient email confirmation <input type="email" id="exceptionAnnualRecipient" placeholder="Must match the account email"></label></div>
+<div class="actions"><button type="button" id="sendExceptionAnnualReview">Send Approved Review by Brevo</button></div>
+<div id="exceptionAnnualSendStatus" class="muted" aria-live="polite"></div>
+<p class="muted">Sending is restricted to the Super Administrator. The recipient UUID must belong to an existing FrostTech account; the entered email is checked against that account. Provider delivery events and recipient acknowledgement are recorded separately.</p>
 <div id="exceptionAnnualDistributionRegister" class="table-wrap"></div>
+<h4>Annual Review Provider Events</h4><div id="exceptionAnnualProviderEvents" class="table-wrap"></div>
+<h4>Annual Review Receipt Acknowledgements</h4><div id="exceptionAnnualAcknowledgements" class="table-wrap"></div>
 <h3>Monthly Exception Performance Report</h3>
 <p class="muted">Management summary of exception volumes, resolutions, outstanding cases, escalation activity and resolution time. Select a reporting period before generating.</p>
 <div class="form-grid"><label>Report from <input type="date" id="exceptionPerformanceFrom"></label><label>Report to <input type="date" id="exceptionPerformanceTo"></label></div>
@@ -417,6 +420,17 @@ async function buildExceptionAnnualReport(){
  $("exceptionAnnualStatus").textContent="Annual report generated from "+history.length+" immutable event records. Current outstanding-case ageing uses current case records; year-on-year resolution counts rely on captured history.";
  return currentExceptionAnnualReport;
 }
+async function sendExceptionAnnualReview(){
+ const status=$("exceptionAnnualSendStatus");status.textContent="Submitting approved archive to Brevo…";
+ try{
+  const archiveId=$("exceptionAnnualArchiveSelect").value,recipientId=$("exceptionAnnualRecipientUserId").value.trim(),email=$("exceptionAnnualRecipient").value.trim().toLowerCase();
+  if(!archiveId||!recipientId||!email)throw new Error("Select an approved archive and enter recipient account UUID and matching email.");
+  const {data,error}=await db.functions.invoke("send-exception-annual-review",{body:{archive_id:archiveId,recipient_user_id:recipientId,recipient_email:email}});
+  if(error)throw error;if(!data?.ok)throw new Error(data?.error||"Email was not accepted by Brevo.");
+  status.textContent="Annual review sent. Delivery reference: "+data.delivery_id+" · Brevo message: "+(data.provider_message_id||"not supplied");
+  await loadExceptionAnnualArchives();
+ }catch(e){status.textContent="Annual review email failed: "+(e.message||String(e));setStatus(status.textContent,"error");await loadExceptionAnnualArchives().catch(()=>{})}
+}
 async function loadExceptionAnnualArchives(){
  const {data,error}=await db.from("ft_exception_annual_review_archive").select("id,approval_id,archive_reference,archived_at,archive_snapshot").order("archived_at",{ascending:false}).limit(200);
  if(error)throw error;
@@ -425,9 +439,15 @@ async function loadExceptionAnnualArchives(){
  (data||[]).forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.archive_reference+" — "+new Date(r.archived_at).toLocaleDateString();select.appendChild(o)});
  if(previous)select.value=previous;
  table($("exceptionAnnualArchiveRegister"),["Archive reference","Archived","Report years","Retention"],data||[],(tr,r)=>{cell(tr,r.archive_reference);cell(tr,date(r.archived_at));cell(tr,String(r.archive_snapshot?.year??"")+" vs "+String(r.archive_snapshot?.compareYear??""));cell(tr,"Permanent")});
- const d=await db.from("ft_exception_annual_review_distribution").select("id,archive_id,recipient_email,channel,distribution_status,recorded_at,distribution_note").order("recorded_at",{ascending:false}).limit(300);
+ const d=await db.from("ft_exception_annual_review_deliveries").select("id,archive_id,recipient_email,provider_message_id,delivery_status,provider_delivery_status,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(300);
  if(d.error)throw d.error;
- table($("exceptionAnnualDistributionRegister"),["Archive ID","Recipient","Channel","Outcome","Recorded","Note"],d.data||[],(tr,r)=>{cell(tr,r.archive_id);cell(tr,r.recipient_email);cell(tr,r.channel);cell(tr,r.distribution_status);cell(tr,date(r.recorded_at));cell(tr,r.distribution_note)});
+ table($("exceptionAnnualDistributionRegister"),["Delivery reference","Archive","Recipient","Provider status","Attempted","Delivered","Failure"],d.data||[],(tr,r)=>{cell(tr,r.id);cell(tr,r.archive_id);cell(tr,r.recipient_email);cell(tr,r.provider_delivery_status||r.delivery_status);cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"Pending provider event");cell(tr,r.failure_reason||"—")});
+ const ev=await db.from("ft_exception_annual_review_provider_events").select("delivery_id,provider_message_id,recipient_email,event_type,event_at,event_reason,received_at").order("received_at",{ascending:false}).limit(500);
+ if(ev.error)throw ev.error;
+ table($("exceptionAnnualProviderEvents"),["Delivery","Recipient","Event","Event time","Received","Reason"],ev.data||[],(tr,r)=>{cell(tr,r.delivery_id||"Unmatched");cell(tr,r.recipient_email);cell(tr,r.event_type);cell(tr,r.event_at?date(r.event_at):"Not supplied");cell(tr,date(r.received_at));cell(tr,r.event_reason||"—")});
+ const ack=await db.from("ft_exception_annual_review_acknowledgements").select("delivery_id,archive_id,recipient_user_id,acknowledged_at,acknowledgement_note").order("acknowledged_at",{ascending:false}).limit(300);
+ if(ack.error)throw ack.error;
+ table($("exceptionAnnualAcknowledgements"),["Delivery","Archive","Recipient account","Acknowledged","Note"],ack.data||[],(tr,r)=>{cell(tr,r.delivery_id);cell(tr,r.archive_id);cell(tr,r.recipient_user_id);cell(tr,date(r.acknowledged_at));cell(tr,r.acknowledgement_note||"—")});
 }
 async function approveExceptionAnnualReview(){
  try{
@@ -454,6 +474,7 @@ async function recordExceptionAnnualDistribution(){
  }catch(e){$("exceptionAnnualStatus").textContent="Distribution record failed: "+e.message;setStatus("Annual review distribution failed: "+e.message,"error")}
 }
 $("approveExceptionAnnual").addEventListener("click",approveExceptionAnnualReview);
+$("sendExceptionAnnualReview").addEventListener("click",sendExceptionAnnualReview);
 $("recordExceptionAnnualDistribution").addEventListener("click",recordExceptionAnnualDistribution);
 loadExceptionAnnualArchives().catch(e=>setStatus("Annual archive register could not load: "+e.message,"error"));
 async function generateExceptionAnnual(){try{await buildExceptionAnnualReport()}catch(e){$("exceptionAnnualStatus").textContent="Annual report failed: "+e.message;setStatus("Annual exception report failed: "+e.message,"error")}}
