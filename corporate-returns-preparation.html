@@ -166,6 +166,14 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="certificateMonitoringSummary" class="grid"></div>
 <div id="certificateMonitoringRows"></div>
 </section>
+<section class="card" id="certificateSecurityAlerts">
+<h2>Certificate Expiry &amp; Security Alerts</h2>
+<p class="muted">Automated alerts for access authorizations nearing expiry, expired authorizations and repeated failed access attempts. Alert review and acknowledgement are reserved for the Super Administrator.</p>
+<div class="actions"><button type="button" id="refreshCertificateSecurityAlerts">Refresh alerts</button><button type="button" class="secondary" id="printCertificateSecurityAlerts">Print alert register</button></div>
+<div id="certificateSecurityAlertStatus" class="status" role="status">Alerts are scanned automatically every 15 minutes. Refresh to view the current register.</div>
+<div id="certificateSecurityAlertSummary" class="grid"></div>
+<div id="certificateSecurityAlertRows"></div>
+</section>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
 <p class="muted">Update an existing statutory filing record. The database rechecks Super Administrator authority and validates required references and active document-vault records. This screen does not initiate payment or submit a return.</p>
@@ -647,6 +655,25 @@ async function loadCertificateMonitoring(){
   status.textContent="Monitoring refreshed at "+new Date().toLocaleString()+". "+grants.length+" authorization record(s) returned.";
  }catch(e){status.textContent="Monitoring unavailable: "+(e.message||"Super Administrator access required.");}
 }
+async function loadCertificateSecurityAlerts(){
+ const status=field("certificateSecurityAlertStatus"),summary=field("certificateSecurityAlertSummary"),host=field("certificateSecurityAlertRows");
+ status.textContent="Refreshing alert scan and loading the Super Administrator register…";summary.innerHTML="";host.innerHTML="";
+ try{
+  const {data:scanData,error:scanError}=await db.rpc("ft_scan_annual_certificate_security_alerts");
+  if(scanError)throw scanError;
+  const {data,error}=await db.rpc("ft_get_annual_certificate_security_alerts");
+  if(error)throw error;
+  const s=data?.summary||{};
+  const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
+  summary.innerHTML=metric("Open alerts",s.open)+metric("Acknowledged",s.acknowledged)+metric("Critical",s.critical)+metric("Warnings",s.warning);
+  const alerts=Array.isArray(data?.alerts)?data.alerts:[];
+  host.innerHTML=alerts.length?alerts.map(a=>{
+   const d=a.details||{};
+   return '<article class="metric" style="margin:12px 0;background:#fff"><h3>'+esc(a.title)+' · '+esc(a.severity)+'</h3><p><strong>Status:</strong> '+esc(a.status)+' · <strong>Occurrences:</strong> '+esc(a.occurrence_count)+'</p><p><strong>Certificate:</strong> '+esc(d.certificate_reference||"—")+' · <strong>Recipient:</strong> '+esc(d.recipient_name||"—")+' ('+esc(d.recipient_email||"—")+')</p><p><strong>First detected:</strong> '+esc(new Date(a.first_detected_at).toLocaleString())+' · <strong>Last detected:</strong> '+esc(new Date(a.last_detected_at).toLocaleString())+'</p><p>'+esc(JSON.stringify(d))+'</p>'+(a.status==="open"?'<button type="button" class="secondary acknowledge-certificate-alert" data-alert="'+esc(a.id)+'">Acknowledge alert</button>':'<p class="muted">Acknowledged '+esc(a.acknowledged_at?new Date(a.acknowledged_at).toLocaleString():"")+' '+esc(a.resolution_note||"")+'</p>')+'</article>';
+  }).join(""):'<p>No certificate security alerts are currently recorded.</p>';
+  status.textContent="Alert scan complete. "+(scanData??0)+" alert record(s) updated; "+alerts.length+" alert(s) in the register.";
+ }catch(e){status.textContent="Alert register unavailable: "+(e.message||"Super Administrator authorization required.");}
+}
 async function loadCertificateDistributions(){
  const status=field("certificateDistributionStatus"),host=field("certificateDistributionRegister");
  status.textContent="Loading distribution register…";host.innerHTML="";
@@ -887,6 +914,10 @@ field("verifyAnnualCertificate").addEventListener("click",verifyAnnualCompliance
 field("grantCertificateDistribution").addEventListener("click",grantCertificateDistribution);
 field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
 field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMonitoring);
+field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
+field("printCertificateSecurityAlerts").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
+field("certificateSecurityAlertRows").addEventListener("click",async e=>{const b=e.target.closest(".acknowledge-certificate-alert");if(!b)return;b.disabled=true;try{const {error}=await db.rpc("ft_acknowledge_annual_certificate_security_alert",{p_alert_id:b.dataset.alert,p_resolution_note:"Reviewed by Super Administrator"});if(error)throw error;await loadCertificateSecurityAlerts();}catch(err){b.disabled=false;field("certificateSecurityAlertStatus").textContent="Acknowledgement failed: "+(err.message||"Authorization error.");}});
+
 field("printCertificateMonitoring").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
 
 field("certificateDistributionRegister").addEventListener("click",e=>{const t=e.target.closest(".issue-certificate-access-token");if(t){issueCertificateAccessToken(t.dataset.grant);return;}const b=e.target.closest(".revoke-certificate-distribution");if(b)revokeCertificateDistribution(b.dataset.grant);});
