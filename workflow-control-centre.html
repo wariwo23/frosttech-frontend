@@ -111,6 +111,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="statReconFiling">Statutory filing</label><select id="statReconFiling"><option value="">Select filing</option></select></div>
 <div class="field"><label for="statReconFee">Actual filing fee (₦)</label><input id="statReconFee" type="number" min="0.01" step="0.01" required></div>
 <div class="field"><label for="statReconExpense">Approved / paid expense</label><select id="statReconExpense"><option value="">Select expense</option></select></div>
+<div class="field"><label for="statReconExecution">Confirmed treasury payment execution (optional for legacy reconciliation)</label><select id="statReconExecution"><option value="">No linked execution</option></select></div>
 <div class="field"><label for="statReconBank">Bank debit (optional until available)</label><select id="statReconBank"><option value="">Not yet matched</option></select></div>
 <div class="field"><label for="statReconPaymentRef">Payment reference</label><input id="statReconPaymentRef" placeholder="Bank / authority payment reference"></div>
 <div class="field"><label for="statReconReceipt">Active Document Vault receipt UUID</label><input id="statReconReceipt" placeholder="Receipt document record UUID"></div>
@@ -1201,22 +1202,26 @@ async function submitStatutoryPaymentRequest(){
 
 async function loadStatutoryPaymentReconciliation(){
  if(currentRole!=="super_admin")return;
- const [filings,expenses,banks,recons,events]=await Promise.all([
+ const [filings,expenses,banks,recons,events,executions]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,due_date,fee_amount").order("due_date",{ascending:true}).limit(500),
   db.from("ft_bookkeeping_expenses").select("id,expense_date,payee,description,amount,status").in("status",["approved","paid","posted"]).order("expense_date",{ascending:false}).limit(500),
   db.from("ft_bookkeeping_bank_transactions").select("id,transaction_date,description,reference,debit,credit").gt("debit",0).order("transaction_date",{ascending:false}).limit(500),
-  db.from("ft_statutory_payment_reconciliations").select("id,filing_id,expense_id,bank_transaction_id,filing_fee_amount,expense_amount,bank_debit_amount,reconciliation_status,variance_note,payment_reference,receipt_document_id,created_at").order("created_at",{ascending:false}).limit(500),
+  db.from("ft_statutory_payment_reconciliations").select("id,filing_id,expense_id,bank_transaction_id,payment_execution_id,filing_fee_amount,expense_amount,bank_debit_amount,reconciliation_status,variance_note,payment_reference,receipt_document_id,created_at").order("created_at",{ascending:false}).limit(500),
+  db.from("ft_treasury_payment_executions").select("id,execution_reference,executed_amount,execution_date,bank_reference,payment_request_id,ft_treasury_payment_requests!inner(statutory_filing_id,payment_request_ref)").eq("execution_status","confirmed").order("created_at",{ascending:false}).limit(500),
   db.from("ft_statutory_payment_reconciliation_events").select("id,reconciliation_id,event_type,actor_user_id,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500)
  ]);
- for(const x of [filings,expenses,banks,recons,events])if(x.error)throw x.error;
+ for(const x of [filings,expenses,banks,recons,events,executions])if(x.error)throw x.error;
  const fill=(id,rows,label)=>{const s=$(id);s.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Select "+label;s.appendChild(first);rows.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.label;s.appendChild(o)})};
  fill("statReconFiling",(filings.data||[]).map(r=>({id:r.id,label:r.filing_type.replaceAll("_"," ")+" · "+r.authority_name+" · "+(r.fee_amount==null?"fee not set":"₦"+Number(r.fee_amount).toLocaleString())})),"filing");
  fill("statReconExpense",(expenses.data||[]).map(r=>({id:r.id,label:r.expense_date+" · "+r.payee+" · "+r.description+" · ₦"+Number(r.amount).toLocaleString()+" · "+r.status})),"expense");
  fill("statReconBank",(banks.data||[]).map(r=>({id:r.id,label:r.transaction_date+" · "+r.description+" · "+(r.reference||"no ref")+" · debit ₦"+Number(r.debit).toLocaleString()})),"bank transaction");
+ const executionSelect=$("statReconExecution");executionSelect.replaceChildren();const noExecution=document.createElement("option");noExecution.value="";noExecution.textContent="No linked execution (legacy record)";executionSelect.appendChild(noExecution);
+ (executions.data||[]).forEach(x=>{const req=Array.isArray(x.ft_treasury_payment_requests)?x.ft_treasury_payment_requests[0]:x.ft_treasury_payment_requests;if(!req?.statutory_filing_id)return;const o=document.createElement("option");o.value=x.id;o.dataset.filing=req.statutory_filing_id;o.textContent=req.payment_request_ref+" · "+x.execution_reference+" · "+x.execution_date+" · ₦"+Number(x.executed_amount).toLocaleString()+" · "+(x.bank_reference||"no bank reference");executionSelect.appendChild(o)});
+ $("statReconFiling").onchange=()=>{const filingId=$("statReconFiling").value;[...executionSelect.options].forEach(o=>{if(o.value)o.hidden=o.dataset.filing!==filingId});if(executionSelect.selectedOptions[0]?.hidden)executionSelect.value=""};
  const summary=[["Reconciliations",recons.data.length],["Matched",recons.data.filter(r=>r.reconciliation_status==="matched").length],["Variance",recons.data.filter(r=>r.reconciliation_status==="variance").length],["Evidence missing",recons.data.filter(r=>r.reconciliation_status==="evidence_missing").length]];
  $("statutoryPaymentReconciliationSummary").replaceChildren();summary.forEach(([l,v])=>{const d=document.createElement("div");d.className="metric";const s=document.createElement("span");s.textContent=l;const b=document.createElement("strong");b.textContent=v;d.append(s,b);$("statutoryPaymentReconciliationSummary").appendChild(d)});
- table($("statutoryPaymentReconciliationTable"),["Recorded","Filing","Expense","Bank debit","Status","Evidence"],recons.data||[],(tr,r)=>{
-  cell(tr,date(r.created_at));cell(tr,r.filing_id);cell(tr,"₦"+Number(r.expense_amount).toLocaleString()+" · "+r.expense_id);cell(tr,r.bank_debit_amount==null?"Not matched":"₦"+Number(r.bank_debit_amount).toLocaleString()+" · "+r.bank_transaction_id);cell(tr,r.reconciliation_status.replaceAll("_"," "));cell(tr,"Fee ₦"+Number(r.filing_fee_amount).toLocaleString()+" · Receipt "+(r.receipt_document_id||"missing")+" · "+(r.payment_reference||"no payment reference")+(r.variance_note?" · "+r.variance_note:""));
+ table($("statutoryPaymentReconciliationTable"),["Recorded","Filing","Expense","Payment execution","Bank debit","Status","Evidence"],recons.data||[],(tr,r)=>{
+  cell(tr,date(r.created_at));cell(tr,r.filing_id);cell(tr,"₦"+Number(r.expense_amount).toLocaleString()+" · "+r.expense_id);cell(tr,r.payment_execution_id||"Legacy / no treasury execution link");cell(tr,r.bank_debit_amount==null?"Not matched":"₦"+Number(r.bank_debit_amount).toLocaleString()+" · "+r.bank_transaction_id);cell(tr,r.reconciliation_status.replaceAll("_"," "));cell(tr,"Fee ₦"+Number(r.filing_fee_amount).toLocaleString()+" · Receipt "+(r.receipt_document_id||"missing")+" · "+(r.payment_reference||"no payment reference")+(r.variance_note?" · "+r.variance_note:""));
  });
  table($("statutoryPaymentReconciliationAudit"),["Recorded","Reconciliation","Event","Actor","Snapshot"],events.data||[],(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.reconciliation_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"—");cell(tr,JSON.stringify(e.event_snapshot||{}))});
  window.__ftStatutoryReconciliationFilings=filings.data||[];
@@ -1224,7 +1229,7 @@ async function loadStatutoryPaymentReconciliation(){
 async function saveStatutoryPaymentReconciliation(){
  const filing=$("statReconFiling").value,fee=Number($("statReconFee").value),expense=$("statReconExpense").value;
  if(!filing||!expense||!Number.isFinite(fee)||fee<=0){setStatus("Select a filing and approved/paid expense, and enter the actual fee.","error");return}
- const {data,error}=await db.rpc("ft_save_statutory_payment_reconciliation",{p_filing_id:filing,p_filing_fee:fee,p_expense_id:expense,p_bank_transaction_id:$("statReconBank").value||null,p_payment_reference:$("statReconPaymentRef").value.trim()||null,p_receipt_document_id:$("statReconReceipt").value.trim()||null,p_variance_note:$("statReconVariance").value.trim()||null});
+ const {data,error}=await db.rpc("ft_save_statutory_payment_reconciliation_v2",{p_filing_id:filing,p_filing_fee:fee,p_expense_id:expense,p_bank_transaction_id:$("statReconBank").value||null,p_payment_reference:$("statReconPaymentRef").value.trim()||null,p_receipt_document_id:$("statReconReceipt").value.trim()||null,p_variance_note:$("statReconVariance").value.trim()||null,p_payment_execution_id:$("statReconExecution").value||null});
  if(error){setStatus("Payment reconciliation failed: "+error.message,"error");return}
  setStatus("Payment reconciliation saved: "+data.status.replaceAll("_"," ")+".","success");$("statReconVariance").value="";await loadStatutoryFilingRegister();await loadStatutoryPaymentReconciliation();
 }
