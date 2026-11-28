@@ -79,7 +79,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </section>
 <section id="escalationsCard" class="card hidden">
 <h2>Super Administrator — Formal Escalations</h2>
-<p class="muted">Only the Super Administrator can create or resolve formal escalations. Departmental administrators cannot override this authority.</p>
+<p class="muted">Only the Super Administrator can create or resolve formal escalations. Named recipients can submit one response without changing escalation ownership or status.</p><div id="escalationMetrics" class="metrics"></div>
 <form id="escalationForm">
 <div class="form-grid">
 <div class="field"><label for="escalationInstance">Workflow instance</label><select id="escalationInstance" required><option value="">Select workflow instance</option></select></div>
@@ -174,7 +174,9 @@ async function submitAction(){
  if(!pendingAction)return;
  const action=pendingAction,notes=$("actionNotes").value.trim();$("modalConfirm").disabled=true;
  try{
-  if(action.type==="resolve_escalation"){
+  if(action.type==="respond_escalation"){
+   const {error}=await db.rpc("ft_respond_to_workflow_escalation",{p_escalation_id:action.id,p_response_note:notes});if(error)throw error;setStatus("Escalation response submitted.","success");
+  }else if(action.type==="resolve_escalation"){
    const {error}=await db.rpc("ft_resolve_workflow_escalation",{p_escalation_id:action.id,p_resolution_notes:notes});if(error)throw error;setStatus("Formal escalation resolved and recorded.","success");
   }else if(action.type==="complete"){
    const {data,error}=await db.rpc("ft_advance_workflow_task",{p_task_id:action.id,p_completion_notes:notes||null});
@@ -204,11 +206,20 @@ async function launchWorkflow(event){
  finally{$("launchButton").disabled=activeWorkflows.length===0}
 }
 async function loadEscalations(){
- const {data,error}=await db.from("ft_workflow_escalations").select("id,instance_id,task_id,escalation_level,reason,escalated_to_department,status,escalated_at,resolution_notes").order("escalated_at",{ascending:false}).limit(100);
- if(error)throw error;
- table($("escalations"),["Level","Workflow","Reason","Recipient department","Status","Raised","Resolution / Action"],data,(tr,r)=>{
-  cell(tr,r.escalation_level);cell(tr,r.instance_id);cell(tr,r.reason);cell(tr,r.escalated_to_department);cell(tr,r.status);cell(tr,date(r.escalated_at));
-  const td=cell(tr,r.resolution_notes||"");if(r.status==="open"){const b=document.createElement("button");b.type="button";b.textContent="Resolve";b.addEventListener("click",()=>openAction("resolve_escalation",r.id,"Resolve escalation","Enter the resolution notes. This action is restricted to the Super Administrator."));td.appendChild(document.createElement("br"));td.appendChild(b)}
+ const [records,summary]=await Promise.all([
+  db.from("ft_workflow_escalations").select("id,instance_id,task_id,escalation_level,reason,escalated_to_user_id,escalated_to_department,status,escalated_at,response_due_at,response_at,response_note,resolution_notes").order("escalated_at",{ascending:false}).limit(100),
+  db.from("ft_workflow_escalation_management_summary").select("*").maybeSingle()
+ ]);
+ if(records.error)throw records.error;
+ if(summary.error)throw summary.error;
+ const s=summary.data||{};
+ const metrics=[["Open",s.open_escalations||0],["Awaiting response",s.awaiting_response||0],["Overdue response",s.overdue_response||0],["Responded / open",s.responded_open||0],["Resolved",s.resolved_escalations||0]];
+ $("escalationMetrics").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("escalationMetrics").appendChild(box)});
+ table($("escalations"),["Level","Workflow","Reason","Recipient","Response deadline","Response","Status","Resolution / Action"],records.data||[],(tr,r)=>{
+  cell(tr,r.escalation_level);cell(tr,r.instance_id);cell(tr,r.reason);cell(tr,r.escalated_to_department||(r.escalated_to_user_id===currentUserId?"You (named recipient)":r.escalated_to_user_id||"—"));cell(tr,date(r.response_due_at));cell(tr,r.response_note?date(r.response_at)+" — "+r.response_note:"Awaiting response");cell(tr,r.status);
+  const td=cell(tr,r.resolution_notes||"");
+  if(r.status==="open"&&r.escalated_to_user_id===currentUserId&&!r.response_at){const b=document.createElement("button");b.type="button";b.textContent="Submit Response";b.addEventListener("click",()=>openAction("respond_escalation",r.id,"Respond to formal escalation","Enter your response. Your response will be recorded without resolving or reassigning the escalation."));td.appendChild(document.createElement("br"));td.appendChild(b)}
+  if(r.status==="open"&&currentRole==="super_admin"){const b=document.createElement("button");b.type="button";b.textContent="Resolve";b.addEventListener("click",()=>openAction("resolve_escalation",r.id,"Resolve escalation","Enter mandatory resolution notes. This action is restricted to the Super Administrator."));td.appendChild(document.createElement("br"));td.appendChild(b)}
  });
 }
 async function loadEscalationChoices(){
