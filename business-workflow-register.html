@@ -7,7 +7,7 @@
 <main>
 <section class="card"><h2 id="heading">Verifying administrator access</h2><p id="status" class="status" role="status">Please wait while your administrator session is verified.</p><div id="tools" class="toolbar hidden"><a class="link secondary" href="workflow-control-centre.html">Workflow Control Centre</a><a class="link secondary" href="admin-portal.html">Administration Portal</a><button id="refresh" type="button">Refresh Records</button></div></section>
 <section class="card hidden" id="register"><h2>Choose a business record category</h2><p class="muted">This register connects existing FrostTech records to their corresponding workflow templates. It does not create, edit, approve, pay, publish or otherwise change the source business record.</p><select id="category"><option value="">Select a category</option><option value="CUSTOMER_REQUEST">Customer Requests</option><option value="STANDARD_QUOTATION">Standard Quotations</option><option value="DIRECT_QUOTATION">Direct Quotations</option><option value="SUPPLIER_ONBOARDING">Supplier Applications</option><option value="PROCUREMENT_RECEIPT">Purchase Orders</option><option value="SUPPLIER_SETTLEMENT">Supplier Settlements</option><option value="ADVERTISING_CAMPAIGN">Advertising Campaigns</option></select><p id="workflowState" class="muted">Choose a category to view records.</p><div id="records" class="table-wrap"></div></section>
-<section class="card hidden" id="eventPanel"><h2>Automatic Business Event Intake</h2><p class="muted">New business records and status changes are captured by database triggers. Events remain queued until the matching workflow is activated and a protected processor is enabled.</p><div id="events" class="table-wrap"><p class="muted">Loading event intake…</p></div></section>
+<section class="card hidden" id="eventPanel"><h2>Automatic Business Event Intake</h2><p class="muted">New business records and status changes are captured by database triggers. Events remain queued until the matching workflow is activated and a protected processor is enabled.</p><div class="toolbar"><button id="processEvents" type="button">Process Eligible Events</button></div><p class="muted">Processing requires an authorised administrator session and an active workflow template. Draft templates remain queued.</p><div id="events" class="table-wrap"><p class="muted">Loading event intake…</p></div></section>
 </main>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script><script>
 const db=window.supabase.createClient("https://nftxptjpgidcsgtaltjn.supabase.co","sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV",{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
@@ -60,6 +60,12 @@ async function loadEventIntake(){
  const table=document.createElement("table"),head=document.createElement("thead"),row=document.createElement("tr");["Source","Entity reference","Event","Status","Received"].forEach(v=>{const th=document.createElement("th");th.textContent=v;row.appendChild(th)});head.appendChild(row);table.appendChild(head);const body=document.createElement("tbody");
  data.forEach(ev=>{const tr=document.createElement("tr");td(tr,ev.source_table);td(tr,ev.entity_reference);td(tr,ev.event_type);td(tr,ev.processing_status);td(tr,new Date(ev.received_at).toLocaleString());body.appendChild(tr)});table.appendChild(body);root.appendChild(table);
 }
+async function processEvents(){
+ const btn=$("processEvents");btn.disabled=true;btn.textContent="Processing…";
+ try{const {data,error}=await db.functions.invoke("process-workflow-events",{body:{limit:20}});if(error)throw error;const s=data?.summary||{};setStatus("Event processing completed. Started: "+(s.started||0)+"; already open: "+(s.already_open||0)+"; awaiting template activation: "+(s.awaiting_activation||0)+"; failed: "+(s.failed||0)+".","success");await loadEventIntake();}
+ catch(e){setStatus("Events were not processed: "+(e.message||"Request failed"),"error");}
+ finally{btn.disabled=false;btn.textContent="Process Eligible Events";}
+}
 async function refresh(){
  try{
   const {data:userData,error:userError}=await db.auth.getUser();if(userError||!userData.user){setStatus("Please sign in through the administrator portal first.","error");return}
@@ -72,5 +78,5 @@ async function refresh(){
   await loadEventIntake();if($("category").value)await loadCategory();
  }catch(e){setStatus(e.message||"Could not load the workflow register.","error")}
 }
-$("category").addEventListener("change",loadCategory);$("refresh").addEventListener("click",refresh);refresh();
+$("category").addEventListener("change",loadCategory);$("refresh").addEventListener("click",refresh);$("processEvents").addEventListener("click",processEvents);refresh();
 </script></body></html>
