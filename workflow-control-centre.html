@@ -97,7 +97,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <button type="submit">Record Report Distribution</button>
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<div id="reportDeliveryAudit" class="table-wrap"></div>
-<h3>Brevo Provider Events</h3><p class="muted">Provider delivery events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
+<h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
 </section>
@@ -247,7 +247,7 @@ async function loadReportDeliveryAudit(){
  const {data,error}=await db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_user_id,recipient_email,provider,delivery_status,provider_delivery_status,provider_event_at,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(100);
  if(error)throw error;
  table($("reportDeliveryAudit"),["Recipient","Provider","Submission","Provider Event","Attempted","Delivered","Failure"],data||[],(tr,r)=>{
-  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
+  cell(tr,r.recipient_email);cell(tr,r.provider);cell(tr,r.delivery_status==="sent"?"Accepted by Brevo":r.delivery_status);cell(tr,r.provider_delivery_status||"Awaiting provider event");cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"—");cell(tr,r.failure_reason||"—");
  });
 }
 async function loadReportProviderEvents(){
