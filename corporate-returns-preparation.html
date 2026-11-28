@@ -15,7 +15,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 .status{padding:11px 13px;border-radius:8px;background:#eaf3fb;color:#17466f;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.metric{padding:13px;border:1px solid var(--line);border-radius:10px;background:#f8fbfe}.metric strong{display:block;font-size:25px;color:var(--navy);margin-top:4px}.muted{color:var(--muted)}
 .table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#edf4fa;color:#173b60}.pill{display:inline-block;border-radius:20px;padding:3px 8px;background:#edf1f5;font-size:12px;font-weight:700}
 #records{min-height:70px}.note{background:#fff8e7;border-left:4px solid #e2a126;padding:12px}
-@media(max-width:600px){main{padding:12px 10px 30px}.card{padding:14px}}
+#closureConfirm[hidden]{display:none}#closureConfirm{position:fixed;inset:0;background:#071d32b8;display:flex;align-items:center;justify-content:center;padding:18px;z-index:1000}#closureConfirm .modal{background:#fff;border-radius:14px;max-width:440px;width:100%;padding:22px;box-shadow:0 18px 60px #0004}#closureConfirm h2{margin:0 0 8px;color:var(--navy)}#closureConfirm .modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}#closureConfirm button{border:0;border-radius:8px;padding:10px 15px;font-weight:700;cursor:pointer}#cancelClosure{background:#eaf1f7;color:#29465f}#confirmClosure{background:var(--blue);color:#fff}@media(max-width:600px){main{padding:12px 10px 30px}.card{padding:14px}}
 @media print{body{background:#fff}header{background:#fff!important;color:#000;border-bottom:2px solid #333;padding:12px}header p{color:#333}main{max-width:none;padding:10px}.actions,#authCard{display:none!important}.card{box-shadow:none;break-inside:avoid}table{min-width:0;font-size:10px}th,td{padding:5px}.table-wrap{overflow:visible}}
 </style>
 </head>
@@ -63,7 +63,14 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 </section>
 <div class="table-wrap" id="records"></div>
 </section>
-</main>
+<div id="closureConfirm" hidden role="dialog" aria-modal="true" aria-labelledby="closureConfirmTitle">
+<div class="modal">
+<h2 id="closureConfirmTitle">Confirm filing completion</h2>
+<p>Are you sure you want to close this accepted statutory filing as complete?</p>
+<p class="muted">FrostTech will verify acknowledgement evidence and, where a fee applies, matched payment, bank and accounting records. This action is recorded in the filing history.</p>
+<div class="modal-actions"><button type="button" id="cancelClosure">Cancel</button><button type="button" id="confirmClosure">Yes, Close Filing</button></div>
+</div>
+</div></main>
 <script>
 (function(){
 const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -115,12 +122,26 @@ function selectFiling(){
  field("closeFiling").disabled=closed;
  field("closureState").textContent=closed?"Completion closed at "+new Date(d.completion_closed_at).toLocaleString()+"; closure is permanent and audited.":(r.record_status==="accepted"?"Accepted filing: closure will recheck active acknowledgement evidence and matched payment records before locking completion.":"Filing must be marked accepted before it can be closed as complete.");
 }
+function askClosureConfirmation(){
+ const modal=field("closureConfirm");
+ modal.hidden=false;
+ return new Promise(resolve=>{
+  const finish=value=>{modal.hidden=true;field("cancelClosure").removeEventListener("click",cancel);field("confirmClosure").removeEventListener("click",yes);modal.removeEventListener("click",outside);document.removeEventListener("keydown",escape);resolve(value);};
+  const cancel=()=>finish(false),yes=()=>finish(true),outside=e=>{if(e.target===modal)finish(false);},escape=e=>{if(e.key==="Escape")finish(false);};
+  field("cancelClosure").addEventListener("click",cancel);
+  field("confirmClosure").addEventListener("click",yes);
+  modal.addEventListener("click",outside);
+  document.addEventListener("keydown",escape);
+  field("cancelClosure").focus();
+ });
+}
 async function closeFiling(){
  const id=filingSelect.value;
  if(!id){actionStatus.textContent="Select a statutory filing first.";return;}
  const note=val("filingNotes");
  if(note.length<10){actionStatus.textContent="Enter a closure note of at least 10 characters in Administrative notes.";return;}
- if(!confirm("Close this accepted statutory filing as complete? The database will verify acknowledgement evidence and payment reconciliation. This action is recorded and cannot be reversed here."))return;
+ const confirmed=await askClosureConfirmation();
+ if(!confirmed)return;
  const btn=field("closeFiling");btn.disabled=true;btn.textContent="Checking evidence…";
  actionStatus.textContent="Verifying filing, acknowledgement, payment, bank and accounting evidence…";
  try{
