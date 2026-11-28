@@ -113,6 +113,18 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
 <p class="muted">Update an existing statutory filing record. The database rechecks Super Administrator authority and validates required references and active document-vault records. This screen does not initiate payment or submit a return.</p>
+<div class="annual-evidence-section" id="submissionEvidencePanel">
+<h3>Actual submission evidence register</h3>
+<p class="muted">Use only after the filing has actually been submitted outside FrostTech. Recording requires the official reference, actual date, submission channel and a document-vault evidence UUID. This action does not contact CAC or any tax authority.</p>
+<div class="grid">
+<div class="field"><label for="actualSubmissionDate">Actual submission date</label><input id="actualSubmissionDate" type="date"></div>
+<div class="field"><label for="actualSubmissionReference">Official submission reference</label><input id="actualSubmissionReference" maxlength="160" placeholder="Reference issued by authority"></div>
+<div class="field"><label for="actualSubmissionChannel">Actual submission channel</label><input id="actualSubmissionChannel" maxlength="120" placeholder="CAC portal / tax portal / authorised professional"></div>
+<div class="field"><label for="actualSubmissionEvidence">Submission receipt / evidence document UUID</label><input id="actualSubmissionEvidence" placeholder="Existing document-vault UUID"></div>
+</div>
+<div class="actions"><button id="recordActualSubmission" type="button">Record actual submission evidence</button></div>
+<div id="actualSubmissionStatus" class="status" role="status">Select a filing marked Ready for submission.</div>
+</div>
 <div class="field"><label for="filingSelect">Select statutory filing</label><select id="filingSelect" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Select a filing record…</option></select></div>
 <form id="filingActionForm" hidden>
 <div class="grid" style="margin-top:12px">
@@ -323,6 +335,22 @@ async function closeFiling(){
   actionStatus.textContent=data?.already_closed?"This filing was already closed as complete.":"Filing successfully closed as complete. The closure event has been recorded.";
  }catch(e){actionStatus.textContent="Closure not completed: "+(e.message||"The database rejected the request.");}
  finally{btn.disabled=false;btn.textContent="Close filing as complete";}
+}
+async function recordActualStatutorySubmission(){
+ const filingId=filingSelect.value,status=field("actualSubmissionStatus"),btn=field("recordActualSubmission");
+ const selected=rows.find(x=>x.record_type==="statutory_filing"&&x.record_id===filingId);
+ if(!selected){status.textContent="Select a statutory filing first.";return;}
+ if(selected.record_status!=="ready_for_submission"){status.textContent="Only a filing marked Ready for submission can be recorded here.";return;}
+ const date=val("actualSubmissionDate"),reference=val("actualSubmissionReference").trim(),channel=val("actualSubmissionChannel").trim(),documentId=val("actualSubmissionEvidence").trim();
+ if(!date||!reference||!channel||!documentId){status.textContent="Complete the actual date, official reference, submission channel and evidence document UUID.";return;}
+ btn.disabled=true;status.textContent="Verifying Super Administrator authority and filing prerequisites…";
+ try{
+  const {data,error}=await db.rpc("ft_record_statutory_filing_submission",{p_filing_id:filingId,p_filing_reference:reference,p_submitted_on:date,p_submission_channel:channel,p_submission_evidence_document_id:documentId});
+  if(error)throw error;
+  status.textContent="Actual submission evidence recorded. Event: "+data.submission_event_id+". FrostTech did not contact the regulator.";
+  await load();filingSelect.value=filingId;await selectFiling();
+ }catch(e){status.textContent="Submission evidence not recorded: "+(e.message||"Database validation failed.");}
+ finally{btn.disabled=false;}
 }
 async function saveFiling(event){
  event.preventDefault();
@@ -655,6 +683,7 @@ field("approveAnnualReview").addEventListener("click",approveAnnualReview);
 field("createAnnualReview").addEventListener("click",()=>setTimeout(loadAnnualBoardApprovalOptions,0));
 field("printAnnualPack").addEventListener("click",()=>{if(!field("annualReviewSelect").value){field("annualPackStatus").textContent="Select an annual pack before printing.";return;}document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 filingForm.addEventListener("submit",saveFiling);
+field("recordActualSubmission").addEventListener("click",recordActualStatutorySubmission);
 field("saveComplianceLinks").addEventListener("click",saveComplianceLinks);
 field("closeFiling").addEventListener("click",closeFiling);
 field("saveReconciliation").addEventListener("click",saveReconciliation);
