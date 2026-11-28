@@ -99,6 +99,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
+<h3>Consolidated Exception Command Panel</h3><p class="muted">Single Super Administrator workspace combining delivery exceptions, notification acknowledgements and escalation actions. Actions remain separately audited; acknowledging an alert never resolves its exception.</p><div id="exceptionCommandMetrics" class="metrics"></div><div id="exceptionCommandPanel" class="table-wrap"></div>
 <h3>Escalation History</h3><p class="muted">Unacknowledged exceptions are escalated automatically after 24, 48 and 72 hours. Escalation notices are separate from the original alert. Acknowledging an escalation does not close the underlying exception.</p><div id="reportExceptionEscalations" class="table-wrap"></div>
 <h3>Delivery Exception Register</h3><p class="muted">Exceptions are opened automatically when report email submissions fail or Brevo reports bounced, blocked, invalid-recipient, spam or unmatched events. Super Administrator can investigate, add follow-up notes and resolve each exception with a mandatory resolution note. Archived reports are never edited or deleted.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
@@ -350,6 +351,41 @@ async function submitExceptionModal(){
  finally{$("exceptionModalSave").disabled=false}
 }
 async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
+async function loadExceptionCommandPanel(){
+ const [exceptionsResult,notificationsResult,escalationsResult]=await Promise.all([
+  db.from("ft_management_report_delivery_exceptions").select("id,exception_type,exception_status,exception_summary,created_at,resolution_note").order("created_at",{ascending:false}).limit(250),
+  db.from("ft_management_report_exception_notifications").select("id,exception_id,notification_title,notification_message,created_at,acknowledged_at").order("created_at",{ascending:false}).limit(250),
+  db.from("ft_management_report_exception_escalations").select("id,exception_id,escalation_level,escalation_reason,created_at,acknowledged_at").order("created_at",{ascending:false}).limit(250)
+ ]);
+ if(exceptionsResult.error)throw exceptionsResult.error;
+ if(notificationsResult.error)throw notificationsResult.error;
+ if(escalationsResult.error)throw escalationsResult.error;
+ const exceptions=exceptionsResult.data||[],notifications=notificationsResult.data||[],escalations=escalationsResult.data||[];
+ const open=exceptions.filter(x=>["open","investigating"].includes(x.exception_status)).length;
+ const pendingAlerts=notifications.filter(x=>!x.acknowledged_at).length;
+ const pendingEscalations=escalations.filter(x=>!x.acknowledged_at).length;
+ const metrics=[["Open exceptions",open],["Investigating",exceptions.filter(x=>x.exception_status==="investigating").length],["Unacknowledged alerts",pendingAlerts],["Unacknowledged escalations",pendingEscalations],["Resolved exceptions",exceptions.filter(x=>x.exception_status==="resolved").length]];
+ const metricBox=$("exceptionCommandMetrics");metricBox.replaceChildren();
+ metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=String(value);box.append(span,strong);metricBox.appendChild(box)});
+ const rows=[
+  ...exceptions.map(x=>({kind:"Exception",id:x.id,exceptionId:x.id,summary:x.exception_type+" — "+x.exception_summary,status:x.exception_status,created_at:x.created_at,detail:x.resolution_note||"No resolution recorded"})),
+  ...notifications.map(x=>({kind:"Notification",id:x.id,exceptionId:x.exception_id,summary:x.notification_title+" — "+x.notification_message,status:x.acknowledged_at?"Acknowledged":"Awaiting acknowledgement",created_at:x.created_at,detail:x.acknowledged_at?"Acknowledged "+date(x.acknowledged_at):"Action required"})),
+  ...escalations.map(x=>({kind:"Escalation L"+x.escalation_level,id:x.id,exceptionId:x.exception_id,summary:x.escalation_reason,status:x.acknowledged_at?"Acknowledged":"Awaiting acknowledgement",created_at:x.created_at,detail:x.acknowledged_at?"Acknowledged "+date(x.acknowledged_at):"Action required"}))
+ ].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
+ table($("exceptionCommandPanel"),["Record","Exception Reference","Details","Status","Recorded","Action"],rows,(tr,r)=>{
+  cell(tr,r.kind);cell(tr,r.exceptionId||"—");cell(tr,r.summary);cell(tr,r.status);cell(tr,date(r.created_at));
+  const td=cell(tr,r.detail);
+  if(r.kind==="Exception"&&["open","investigating"].includes(r.status)){
+   const wrap=document.createElement("div");wrap.className="actions";
+   if(r.status==="open"){const b=document.createElement("button");b.type="button";b.className="secondary";b.textContent="Investigate";b.addEventListener("click",async()=>{await updateReportDeliveryException(r.id,"investigating");await loadExceptionCommandPanel()});wrap.appendChild(b)}
+   const resolve=document.createElement("button");resolve.type="button";resolve.textContent="Resolve";resolve.addEventListener("click",()=>resolveReportDeliveryException(r.id));wrap.appendChild(resolve);td.appendChild(document.createElement("br"));td.appendChild(wrap);
+  }else if(r.kind==="Notification"&&r.status==="Awaiting acknowledgement"){
+   const b=document.createElement("button");b.type="button";b.textContent="Acknowledge alert";b.addEventListener("click",async()=>{b.disabled=true;const {error}=await db.from("ft_management_report_exception_notifications").update({acknowledged_at:new Date().toISOString(),acknowledged_by:currentUserId}).eq("id",r.id).is("acknowledged_at",null);if(error){setStatus("Alert acknowledgement failed: "+error.message,"error");b.disabled=false;return}setStatus("Alert acknowledged; exception remains open.","success");await loadExceptionCommandPanel();await loadReportExceptionNotifications()});td.appendChild(b);
+  }else if(r.kind.startsWith("Escalation")&&r.status==="Awaiting acknowledgement"){
+   const b=document.createElement("button");b.type="button";b.textContent="Acknowledge escalation";b.addEventListener("click",async()=>{b.disabled=true;const {error}=await db.from("ft_management_report_exception_escalations").update({acknowledged_at:new Date().toISOString(),acknowledged_by:currentUserId}).eq("id",r.id).is("acknowledged_at",null);if(error){setStatus("Escalation acknowledgement failed: "+error.message,"error");b.disabled=false;return}setStatus("Escalation acknowledged; exception remains open.","success");await loadExceptionCommandPanel();await loadReportExceptionEscalations()});td.appendChild(b);
+  }
+ });
+}
 async function loadReportExceptionNotifications(){
  const {data,error}=await db.from("ft_management_report_exception_notifications")
   .select("id,exception_id,notification_title,notification_message,created_at,acknowledged_at")
@@ -670,7 +706,7 @@ async function loadRecipientReports(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
