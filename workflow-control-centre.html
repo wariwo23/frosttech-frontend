@@ -98,7 +98,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
-<h3>Delivery Exception Register</h3><p class="muted">Super Administrator follow-up register for failed submissions, bounced or blocked recipients, spam complaints and unmatched provider events. Closing an exception requires a resolution note. This register never edits or deletes an archived report.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
+<h3>Delivery Exception Register</h3><p class="muted">Exceptions are opened automatically when report email submissions fail or Brevo reports bounced, blocked, invalid-recipient, spam or unmatched events. Super Administrator can investigate, add follow-up notes and resolve each exception with a mandatory resolution note. Archived reports are never edited or deleted.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
 </section>
