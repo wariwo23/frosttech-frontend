@@ -93,6 +93,13 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </div><button type="submit">Submit for Super Admin Review</button></form>
 <div id="complianceSubmissionStatus" class="muted" aria-live="polite"></div>
 <h3>Completion Submissions and Review</h3><div id="complianceSubmissionRegister" class="table-wrap"></div>
+<section id="documentRetentionWorkspace" class="subpanel">
+<h3>Document Retention, Legal Holds and Disposal</h3>
+<p class="muted">Retention expiry never deletes documents automatically. Disposal requires an expired retention date, no legal hold, two distinct Super Administrator approvals, and a separate execution step.</p>
+<div id="documentRetentionRegister" class="table-wrap"></div>
+<h4>Disposal Requests and Approvals</h4><div id="documentDisposalRegister" class="table-wrap"></div>
+<div id="documentRetentionStatus" class="muted" aria-live="polite"></div>
+</section>
 </section>
 <section id="reportingCard" class="card hidden">
 <h2>Management Reporting Periods and Official Reports</h2>
@@ -1129,7 +1136,7 @@ async function loadComplianceCalendar(){
   if(currentRole==="super_admin"&&r.status==="pending_review"){
    const note=document.createElement("input");note.placeholder="Review note (required for rejection / resubmission)";
    const actions=document.createElement("div");actions.className="actions";
-   ["approved","rejected","resubmission_required"].forEach(decision=>{const b=document.createElement("button");b.type="button";b.textContent=decision.replaceAll("_"," ");b.addEventListener("click",async()=>{b.disabled=true;const {data,error}=await db.rpc("ft_review_compliance_completion_submission",{p_submission_id:r.id,p_decision:decision,p_note:note.value||null});if(error){setStatus("Review failed: "+error.message,"error");b.disabled=false;return}setStatus("Completion submission "+decision.replaceAll("_"," ")+".","success");await Promise.all([loadComplianceCalendar(),loadComplianceSubmissions()])});actions.appendChild(b)});
+   ["approved","rejected","resubmission_required"].forEach(decision=>{const b=document.createElement("button");b.type="button";b.textContent=decision.replaceAll("_"," ");b.addEventListener("click",async()=>{b.disabled=true;const {data,error}=await db.rpc("ft_review_compliance_completion_submission",{p_submission_id:r.id,p_decision:decision,p_note:note.value||null});if(error){setStatus("Review failed: "+error.message,"error");b.disabled=false;return}setStatus("Completion submission "+decision.replaceAll("_"," ")+".","success");await Promise.all([loadComplianceCalendar(),loadComplianceSubmissions(),loadDocumentRetentionWorkspace()])});actions.appendChild(b)});
    td.append(note,actions);
   }else{td.textContent=(r.review_note||"Awaiting review")+" · "+(r.reviewed_at?date(r.reviewed_at):"");}
   tr.appendChild(td);
@@ -1156,6 +1163,69 @@ async function submitComplianceCompletion(e){
  $("complianceCompletionForm").reset();
  $("complianceSubmissionStatus").textContent="Evidence securely uploaded and submitted for Super Administrator review. Submission: "+data.submission_id+" · Document: "+data.document_reference;
  await loadComplianceSubmissions();
+}
+async function loadDocumentRetentionWorkspace(){
+ if(currentRole!=="super_admin"){$("documentRetentionWorkspace").classList.add("hidden");return}
+ $("documentRetentionWorkspace").classList.remove("hidden");
+ const [docs,requests]=await Promise.all([
+  db.from("ft_document_records").select("id,document_ref,title,related_entity_type,related_entity_id,record_status,retention_until,legal_hold,legal_hold_reason,disposed_at").like("related_entity_type","compliance_%").order("retention_until",{ascending:true}).limit(500),
+  db.from("ft_document_disposal_requests").select("id,request_ref,document_id,requested_by,requested_at,reason,status,first_approved_by,first_approved_at,second_approved_by,second_approved_at,completed_by,completed_at,completion_note").order("requested_at",{ascending:false}).limit(300)
+ ]);
+ if(docs.error)throw docs.error;if(requests.error)throw requests.error;
+ const versions=docs.data?.length?await db.from("ft_document_versions").select("id,document_id,bucket_id,object_path,version_number").in("document_id",docs.data.map(d=>d.id)): {data:[],error:null};
+ if(versions.error)throw versions.error;
+ const versionMap={};(versions.data||[]).forEach(v=>(versionMap[v.document_id]??=[]).push(v));
+ const register=$("documentRetentionRegister");register.replaceChildren();
+ const tableEl=document.createElement("table"),head=document.createElement("thead"),hr=document.createElement("tr");
+ ["Document","Retention","Legal hold","Controls"].forEach(x=>{const th=document.createElement("th");th.textContent=x;hr.appendChild(th)});head.appendChild(hr);tableEl.appendChild(head);
+ const body=document.createElement("tbody");
+ (docs.data||[]).forEach(d=>{
+  const tr=document.createElement("tr"),title=document.createElement("td");title.textContent=d.document_ref+" · "+d.title+" · "+d.record_status;tr.appendChild(title);
+  const retention=document.createElement("td");retention.textContent=d.retention_until||"No expiry set";const dateInput=document.createElement("input");dateInput.type="date";dateInput.value=d.retention_until||"";const reason=document.createElement("input");reason.placeholder="Retention reason (5+ characters)";
+  const setDate=document.createElement("button");setDate.type="button";setDate.textContent="Set retention";setDate.addEventListener("click",async()=>{const {error}=await db.rpc("ft_set_document_retention",{p_document_id:d.id,p_retention_until:dateInput.value,p_note:reason.value.trim()});if(error){setStatus("Retention update failed: "+error.message,"error");return}setStatus("Retention date recorded.","success");await loadDocumentRetentionWorkspace()});retention.append(dateInput,reason,setDate);tr.appendChild(retention);
+  const hold=document.createElement("td");hold.textContent=d.legal_hold?"ON · "+(d.legal_hold_reason||""): "Off";
+  const holdReason=document.createElement("input");holdReason.placeholder="Legal hold reason (10+ characters)";
+  const holdBtn=document.createElement("button");holdBtn.type="button";holdBtn.textContent=d.legal_hold?"Release hold":"Place legal hold";holdBtn.addEventListener("click",async()=>{const note=holdReason.value.trim();if(note.length<10){setStatus("Enter a legal-hold reason of at least 10 characters.","error");return}const {error}=await db.rpc("ft_set_document_legal_hold",{p_document_id:d.id,p_place_hold:!d.legal_hold,p_reason:note});if(error){setStatus("Legal hold update failed: "+error.message,"error");return}setStatus(d.legal_hold?"Legal hold released.":"Legal hold placed.","success");await loadDocumentRetentionWorkspace()});hold.append(holdReason,holdBtn);tr.appendChild(hold);
+  const controls=document.createElement("td");
+  const due=d.retention_until&&d.retention_until<=new Date().toISOString().slice(0,10);
+  if(d.record_status==="active"&&due&&!d.legal_hold){
+   const why=document.createElement("input");why.placeholder="Disposal reason (10+ characters)";
+   const request=document.createElement("button");request.type="button";request.textContent="Request disposal";request.addEventListener("click",async()=>{if(why.value.trim().length<10){setStatus("Enter a disposal reason of at least 10 characters.","error");return}const {data,error}=await db.rpc("ft_request_document_disposal",{p_document_id:d.id,p_reason:why.value.trim()});if(error){setStatus("Disposal request failed: "+error.message,"error");return}setStatus("Disposal request created: "+data.request_ref,"success");await loadDocumentRetentionWorkspace()});controls.append(why,request);
+  }else{const status=document.createElement("span");status.textContent=d.legal_hold?"Disposal blocked by legal hold":d.record_status!=="active"?"Document is "+d.record_status:d.retention_until?"Retention not yet expired":"Set a retention expiry date first";controls.appendChild(status)}
+  tr.appendChild(controls);body.appendChild(tr);
+ });
+ tableEl.appendChild(body);register.replaceChildren(tableEl);
+ const reqBox=$("documentDisposalRegister");reqBox.replaceChildren();const reqTable=document.createElement("table"),rh=document.createElement("thead"),rhr=document.createElement("tr");
+ ["Request","Reason / status","Approvals","Action"].forEach(x=>{const th=document.createElement("th");th.textContent=x;rhr.appendChild(th)});rh.appendChild(rhr);reqTable.appendChild(rh);const rb=document.createElement("tbody");
+ (requests.data||[]).forEach(r=>{
+  const tr=document.createElement("tr"),ref=document.createElement("td");ref.textContent=r.request_ref+" · "+date(r.requested_at);tr.appendChild(ref);
+  const state=document.createElement("td");state.textContent=r.reason+" · "+r.status;tr.appendChild(state);
+  const approvals=document.createElement("td");approvals.textContent="Requested by "+r.requested_by+" · First: "+(r.first_approved_by||"pending")+" · Second: "+(r.second_approved_by||"pending");tr.appendChild(approvals);
+  const action=document.createElement("td");
+  if(r.status==="pending_first_approval"||r.status==="pending_second_approval"){
+   const note=document.createElement("input");note.placeholder="Approval note (5+ characters)";
+   const approve=document.createElement("button");approve.type="button";approve.textContent=r.status==="pending_first_approval"?"First approval":"Second approval";
+   approve.addEventListener("click",async()=>{if(note.value.trim().length<5){setStatus("Enter an approval note of at least five characters.","error");return}const {error}=await db.rpc("ft_approve_document_disposal",{p_request_id:r.id,p_note:note.value.trim()});if(error){setStatus("Disposal approval failed: "+error.message,"error");return}setStatus("Disposal approval recorded.","success");await loadDocumentRetentionWorkspace()});action.append(note,approve);
+  }else if(r.status==="approved_for_disposal"){
+   const note=document.createElement("input");note.placeholder="Execution note (5+ characters)";
+   const confirm=document.createElement("input");confirm.placeholder="Type "+r.request_ref+" to confirm irreversible disposal";
+   const execute=document.createElement("button");execute.type="button";execute.textContent="Remove stored files and finalise";execute.addEventListener("click",async()=>{
+    if(confirm.value.trim()!==r.request_ref){setStatus("Exact disposal reference confirmation is required.","error");return}
+    if(note.value.trim().length<5){setStatus("Enter an execution note.","error");return}
+    execute.disabled=true;
+    try{
+     const {data:vs,error:ve}=await db.from("ft_document_versions").select("bucket_id,object_path").eq("document_id",r.document_id);
+     if(ve)throw ve;
+     const groups={};(vs||[]).forEach(v=>(groups[v.bucket_id]??=[]).push(v.object_path));
+     for(const [bucket,paths] of Object.entries(groups)){const {error}=await db.storage.from(bucket).remove(paths);if(error)throw error}
+     const {error:finalError}=await db.rpc("ft_finalize_document_disposal",{p_request_id:r.id,p_completion_note:note.value.trim()});if(finalError)throw finalError;
+     setStatus("Document files removed and disposal permanently recorded.","success");await loadDocumentRetentionWorkspace();
+    }catch(err){setStatus("Disposal could not be completed: "+err.message+". Existing register retained for administrator reconciliation.","error");execute.disabled=false}
+   });action.append(note,confirm,execute);
+  }else{action.textContent=r.completed_at?"Completed "+date(r.completed_at):r.status}
+  tr.appendChild(action);rb.appendChild(tr);
+ });
+ reqTable.appendChild(rb);reqBox.appendChild(reqTable);
 }
 window.__ftComplianceCalendarExport=rows;
  const {data:reminders,error:reminderError}=await db.from("ft_compliance_calendar_reminder_log").select("source_type,source_id,due_date,reminder_stage,recipient_user_id,created_at,notification_id").order("created_at",{ascending:false}).limit(300);
