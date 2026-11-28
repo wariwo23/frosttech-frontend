@@ -111,7 +111,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="statReconFiling">Statutory filing</label><select id="statReconFiling"><option value="">Select filing</option></select></div>
 <div class="field"><label for="statReconFee">Actual filing fee (₦)</label><input id="statReconFee" type="number" min="0.01" step="0.01" required></div>
 <div class="field"><label for="statReconExpense">Approved / paid expense</label><select id="statReconExpense"><option value="">Select expense</option></select></div>
-<div class="field"><label for="statReconExecution">Confirmed treasury payment execution (optional for legacy reconciliation)</label><select id="statReconExecution"><option value="">No linked execution</option></select></div>
+<div class="field"><label for="statReconExecution">Confirmed treasury payment execution (required for new reconciliations)</label><select id="statReconExecution"><option value="">No linked execution</option></select></div>
 <div class="field"><label for="statReconBank">Bank debit (optional until available)</label><select id="statReconBank"><option value="">Not yet matched</option></select></div>
 <div class="field"><label for="statReconPaymentRef">Payment reference</label><input id="statReconPaymentRef" placeholder="Bank / authority payment reference"></div>
 <div class="field"><label for="statReconReceipt">Active Document Vault receipt UUID</label><input id="statReconReceipt" placeholder="Receipt document record UUID"></div>
@@ -1228,7 +1228,7 @@ async function loadStatutoryPaymentReconciliation(){
 }
 async function saveStatutoryPaymentReconciliation(){
  const filing=$("statReconFiling").value,fee=Number($("statReconFee").value),expense=$("statReconExpense").value;
- if(!filing||!expense||!Number.isFinite(fee)||fee<=0){setStatus("Select a filing and approved/paid expense, and enter the actual fee.","error");return}
+ if(!filing||!expense||!$("statReconExecution").value||!Number.isFinite(fee)||fee<=0){setStatus("Select a filing, approved/paid expense, confirmed treasury execution and actual fee.","error");return}
  const {data,error}=await db.rpc("ft_save_statutory_payment_reconciliation_v2",{p_filing_id:filing,p_filing_fee:fee,p_expense_id:expense,p_bank_transaction_id:$("statReconBank").value||null,p_payment_reference:$("statReconPaymentRef").value.trim()||null,p_receipt_document_id:$("statReconReceipt").value.trim()||null,p_variance_note:$("statReconVariance").value.trim()||null,p_payment_execution_id:$("statReconExecution").value||null});
  if(error){setStatus("Payment reconciliation failed: "+error.message,"error");return}
  setStatus("Payment reconciliation saved: "+data.status.replaceAll("_"," ")+".","success");$("statReconVariance").value="";await loadStatutoryFilingRegister();await loadStatutoryPaymentReconciliation();
