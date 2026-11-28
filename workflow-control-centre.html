@@ -1236,12 +1236,13 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders]=await Promise.all([
-  db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,created_at").order("due_date",{ascending:true}).limit(500),
+ const [filings,events,reminders,calendarItems]=await Promise.all([
+  db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
-  db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300)
+  db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
+  db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").in("status",["scheduled","in_progress","deferred"]).order("due_date",{ascending:true}).limit(500)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;
  const rows=filings.data||[];
  const todayIso=new Date().toISOString().slice(0,10);
  const openRows=rows.filter(r=>!["accepted","not_applicable","cancelled"].includes(r.status));
@@ -1275,7 +1276,22 @@ async function loadStatutoryFilingRegister(){
    if(error){setStatus("Statutory filing update failed: "+error.message,"error");save.disabled=false;return}
    setStatus("Statutory filing and evidence references saved.","success");await loadStatutoryFilingRegister();
   });
-  evidence.appendChild(save);tr.appendChild(evidence);
+  evidence.appendChild(save);
+  const closureLabel=document.createElement("div");closureLabel.textContent=r.completion_closed_at?"Completion closed: "+date(r.completion_closed_at):"Completion closure";
+  const calendarSelect=document.createElement("select");const noCalendar=document.createElement("option");noCalendar.value="";noCalendar.textContent="No calendar item";calendarSelect.appendChild(noCalendar);
+  (calendarItems.data||[]).forEach(item=>{const opt=document.createElement("option");opt.value=item.id;opt.textContent=item.calendar_ref+" · "+item.title+" · due "+date(item.due_date);calendarSelect.appendChild(opt)});
+  calendarSelect.value=r.compliance_calendar_item_id||"";
+  calendarSelect.disabled=!!r.completion_closed_at;
+  const closeButton=document.createElement("button");closeButton.type="button";closeButton.textContent=r.completion_closed_at?"Closed":"Verify and close filing";closeButton.disabled=!!r.completion_closed_at;
+  closeButton.addEventListener("click",async()=>{
+   if(status.value!=="accepted"){setStatus("Only an accepted filing can be closed.","error");return}
+   if(!confirm("Close this statutory filing after checking payment, accounting and acknowledgement evidence?"))return;
+   closeButton.disabled=true;
+   const {data,error}=await db.rpc("ft_close_statutory_filing_completion",{p_filing_id:r.id,p_calendar_item_id:calendarSelect.value||null});
+   if(error){setStatus("Filing closure blocked: "+error.message,"error");closeButton.disabled=false;return}
+   setStatus("Statutory filing completion closed. Accounting and compliance evidence linked.","success");await loadStatutoryFilingRegister();await loadComplianceCalendar();
+  });
+  evidence.append(closureLabel,calendarSelect,closeButton);tr.appendChild(evidence);
  });
  const auditRows=events.data||[];
  table($("statutoryFilingAudit"),["Recorded","Filing","Event","Actor","Details"],auditRows,(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.event_snapshot?.filing_type||e.filing_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"System");cell(tr,e.event_note||"—")});
