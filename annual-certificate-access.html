@@ -23,38 +23,47 @@ button{margin-top:18px;background:var(--blue);color:#fff;border:0;border-radius:
 <p class="muted">This page redeems a one-time access token issued by FrostTech's Super Administrator for an authorized recipient.</p>
 <label for="accessToken">One-time access token</label><input id="accessToken" autocomplete="one-time-code" spellcheck="false" placeholder="Paste the access token">
 <label for="recipientEmail">Authorized recipient email</label><input id="recipientEmail" type="email" autocomplete="email" placeholder="name@example.com">
-<button id="redeem" type="button">Verify and access documents</button>
-<div id="status" class="status" role="status">Access tokens expire after 15 minutes, can be redeemed once, and are invalidated by revoked or expired distribution authorizations.</div>
+<button id="requestCode" type="button">Email me a verification code</button><div id="otpPanel" hidden><label for="emailCode">Six-digit email verification code</label><input id="emailCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="000000"><button id="redeem" type="button">Verify code and access documents</button></div>
+<div id="status" class="status" role="status">Access tokens expire after 15 minutes. A six-digit code must be verified from the authorized email inbox before documents can be accessed.</div>
 <div id="result"></div>
 <div class="warning"><strong>Privacy notice:</strong> Entering the authorized email address matches the distribution record but does not independently verify ownership of that mailbox. Do not use a shared or public device. Temporary document links expire after 10 minutes.</div>
 </section></main>
 <footer>FrostTech · Confidential corporate records</footer>
 <script>
 (function(){
- const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+ const API="https://nftxptjpgidcsgtaltjn.supabase.co/functions/v1/annual-certificate-access";
  const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
  const status=document.getElementById("status"),result=document.getElementById("result");
+ let challengeId=null;
  const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
- document.getElementById("redeem").addEventListener("click",async()=>{
-  const token=document.getElementById("accessToken").value.trim();
-  const email=document.getElementById("recipientEmail").value.trim().toLowerCase();
-  result.innerHTML="";
-  if(!token||!email||!email.includes("@")){status.textContent="Enter the access token and authorized recipient email.";return;}
-  status.textContent="Verifying token and authorization…";
+ const values=()=>({access_token:document.getElementById("accessToken").value.trim(),recipient_email:document.getElementById("recipientEmail").value.trim().toLowerCase()});
+ async function call(body){
+  const r=await fetch(API,{method:"POST",headers:{"Content-Type":"application/json","apikey":KEY},body:JSON.stringify(body)});
+  const d=await r.json();if(!r.ok)throw new Error(d.error||"Request failed.");return d;
+ }
+ document.getElementById("requestCode").addEventListener("click",async()=>{
+  const v=values();result.innerHTML="";
+  if(!v.access_token||!v.recipient_email||!v.recipient_email.includes("@")){status.textContent="Enter the access token and authorized recipient email.";return;}
+  status.textContent="Requesting email verification code…";
   try{
-   const response=await fetch(SUPABASE_URL+"/functions/v1/annual-certificate-access",{
-    method:"POST",headers:{"Content-Type":"application/json","apikey":KEY},
-    body:JSON.stringify({access_token:token,recipient_email:email})
-   });
-   const data=await response.json();
-   if(!response.ok)throw new Error(data.error||"Access denied.");
-   status.textContent="One-time token redeemed. Certificate "+data.certificate_reference+" · reporting year "+data.reporting_year+" · version "+data.version_number+".";
-   const files=Array.isArray(data.files)?data.files:[];
-   result.innerHTML=(files.length?files.map(f=>'<div class="file"><strong>'+esc(f.title||f.document_ref)+'</strong><p class="muted">'+esc(f.document_ref)+'</p><a href="'+esc(f.download_url)+'" target="_blank" rel="noopener noreferrer">Open temporary document link</a><p class="muted">Expires in 10 minutes.</p></div>').join(""):"<p>No linked supporting documents were found for this certificate.</p>")+'<p class="muted">'+esc(data.notice||"")+'</p>';
-   document.getElementById("accessToken").value="";
-   document.getElementById("redeem").disabled=true;
-   document.getElementById("redeem").textContent="Token already redeemed";
-  }catch(e){status.textContent=e.message||"Access could not be completed.";}
+   const d=await call({...v,action:"request_code"});challengeId=d.challenge_id;
+   document.getElementById("otpPanel").hidden=false;
+   document.getElementById("requestCode").disabled=true;
+   status.textContent="A verification code has been sent to the authorized email address. It expires at "+new Date(d.expires_at).toLocaleString()+".";
+  }catch(e){status.textContent=e.message||"Could not send verification code.";}
+ });
+ document.getElementById("redeem").addEventListener("click",async()=>{
+  const v=values(),code=document.getElementById("emailCode").value.trim();
+  if(!challengeId||!/^[0-9]{6}$/.test(code)){status.textContent="Request a code and enter the six digits received by email.";return;}
+  status.textContent="Verifying email code and redeeming one-time access token…";
+  try{
+   const d=await call({...v,action:"verify_code",challenge_id:challengeId,code});
+   status.textContent="Email ownership verified. Certificate "+d.certificate_reference+" · reporting year "+d.reporting_year+" · version "+d.version_number+".";
+   const files=Array.isArray(d.files)?d.files:[];
+   result.innerHTML=(files.length?files.map(f=>'<div class="file"><strong>'+esc(f.title||f.document_ref)+'</strong><p class="muted">'+esc(f.document_ref)+'</p><a href="'+esc(f.download_url)+'" target="_blank" rel="noopener noreferrer">Open temporary document link</a><p class="muted">Expires in 10 minutes.</p></div>').join(""):"<p>No linked supporting documents were found for this certificate.</p>")+'<p class="muted">Your one-time token has been consumed. Document links expire after 10 minutes.</p>';
+   document.getElementById("accessToken").value="";document.getElementById("emailCode").value="";
+   document.getElementById("requestCode").disabled=true;document.getElementById("redeem").disabled=true;document.getElementById("redeem").textContent="Access completed";
+  }catch(e){status.textContent=e.message||"Email verification failed.";}
  });
 })();
 </script>
