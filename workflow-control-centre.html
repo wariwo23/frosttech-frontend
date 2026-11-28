@@ -81,7 +81,21 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="approvalNote">Approval note</label><textarea id="approvalNote" required maxlength="2000" rows="3" placeholder="Record the management approval decision"></textarea></div>
 <button type="submit">Approve Official Report Snapshot</button>
 </form>
-<div id="approvedReports" class="table-wrap"></div>
+<div id="approvedReports" class="table-wrap"></div>\n<hr>
+<h3>Official Report Archive and Distribution</h3>
+<p class="muted">Approved report snapshots are archived automatically and cannot be edited. Distribution entries record internal filing or an email handoff; email delivery is not enabled by this register.</p>
+<div id="reportArchive" class="table-wrap"></div>
+<form id="reportDistributionForm">
+<div class="form-grid">
+<div class="field"><label for="distributionArchive">Archived report</label><select id="distributionArchive" required><option value="">Select an archived report</option></select></div>
+<div class="field"><label for="distributionRecipient">Recipient account UUID</label><input id="distributionRecipient" required placeholder="Authorised FrostTech user UUID"></div>
+<div class="field"><label for="distributionChannel">Distribution record type</label><select id="distributionChannel" required><option value="internal_record">Internal filing</option><option value="email_pending">Email handoff pending</option></select></div>
+</div>
+<div class="field"><label for="distributionNote">Distribution note</label><textarea id="distributionNote" rows="2" maxlength="1000"></textarea></div>
+<button type="submit">Record Report Distribution</button>
+</form>
+<div id="distributionLog" class="table-wrap"></div>
+
 </section>
 <section id="definitionsCard" class="card hidden">
 <h2>Workflow Templates</h2>
