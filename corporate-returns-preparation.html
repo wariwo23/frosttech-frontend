@@ -38,6 +38,27 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="statusReport" class="status" role="status">Loading records…</div>
 <div class="grid" id="metrics"></div>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
+<section class="card" id="filingActionCard">
+<h2>Super Administrator filing action centre</h2>
+<p class="muted">Update an existing statutory filing record. The database rechecks Super Administrator authority and validates required references and active document-vault records. This screen does not initiate payment or submit a return.</p>
+<div class="field"><label for="filingSelect">Select statutory filing</label><select id="filingSelect" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Select a filing record…</option></select></div>
+<form id="filingActionForm" hidden>
+<div class="grid" style="margin-top:12px">
+<div class="field"><label for="filingStatus">Filing status</label><select id="filingStatus" required style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="not_started">Not started</option><option value="preparing">Preparing</option><option value="ready_for_submission">Ready for submission</option><option value="submitted">Submitted</option><option value="accepted">Accepted</option><option value="rejected">Rejected</option><option value="overdue">Overdue</option><option value="not_applicable">Not applicable</option></select></div>
+<div class="field"><label for="filedDate">Filing / submission date</label><input id="filedDate" type="date" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="filingReference">Official filing reference</label><input id="filingReference" maxlength="160" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="ackReference">Acknowledgement reference</label><input id="ackReference" maxlength="160" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="paymentReference">Payment reference (record only)</label><input id="paymentReference" maxlength="160" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="submissionChannel">Submission channel</label><input id="submissionChannel" maxlength="120" placeholder="e.g. CAC portal / authorised professional" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="ackDocument">Acknowledgement document ID (vault UUID)</label><input id="ackDocument" inputmode="text" placeholder="Document vault record UUID" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="supportDocument">Supporting document ID (vault UUID)</label><input id="supportDocument" inputmode="text" placeholder="Document vault record UUID" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="receiptDocument">Payment receipt document ID (vault UUID)</label><input id="receiptDocument" inputmode="text" placeholder="Document vault record UUID" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+</div>
+<div class="field" style="margin-top:12px"><label for="filingNotes">Administrative notes</label><textarea id="filingNotes" rows="3" maxlength="4000" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea></div>
+<div class="actions"><button id="saveFiling" type="submit">Save filing record</button></div>
+<div id="filingActionStatus" class="status" role="status">Select a filing record to begin.</div>
+</form>
+</section>
 <div class="table-wrap" id="records"></div>
 </section>
 </main>
@@ -59,11 +80,79 @@ function csv(){
  const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
  const csvUrl=window.URL.createObjectURL(blob),a=document.createElement("a");a.href=csvUrl;a.download="frosttech-corporate-returns-preparation.csv";a.click();window.URL.revokeObjectURL(csvUrl);
 }
+const filingSelect=document.getElementById("filingSelect");
+const filingForm=document.getElementById("filingActionForm");
+const actionStatus=document.getElementById("filingActionStatus");
+const field=id=>document.getElementById(id);
+const val=id=>field(id).value.trim();
+const setVal=(id,value)=>{field(id).value=value??"";};
+function populateFilingActions(){
+ const filings=rows.filter(r=>r.record_type==="statutory_filing");
+ filingSelect.innerHTML='<option value="">Select a filing record…</option>'+filings.map(r=>'<option value="'+esc(r.record_id)+'">'+esc((r.record_reference||"Unreferenced")+' — '+(r.record_title||"Statutory filing")+' ['+(r.record_status||"unknown")+']')+'</option>').join("");
+ filingForm.hidden=true;
+ actionStatus.textContent=filings.length+" statutory filing record(s) available for authorised update.";
+}
+function selectFiling(){
+ const r=rows.find(x=>x.record_type==="statutory_filing"&&x.record_id===filingSelect.value);
+ filingForm.hidden=!r;
+ if(!r)return;
+ const d=r.details||{};
+ setVal("filingStatus",r.record_status);
+ setVal("filedDate",d.filed_date);
+ setVal("filingReference",r.record_reference && r.record_reference!=="—"?r.record_reference:"");
+ setVal("ackReference",d.acknowledgement_reference);
+ setVal("paymentReference",d.payment_reference);
+ setVal("submissionChannel",d.submission_channel);
+ setVal("ackDocument",d.acknowledgement_document_id);
+ setVal("supportDocument",d.supporting_document_id);
+ setVal("receiptDocument",d.payment_receipt_document_id);
+ setVal("filingNotes",d.notes);
+ actionStatus.textContent="Selected "+(r.record_reference||"filing record")+". Updates are audited in the statutory filing register.";
+}
+async function saveFiling(event){
+ event.preventDefault();
+ const id=filingSelect.value;
+ if(!id){actionStatus.textContent="Select a statutory filing first.";return;}
+ const statusValue=val("filingStatus");
+ if(["submitted","accepted","rejected"].includes(statusValue)&&(!val("filedDate")||val("filingReference").length<3)){
+  actionStatus.textContent="A filing date and official filing reference are required for this status.";return;
+ }
+ if(statusValue==="accepted"&&(!val("ackReference")||!val("ackDocument"))){
+  actionStatus.textContent="Acceptance requires an acknowledgement reference and active document-vault record UUID.";return;
+ }
+ const uuidOrNull=id=>id? id:null;
+ const args={
+  p_filing_id:id,
+  p_status:statusValue,
+  p_filed_date:val("filedDate")||null,
+  p_filing_reference:val("filingReference")||null,
+  p_acknowledgement_reference:val("ackReference")||null,
+  p_payment_reference:val("paymentReference")||null,
+  p_submission_channel:val("submissionChannel")||null,
+  p_acknowledgement_document_id:uuidOrNull(val("ackDocument")),
+  p_supporting_document_id:uuidOrNull(val("supportDocument")),
+  p_payment_receipt_document_id:uuidOrNull(val("receiptDocument")),
+  p_notes:val("filingNotes")||null
+ };
+ const save=field("saveFiling");save.disabled=true;save.textContent="Saving…";
+ actionStatus.textContent="Submitting update to the protected production function…";
+ try{
+  const {data,error}=await db.rpc("ft_update_corporate_statutory_filing",args);
+  if(error)throw error;
+  actionStatus.textContent="Filing record updated. Audit trigger recorded the change. Refreshing source records…";
+  await load();
+  filingSelect.value=id;
+  selectFiling();
+  actionStatus.textContent="Filing record updated successfully. The production audit trigger records this change.";
+ }catch(e){actionStatus.textContent="Update not completed: "+(e.message||"The database rejected the request.");}
+ finally{save.disabled=false;save.textContent="Save filing record";}
+}
 async function load(){
  reportStatus.textContent="Loading governance and statutory records…";
  const {data,error}=await db.rpc("ft_get_corporate_returns_preparation");
  if(error)throw error;
  rows=data||[];
+ populateFilingActions();
  const types=[...new Set(rows.map(r=>r.record_type))];
  const readiness=rows.filter(r=>r.record_type==="filing_readiness");
  const count=(fn)=>readiness.filter(fn).length;
@@ -91,6 +180,8 @@ async function init(){
   authCard.hidden=true;reportCard.hidden=false;await load();
  }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
 }
+filingSelect.addEventListener("change",selectFiling);
+filingForm.addEventListener("submit",saveFiling);
 document.getElementById("refresh").addEventListener("click",()=>load().catch(e=>reportStatus.textContent="Refresh failed: "+e.message));
 document.getElementById("csv").addEventListener("click",csv);
 document.getElementById("print").addEventListener("click",()=>window.print());
