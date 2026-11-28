@@ -19,6 +19,12 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 @media print{body.annual-print-mode main>section:not(#annualPackCard){display:none!important}body.annual-print-mode #annualPackCard .actions,body.annual-print-mode #annualApprovalPanel,body.annual-print-mode #annualPackCard>p.muted{display:none!important}body.annual-print-mode #annualPackCard{display:block!important;border:0!important;padding:0!important;margin:0!important}.annual-evidence-section{break-inside:avoid;margin-top:18px}body.annual-print-mode #annualPackSnapshot table{min-width:0;font-size:10px}body.annual-print-mode #annualPackSnapshot th,body.annual-print-mode #annualPackSnapshot td{padding:5px}body.annual-print-mode #annualPackSnapshot details pre{max-height:none!important;overflow:visible!important}}@media print{body{background:#fff}header{background:#fff!important;color:#000;border-bottom:2px solid #333;padding:12px}header p{color:#333}main{max-width:none;padding:10px}.actions,#authCard{display:none!important}.card{box-shadow:none;break-inside:avoid}table{min-width:0;font-size:10px}th,td{padding:5px}.table-wrap{overflow:visible}}
 
 @media print{
+ body.governance-action-printing *{visibility:hidden}
+ body.governance-action-printing #governanceActionTracking,body.governance-action-printing #governanceActionTracking *{visibility:visible}
+ body.governance-action-printing #governanceActionTracking{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}
+ body.governance-action-printing #governanceActionTracking .actions{display:none}
+ body.governance-action-printing #governanceActionTracking details{display:block}
+ body.governance-action-printing #governanceActionTracking summary{display:none}
  body.certificate-monitor-printing *{visibility:hidden}
  #certificateDistributionMonitoring,#certificateDistributionMonitoring *{visibility:visible}
  #certificateDistributionMonitoring{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}
@@ -977,7 +983,7 @@ field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMo
 field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
 field("createGovernanceAction").addEventListener("click",createGovernanceAction);
 field("refreshGovernanceActions").addEventListener("click",loadGovernanceActionRegister);
-field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
+field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("governance-action-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-action-printing"),{once:true});window.print();});
 field("governanceActionRows").addEventListener("click",e=>{const b=e.target.closest(".save-governance-action");if(b)saveGovernanceActionStatus(b);});
 field("certificateSecurityAlertRows").addEventListener("click",e=>{const b=e.target.closest(".create-action-from-alert");if(!b)return;field("governanceActionAlert").value=b.dataset.alert;field("governanceActionDescription").focus();field("governanceActionStatus").textContent="Alert linked. Enter the follow-up action and create it.";});
 
