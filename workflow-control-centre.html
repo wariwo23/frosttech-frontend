@@ -104,6 +104,21 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <h4>Automated statutory and tax deadline reminders</h4><div id="statutoryReminderAudit" class="table-wrap"></div>
 <div class="actions"><button type="button" class="secondary" id="refreshStatutoryFilings">Refresh Statutory Register</button><button type="button" class="secondary" id="exportStatutoryFilings">Export Statutory Register CSV</button></div>
 <div id="statutoryFilingRegister" class="table-wrap"></div>
+<h4>Statutory Fee and Bank Payment Reconciliation</h4>
+<p class="muted">Match an actual filing fee to an approved/paid Expense Register entry, a bank debit and an active receipt in the Document Vault. This records reconciliation only; it does not initiate payments or alter bank transactions.</p>
+<div id="statutoryPaymentReconciliationSummary" class="metrics-grid"></div>
+<div id="statutoryPaymentReconciliationForm" class="form-grid">
+<div class="field"><label for="statReconFiling">Statutory filing</label><select id="statReconFiling"><option value="">Select filing</option></select></div>
+<div class="field"><label for="statReconFee">Actual filing fee (₦)</label><input id="statReconFee" type="number" min="0.01" step="0.01" required></div>
+<div class="field"><label for="statReconExpense">Approved / paid expense</label><select id="statReconExpense"><option value="">Select expense</option></select></div>
+<div class="field"><label for="statReconBank">Bank debit (optional until available)</label><select id="statReconBank"><option value="">Not yet matched</option></select></div>
+<div class="field"><label for="statReconPaymentRef">Payment reference</label><input id="statReconPaymentRef" placeholder="Bank / authority payment reference"></div>
+<div class="field"><label for="statReconReceipt">Active Document Vault receipt UUID</label><input id="statReconReceipt" placeholder="Receipt document record UUID"></div>
+</div>
+<div class="field"><label for="statReconVariance">Variance explanation (required when amounts differ)</label><textarea id="statReconVariance" rows="2" maxlength="2000"></textarea></div>
+<button type="button" id="saveStatutoryReconciliation">Save Payment Reconciliation</button>
+<div id="statutoryPaymentReconciliationTable" class="table-wrap"></div>
+<div id="statutoryPaymentReconciliationAudit" class="table-wrap"></div>
 <h4>Filing Evidence and Audit Trail</h4><div id="statutoryFilingAudit" class="table-wrap"></div>
 </section>
 <h3>Automated Reminder and Overdue Escalation History</h3><p class="muted">Advance reminders are scheduled 30, 14, 7 and 1 day before the deadline, followed by due-day and 1-, 7- and 30-day overdue alerts. Notifications are in-app; no email or SMS is sent by this process.</p><div id="complianceReminderHistory" class="table-wrap"></div>
@@ -1066,6 +1081,35 @@ async function loadRecipientReports(){
   annualBox.appendChild(item)
  });
 }
+async function loadStatutoryPaymentReconciliation(){
+ if(currentRole!=="super_admin")return;
+ const [filings,expenses,banks,recons,events]=await Promise.all([
+  db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,due_date,fee_amount").order("due_date",{ascending:true}).limit(500),
+  db.from("ft_bookkeeping_expenses").select("id,expense_date,payee,description,amount,status").in("status",["approved","paid","posted"]).order("expense_date",{ascending:false}).limit(500),
+  db.from("ft_bookkeeping_bank_transactions").select("id,transaction_date,description,reference,debit,credit").gt("debit",0).order("transaction_date",{ascending:false}).limit(500),
+  db.from("ft_statutory_payment_reconciliations").select("id,filing_id,expense_id,bank_transaction_id,filing_fee_amount,expense_amount,bank_debit_amount,reconciliation_status,variance_note,payment_reference,receipt_document_id,created_at").order("created_at",{ascending:false}).limit(500),
+  db.from("ft_statutory_payment_reconciliation_events").select("id,reconciliation_id,event_type,actor_user_id,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500)
+ ]);
+ for(const x of [filings,expenses,banks,recons,events])if(x.error)throw x.error;
+ const fill=(id,rows,label)=>{const s=$(id);s.replaceChildren();const first=document.createElement("option");first.value="";first.textContent="Select "+label;s.appendChild(first);rows.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.label;s.appendChild(o)})};
+ fill("statReconFiling",(filings.data||[]).map(r=>({id:r.id,label:r.filing_type.replaceAll("_"," ")+" · "+r.authority_name+" · "+(r.fee_amount==null?"fee not set":"₦"+Number(r.fee_amount).toLocaleString())})),"filing");
+ fill("statReconExpense",(expenses.data||[]).map(r=>({id:r.id,label:r.expense_date+" · "+r.payee+" · "+r.description+" · ₦"+Number(r.amount).toLocaleString()+" · "+r.status})),"expense");
+ fill("statReconBank",(banks.data||[]).map(r=>({id:r.id,label:r.transaction_date+" · "+r.description+" · "+(r.reference||"no ref")+" · debit ₦"+Number(r.debit).toLocaleString()})),"bank transaction");
+ const summary=[["Reconciliations",recons.data.length],["Matched",recons.data.filter(r=>r.reconciliation_status==="matched").length],["Variance",recons.data.filter(r=>r.reconciliation_status==="variance").length],["Evidence missing",recons.data.filter(r=>r.reconciliation_status==="evidence_missing").length]];
+ $("statutoryPaymentReconciliationSummary").replaceChildren();summary.forEach(([l,v])=>{const d=document.createElement("div");d.className="metric";const s=document.createElement("span");s.textContent=l;const b=document.createElement("strong");b.textContent=v;d.append(s,b);$("statutoryPaymentReconciliationSummary").appendChild(d)});
+ table($("statutoryPaymentReconciliationTable"),["Recorded","Filing","Expense","Bank debit","Status","Evidence"],recons.data||[],(tr,r)=>{
+  cell(tr,date(r.created_at));cell(tr,r.filing_id);cell(tr,"₦"+Number(r.expense_amount).toLocaleString()+" · "+r.expense_id);cell(tr,r.bank_debit_amount==null?"Not matched":"₦"+Number(r.bank_debit_amount).toLocaleString()+" · "+r.bank_transaction_id);cell(tr,r.reconciliation_status.replaceAll("_"," "));cell(tr,"Fee ₦"+Number(r.filing_fee_amount).toLocaleString()+" · Receipt "+(r.receipt_document_id||"missing")+" · "+(r.payment_reference||"no payment reference")+(r.variance_note?" · "+r.variance_note:""));
+ });
+ table($("statutoryPaymentReconciliationAudit"),["Recorded","Reconciliation","Event","Actor","Snapshot"],events.data||[],(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.reconciliation_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"—");cell(tr,JSON.stringify(e.event_snapshot||{}))});
+ window.__ftStatutoryReconciliationFilings=filings.data||[];
+}
+async function saveStatutoryPaymentReconciliation(){
+ const filing=$("statReconFiling").value,fee=Number($("statReconFee").value),expense=$("statReconExpense").value;
+ if(!filing||!expense||!Number.isFinite(fee)||fee<=0){setStatus("Select a filing and approved/paid expense, and enter the actual fee.","error");return}
+ const {data,error}=await db.rpc("ft_save_statutory_payment_reconciliation",{p_filing_id:filing,p_filing_fee:fee,p_expense_id:expense,p_bank_transaction_id:$("statReconBank").value||null,p_payment_reference:$("statReconPaymentRef").value.trim()||null,p_receipt_document_id:$("statReconReceipt").value.trim()||null,p_variance_note:$("statReconVariance").value.trim()||null});
+ if(error){setStatus("Payment reconciliation failed: "+error.message,"error");return}
+ setStatus("Payment reconciliation saved: "+data.status.replaceAll("_"," ")+".","success");$("statReconVariance").value="";await loadStatutoryFilingRegister();await loadStatutoryPaymentReconciliation();
+}
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
@@ -1114,6 +1158,7 @@ async function loadStatutoryFilingRegister(){
  table($("statutoryFilingAudit"),["Recorded","Filing","Event","Actor","Details"],auditRows,(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.event_snapshot?.filing_type||e.filing_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"System");cell(tr,e.event_note||"—")});
  table($("statutoryReminderAudit"),["Reminder sent","Source","Deadline","Stage","Recipient","In-app notice"],reminders.data||[],(tr,r)=>{cell(tr,date(r.created_at));cell(tr,r.source_type.replaceAll("_"," ")+" · "+(r.source_reference||r.source_id));cell(tr,date(r.due_date));cell(tr,r.reminder_stage.replaceAll("_"," "));cell(tr,r.recipient_user_id||"—");cell(tr,r.notification_id?"Created":"No notification linked")});
  window.__ftStatutoryFilingExport=rows;
+ await loadStatutoryPaymentReconciliation();
 }
 async function createStatutoryFiling(event){
  event.preventDefault();
@@ -1367,7 +1412,7 @@ async function start(){
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
+$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("saveStatutoryReconciliation").addEventListener("click",saveStatutoryPaymentReconciliation);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
