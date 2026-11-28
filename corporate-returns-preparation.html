@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FrostTech | Corporate Returns Preparation</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#073b70;--blue:#0879c9;--line:#dce5ee;--bg:#f3f7fb;--ink:#172b40;--muted:#607286}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 Arial,sans-serif}
+header{background:linear-gradient(120deg,#052b50,#075a9c);color:#fff;padding:22px max(16px,calc((100vw - 1180px)/2));border-bottom:4px solid #19a4e8}
+header h1{margin:0;font-size:clamp(21px,4vw,28px)}header p{margin:5px 0 0;color:#dceeff}
+main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:18px;margin-bottom:16px;box-shadow:0 3px 14px #102f4b0b}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}.actions a,.actions button{display:inline-block;border:0;border-radius:8px;padding:10px 14px;background:var(--blue);color:white;text-decoration:none;font-weight:700;cursor:pointer}.actions .secondary{background:#eaf1f7;color:#29465f;border:1px solid var(--line)}
+.status{padding:11px 13px;border-radius:8px;background:#eaf3fb;color:#17466f;overflow-wrap:anywhere}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px}.metric{padding:13px;border:1px solid var(--line);border-radius:10px;background:#f8fbfe}.metric strong{display:block;font-size:25px;color:var(--navy);margin-top:4px}.muted{color:var(--muted)}
+.table-wrap{overflow-x:auto}table{width:100%;border-collapse:collapse;min-width:760px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}th{background:#edf4fa;color:#173b60}.pill{display:inline-block;border-radius:20px;padding:3px 8px;background:#edf1f5;font-size:12px;font-weight:700}
+#records{min-height:70px}.note{background:#fff8e7;border-left:4px solid #e2a126;padding:12px}
+@media(max-width:600px){main{padding:12px 10px 30px}.card{padding:14px}}
+@media print{body{background:#fff}header{background:#fff!important;color:#000;border-bottom:2px solid #333;padding:12px}header p{color:#333}main{max-width:none;padding:10px}.actions,#authCard{display:none!important}.card{box-shadow:none;break-inside:avoid}table{min-width:0;font-size:10px}th,td{padding:5px}.table-wrap{overflow:visible}}
+</style>
+</head>
+<body>
+<header><h1>Corporate Returns Preparation</h1><p>Super Administrator · Governance and statutory evidence overview</p></header>
+<main>
+<section class="card" id="authCard">
+<div id="status" class="status">Checking your administrator session…</div>
+<div class="actions"><a href="admin.html" class="secondary">← Back to Super Administrator</a></div>
+</section>
+<section class="card" id="reportCard" hidden>
+<div class="actions">
+<a href="admin.html" class="secondary">← Back to Command Centre</a>
+<button id="refresh" type="button">Refresh records</button>
+<button id="csv" type="button" class="secondary">Download CSV</button>
+<button id="print" type="button" class="secondary">Print / Save PDF</button>
+</div>
+<h2>Corporate governance and statutory records</h2>
+<p class="muted">Read-only preparation report. Source registers remain authoritative. Applicability, filing accuracy and statutory submission must be confirmed by management and the relevant professional adviser.</p>
+<div id="statusReport" class="status" role="status">Loading records…</div>
+<div class="grid" id="metrics"></div>
+<div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Missing evidence must be resolved from source records.</div>
+<div class="table-wrap" id="records"></div>
+</section>
+</main>
+<script>
+(function(){
+const URL="https://nftxptjpgidcsgtaltjn.supabase.co";
+const KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
+const db=window.supabase.createClient(URL,KEY);
+const authCard=document.getElementById("authCard"), reportCard=document.getElementById("reportCard");
+const status=document.getElementById("status"), reportStatus=document.getElementById("statusReport");
+const host=document.getElementById("records"), metrics=document.getElementById("metrics");
+let rows=[];
+const esc=v=>String(v??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const date=v=>{if(!v)return "—";const d=new Date(v);return isNaN(d)?"—":d.toLocaleString("en-NG");};
+function csv(){
+ const cols=["record_type","record_reference","record_title","record_status","event_at","recorded_at","details"];
+ const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const lines=[cols.join(","),...rows.map(r=>cols.map(k=>quote(typeof r[k]==="object"?JSON.stringify(r[k]):r[k])).join(","))];
+ const blob=new Blob(["\ufeff"+lines.join("\r\n")],{type:"text/csv;charset=utf-8"});
+ const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-corporate-returns-preparation.csv";a.click();URL.revokeObjectURL(url);
+}
+async function load(){
+ reportStatus.textContent="Loading governance and statutory records…";
+ const {data,error}=await db.from("ft_corporate_returns_preparation_v").select("*").order("recorded_at",{ascending:false});
+ if(error)throw error;
+ rows=data||[];
+ const types=[...new Set(rows.map(r=>r.record_type))];
+ metrics.innerHTML=types.length?types.map(t=>'<div class="metric">'+esc(t.replaceAll("_"," "))+'<strong>'+rows.filter(r=>r.record_type===t).length+'</strong></div>').join(""):'<div class="metric">Records returned<strong>0</strong></div>';
+ if(!rows.length){host.innerHTML="<p>No corporate governance or statutory records are currently visible to this authorised account.</p>";}
+ else host.innerHTML='<table><thead><tr><th>Record type</th><th>Reference</th><th>Title</th><th>Status</th><th>Relevant date</th><th>Recorded</th><th>Details</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.record_type)+'</td><td>'+esc(r.record_reference)+'</td><td>'+esc(r.record_title)+'</td><td><span class="pill">'+esc(r.record_status)+'</span></td><td>'+esc(date(r.event_at))+'</td><td>'+esc(date(r.recorded_at))+'</td><td><details><summary>View</summary><pre style="white-space:pre-wrap;max-width:420px">'+esc(JSON.stringify(r.details||{},null,2))+'</pre></details></td></tr>').join("")+'</tbody></table>';
+ reportStatus.textContent="Loaded "+rows.length+" source records across "+types.length+" record categories. Read-only view.";
+}
+async function init(){
+ try{
+  const {data:{session},error}=await db.auth.getSession();if(error)throw error;
+  if(!session){status.textContent="Sign in through the Super Administrator portal to access this report.";return;}
+  const {data:allowed,error:roleError}=await db.rpc("is_super_admin");
+  if(roleError)throw roleError;
+  if(allowed!==true){status.textContent="Access denied. Super Administrator authority is required.";await db.auth.signOut();return;}
+  authCard.hidden=true;reportCard.hidden=false;await load();
+ }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
+}
+document.getElementById("refresh").addEventListener("click",()=>load().catch(e=>reportStatus.textContent="Refresh failed: "+e.message));
+document.getElementById("csv").addEventListener("click",csv);
+document.getElementById("print").addEventListener("click",()=>window.print());
+init();
+})();
+</script>
+</body>
+</html>
