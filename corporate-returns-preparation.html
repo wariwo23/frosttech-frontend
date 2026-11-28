@@ -75,6 +75,14 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="yearEndCloseGateStatus" class="status" role="status">Loading close assessment…</div>
 <div id="yearEndCloseGateResults"></div>
 </section>
+<section class="card" id="postClosePackCard">
+<h2>Post-Close Financial &amp; Statutory Reporting Pack</h2>
+<p class="muted">Generate a read-only internal reporting snapshot for a closed accounting period. This does not create audited accounts, amend ledger records, or submit statutory filings.</p>
+<div class="actions"><button id="refreshPostClosePacks" type="button">Refresh closed periods</button></div>
+<div id="postClosePackStatus" class="status" role="status">Loading closed accounting periods…</div>
+<div id="postClosePackPeriods"></div>
+<div id="postClosePackOutput"></div>
+</section>
 <section class="card" id="yearEndAdjustmentsCard">
 <h2>Year-End Adjustment Register</h2>
 <p class="muted">Super Administrator read-only oversight of adjustments prepared through the bookkeeping workflow. This panel does not create, approve, reject or post journals.</p>
@@ -478,6 +486,27 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
   await loadYearEndReadiness();
  }catch(e){status.textContent="Period was not closed: "+(e.message||"Authorization failed.");}
 }
+async function loadPostClosePackOptions(){
+ const status=field("postClosePackStatus"),host=field("postClosePackPeriods");
+ status.textContent="Loading closed accounting periods…";host.innerHTML="";field("postClosePackOutput").innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_year_end_close_gate");if(error)throw error;
+  const periods=Array.isArray(data)?data.filter(p=>p.period_status==="closed"):[];
+  if(!periods.length){host.innerHTML='<p class="muted">No closed accounting periods are currently available for reporting packs.</p>';status.textContent="No closed periods found.";return;}
+  host.innerHTML=periods.map(p=>'<div class="annual-evidence-section"><strong>'+esc(p.period_name)+'</strong> · '+esc(p.start_date)+' to '+esc(p.end_date)+' <button type="button" data-report-pack-period="'+esc(p.period_id)+'">Generate reporting pack</button></div>').join("");
+  status.textContent=periods.length+" closed period(s) available. Select a period to generate its read-only pack.";
+ }catch(e){status.textContent="Closed-period list unavailable: "+(e.message||"Access denied.");}
+}
+async function generatePostClosePack(periodId){
+ const status=field("postClosePackStatus"),output=field("postClosePackOutput");
+ status.textContent="Generating internal reporting snapshot…";output.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_post_close_reporting_pack",{p_period_id:periodId});if(error)throw error;
+  output.innerHTML='<div class="annual-evidence-section"><h3>Generated reporting snapshot</h3><p class="muted">Internal use only · No regulatory submission performed</p><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(data,null,2))+'</pre><button type="button" id="copyPostClosePack">Copy reporting pack JSON</button></div>';
+  field("copyPostClosePack").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(JSON.stringify(data,null,2));status.textContent="Reporting pack copied."; }catch(e){status.textContent="Copy unavailable in this browser; select and copy the displayed JSON."; }});
+  status.textContent="Reporting pack generated from the closed ledger and immutable closure record.";
+ }catch(e){status.textContent="Reporting pack not generated: "+(e.message||"Access denied.");}
+}
 async function loadYearEndCloseGate(){
  const status=field("yearEndCloseGateStatus"),host=field("yearEndCloseGateResults");
  status.textContent="Retrieving protected year-end close assessment…";host.innerHTML="";
@@ -549,6 +578,7 @@ async function load(){
  rows=data||[];
  populateFilingActions();
  await loadCalendar();
+ await loadPostClosePackOptions();
  populateAnnualReviews();
  const types=[...new Set(rows.map(r=>r.record_type))];
  const readiness=rows.filter(r=>r.record_type==="filing_readiness");
@@ -580,6 +610,8 @@ async function init(){
 filingSelect.addEventListener("change",selectFiling);
 field("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
 field("refreshYearEndCloseGate").addEventListener("click",loadYearEndCloseGate);
+field("refreshPostClosePacks").addEventListener("click",loadPostClosePackOptions);
+field("postClosePackPeriods").addEventListener("click",event=>{const button=event.target.closest("[data-report-pack-period]");if(button)generatePostClosePack(button.dataset.reportPackPeriod);});
 field("yearEndCloseGateResults").addEventListener("click",event=>{const button=event.target.closest("[data-close-period]");if(button)authorizeYearEndPeriodClose(button.dataset.closePeriod,button.dataset.periodName);});
 field("refreshYearEndAdjustments").addEventListener("click",loadYearEndAdjustments);
 field("annualReviewYear").value=new Date().getFullYear();
