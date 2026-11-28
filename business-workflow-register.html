@@ -32,12 +32,19 @@ async function loadCategory(){
  const {data,error}=await db.from(cfg.table).select(cols).order(cfg.ref,{ascending:false}).limit(100);
  if(error){empty("Records are not available under your current database permissions: "+error.message);return}
  if(!data||!data.length){empty("No "+cfg.label.toLowerCase()+" records are currently visible.");return}
- $("records").replaceChildren();const t=document.createElement("table"),h=document.createElement("thead"),hr=document.createElement("tr");["Business reference","Record","Current status","Workflow"].forEach(v=>{const th=document.createElement("th");th.textContent=v;hr.appendChild(th)});h.appendChild(hr);t.appendChild(h);const b=document.createElement("tbody");
- data.forEach(r=>{const tr=document.createElement("tr");td(tr,r[cfg.ref]);td(tr,r[cfg.title]);td(tr,r[cfg.status]);const action=td(tr,"");const btn=document.createElement("button");btn.type="button";btn.textContent="Start workflow";btn.disabled=!active;btn.addEventListener("click",()=>startWorkflow(cfg,r));const note=document.createElement("span");note.className="muted";note.textContent=active?"":" Template Draft";action.append(btn,note);b.appendChild(tr)});t.appendChild(b);$("records").appendChild(t)
+ const refs=data.map(r=>String(r[cfg.ref]??r[cfg.id]??"")).filter(Boolean);
+ linkedInstances={};
+ if(refs.length){
+  const {data:instances,error:instanceError}=await db.from("ft_workflow_instances").select("id,instance_reference,entity_type,entity_reference,status,workflow_id").eq("entity_type",cfg.entity).in("entity_reference",refs).order("created_at",{ascending:false});
+  if(!instanceError)(instances||[]).forEach(w=>{if(!linkedInstances[w.entity_reference])linkedInstances[w.entity_reference]=w});
+ }
+ $("records").replaceChildren();const t=document.createElement("table"),h=document.createElement("thead"),hr=document.createElement("tr");["Business reference","Record","Current status","Linked workflow","Action"].forEach(v=>{const th=document.createElement("th");th.textContent=v;hr.appendChild(th)});h.appendChild(hr);t.appendChild(h);const b=document.createElement("tbody");
+ data.forEach(r=>{const tr=document.createElement("tr");const ref=String(r[cfg.ref]??r[cfg.id]??"");td(tr,ref);td(tr,r[cfg.title]);td(tr,r[cfg.status]);const linked=linkedInstances[ref];td(tr,linked?(linked.instance_reference+" · "+linked.status):"Not started");const action=td(tr,"");const btn=document.createElement("button");btn.type="button";btn.textContent=linked&&["pending","in_progress","awaiting_approval","on_hold"].includes(linked.status)?"Already in workflow":"Start workflow";btn.disabled=!active||!!(linked&&["pending","in_progress","awaiting_approval","on_hold"].includes(linked.status));btn.addEventListener("click",()=>startWorkflow(cfg,r));const note=document.createElement("span");note.className="muted";note.textContent=active?"":" Template Draft";action.append(btn,note);b.appendChild(tr)});t.appendChild(b);$("records").appendChild(t);
 }
 async function startWorkflow(cfg,r){
  const ref=String(r[cfg.ref]??r[cfg.id]??"").trim();if(!ref){setStatus("The selected source record has no usable reference. No workflow was started.","error");return}
- if(!effective(defs[$("category").value])){setStatus("This workflow template is not active. No workflow was started.","error");return}
+ const definition=defs[$("category").value];if(!effective(definition)){setStatus("This workflow template is not active. No workflow was started.","error");return}
+ if(definition.applies_to_entity!==cfg.entity){setStatus("The selected workflow does not apply to this business record type. No workflow was started.","error");return}
  const context={source_table:cfg.table,source_record_id:r[cfg.id],source_record_reference:ref,source_record_title:r[cfg.title]??null,source_record_status:r[cfg.status]??null};
  const {data,error}=await db.rpc("ft_start_workflow_instance",{p_workflow_code:cfg.code,p_entity_type:cfg.entity,p_entity_reference:ref,p_priority:"normal",p_context_data:context});
  if(error){setStatus("Workflow was not started: "+error.message,"error");return}
@@ -49,8 +56,8 @@ async function refresh(){
   const {data:r,error}=await db.rpc("admin_get_my_role");if(error)throw error;
   if(!["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"].includes(r))throw new Error("This register is restricted to authorised FrostTech administrators.");
   role=r;$("heading").textContent=r==="super_admin"?"Super Administrator — Business Workflow Register":"Departmental Business Workflow Register";
-  const {data:definitions,error:de}=await db.from("ft_workflow_definitions").select("workflow_code,workflow_name,applies_to_entity,status,effective_from,effective_to");
-  if(de)throw de;defs={};(definitions||[]).forEach(d=>defs[d.workflow_code]=d);
+  const {data:definitions,error:de}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,applies_to_entity,status,effective_from,effective_to");
+  if(de)throw de;defs={};definitionById={};(definitions||[]).forEach(d=>{defs[d.workflow_code]=d;definitionById[d.id]=d.workflow_name});
   $("register").classList.remove("hidden");$("tools").classList.remove("hidden");setStatus("Administrator access verified. Source records are displayed according to your existing database permissions.","success");
   if($("category").value)await loadCategory();
  }catch(e){setStatus(e.message||"Could not load the workflow register.","error")}
