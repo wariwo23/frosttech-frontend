@@ -618,7 +618,7 @@ async function loadCertificateDistributions(){
   host.innerHTML=data&&data.length?'<div class="table-wrap"><table><thead><tr><th>Certificate</th><th>Recipient</th><th>Purpose</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>'+data.map(x=>{
    const cert=Array.isArray(x.ft_annual_compliance_certificates)?x.ft_annual_compliance_certificates[0]:x.ft_annual_compliance_certificates;
    const active=!x.revoked_at&&new Date(x.access_expires_at)>new Date();
-   return '<tr><td>'+esc(cert?.certificate_reference||"—")+'</td><td>'+esc(x.recipient_name)+'<br>'+esc(x.recipient_email)+'</td><td>'+esc(x.distribution_purpose)+'</td><td>'+esc(date(x.access_expires_at))+'</td><td>'+esc(x.revoked_at?'Revoked':active?'Authorized until expiry':'Expired')+'</td><td>'+(!x.revoked_at&&active?'<button type="button" class="secondary revoke-certificate-distribution" data-grant="'+esc(x.id)+'">Revoke</button>':'—')+'</td></tr>';
+   return '<tr><td>'+esc(cert?.certificate_reference||"—")+'</td><td>'+esc(x.recipient_name)+'<br>'+esc(x.recipient_email)+'</td><td>'+esc(x.distribution_purpose)+'</td><td>'+esc(date(x.access_expires_at))+'</td><td>'+esc(x.revoked_at?'Revoked':active?'Authorized until expiry':'Expired')+'</td><td>'+(!x.revoked_at&&active?'<button type="button" class="secondary issue-certificate-access-token" data-grant="'+esc(x.id)+'">Create one-time access token</button> <button type="button" class="secondary revoke-certificate-distribution" data-grant="'+esc(x.id)+'">Revoke</button>':'—')+'</td></tr>';
   }).join('')+'</tbody></table></div>':'<p>No certificate distribution authorizations have been recorded.</p>';
   status.textContent="Distribution register loaded. Delivery and document access are not enabled by these records.";
  }catch(e){status.textContent="Could not load distribution register: "+(e.message||"Access denied.");}
@@ -636,6 +636,19 @@ async function grantCertificateDistribution(){
   status.textContent="Authorization recorded for "+data.recipient_email+". No email or document access link was created.";
   await loadCertificateDistributions();
  }catch(e){status.textContent="Authorization not recorded: "+(e.message||"Access denied.");}
+}
+
+async function issueCertificateAccessToken(id){
+ const status=field("certificateDistributionStatus");
+ if(!window.confirm("Create a one-time, 15-minute access token for this authorized recipient? The token will be shown once and is not emailed automatically."))return;
+ status.textContent="Creating one-time access token…";
+ try{
+  const {data,error}=await db.rpc("ft_issue_annual_certificate_access_token",{p_grant_id:id});
+  if(error)throw error;
+  const shareUrl="https://wariwo23.github.io/frosttech-frontend/annual-certificate-access.html";
+  status.innerHTML='<strong>One-time token created.</strong><p>Recipient: '+esc(data.recipient_email)+'</p><p>Expires: '+esc(date(data.expires_at))+'</p><p>Access page: <a href="'+shareUrl+'" target="_blank" rel="noopener">Open secure access page</a></p><p><code style="overflow-wrap:anywhere">'+esc(data.access_token)+'</code></p><button type="button" id="copyCertificateAccessToken">Copy token</button><p class="muted">Send the page link and token to the named recipient through a separate trusted channel. The token is shown only once. Matching the email address is not independent mailbox verification.</p>';
+  field("copyCertificateAccessToken").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(data.access_token);status.insertAdjacentHTML("beforeend","<p>Token copied.</p>");}catch(e){status.insertAdjacentHTML("beforeend","<p>Clipboard unavailable; select and copy the token above.</p>");}});
+ }catch(e){status.textContent="Token not created: "+(e.message||"Access denied.");}
 }
 async function revokeCertificateDistribution(id){
  const reason=window.prompt("Enter the reason for revoking this distribution authorization:");
@@ -835,7 +848,7 @@ field("refreshAnnualCertificateRegister").addEventListener("click",loadAnnualCer
 field("verifyAnnualCertificate").addEventListener("click",verifyAnnualComplianceCertificate);
 field("grantCertificateDistribution").addEventListener("click",grantCertificateDistribution);
 field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
-field("certificateDistributionRegister").addEventListener("click",e=>{const b=e.target.closest(".revoke-certificate-distribution");if(b)revokeCertificateDistribution(b.dataset.grant);});
+field("certificateDistributionRegister").addEventListener("click",e=>{const t=e.target.closest(".issue-certificate-access-token");if(t){issueCertificateAccessToken(t.dataset.grant);return;}const b=e.target.closest(".revoke-certificate-distribution");if(b)revokeCertificateDistribution(b.dataset.grant);});
 
 
 
