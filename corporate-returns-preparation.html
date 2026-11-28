@@ -56,6 +56,8 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 </div>
 <div class="field" style="margin-top:12px"><label for="filingNotes">Administrative notes</label><textarea id="filingNotes" rows="3" maxlength="4000" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea></div>
 <div class="actions"><button id="saveFiling" type="submit">Save filing record</button></div>
+<div class="actions" style="margin-top:10px"><button id="closeFiling" type="button" hidden>Close filing as complete</button></div>
+<p class="muted" id="closureState">Completion closure is available only after acceptance and evidence reconciliation.</p>
 <div id="filingActionStatus" class="status" role="status">Select a filing record to begin.</div>
 </form>
 </section>
@@ -108,6 +110,28 @@ function selectFiling(){
  setVal("receiptDocument",d.payment_receipt_document_id);
  setVal("filingNotes",d.notes);
  actionStatus.textContent="Selected "+(d.authority_name||"statutory authority")+" · "+(r.record_title||"filing")+" · period "+(d.reporting_period_start||"—")+" to "+(d.reporting_period_end||"—")+". Updates are audited in the statutory filing register.";
+ const closed=Boolean(d.completion_closed_at);
+ field("closeFiling").hidden=!(r.record_status==="accepted"&&!closed);
+ field("closeFiling").disabled=closed;
+ field("closureState").textContent=closed?"Completion closed at "+new Date(d.completion_closed_at).toLocaleString()+"; closure is permanent and audited.":(r.record_status==="accepted"?"Accepted filing: closure will recheck active acknowledgement evidence and matched payment records before locking completion.":"Filing must be marked accepted before it can be closed as complete.");
+}
+async function closeFiling(){
+ const id=filingSelect.value;
+ if(!id){actionStatus.textContent="Select a statutory filing first.";return;}
+ const note=val("filingNotes");
+ if(note.length<10){actionStatus.textContent="Enter a closure note of at least 10 characters in Administrative notes.";return;}
+ if(!confirm("Close this accepted statutory filing as complete? The database will verify acknowledgement evidence and payment reconciliation. This action is recorded and cannot be reversed here."))return;
+ const btn=field("closeFiling");btn.disabled=true;btn.textContent="Checking evidence…";
+ actionStatus.textContent="Verifying filing, acknowledgement, payment, bank and accounting evidence…";
+ try{
+  const {data,error}=await db.rpc("ft_close_corporate_statutory_filing",{p_filing_id:id,p_closure_note:note});
+  if(error)throw error;
+  await load();
+  filingSelect.value=id;
+  selectFiling();
+  actionStatus.textContent=data?.already_closed?"This filing was already closed as complete.":"Filing successfully closed as complete. The closure event has been recorded.";
+ }catch(e){actionStatus.textContent="Closure not completed: "+(e.message||"The database rejected the request.");}
+ finally{btn.disabled=false;btn.textContent="Close filing as complete";}
 }
 async function saveFiling(event){
  event.preventDefault();
@@ -185,6 +209,7 @@ async function init(){
 }
 filingSelect.addEventListener("change",selectFiling);
 filingForm.addEventListener("submit",saveFiling);
+field("closeFiling").addEventListener("click",closeFiling);
 document.getElementById("refresh").addEventListener("click",()=>load().catch(e=>reportStatus.textContent="Refresh failed: "+e.message));
 document.getElementById("csv").addEventListener("click",csv);
 document.getElementById("print").addEventListener("click",()=>window.print());
