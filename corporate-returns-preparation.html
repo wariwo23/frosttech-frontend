@@ -130,6 +130,20 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="field" style="margin-top:14px"><label for="verifyAnnualCertificateRef">Verify certificate reference</label><input id="verifyAnnualCertificateRef" type="text" placeholder="FT-ACC-YYYY-001-XXXXXXXX" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
 <div class="actions"><button id="verifyAnnualCertificate" type="button" class="secondary">Verify certificate and linked documents</button></div>
 <div id="annualCertificateVerificationOutput" class="status" role="status"></div>
+<section class="annual-evidence-section" id="annualCertificateDistribution">
+<h3>Controlled Certificate Distribution</h3>
+<p class="muted">Record a time-limited authorization for an issued certificate. This records permission metadata only; it does not email a certificate, create a public link, or grant direct Document Vault access.</p>
+<div class="grid">
+<div class="field"><label for="distributionCertificateRef">Issued certificate reference</label><input id="distributionCertificateRef" type="text" placeholder="FT-ACC-YYYY-001-XXXXXXXX"></div>
+<div class="field"><label for="distributionRecipientName">Recipient name</label><input id="distributionRecipientName" type="text"></div>
+<div class="field"><label for="distributionRecipientEmail">Recipient email</label><input id="distributionRecipientEmail" type="email"></div>
+<div class="field"><label for="distributionPurpose">Purpose</label><input id="distributionPurpose" type="text" placeholder="e.g. External accountant review"></div>
+<div class="field"><label for="distributionExpiry">Access authorization expiry</label><input id="distributionExpiry" type="datetime-local"></div>
+</div>
+<div class="actions"><button id="grantCertificateDistribution" type="button">Record distribution authorization</button><button id="refreshCertificateDistributions" type="button" class="secondary">Refresh distribution register</button></div>
+<div id="certificateDistributionStatus" class="status" role="status"></div>
+<div id="certificateDistributionRegister"></div>
+</section>
 </section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
 <section class="card" id="filingActionCard">
@@ -594,6 +608,46 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
 
 
 
+
+async function loadCertificateDistributions(){
+ const status=field("certificateDistributionStatus"),host=field("certificateDistributionRegister");
+ status.textContent="Loading distribution register…";host.innerHTML="";
+ try{
+  const {data,error}=await db.from("ft_annual_certificate_distribution_grants").select("id,certificate_id,recipient_name,recipient_email,distribution_purpose,access_expires_at,granted_at,revoked_at,revocation_reason,ft_annual_compliance_certificates(certificate_reference,reporting_year)").order("granted_at",{ascending:false}).limit(100);
+  if(error)throw error;
+  host.innerHTML=data&&data.length?'<div class="table-wrap"><table><thead><tr><th>Certificate</th><th>Recipient</th><th>Purpose</th><th>Expiry</th><th>Status</th><th>Action</th></tr></thead><tbody>'+data.map(x=>{
+   const cert=Array.isArray(x.ft_annual_compliance_certificates)?x.ft_annual_compliance_certificates[0]:x.ft_annual_compliance_certificates;
+   const active=!x.revoked_at&&new Date(x.access_expires_at)>new Date();
+   return '<tr><td>'+esc(cert?.certificate_reference||"—")+'</td><td>'+esc(x.recipient_name)+'<br>'+esc(x.recipient_email)+'</td><td>'+esc(x.distribution_purpose)+'</td><td>'+esc(date(x.access_expires_at))+'</td><td>'+esc(x.revoked_at?'Revoked':active?'Authorized until expiry':'Expired')+'</td><td>'+(!x.revoked_at&&active?'<button type="button" class="secondary revoke-certificate-distribution" data-grant="'+esc(x.id)+'">Revoke</button>':'—')+'</td></tr>';
+  }).join('')+'</tbody></table></div>':'<p>No certificate distribution authorizations have been recorded.</p>';
+  status.textContent="Distribution register loaded. Delivery and document access are not enabled by these records.";
+ }catch(e){status.textContent="Could not load distribution register: "+(e.message||"Access denied.");}
+}
+async function grantCertificateDistribution(){
+ const status=field("certificateDistributionStatus");
+ const ref=field("distributionCertificateRef").value.trim(),name=field("distributionRecipientName").value.trim(),email=field("distributionRecipientEmail").value.trim(),purpose=field("distributionPurpose").value.trim(),raw=field("distributionExpiry").value;
+ if(!ref||!name||!email||!purpose||!raw){status.textContent="Complete all fields before recording authorization.";return;}
+ const expiry=new Date(raw);
+ if(Number.isNaN(expiry.getTime())||expiry<=new Date()||expiry>new Date(Date.now()+90*24*60*60*1000)){status.textContent="Expiry must be in the future and within 90 days.";return;}
+ status.textContent="Recording Super Administrator distribution authorization…";
+ try{
+  const {data,error}=await db.rpc("ft_grant_annual_certificate_distribution",{p_certificate_reference:ref,p_recipient_name:name,p_recipient_email:email,p_purpose:purpose,p_expires_at:expiry.toISOString()});
+  if(error)throw error;
+  status.textContent="Authorization recorded for "+data.recipient_email+". No email or document access link was created.";
+  await loadCertificateDistributions();
+ }catch(e){status.textContent="Authorization not recorded: "+(e.message||"Access denied.");}
+}
+async function revokeCertificateDistribution(id){
+ const reason=window.prompt("Enter the reason for revoking this distribution authorization:");
+ if(!reason||!reason.trim())return;
+ const status=field("certificateDistributionStatus");status.textContent="Revoking authorization…";
+ try{
+  const {error}=await db.rpc("ft_revoke_annual_certificate_distribution",{p_grant_id:id,p_reason:reason.trim()});
+  if(error)throw error;
+  status.textContent="Distribution authorization revoked and audit event recorded.";
+  await loadCertificateDistributions();
+ }catch(e){status.textContent="Revocation failed: "+(e.message||"Access denied.");}
+}
 async function verifyAnnualComplianceCertificate(){
  const ref=field("verifyAnnualCertificateRef").value.trim(),host=field("annualCertificateVerificationOutput");
  host.textContent="Verifying certificate snapshot and linked document records…";
@@ -779,6 +833,10 @@ field("generateAnnualCertificate").addEventListener("click",generateAnnualReturn
 field("issueAnnualCertificate").addEventListener("click",issueAnnualComplianceCertificate);
 field("refreshAnnualCertificateRegister").addEventListener("click",loadAnnualCertificateRegister);
 field("verifyAnnualCertificate").addEventListener("click",verifyAnnualComplianceCertificate);
+field("grantCertificateDistribution").addEventListener("click",grantCertificateDistribution);
+field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
+field("certificateDistributionRegister").addEventListener("click",e=>{const b=e.target.closest(".revoke-certificate-distribution");if(b)revokeCertificateDistribution(b.dataset.grant);});
+
 
 
 field("printAnnualCertificate").addEventListener("click",()=>{document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
