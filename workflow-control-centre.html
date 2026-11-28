@@ -19,6 +19,7 @@ h2{font-size:18px;color:var(--navy);margin:0 0 12px}
 button,.link{border:0;border-radius:7px;padding:10px 14px;background:var(--blue);color:#fff;font-weight:700;text-decoration:none;cursor:pointer}
 button.secondary,.link.secondary{background:#536779}button:disabled{opacity:.6;cursor:wait}
 .metrics{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:9px}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.field{display:flex;flex-direction:column;gap:6px;margin:8px 0}.field label{font-size:13px;font-weight:700;color:#25445f}.field input,.field select,.field textarea{width:100%;padding:11px;border:1px solid #cbd6e2;border-radius:7px;font:inherit;background:#fff}.actions{display:flex;gap:7px;flex-wrap:wrap}.actions button{font-size:12px;padding:8px 10px}.modal-backdrop{position:fixed;inset:0;background:#071c31a8;display:flex;align-items:center;justify-content:center;padding:16px;z-index:20}.modal{width:min(520px,100%);background:#fff;border-radius:12px;padding:18px;box-shadow:0 18px 55px #0004}.modal h2{margin-bottom:8px}.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:14px}
 .metric{border:1px solid var(--line);border-left:4px solid var(--blue);border-radius:9px;padding:12px;background:#fff;min-width:0}
 .metric span{display:block;color:#526477;font-size:12px}.metric strong{display:block;color:var(--navy);font-size:24px;margin-top:8px;overflow-wrap:anywhere}
 .table-wrap{overflow-x:auto}table{width:100%;min-width:680px;border-collapse:collapse;font-size:13px}
@@ -52,10 +53,29 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <p class="muted">Super Administrator view. Templates remain Draft until separately approved and activated. This page does not activate or edit templates.</p>
 <div id="definitions" class="table-wrap"></div>
 </section>
+<section id="launchCard" class="card hidden">
+<h2>Start an Approved Workflow</h2>
+<p class="muted">Only active, effective workflow definitions can be launched. Draft templates cannot be started.</p>
+<form id="launchForm">
+<div class="form-grid">
+<div class="field"><label for="launchWorkflow">Active workflow</label><select id="launchWorkflow" required><option value="">No active workflows available</option></select></div>
+<div class="field"><label for="launchPriority">Priority</label><select id="launchPriority"><option value="normal">Normal</option><option value="low">Low</option><option value="high">High</option><option value="urgent">Urgent</option></select></div>
+<div class="field"><label for="entityType">Business record type</label><input id="entityType" required maxlength="100" placeholder="e.g. customer_request"></div>
+<div class="field"><label for="entityReference">Business record reference</label><input id="entityReference" required maxlength="160" placeholder="Existing record reference"></div>
+</div>
+<button id="launchButton" type="submit" disabled>Start Workflow</button>
+<p id="launchStatus" class="muted">No active workflows are currently available.</p>
+</form>
+</section>
 <section id="tasksCard" class="card hidden">
 <h2>My Department's Workflow Tasks</h2>
 <p class="muted">Only records returned by the database's existing row-level security policies are displayed.</p>
 <div id="tasks" class="table-wrap"></div>
+</section>
+<section id="approvalsCard" class="card hidden">
+<h2>Pending Workflow Approvals</h2>
+<p class="muted">Approval decisions are recorded against your authenticated account and are subject to stage permissions and separation-of-duties rules.</p>
+<div id="approvals" class="table-wrap"></div>
 </section>
 <section id="notificationsCard" class="card hidden">
 <h2>My Workflow Notifications</h2>
@@ -63,6 +83,11 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="notifications"></div>
 </section>
 </main>
+<div id="actionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+<div class="modal"><h2 id="modalTitle">Confirm action</h2><p id="modalDescription" class="muted"></p>
+<div class="field"><label for="actionNotes">Notes (optional)</label><textarea id="actionNotes" rows="4" maxlength="2000" placeholder="Add a short decision or completion note"></textarea></div>
+<div class="modal-actions"><button id="modalCancel" type="button" class="secondary">Cancel</button><button id="modalConfirm" type="button">Confirm</button></div>
+</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -70,6 +95,9 @@ const SUPABASE_KEY="sb_publishable_9b9QzhXqSJflCKDUc2sQnA_p4f0pblV";
 const db=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
 const $=id=>document.getElementById(id);
 let currentRole=null;
+let currentUserId=null;
+let activeWorkflows=[];
+let pendingAction=null;
 const allowedRoles=["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"];
 function cell(row,value){const td=document.createElement("td");td.textContent=value??"—";row.appendChild(td);return td}
 function empty(container,message){container.replaceChildren();const p=document.createElement("p");p.className="muted";p.textContent=message;container.appendChild(p)}
@@ -89,9 +117,70 @@ async function loadDefinitions(){
  table($("definitions"),["Workflow","Department","Version","Status","Effective from"],data,(tr,r)=>{cell(tr,r.workflow_name+" ("+r.workflow_code+")");cell(tr,r.department_code);cell(tr,r.version_number);const td=cell(tr,r.status);const b=document.createElement("span");b.className="pill "+(r.status==="Draft"||r.status==="draft"?"draft":"");b.textContent=r.status;td.replaceChildren(b);cell(tr,date(r.effective_from))});
 }
 async function loadTasks(){
- const {data,error}=await db.from("ft_workflow_task_monitoring").select("task_reference,task_title,instance_reference,workflow_name,stage_name,assigned_department,task_status,priority,due_at,is_overdue,escalation_due").order("created_at",{ascending:false}).limit(100);
+ const {data,error}=await db.from("ft_workflow_task_monitoring").select("task_id,task_reference,task_title,instance_reference,workflow_name,stage_name,assigned_department,task_status,priority,due_at,is_overdue,escalation_due,created_at").order("created_at",{ascending:false}).limit(100);
  if(error)throw error;
- table($("tasks"),["Task","Workflow / Instance","Stage","Department","Status","Priority","Due","Attention"],data,(tr,r)=>{cell(tr,(r.task_reference||"")+" — "+(r.task_title||""));cell(tr,(r.workflow_name||"")+" / "+(r.instance_reference||""));cell(tr,r.stage_name);cell(tr,r.assigned_department);cell(tr,r.task_status);cell(tr,r.priority);cell(tr,date(r.due_at));const td=cell(tr,r.is_overdue?"Overdue":r.escalation_due?"Escalation due":"—");if(r.is_overdue){const b=document.createElement("span");b.className="pill overdue";b.textContent="Overdue";td.replaceChildren(b)}});
+ table($("tasks"),["Task","Workflow / Instance","Stage","Department","Status","Priority","Due","Attention / Action"],data,(tr,r)=>{
+  cell(tr,(r.task_reference||"")+" — "+(r.task_title||""));cell(tr,(r.workflow_name||"")+" / "+(r.instance_reference||""));cell(tr,r.stage_name);cell(tr,r.assigned_department);cell(tr,r.task_status);cell(tr,r.priority);cell(tr,date(r.due_at));
+  const td=cell(tr,r.is_overdue?"Overdue":r.escalation_due?"Escalation due":"—");
+  if(r.is_overdue){const b=document.createElement("span");b.className="pill overdue";b.textContent="Overdue";td.replaceChildren(b)}
+  const action=document.createElement("td"),wrap=document.createElement("div");wrap.className="actions";
+  if(["pending","accepted","in_progress","awaiting_input"].includes(r.task_status)){const b=document.createElement("button");b.type="button";b.textContent="Complete / Advance";b.addEventListener("click",()=>openAction("complete",r.task_id,"Complete current stage", "This submits the current task for completion. If the stage requires approval, the workflow will pause until approval is granted."));wrap.appendChild(b)}
+  action.appendChild(wrap);tr.appendChild(action);
+ });
+}
+async function loadApprovals(){
+ const {data,error}=await db.from("ft_workflow_approval_requests").select("id,approval_reference,approval_type,status,minimum_approvals,requested_at,decision_due_at,decision_summary,instance_id,stage_id").eq("status","pending").order("requested_at",{ascending:true}).limit(100);
+ if(error)throw error;
+ table($("approvals"),["Approval","Type","Required approvals","Requested","Decision due","Summary","Decision"],data,(tr,r)=>{
+  cell(tr,r.approval_reference);cell(tr,r.approval_type);cell(tr,r.minimum_approvals);cell(tr,date(r.requested_at));cell(tr,date(r.decision_due_at));cell(tr,r.decision_summary);
+  const td=cell(tr,"");const wrap=document.createElement("div");wrap.className="actions";
+  [["Approve","approved"],["Reject","rejected"]].forEach(([label,decision])=>{const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";b.addEventListener("click",()=>openAction(decision,r.id,label+" approval","Your decision will be permanently recorded in the workflow audit trail."));wrap.appendChild(b)});
+  td.appendChild(wrap);
+ });
+}
+async function loadActiveWorkflows(){
+ const {data,error}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,applies_to_entity").eq("status","active").order("workflow_name");
+ if(error)throw error;
+ activeWorkflows=data||[];
+ const select=$("launchWorkflow");select.replaceChildren();
+ if(!activeWorkflows.length){const opt=document.createElement("option");opt.value="";opt.textContent="No active workflows available";select.appendChild(opt);$("launchButton").disabled=true;$("launchStatus").textContent="No active workflows are currently available. Draft templates cannot be launched.";return}
+ activeWorkflows.forEach(w=>{const opt=document.createElement("option");opt.value=w.workflow_code;opt.textContent=w.workflow_name+" ("+w.workflow_code+")";select.appendChild(opt)});
+ $("launchButton").disabled=false;$("launchStatus").textContent="Only active definitions are listed. Launching creates a workflow record linked to the supplied business record reference.";
+}
+function openAction(type,id,title,description){
+ pendingAction={type,id};$("modalTitle").textContent=title;$("modalDescription").textContent=description;$("actionNotes").value="";$("actionModal").classList.remove("hidden");
+}
+function closeAction(){$("actionModal").classList.add("hidden");pendingAction=null}
+async function submitAction(){
+ if(!pendingAction)return;
+ const action=pendingAction,notes=$("actionNotes").value.trim();$("modalConfirm").disabled=true;
+ try{
+  if(action.type==="complete"){
+   const {data,error}=await db.rpc("ft_advance_workflow_task",{p_task_id:action.id,p_completion_notes:notes||null});
+   if(error)throw error;
+   setStatus("Workflow task action recorded: "+(data?.result||"completed")+".","success");
+  }else{
+   const {error}=await db.from("ft_workflow_approval_decisions").insert({approval_request_id:action.id,decision:action.type,decision_notes:notes||null,decided_by:currentUserId});
+   if(error)throw error;
+   setStatus("Approval decision recorded. The workflow status has been updated by the database controls.","success");
+  }
+  closeAction();await refresh();
+ }catch(e){setStatus("Action was not completed: "+(e.message||"Permission or database error."),"error")}
+ finally{$("modalConfirm").disabled=false}
+}
+async function launchWorkflow(event){
+ event.preventDefault();const code=$("launchWorkflow").value;
+ if(!code){$("launchStatus").textContent="No active workflow is available.";return}
+ const entityType=$("entityType").value.trim(),entityReference=$("entityReference").value.trim();
+ if(!entityType||!entityReference){$("launchStatus").textContent="Enter both the business record type and reference.";return}
+ $("launchButton").disabled=true;
+ try{
+  const {data,error}=await db.rpc("ft_start_workflow_instance",{p_workflow_code:code,p_entity_type:entityType,p_entity_reference:entityReference,p_priority:$("launchPriority").value,p_context_data:{}});
+  if(error)throw error;
+  $("launchStatus").textContent="Workflow started: "+(data?.instance_reference||"record created")+". First task: "+(data?.task_reference||"created")+".";
+  $("entityReference").value="";await refresh();
+ }catch(e){$("launchStatus").textContent="Workflow not started: "+(e.message||"Permission or database error.");}
+ finally{$("launchButton").disabled=activeWorkflows.length===0}
 }
 async function loadNotifications(){
  const {data,error}=await db.from("ft_workflow_notification_outbox").select("notification_type,title,message,status,scheduled_at,created_at").order("created_at",{ascending:false}).limit(50);
@@ -104,7 +193,7 @@ async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
   if(currentRole==="super_admin"){await loadSummary();await loadDefinitions()}
-  await Promise.all([loadTasks(),loadNotifications()]);
+  await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows()]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
  finally{$("refresh").disabled=false}
@@ -117,15 +206,22 @@ async function start(){
   if(error)throw error;
   if(!allowedRoles.includes(role))throw new Error("This workspace is restricted to authorised FrostTech administrators.");
   currentRole=role;
+  currentUserId=userData.user.id;
   $("heading").textContent=role==="super_admin"?"Super Administrator — Workflow Oversight":"Departmental Workflow and Notifications";
   $("sessionTools").classList.remove("hidden");
   $("tasksCard").classList.remove("hidden");
+  $("approvalsCard").classList.remove("hidden");
+  $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
   if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden")}
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);
+$("launchForm").addEventListener("submit",launchWorkflow);
+$("modalCancel").addEventListener("click",closeAction);
+$("modalConfirm").addEventListener("click",submitAction);
+$("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
 $("logout").addEventListener("click",async()=>{const {error}=await db.auth.signOut();if(error){setStatus(error.message,"error");return}location.href="admin-portal.html"});
 start();
 </script>
