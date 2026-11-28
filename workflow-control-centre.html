@@ -97,7 +97,11 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <button type="submit">Record Report Distribution</button>
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
-<h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
+<h3>Consolidated Report Distribution Oversight</h3>
+<p class="muted">Super Administrator view across monthly/departmental management reports and annual exception reviews. Pending acknowledgement is measured from confirmed provider delivery where available; items older than seven days are flagged overdue. Opening this dashboard does not acknowledge or alter any report.</p>
+<div class="actions"><button type="button" class="secondary" id="refreshReportOversight">Refresh Distribution Oversight</button><button type="button" class="secondary" id="exportReportOversight">Export Oversight CSV</button><span id="reportOversightStatus" class="muted" aria-live="polite"></span></div>
+<div id="reportOversightMetrics" class="metrics"></div>
+<h4>Delivery and Acknowledgement Register</h4><div id="reportOversightRegister" class="table-wrap"></div><h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
 <h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Annual Exception Performance and Year-on-Year Report</h3>
 <p class="muted">Compare calendar years, identify recurring exception categories and review the age of currently outstanding cases.</p>
@@ -431,6 +435,40 @@ async function sendExceptionAnnualReview(){
   await loadExceptionAnnualArchives();
  }catch(e){status.textContent="Annual review email failed: "+(e.message||String(e));setStatus(status.textContent,"error");await loadExceptionAnnualArchives().catch(()=>{})}
 }
+let reportOversightRows=[];
+async function loadReportDistributionOversight(){
+ const status=$("reportOversightStatus");status.textContent="Loading delivery and acknowledgement records…";
+ const [monthly,monthlyAck,annual,annualAck]=await Promise.all([
+  db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_email,provider_message_id,delivery_status,provider_delivery_status,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(1000),
+  db.from("ft_management_report_acknowledgements").select("delivery_attempt_id,acknowledged_at,acknowledgement_note").order("acknowledged_at",{ascending:false}).limit(1000),
+  db.from("ft_exception_annual_review_deliveries").select("id,archive_id,recipient_email,provider_message_id,delivery_status,provider_delivery_status,attempted_at,delivered_at,failure_reason").order("attempted_at",{ascending:false}).limit(1000),
+  db.from("ft_exception_annual_review_acknowledgements").select("delivery_id,acknowledged_at,acknowledgement_note").order("acknowledged_at",{ascending:false}).limit(1000)
+ ]);
+ for(const x of [monthly,monthlyAck,annual,annualAck])if(x.error)throw x.error;
+ const ackMap=new Map();(monthlyAck.data||[]).forEach(a=>ackMap.set(a.delivery_attempt_id,a));(annualAck.data||[]).forEach(a=>ackMap.set(a.delivery_id,a));
+ const now=Date.now(),rows=[];
+ for(const [kind,items] of [["Management report",monthly.data||[]],["Annual exception review",annual.data||[]]]){
+  for(const r of items){
+   const ack=ackMap.get(r.id)||null,provider=(r.provider_delivery_status||"").toLowerCase(),base=(r.delivered_at||r.attempted_at),delivered=!!r.delivered_at||provider==="delivered",pending=r.delivery_status==="sent"&&!ack,age=base?Math.max(0,Math.floor((now-new Date(base).getTime())/86400000)):null;
+   rows.push({kind,delivery_id:r.id,archive_id:r.archive_id,recipient:r.recipient_email,status:provider||r.delivery_status,attempted_at:r.attempted_at,delivered_at:r.delivered_at,acknowledged_at:ack?.acknowledged_at||null,acknowledgement_note:ack?.acknowledgement_note||"",pending_ack:pending,overdue_ack:pending&&delivered&&age!==null&&age>7,age_days:age,failure:r.failure_reason||""});
+  }
+ }
+ rows.sort((a,b)=>new Date(b.attempted_at||0)-new Date(a.attempted_at||0));reportOversightRows=rows;
+ const sent=rows.filter(r=>r.status==="sent"||r.status==="accepted"||r.status==="delivered"||r.delivered_at).length,delivered=rows.filter(r=>r.delivered_at||r.status==="delivered").length,failed=rows.filter(r=>["failed","blocked_configuration","hard_bounced","soft_bounced","blocked","invalid_email","error"].includes(r.status)).length,pending=rows.filter(r=>r.pending_ack).length,overdue=rows.filter(r=>r.overdue_ack).length,ack=rows.filter(r=>r.acknowledged_at).length;
+ const metrics=$("reportOversightMetrics");metrics.replaceChildren();
+ [["Total attempts",rows.length],["Provider delivered",delivered],["Failed / bounced",failed],["Awaiting acknowledgement",pending],["Overdue > 7 days",overdue],["Acknowledged",ack]].forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(s,strong);metrics.appendChild(box)});
+ table($("reportOversightRegister"),["Report type","Delivery reference","Recipient","Provider status","Attempted","Delivered","Acknowledged","Ack status","Age (days)","Failure"],rows,(tr,r)=>{cell(tr,r.kind);cell(tr,r.delivery_id);cell(tr,r.recipient);cell(tr,r.status);cell(tr,date(r.attempted_at));cell(tr,r.delivered_at?date(r.delivered_at):"Not confirmed");cell(tr,r.acknowledged_at?date(r.acknowledged_at):"—");cell(tr,r.acknowledged_at?"Acknowledged":r.overdue_ack?"OVERDUE":r.pending_ack?"Pending":"Not applicable");cell(tr,r.age_days===null?"—":r.age_days);cell(tr,r.failure||"—")});
+ status.textContent="Updated "+new Date().toLocaleString()+" · "+rows.length+" delivery records";
+}
+function exportReportDistributionOversight(){
+ const header=["Report type","Delivery reference","Archive ID","Recipient","Provider status","Attempted at","Delivered at","Acknowledged at","Acknowledgement status","Age days","Failure"];
+ const escCsv=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const lines=[header,...reportOversightRows.map(r=>[r.kind,r.delivery_id,r.archive_id,r.recipient,r.status,r.attempted_at,r.delivered_at,r.acknowledged_at,r.acknowledged_at?"Acknowledged":r.overdue_ack?"Overdue":r.pending_ack?"Pending":"Not applicable",r.age_days,r.failure])].map(row=>row.map(escCsv).join(",")).join("\r\n");
+ const blob=new Blob(["\\ufeff",lines],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-report-distribution-oversight.csv";a.click();URL.revokeObjectURL(url);
+}
+$("refreshReportOversight").addEventListener("click",()=>loadReportDistributionOversight().catch(e=>{$("reportOversightStatus").textContent="Oversight refresh failed: "+e.message}));
+$("exportReportOversight").addEventListener("click",exportReportDistributionOversight);
+loadReportDistributionOversight().catch(e=>{$("reportOversightStatus").textContent="Oversight register could not load: "+e.message});
 async function loadExceptionAnnualArchives(){
  const {data,error}=await db.from("ft_exception_annual_review_archive").select("id,approval_id,archive_reference,archived_at,archive_snapshot").order("archived_at",{ascending:false}).limit(200);
  if(error)throw error;
