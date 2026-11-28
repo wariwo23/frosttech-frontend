@@ -464,6 +464,20 @@ async function approveAnnualReview(){
  }catch(e){field("annualPackStatus").textContent="Approval not completed: "+(e.message||"The database rejected the request.");}
  finally{btn.disabled=false;btn.textContent="Approve annual pack";}
 }
+async function authorizeYearEndPeriodClose(periodId,periodName){
+ const status=field("yearEndCloseGateStatus");
+ const confirmation=field("closeConfirm-"+periodId).value.trim();
+ const expected="CLOSE "+periodName;
+ if(confirmation!==expected){status.textContent="Closure not submitted. Type exactly: "+expected;return;}
+ status.textContent="Submitting final authorization and rechecking all close requirements…";
+ try{
+  const {data,error}=await db.rpc("ft_authorize_and_close_bookkeeping_period",{p_period_id:periodId,p_confirmation_text:confirmation});
+  if(error)throw error;
+  status.textContent="Accounting period closed. Immutable authorization event: "+(data.event_id||"recorded")+".";
+  await loadYearEndCloseGate();
+  await loadYearEndReadiness();
+ }catch(e){status.textContent="Period was not closed: "+(e.message||"Authorization failed.");}
+}
 async function loadYearEndCloseGate(){
  const status=field("yearEndCloseGateStatus"),host=field("yearEndCloseGateResults");
  status.textContent="Retrieving protected year-end close assessment…";host.innerHTML="";
@@ -484,7 +498,7 @@ async function loadYearEndCloseGate(){
     ["Tax records missing filing/evidence",p.tax_items_missing_filing_or_evidence]
    ];
    const blockers=checks.reduce((n,x)=>n+Number(x[1]||0),0)+(p.financial_statements_linked?0:1)+(p.tax_computation_linked?0:1)+(p.year_end_record_id?0:1);
-   return '<section class="annual-evidence-section"><h3>'+esc(p.period_name)+' · '+esc(p.start_date)+' to '+esc(p.end_date)+'</h3><div class="grid"><div class="metric">Period status<strong>'+esc(p.period_status)+'</strong></div><div class="metric">Year-end record<strong>'+esc(p.year_end_status||"Not prepared")+'</strong></div><div class="metric">Blocking items<strong>'+blockers+'</strong></div><div class="metric">Financial statements<strong>'+(p.financial_statements_linked?'Linked':'Missing')+'</strong></div><div class="metric">Tax computation<strong>'+(p.tax_computation_linked?'Linked':'Missing')+'</strong></div></div><div class="table-wrap"><table><thead><tr><th>Close requirement</th><th>Outstanding</th><th>Assessment</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+Number(x[1]||0)+'</td><td><span class="pill">'+(Number(x[1]||0)===0?'No exception identified':'Action required')+'</span></td></tr>').join("")+'<tr><td>Year-end record exists</td><td>'+(p.year_end_record_id?0:1)+'</td><td>'+(p.year_end_record_id?'Recorded':'Required')+'</td></tr><tr><td>Financial statements document</td><td>'+(p.financial_statements_linked?0:1)+'</td><td>'+(p.financial_statements_linked?'Linked':'Required')+'</td></tr><tr><td>Tax computation document</td><td>'+(p.tax_computation_linked?0:1)+'</td><td>'+(p.tax_computation_linked?'Linked':'Required')+'</td></tr></tbody></table></div><p><strong>Close gate:</strong> <span class="pill">'+(p.close_gate_passed?'Eligible for separate authorization':'Blocked — resolve outstanding requirements')+'</span></p></section>';
+   return '<section class="annual-evidence-section"><h3>'+esc(p.period_name)+' · '+esc(p.start_date)+' to '+esc(p.end_date)+'</h3><div class="grid"><div class="metric">Period status<strong>'+esc(p.period_status)+'</strong></div><div class="metric">Year-end record<strong>'+esc(p.year_end_status||"Not prepared")+'</strong></div><div class="metric">Blocking items<strong>'+blockers+'</strong></div><div class="metric">Financial statements<strong>'+(p.financial_statements_linked?'Linked':'Missing')+'</strong></div><div class="metric">Tax computation<strong>'+(p.tax_computation_linked?'Linked':'Missing')+'</strong></div></div><div class="table-wrap"><table><thead><tr><th>Close requirement</th><th>Outstanding</th><th>Assessment</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+Number(x[1]||0)+'</td><td><span class="pill">'+(Number(x[1]||0)===0?'No exception identified':'Action required')+'</span></td></tr>').join("")+'<tr><td>Year-end record exists</td><td>'+(p.year_end_record_id?0:1)+'</td><td>'+(p.year_end_record_id?'Recorded':'Required')+'</td></tr><tr><td>Financial statements document</td><td>'+(p.financial_statements_linked?0:1)+'</td><td>'+(p.financial_statements_linked?'Linked':'Required')+'</td></tr><tr><td>Tax computation document</td><td>'+(p.tax_computation_linked?0:1)+'</td><td>'+(p.tax_computation_linked?'Linked':'Required')+'</td></tr></tbody></table></div><p><strong>Close gate:</strong> <span class="pill">'+(p.close_gate_passed?'Eligible for controlled closure':'Blocked — resolve outstanding requirements')+'</span></p>'+(p.close_gate_passed?'<div class="annual-evidence-section"><p><strong>Final authorization</strong> · Type exactly: <code>'+esc('CLOSE '+p.period_name)+'</code></p><input id="closeConfirm-'+esc(p.period_id)+'" type="text" autocomplete="off" placeholder="Type exact confirmation text"><button type="button" data-close-period="'+esc(p.period_id)+'" data-period-name="'+esc(p.period_name)+'">Authorize and close period</button></div>':'<p class="muted">Closure is unavailable until every blocking requirement is resolved.</p>')+'</section>';
   }).join("");
   status.textContent="Loaded "+periods.length+" period(s). This assessment does not close or authorize closure.";
  }catch(e){status.textContent="Close assessment unavailable: "+(e.message||"Access denied.");}
@@ -565,7 +579,9 @@ async function init(){
 }
 filingSelect.addEventListener("change",selectFiling);
 field("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
-field("refreshYearEndCloseGate").addEventListener("click",loadYearEndCloseGate);\nfield("refreshYearEndAdjustments").addEventListener("click",loadYearEndAdjustments);
+field("refreshYearEndCloseGate").addEventListener("click",loadYearEndCloseGate);
+field("yearEndCloseGateResults").addEventListener("click",event=>{const button=event.target.closest("[data-close-period]");if(button)authorizeYearEndPeriodClose(button.dataset.closePeriod,button.dataset.periodName);});
+field("refreshYearEndAdjustments").addEventListener("click",loadYearEndAdjustments);
 field("annualReviewYear").value=new Date().getFullYear();
 field("calendarSelect").addEventListener("change",async()=>{const logs=await db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").order("created_at",{ascending:false}).limit(200);selectCalendarItem(logs.data||[]);});
 field("saveCalendarItem").addEventListener("click",saveCalendarItem);
