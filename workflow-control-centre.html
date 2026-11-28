@@ -104,6 +104,17 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="form-grid"><label>Current year <input type="number" id="exceptionAnnualYear" min="2000" max="2200"></label><label>Comparison year <input type="number" id="exceptionAnnualCompareYear" min="2000" max="2200"></label></div>
 <div class="actions"><button type="button" id="generateExceptionAnnual">Generate Annual Report</button><button type="button" class="secondary" id="exportExceptionAnnual">Export Annual CSV</button></div>
 <div id="exceptionAnnualMetrics" class="metrics"></div><div id="exceptionAnnualBreakdown" class="table-wrap"></div><div id="exceptionAnnualStatus" class="muted" aria-live="polite"></div>
+<h4>Annual Review Approval and Permanent Archive</h4>
+<p class="muted">Super Administrator sign-off creates an immutable approved snapshot and permanent archive reference. Distribution entries record dispatch outcomes; they do not send email by themselves.</p>
+<label>Approval note <textarea id="exceptionAnnualApprovalNote" rows="3" placeholder="Record the management review decision and any qualifications"></textarea></label>
+<div class="actions"><button type="button" id="approveExceptionAnnual">Approve and Archive Annual Review</button></div>
+<div id="exceptionAnnualArchiveRegister" class="table-wrap"></div>
+<h4>Archived Review Distribution Register</h4>
+<label>Archive reference <select id="exceptionAnnualArchiveSelect"><option value="">Select an archived review</option></select></label>
+<div class="form-grid"><label>Recipient email <input type="email" id="exceptionAnnualRecipient" placeholder="recipient@example.com"></label><label>Channel <select id="exceptionAnnualChannel"><option value="email">Email</option><option value="internal">Internal</option></select></label><label>Distribution status <select id="exceptionAnnualDistributionStatus"><option value="prepared">Prepared</option><option value="sent">Sent</option><option value="failed">Failed</option><option value="blocked">Blocked</option></select></label></div>
+<label>Distribution note <textarea id="exceptionAnnualDistributionNote" rows="2" placeholder="Record dispatch reference or reason for failure"></textarea></label>
+<button type="button" id="recordExceptionAnnualDistribution">Record Distribution Outcome</button>
+<div id="exceptionAnnualDistributionRegister" class="table-wrap"></div>
 <h3>Monthly Exception Performance Report</h3>
 <p class="muted">Management summary of exception volumes, resolutions, outstanding cases, escalation activity and resolution time. Select a reporting period before generating.</p>
 <div class="form-grid"><label>Report from <input type="date" id="exceptionPerformanceFrom"></label><label>Report to <input type="date" id="exceptionPerformanceTo"></label></div>
@@ -406,6 +417,45 @@ async function buildExceptionAnnualReport(){
  $("exceptionAnnualStatus").textContent="Annual report generated from "+history.length+" immutable event records. Current outstanding-case ageing uses current case records; year-on-year resolution counts rely on captured history.";
  return currentExceptionAnnualReport;
 }
+async function loadExceptionAnnualArchives(){
+ const {data,error}=await db.from("ft_exception_annual_review_archive").select("id,approval_id,archive_reference,archived_at,archive_snapshot").order("archived_at",{ascending:false}).limit(200);
+ if(error)throw error;
+ const select=$("exceptionAnnualArchiveSelect"),previous=select.value;select.replaceChildren();
+ const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select an archived review";select.appendChild(placeholder);
+ (data||[]).forEach(r=>{const o=document.createElement("option");o.value=r.id;o.textContent=r.archive_reference+" — "+new Date(r.archived_at).toLocaleDateString();select.appendChild(o)});
+ if(previous)select.value=previous;
+ table($("exceptionAnnualArchiveRegister"),["Archive reference","Archived","Report years","Retention"],data||[],(tr,r)=>{cell(tr,r.archive_reference);cell(tr,date(r.archived_at));cell(tr,String(r.archive_snapshot?.year??"")+" vs "+String(r.archive_snapshot?.compareYear??""));cell(tr,"Permanent")});
+ const d=await db.from("ft_exception_annual_review_distribution").select("id,archive_id,recipient_email,channel,distribution_status,recorded_at,distribution_note").order("recorded_at",{ascending:false}).limit(300);
+ if(d.error)throw d.error;
+ table($("exceptionAnnualDistributionRegister"),["Archive ID","Recipient","Channel","Outcome","Recorded","Note"],d.data||[],(tr,r)=>{cell(tr,r.archive_id);cell(tr,r.recipient_email);cell(tr,r.channel);cell(tr,r.distribution_status);cell(tr,date(r.recorded_at));cell(tr,r.distribution_note)});
+}
+async function approveExceptionAnnualReview(){
+ try{
+  const report=currentExceptionAnnualReport||await buildExceptionAnnualReport();
+  const note=$("exceptionAnnualApprovalNote").value.trim();if(!note)throw new Error("Enter the Super Administrator approval note.");
+  const snapshot={...report,generated_at:new Date().toISOString(),report_type:"annual_exception_performance",methodology:"Based on immutable captured exception history and current outstanding-case records."};
+  delete snapshot.history;
+  const {data,error}=await db.rpc("ft_approve_exception_annual_review",{p_report_year:report.year,p_comparison_year:report.compareYear,p_report_snapshot:snapshot,p_approval_note:note});
+  if(error)throw error;
+  $("exceptionAnnualApprovalNote").value="";
+  $("exceptionAnnualStatus").textContent="Annual review approved and archived. Approval reference: "+data;
+  await loadExceptionAnnualArchives();
+ }catch(e){$("exceptionAnnualStatus").textContent="Approval failed: "+e.message;setStatus("Annual review approval failed: "+e.message,"error")}
+}
+async function recordExceptionAnnualDistribution(){
+ try{
+  const archiveId=$("exceptionAnnualArchiveSelect").value,recipient=$("exceptionAnnualRecipient").value.trim(),note=$("exceptionAnnualDistributionNote").value.trim();
+  if(!archiveId||!recipient||!note)throw new Error("Select an archive and provide recipient email and distribution note.");
+  const {data,error}=await db.rpc("ft_record_exception_annual_review_distribution",{p_archive_id:archiveId,p_recipient_email:recipient,p_channel:$("exceptionAnnualChannel").value,p_status:$("exceptionAnnualDistributionStatus").value,p_note:note});
+  if(error)throw error;
+  $("exceptionAnnualDistributionNote").value="";
+  $("exceptionAnnualStatus").textContent="Distribution outcome recorded: "+data;
+  await loadExceptionAnnualArchives();
+ }catch(e){$("exceptionAnnualStatus").textContent="Distribution record failed: "+e.message;setStatus("Annual review distribution failed: "+e.message,"error")}
+}
+$("approveExceptionAnnual").addEventListener("click",approveExceptionAnnualReview);
+$("recordExceptionAnnualDistribution").addEventListener("click",recordExceptionAnnualDistribution);
+loadExceptionAnnualArchives().catch(e=>setStatus("Annual archive register could not load: "+e.message,"error"));
 async function generateExceptionAnnual(){try{await buildExceptionAnnualReport()}catch(e){$("exceptionAnnualStatus").textContent="Annual report failed: "+e.message;setStatus("Annual exception report failed: "+e.message,"error")}}
 async function exportExceptionAnnual(){
  try{
