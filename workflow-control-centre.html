@@ -99,7 +99,9 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="statutoryCreateNotes">Preparation notes</label><textarea id="statutoryCreateNotes" rows="2" maxlength="3000"></textarea></div>
 <button type="submit">Create Statutory Filing Record</button>
 </form>
+<div id="statutoryFilingMetrics" class="metrics-grid"></div>
 <div id="statutoryFilingStatus" class="muted" aria-live="polite"></div>
+<h4>Automated statutory and tax deadline reminders</h4><div id="statutoryReminderAudit" class="table-wrap"></div>
 <div class="actions"><button type="button" class="secondary" id="refreshStatutoryFilings">Refresh Statutory Register</button><button type="button" class="secondary" id="exportStatutoryFilings">Export Statutory Register CSV</button></div>
 <div id="statutoryFilingRegister" class="table-wrap"></div>
 <h4>Filing Evidence and Audit Trail</h4><div id="statutoryFilingAudit" class="table-wrap"></div>
@@ -1067,12 +1069,21 @@ async function loadRecipientReports(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events]=await Promise.all([
+ const [filings,events,reminders]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,created_at").order("due_date",{ascending:true}).limit(500),
-  db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500)
+  db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
+  db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;
  const rows=filings.data||[];
+ const todayIso=new Date().toISOString().slice(0,10);
+ const openRows=rows.filter(r=>!["accepted","not_applicable","cancelled"].includes(r.status));
+ const overdueRows=openRows.filter(r=>r.due_date&&r.due_date<todayIso);
+ const dueRows=openRows.filter(r=>r.due_date&&r.due_date>=todayIso&&r.due_date<=new Date(Date.now()+30*86400000).toISOString().slice(0,10));
+ const missingAck=rows.filter(r=>r.status==="accepted"&&(!r.acknowledgement_document_id||!r.acknowledgement_reference)).length;
+ const missingReceipt=rows.filter(r=>r.payment_reference&&!r.payment_receipt_document_id).length;
+ const metrics=[["Statutory filings",rows.length],["Overdue filings",overdueRows.length],["Due within 30 days",dueRows.length],["Accepted without acknowledgement",missingAck],["Payment reference without receipt",missingReceipt]];
+ $("statutoryFilingMetrics").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(s,strong);$("statutoryFilingMetrics").appendChild(box)});
  table($("statutoryFilingRegister"),["Due / filed","Filing / authority","Owner / obligation","Status","Official references","Evidence / update"],rows,(tr,r)=>{
   cell(tr,date(r.due_date)+" · Filed: "+date(r.filed_date));
   cell(tr,r.filing_type.replaceAll("_"," ")+" · "+r.authority_name);
@@ -1101,6 +1112,7 @@ async function loadStatutoryFilingRegister(){
  });
  const auditRows=events.data||[];
  table($("statutoryFilingAudit"),["Recorded","Filing","Event","Actor","Details"],auditRows,(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.event_snapshot?.filing_type||e.filing_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"System");cell(tr,e.event_note||"—")});
+ table($("statutoryReminderAudit"),["Reminder sent","Source","Deadline","Stage","Recipient","In-app notice"],reminders.data||[],(tr,r)=>{cell(tr,date(r.created_at));cell(tr,r.source_type.replaceAll("_"," ")+" · "+(r.source_reference||r.source_id));cell(tr,date(r.due_date));cell(tr,r.reminder_stage.replaceAll("_"," "));cell(tr,r.recipient_user_id||"—");cell(tr,r.notification_id?"Created":"No notification linked")});
  window.__ftStatutoryFilingExport=rows;
 }
 async function createStatutoryFiling(event){
