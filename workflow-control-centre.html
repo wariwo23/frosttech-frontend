@@ -99,7 +99,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
-<h3>Consolidated Exception Command Panel</h3><p class="muted">Single Super Administrator workspace combining delivery exceptions, notification acknowledgements and escalation actions. Actions remain separately audited; acknowledging an alert never resolves its exception.</p><div id="exceptionCommandMetrics" class="metrics"></div><div id="exceptionCommandPanel" class="table-wrap"></div>
+<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><p class="muted">Single Super Administrator workspace combining delivery exceptions, notification acknowledgements and escalation actions. Actions remain separately audited; acknowledging an alert never resolves its exception.</p><div id="exceptionCommandMetrics" class="metrics"></div><div id="exceptionCommandPanel" class="table-wrap"></div>
 <h3>Escalation History</h3><p class="muted">Unacknowledged exceptions are escalated automatically after 24, 48 and 72 hours. Escalation notices are separate from the original alert. Acknowledging an escalation does not close the underlying exception.</p><div id="reportExceptionEscalations" class="table-wrap"></div>
 <h3>Delivery Exception Register</h3><p class="muted">Exceptions are opened automatically when report email submissions fail or Brevo reports bounced, blocked, invalid-recipient, spam or unmatched events. Super Administrator can investigate, add follow-up notes and resolve each exception with a mandatory resolution note. Archived reports are never edited or deleted.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
@@ -351,6 +351,26 @@ async function submitExceptionModal(){
  finally{$("exceptionModalSave").disabled=false}
 }
 async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
+async function loadExceptionCaseHistory(){
+ const {data,error}=await db.from("ft_management_report_exception_case_history")
+  .select("id,source_table,source_record_id,exception_id,action,actor_user_id,event_at,before_snapshot,after_snapshot")
+  .order("event_at",{ascending:false}).limit(500);
+ if(error)throw error;
+ table($("exceptionCaseHistory"),["Time","Record Type","Action","Exception Reference","Actor","Change Summary","Evidence"],data||[],(tr,r)=>{
+  cell(tr,date(r.event_at));
+  cell(tr,r.source_table.replace("ft_management_report_","").replaceAll("_"," "));
+  cell(tr,r.action);
+  cell(tr,r.exception_id||r.source_record_id);
+  cell(tr,r.actor_user_id||"System-generated");
+  const before=r.before_snapshot||{},after=r.after_snapshot||{};
+  const keys=["exception_status","exception_type","exception_summary","acknowledged_at","escalation_level","resolution_note"];
+  const changes=keys.filter(k=>JSON.stringify(before[k]??null)!==JSON.stringify(after[k]??null)).map(k=>k+": "+String(before[k]??"—")+" → "+String(after[k]??"—"));
+  cell(tr,changes.join(" | ")||"Record captured");
+  const td=cell(tr,"");const b=document.createElement("button");b.type="button";b.className="secondary";b.textContent="View evidence";
+  b.addEventListener("click",()=>{const w=window.open("","_blank");if(!w){setStatus("Allow pop-ups to view evidence.","error");return}const pre=w.document.createElement("pre");pre.textContent=JSON.stringify({before:r.before_snapshot,after:r.after_snapshot},null,2);w.document.body.appendChild(pre);w.document.title="FrostTech Exception Evidence";});
+  td.appendChild(b);
+ });
+}
 async function loadExceptionCommandPanel(){
  const [exceptionsResult,notificationsResult,escalationsResult]=await Promise.all([
   db.from("ft_management_report_delivery_exceptions").select("id,exception_type,exception_status,exception_summary,created_at,resolution_note").order("created_at",{ascending:false}).limit(250),
@@ -706,7 +726,7 @@ async function loadRecipientReports(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel(),loadExceptionCaseHistory()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
