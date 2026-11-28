@@ -56,6 +56,13 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="departmentMetrics" class="table-wrap"></div>
 <p id="executiveGenerated" class="muted"></p>
 </section>
+<section id="performanceCard" class="card hidden">
+<h2>Departmental Performance History</h2>
+<p class="muted">Monthly historical indicators derived from recorded task and escalation timestamps. Averages are elapsed minutes between recorded events, not service-level guarantees. Empty periods are not fabricated.</p>
+<div id="performanceSummary" class="metrics"></div>
+<div id="performanceHistory" class="table-wrap"></div>
+<p id="performanceGenerated" class="muted"></p>
+</section>
 <section id="definitionsCard" class="card hidden">
 <h2>Workflow Templates</h2>
 <p class="muted">Super Administrator view. Templates remain Draft until separately approved and activated. This page does not activate or edit templates.</p>
@@ -146,6 +153,27 @@ async function loadExecutiveDashboard(){
  $("executiveMetrics").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value??0;box.append(span,strong);$("executiveMetrics").appendChild(box)});
  table($("departmentMetrics"),["Department","Open tasks","Overdue","Overdue / unacknowledged","Awaiting acknowledgement"],departments.data||[],(tr,r)=>{cell(tr,r.department_code);cell(tr,r.open_tasks);cell(tr,r.overdue_tasks);cell(tr,r.overdue_unacknowledged_tasks);cell(tr,r.awaiting_acknowledgement)});
  $("executiveGenerated").textContent="Dashboard generated: "+date(s.generated_at)+". Values update when records are refreshed.";
+}
+async function loadMonthlyPerformance(){
+ const {data,error}=await db.from("ft_workflow_department_monthly_performance").select("*").order("reporting_month",{ascending:false}).order("department_code").limit(240);
+ if(error)throw error;
+ const rows=data||[];
+ const totals=rows.reduce((a,r)=>({
+  created:a.created+(Number(r.tasks_created)||0),
+  completed:a.completed+(Number(r.tasks_completed)||0),
+  acknowledged:a.acknowledged+(Number(r.tasks_acknowledged)||0),
+  escalations:a.escalations+(Number(r.escalations_raised)||0),
+  responded:a.responded+(Number(r.escalations_responded)||0)
+ }),{created:0,completed:0,acknowledged:0,escalations:0,responded:0});
+ const metrics=[["Tasks created",totals.created],["Tasks completed",totals.completed],["Tasks acknowledged",totals.acknowledged],["Escalations raised",totals.escalations],["Escalations responded",totals.responded]];
+ $("performanceSummary").replaceChildren();
+ metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("performanceSummary").appendChild(box)});
+ table($("performanceHistory"),["Month","Department","Tasks created","Completed","Acknowledged","Avg acknowledgement (min)","Avg completion (min)","Escalations","Responses","Avg response (min)"],rows,(tr,r)=>{
+  const month=r.reporting_month?new Date(r.reporting_month+"T00:00:00").toLocaleDateString(undefined,{year:"numeric",month:"long"}):"—";
+  cell(tr,month);cell(tr,r.department_code);cell(tr,r.tasks_created);cell(tr,r.tasks_completed);cell(tr,r.tasks_acknowledged);
+  cell(tr,r.average_acknowledgement_minutes??"—");cell(tr,r.average_completion_minutes??"—");cell(tr,r.escalations_raised);cell(tr,r.escalations_responded);cell(tr,r.average_escalation_response_minutes??"—");
+ });
+ $("performanceGenerated").textContent="Loaded "+rows.length+" department-month records. Metrics reflect available recorded timestamps and database permissions.";
 }
 async function loadDefinitions(){
  const {data,error}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,department_code,status,version_number,effective_from").order("workflow_name");
@@ -278,7 +306,7 @@ async function queueOverdueReminders(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -299,7 +327,7 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
+  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
