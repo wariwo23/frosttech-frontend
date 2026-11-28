@@ -99,7 +99,12 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
-<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Monthly Exception Performance Report</h3>
+<h3>Consolidated Exception Command Panel</h3><h3>Permanent Exception Case History</h3><p class="muted">Immutable chronological record of exception creation, status changes, notification acknowledgements and escalations.</p><div id="exceptionCaseHistory" class="table-wrap"></div><h3>Annual Exception Performance and Year-on-Year Report</h3>
+<p class="muted">Compare calendar years, identify recurring exception categories and review the age of currently outstanding cases.</p>
+<div class="form-grid"><label>Current year <input type="number" id="exceptionAnnualYear" min="2000" max="2200"></label><label>Comparison year <input type="number" id="exceptionAnnualCompareYear" min="2000" max="2200"></label></div>
+<div class="actions"><button type="button" id="generateExceptionAnnual">Generate Annual Report</button><button type="button" class="secondary" id="exportExceptionAnnual">Export Annual CSV</button></div>
+<div id="exceptionAnnualMetrics" class="metrics"></div><div id="exceptionAnnualBreakdown" class="table-wrap"></div><div id="exceptionAnnualStatus" class="muted" aria-live="polite"></div>
+<h3>Monthly Exception Performance Report</h3>
 <p class="muted">Management summary of exception volumes, resolutions, outstanding cases, escalation activity and resolution time. Select a reporting period before generating.</p>
 <div class="form-grid"><label>Report from <input type="date" id="exceptionPerformanceFrom"></label><label>Report to <input type="date" id="exceptionPerformanceTo"></label></div>
 <div class="actions"><button type="button" id="generateExceptionPerformance">Generate Monthly Report</button><button type="button" class="secondary" id="exportExceptionPerformance">Export Management CSV</button></div>
@@ -364,6 +369,56 @@ async function submitExceptionModal(){
  finally{$("exceptionModalSave").disabled=false}
 }
 async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
+let currentExceptionAnnualReport=null;
+async function buildExceptionAnnualReport(){
+ const year=Number($("exceptionAnnualYear").value),compareYear=Number($("exceptionAnnualCompareYear").value);
+ if(!Number.isInteger(year)||year<2000||year>2200||!Number.isInteger(compareYear)||compareYear<2000||compareYear>2200||year===compareYear)throw new Error("Enter two different valid calendar years.");
+ const startYear=Math.min(year,compareYear),endYear=Math.max(year,compareYear);
+ const from=startYear+"-01-01T00:00:00.000Z",to=endYear+"-12-31T23:59:59.999Z";
+ const [h,e]=await Promise.all([
+  db.from("ft_management_report_exception_case_history").select("id,source_table,source_record_id,exception_id,action,event_at,before_snapshot,after_snapshot").gte("event_at",from).lte("event_at",to).order("event_at",{ascending:true}).limit(10000),
+  db.from("ft_management_report_delivery_exceptions").select("id,exception_type,exception_status,created_at,resolution_note").order("created_at",{ascending:false}).limit(5000)
+ ]);
+ if(h.error)throw h.error;if(e.error)throw e.error;
+ const history=h.data||[],cases=e.data||[];
+ const annual=[year,compareYear].map(y=>{
+  const events=history.filter(x=>new Date(x.event_at).getUTCFullYear()===y);
+  const opened=events.filter(x=>x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="insert");
+  const resolved=events.filter(x=>x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="update"&&x.after_snapshot?.exception_status==="resolved"&&x.before_snapshot?.exception_status!=="resolved");
+  const escalated=events.filter(x=>x.source_table==="ft_management_report_exception_escalations"&&x.action==="insert");
+  const unresolvedCases=cases.filter(x=>["open","investigating"].includes(x.exception_status)&&new Date(x.created_at).getUTCFullYear()===y);
+  return {year:y,opened:opened.length,resolved:resolved.length,escalated:escalated.length,unresolved:unresolvedCases.length,events:events.length};
+ });
+ const categoryCounts={};history.filter(x=>x.source_table==="ft_management_report_delivery_exceptions"&&x.action==="insert").forEach(x=>{const y=new Date(x.event_at).getUTCFullYear();if(y!==year&&y!==compareYear)return;const category=x.after_snapshot?.exception_type||"Unclassified";categoryCounts[y]??={};categoryCounts[y][category]=(categoryCounts[y][category]||0)+1});
+ const categoryRows=[...new Set([...Object.keys(categoryCounts[year]||{}),...Object.keys(categoryCounts[compareYear]||{})])].sort().map(category=>({category,current:categoryCounts[year]?.[category]||0,comparison:categoryCounts[compareYear]?.[category]||0}));
+ const now=Date.now();
+ const ageing=cases.filter(x=>["open","investigating"].includes(x.exception_status)).map(x=>({id:x.id,type:x.exception_type,status:x.exception_status,ageDays:Math.max(0,Math.floor((now-new Date(x.created_at).getTime())/86400000))})).sort((a,b)=>b.ageDays-a.ageDays);
+ const bands=[{band:"0–7 days",min:0,max:7},{band:"8–30 days",min:8,max:30},{band:"31–60 days",min:31,max:60},{band:"61–90 days",min:61,max:90},{band:"Over 90 days",min:91,max:Infinity}].map(b=>({band:b.band,count:ageing.filter(x=>x.ageDays>=b.min&&x.ageDays<=b.max).length}));
+ currentExceptionAnnualReport={year,compareYear,annual,categoryRows,ageing,bands,historyCount:history.length};
+ const metrics=[["Current year new cases",annual[0].opened],["Comparison year new cases",annual[1].opened],["Current year resolved",annual[0].resolved],["Current outstanding cases",cases.filter(x=>["open","investigating"].includes(x.exception_status)).length],["Open cases over 30 days",ageing.filter(x=>x.ageDays>30).length],["Events analysed",history.length]];
+ const box=$("exceptionAnnualMetrics");box.replaceChildren();metrics.forEach(([label,value])=>{const d=document.createElement("div");d.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=String(value);d.append(s,strong);box.appendChild(d)});
+ const target=$("exceptionAnnualBreakdown");target.replaceChildren();
+ const addSection=(title,headers,rows,render)=>{const h=document.createElement("h4");h.textContent=title;target.appendChild(h);const wrap=document.createElement("div");wrap.className="table-wrap";target.appendChild(wrap);table(wrap,headers,rows,render)};
+ addSection("Year-on-year comparison",["Year","New cases","Resolved","Escalations","Still open (created that year)","Events"],annual,(tr,r)=>{[r.year,r.opened,r.resolved,r.escalated,r.unresolved,r.events].forEach(v=>cell(tr,v))});
+ addSection("Recurring failure categories",["Category","Current year","Comparison year"],categoryRows,(tr,r)=>{cell(tr,r.category);cell(tr,r.current);cell(tr,r.comparison)});
+ addSection("Outstanding case ageing",["Age band","Cases"],bands,(tr,r)=>{cell(tr,r.band);cell(tr,r.count)});
+ addSection("Oldest outstanding cases",["Exception reference","Category","Status","Age (days)"],ageing.slice(0,100),(tr,r)=>{cell(tr,r.id);cell(tr,r.type);cell(tr,r.status);cell(tr,r.ageDays)});
+ $("exceptionAnnualStatus").textContent="Annual report generated from "+history.length+" immutable event records. Current outstanding-case ageing uses current case records; year-on-year resolution counts rely on captured history.";
+ return currentExceptionAnnualReport;
+}
+async function generateExceptionAnnual(){try{await buildExceptionAnnualReport()}catch(e){$("exceptionAnnualStatus").textContent="Annual report failed: "+e.message;setStatus("Annual exception report failed: "+e.message,"error")}}
+async function exportExceptionAnnual(){
+ try{
+  const r=currentExceptionAnnualReport||await buildExceptionAnnualReport();
+  const rows=[["FrostTech Annual Exception Performance Report"],["Current year",r.year],["Comparison year",r.compareYear],[],["Year","New cases","Resolved","Escalations","Still open","Events"],...r.annual.map(x=>[x.year,x.opened,x.resolved,x.escalated,x.unresolved,x.events]),[],["Category","Current year","Comparison year"],...r.categoryRows.map(x=>[x.category,x.current,x.comparison]),[],["Outstanding age band","Cases"],...r.bands.map(x=>[x.band,x.count]),[],["Exception reference","Category","Status","Age days"],...r.ageing.map(x=>[x.id,x.type,x.status,x.ageDays])];
+  const csv=rows.map(row=>row.map(v=>'"'+String(v??"").replace(/"/g,'""')+'"').join(",")).join("\r\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-annual-exception-performance-"+r.year+"-vs-"+r.compareYear+".csv";document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+  $("exceptionAnnualStatus").textContent="Annual management CSV exported.";
+ }catch(e){$("exceptionAnnualStatus").textContent="Annual CSV export failed: "+e.message;setStatus("Annual exception export failed: "+e.message,"error")}
+}
+const currentYear=new Date().getFullYear();$("exceptionAnnualYear").value=currentYear;$("exceptionAnnualCompareYear").value=currentYear-1;
+$("generateExceptionAnnual").addEventListener("click",generateExceptionAnnual);
+$("exportExceptionAnnual").addEventListener("click",exportExceptionAnnual);
 let currentExceptionPerformanceReport=null;
 async function buildExceptionPerformanceReport(){
  const from=$("exceptionPerformanceFrom").value,to=$("exceptionPerformanceTo").value;
