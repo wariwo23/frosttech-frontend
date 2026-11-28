@@ -17,6 +17,17 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 #records{min-height:70px}.note{background:#fff8e7;border-left:4px solid #e2a126;padding:12px}
 #closureConfirm[hidden]{display:none}#closureConfirm{position:fixed;inset:0;background:#071d32b8;display:flex;align-items:center;justify-content:center;padding:18px;z-index:1000}#closureConfirm .modal{background:#fff;border-radius:14px;max-width:440px;width:100%;padding:22px;box-shadow:0 18px 60px #0004}#closureConfirm h2{margin:0 0 8px;color:var(--navy)}#closureConfirm .modal-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:18px}#closureConfirm button{border:0;border-radius:8px;padding:10px 15px;font-weight:700;cursor:pointer}#cancelClosure{background:#eaf1f7;color:#29465f}#confirmClosure{background:var(--blue);color:#fff}@media(max-width:600px){main{padding:12px 10px 30px}.card{padding:14px}}
 @media print{body.annual-print-mode main>section:not(#annualPackCard){display:none!important}body.annual-print-mode #annualPackCard .actions,body.annual-print-mode #annualApprovalPanel,body.annual-print-mode #annualPackCard>p.muted{display:none!important}body.annual-print-mode #annualPackCard{display:block!important;border:0!important;padding:0!important;margin:0!important}.annual-evidence-section{break-inside:avoid;margin-top:18px}body.annual-print-mode #annualPackSnapshot table{min-width:0;font-size:10px}body.annual-print-mode #annualPackSnapshot th,body.annual-print-mode #annualPackSnapshot td{padding:5px}body.annual-print-mode #annualPackSnapshot details pre{max-height:none!important;overflow:visible!important}}@media print{body{background:#fff}header{background:#fff!important;color:#000;border-bottom:2px solid #333;padding:12px}header p{color:#333}main{max-width:none;padding:10px}.actions,#authCard{display:none!important}.card{box-shadow:none;break-inside:avoid}table{min-width:0;font-size:10px}th,td{padding:5px}.table-wrap{overflow:visible}}
+
+@media print{
+ body.certificate-monitor-printing *{visibility:hidden}
+ #certificateDistributionMonitoring,#certificateDistributionMonitoring *{visibility:visible}
+ #certificateDistributionMonitoring{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}
+ #certificateDistributionMonitoring .actions{display:none}
+ #certificateDistributionMonitoring details{display:block}
+ #certificateDistributionMonitoring summary{display:none}
+ #certificateDistributionMonitoring table{min-width:0;font-size:10px}
+ #certificateDistributionMonitoring th,#certificateDistributionMonitoring td{padding:5px}
+}
 </style>
 </head>
 <body>
@@ -146,6 +157,15 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 </section>
 </section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
+
+<section class="card" id="certificateDistributionMonitoring">
+<h2>Certificate Distribution Monitoring</h2>
+<p class="muted">Super Administrator oversight of authorizations, expiry, revocation, verified access and failed attempts. This report is read-only and does not expose tokens or verification codes.</p>
+<div class="actions"><button type="button" id="refreshCertificateMonitoring">Refresh monitoring</button><button type="button" class="secondary" id="printCertificateMonitoring">Print distribution report</button></div>
+<div id="certificateMonitoringStatus" class="status" role="status">Refresh to load the latest distribution activity.</div>
+<div id="certificateMonitoringSummary" class="grid"></div>
+<div id="certificateMonitoringRows"></div>
+</section>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
 <p class="muted">Update an existing statutory filing record. The database rechecks Super Administrator authority and validates required references and active document-vault records. This screen does not initiate payment or submit a return.</p>
@@ -609,6 +629,24 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
 
 
 
+
+async function loadCertificateMonitoring(){
+ const status=field("certificateMonitoringStatus"),summary=field("certificateMonitoringSummary"),host=field("certificateMonitoringRows");
+ status.textContent="Loading Super Administrator distribution monitoring…";summary.innerHTML="";host.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_annual_certificate_distribution_monitoring");
+  if(error)throw error;
+  const s=data?.summary||{};
+  const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
+  summary.innerHTML=metric("Total authorizations",s.total)+metric("Active",s.active)+metric("Expired",s.expired)+metric("Revoked",s.revoked)+metric("Verified accesses",s.verified_accesses)+metric("Failed attempts",s.failed_attempts);
+  const grants=Array.isArray(data?.grants)?data.grants:[];
+  host.innerHTML=grants.length?grants.map(g=>{
+   const events=Array.isArray(g.event_history)?g.event_history:[];
+   return '<article class="metric" style="margin:12px 0;background:#fff"><h3>'+esc(g.certificate_reference||"Certificate reference unavailable")+' · '+esc(g.status)+'</h3><p><strong>Recipient:</strong> '+esc(g.recipient_name)+' · '+esc(g.recipient_email)+'</p><p><strong>Purpose:</strong> '+esc(g.purpose)+'</p><p><strong>Authorized:</strong> '+esc(new Date(g.granted_at).toLocaleString())+' · <strong>Expires:</strong> '+esc(new Date(g.expires_at).toLocaleString())+'</p><p><strong>Tokens issued:</strong> '+esc(g.tokens_issued)+' · <strong>Redeemed:</strong> '+esc(g.tokens_used)+' · <strong>Verified access:</strong> '+esc(g.verified_accesses)+' · <strong>Failed attempts:</strong> '+esc(g.failed_attempts)+'</p>'+(g.revoked_at?'<p><strong>Revoked:</strong> '+esc(new Date(g.revoked_at).toLocaleString())+' · '+esc(g.revocation_reason||"No reason supplied")+'</p>':'')+'<details><summary>Access event history ('+events.length+')</summary>'+(events.length?'<div class="table-wrap"><table><thead><tr><th>Event</th><th>Date</th><th>Recipient</th><th>Details</th></tr></thead><tbody>'+events.map(e=>'<tr><td>'+esc(e.event_type)+'</td><td>'+esc(new Date(e.event_at).toLocaleString())+'</td><td>'+esc(e.recipient_email||"—")+'</td><td>'+esc(JSON.stringify(e.details||{}))+'</td></tr>').join("")+'</tbody></table></div>':'<p>No access events recorded.</p>')+'</details></article>';
+  }).join(""):'<p>No certificate distribution authorizations are recorded.</p>';
+  status.textContent="Monitoring refreshed at "+new Date().toLocaleString()+". "+grants.length+" authorization record(s) returned.";
+ }catch(e){status.textContent="Monitoring unavailable: "+(e.message||"Super Administrator access required.");}
+}
 async function loadCertificateDistributions(){
  const status=field("certificateDistributionStatus"),host=field("certificateDistributionRegister");
  status.textContent="Loading distribution register…";host.innerHTML="";
@@ -848,6 +886,9 @@ field("refreshAnnualCertificateRegister").addEventListener("click",loadAnnualCer
 field("verifyAnnualCertificate").addEventListener("click",verifyAnnualComplianceCertificate);
 field("grantCertificateDistribution").addEventListener("click",grantCertificateDistribution);
 field("refreshCertificateDistributions").addEventListener("click",loadCertificateDistributions);
+field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMonitoring);
+field("printCertificateMonitoring").addEventListener("click",()=>{document.body.classList.add("certificate-monitor-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("certificate-monitor-printing"),{once:true});window.print();});
+
 field("certificateDistributionRegister").addEventListener("click",e=>{const t=e.target.closest(".issue-certificate-access-token");if(t){issueCertificateAccessToken(t.dataset.grant);return;}const b=e.target.closest(".revoke-certificate-distribution");if(b)revokeCertificateDistribution(b.dataset.grant);});
 
 
