@@ -190,7 +190,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <section id="recipientReportsCard" class="card hidden">
 <h2>Reports Sent to My Account</h2>
 <p class="muted">Review official management reports delivered to your signed-in FrostTech account. Acknowledging confirms receipt only; it does not mean approval of the report contents.</p>
-<div id="recipientReports" class="table-wrap"></div>
+<div id="recipientReports" class="table-wrap"></div><h3>Annual Exception Performance Reviews</h3><div id="annualRecipientReports" class="table-wrap"></div>
 </section>
 </main>
 <div id="actionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
@@ -920,7 +920,7 @@ async function loadRecipientReports(){
   return;
  }
  const reports=data.reports||[];
- if(!reports.length){empty(box,"No approved reports have been emailed to this account.");return}
+ if(!reports.length){empty(box,"No approved reports have been emailed to this account.")}
  reports.forEach(r=>{
   const item=document.createElement("article");item.className="item";
   const title=document.createElement("strong");title.textContent=r.archive?.archive_reference||"Archived report";
@@ -942,6 +942,27 @@ async function loadRecipientReports(){
    item.append(note,button);
   }
   box.appendChild(item);
+ });
+ 
+ const annualBox=$("annualRecipientReports");annualBox.replaceChildren();
+ const annual=await db.functions.invoke("exception-annual-review-recipient",{method:"GET"});
+ if(annual.error||!annual.data?.ok){empty(annualBox,"Annual exception reviews are temporarily unavailable: "+(annual.error?.message||annual.data?.error||"Service unavailable"));return}
+ const annualReports=annual.data.reports||[];
+ if(!annualReports.length){empty(annualBox,"No approved annual exception reviews have been delivered to this account.");return}
+ annualReports.forEach(r=>{
+  const item=document.createElement("article");item.className="item";
+  const title=document.createElement("strong");title.textContent=r.archive?.archive_reference||"Annual exception review";
+  const meta=document.createElement("p");meta.className="muted";meta.textContent="Delivery: "+date(r.delivered_at)+" · Provider status: "+(r.delivery_status||"sent");
+  const pre=document.createElement("pre");pre.style.whiteSpace="pre-wrap";pre.style.overflowWrap="anywhere";pre.style.background="#f4f6f8";pre.style.padding="12px";pre.style.borderRadius="7px";pre.textContent=JSON.stringify(r.archive?.archive_snapshot??{},null,2);
+  item.append(title,meta,pre);
+  if(r.acknowledgement){const done=document.createElement("p");done.className="status success";done.textContent="Receipt acknowledged: "+date(r.acknowledgement.acknowledged_at)+(r.acknowledgement.acknowledgement_note?" · "+r.acknowledgement.acknowledgement_note:"");item.appendChild(done)}
+  else{
+   const note=document.createElement("textarea");note.maxLength=1000;note.rows=2;note.placeholder="Optional receipt note (not an approval)";note.style.width="100%";note.style.margin="8px 0";note.style.padding="10px";note.style.border="1px solid #cbd6e2";note.style.borderRadius="7px";
+   const button=document.createElement("button");button.type="button";button.textContent="Acknowledge Annual Review Receipt";
+   button.addEventListener("click",async()=>{button.disabled=true;const result=await db.functions.invoke("exception-annual-review-recipient",{body:{delivery_id:r.delivery_id,acknowledgement_note:note.value.trim()}});if(result.error||!result.data?.ok){setStatus(result.error?.message||result.data?.error||"Acknowledgement was not recorded.","error");button.disabled=false;return}setStatus("Annual review receipt acknowledged.","success");await loadRecipientReports()});
+   item.append(note,button)
+  }
+  annualBox.appendChild(item)
  });
 }
 async function refresh(){
