@@ -163,6 +163,11 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="actionNotes">Notes (optional)</label><textarea id="actionNotes" rows="4" maxlength="2000" placeholder="Add a short decision or completion note"></textarea></div>
 <div class="modal-actions"><button id="modalCancel" type="button" class="secondary">Cancel</button><button id="modalConfirm" type="button">Confirm</button></div>
 </div></div>
+<div id="exceptionModal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="exceptionModalTitle">
+<div class="modal"><h2 id="exceptionModalTitle">Delivery exception</h2><p id="exceptionModalDescription" class="muted"></p>
+<div class="field"><label for="exceptionModalNote">Notes</label><textarea id="exceptionModalNote" rows="4" maxlength="2000" required></textarea></div>
+<div class="modal-actions"><button id="exceptionModalCancel" type="button" class="secondary">Cancel</button><button id="exceptionModalSave" type="button">Save</button></div>
+</div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL="https://nftxptjpgidcsgtaltjn.supabase.co";
@@ -173,6 +178,7 @@ let currentRole=null;
 let currentUserId=null;
 let activeWorkflows=[];
 let pendingAction=null;
+let pendingExceptionAction=null;
 const allowedRoles=["super_admin","operations_admin","supplier_admin","supplier_catalogue_admin","catalogue_admin","finance_admin","advertisers_admin"];
 function cell(row,value){const td=document.createElement("td");td.textContent=value??"—";row.appendChild(td);return td}
 function empty(container,message){container.replaceChildren();const p=document.createElement("p");p.className="muted";p.textContent=message;container.appendChild(p)}
@@ -311,15 +317,37 @@ async function loadReportProviderEvents(){
  });
  await loadReportDeliveryExceptions();
 }
-async function createReportDeliveryException(payload){
- const summary=window.prompt("Describe the follow-up action for this delivery exception:",payload.exception_summary);
- if(summary===null)return;
- const clean=summary.trim();if(!clean){setStatus("An exception summary is required.","error");return}
- const {error}=await db.from("ft_management_report_delivery_exceptions").insert({...payload,exception_summary:clean,created_by:currentUserId});
- if(error){setStatus("Exception could not be opened: "+error.message,"error");return}
- setStatus("Delivery exception opened and recorded.","success");
- await Promise.all([loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportDeliveryExceptions()]);
+function openExceptionModal(mode,payload){
+ pendingExceptionAction={mode,payload};
+ $("exceptionModalTitle").textContent=mode==="create"?"Open Delivery Exception":"Resolve Delivery Exception";
+ $("exceptionModalDescription").textContent=mode==="create"?"Record the follow-up required for this delivery issue.":"Enter the resolution note required to close this exception.";
+ $("exceptionModalNote").value=payload?.exception_summary||"";
+ $("exceptionModal").classList.remove("hidden");
 }
+function closeExceptionModal(){
+ $("exceptionModal").classList.add("hidden");pendingExceptionAction=null;
+}
+async function submitExceptionModal(){
+ if(!pendingExceptionAction)return;
+ const action=pendingExceptionAction,note=$("exceptionModalNote").value.trim();
+ if(!note){setStatus(action.mode==="create"?"An exception summary is required.":"A resolution note is required.","error");return}
+ $("exceptionModalSave").disabled=true;
+ try{
+  if(action.mode==="create"){
+   const {error}=await db.from("ft_management_report_delivery_exceptions").insert({...action.payload,exception_summary:note,created_by:currentUserId});
+   if(error)throw error;
+   setStatus("Delivery exception opened and recorded.","success");
+  }else{
+   const {error}=await db.from("ft_management_report_delivery_exceptions").update({exception_status:"resolved",resolution_note:note}).eq("id",action.payload.id);
+   if(error)throw error;
+   setStatus("Delivery exception resolved and permanently recorded.","success");
+  }
+  closeExceptionModal();
+  await Promise.all([loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportDeliveryExceptions()]);
+ }catch(e){setStatus("Exception action failed: "+(e.message||"Permission denied."),"error")}
+ finally{$("exceptionModalSave").disabled=false}
+}
+async function createReportDeliveryException(payload){openExceptionModal("create",payload);}
 async function loadReportDeliveryExceptions(){
  const {data,error}=await db.from("ft_management_report_delivery_exceptions").select("id,delivery_attempt_id,provider_event_fingerprint,exception_type,exception_status,exception_summary,resolution_note,assigned_to,created_at,updated_at,resolved_at").order("created_at",{ascending:false}).limit(250);
  if(error)throw error;
@@ -338,15 +366,7 @@ async function updateReportDeliveryException(id,status){
  if(error){setStatus("Exception status was not updated: "+error.message,"error");return}
  setStatus("Exception marked as "+status+".","success");await loadReportDeliveryExceptions();
 }
-async function resolveReportDeliveryException(id){
- const note=window.prompt("Enter the resolution note required to close this exception:");
- if(note===null)return;
- if(!note.trim()){setStatus("A resolution note is required.","error");return}
- const {error}=await db.from("ft_management_report_delivery_exceptions").update({exception_status:"resolved",resolution_note:note.trim()}).eq("id",id);
- if(error){setStatus("Exception could not be resolved: "+error.message,"error");return}
- setStatus("Delivery exception resolved and permanently recorded.","success");
- await Promise.all([loadReportDeliveryExceptions(),loadReportDeliveryAudit()]);
-}
+async function resolveReportDeliveryException(id){openExceptionModal("resolve",{id});}
 async function registerBrevoReportWebhook(){
  const button=$("registerBrevoWebhook"),status=$("brevoWebhookStatus");button.disabled=true;status.textContent="Registering secure Brevo webhook…";
  try{
@@ -629,6 +649,9 @@ async function start(){
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
+$("exceptionModalCancel").addEventListener("click",closeExceptionModal);
+$("exceptionModalSave").addEventListener("click",submitExceptionModal);
+$("exceptionModal").addEventListener("click",e=>{if(e.target.id==="exceptionModal")closeExceptionModal()});
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
