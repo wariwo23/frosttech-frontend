@@ -1053,7 +1053,7 @@ async function init(){
   const {data:allowed,error:roleError}=await db.rpc("is_super_admin");
   if(roleError)throw roleError;
   if(allowed!==true){status.textContent="Access denied. Super Administrator authority is required.";await db.auth.signOut();return;}
-  authCard.hidden=true;reportCard.hidden=false;await load();
+  authCard.hidden=true;reportCard.hidden=false;await load();await Promise.all([loadGovernanceActionRegister(),loadGovernanceDeliveryAudit()]);
  }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
 }
 filingSelect.addEventListener("change",selectFiling);
