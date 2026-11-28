@@ -109,6 +109,17 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="annual-evidence-section"><h3>Board approval evidence register</h3><p class="muted">Register an already-approved board resolution and its approved minutes against this approved annual review. This does not create or approve a board resolution.</p><label for="annualBoardResolution">Approved board resolution</label><select id="annualBoardResolution" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Load approved resolutions…</option></select><div class="actions"><button id="recordAnnualBoardApproval" type="button">Record verified board approval</button></div><div id="annualBoardApprovalStatus" class="status" role="status"></div></div>
 </div>
 </section>
+
+<section class="card" id="annualReturnsCertificateCard">
+<h2>Annual Statutory Compliance Completion Report</h2>
+<p class="muted">Generate an internal, evidence-based completion assessment for a reporting year. A certificate is marked eligible only when the recorded annual review, filing acceptance, completion closure, applicable payment reconciliation and board approval evidence satisfy the database gate. This is not an auditor's opinion, legal certification or proof of regulator submission beyond the recorded source evidence.</p>
+<div class="grid">
+<div class="field"><label for="annualCertificateYear">Reporting year</label><input id="annualCertificateYear" type="number" min="2000" max="2200" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+</div>
+<div class="actions"><button id="generateAnnualCertificate" type="button">Generate completion assessment</button><button id="printAnnualCertificate" type="button" class="secondary">Print / Save PDF</button></div>
+<div id="annualCertificateStatus" class="status" role="status">Select a reporting year and generate the assessment.</div>
+<div id="annualCertificateOutput"></div>
+</section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
@@ -569,6 +580,24 @@ async function authorizeYearEndPeriodClose(periodId,periodName){
   await loadYearEndReadiness();
  }catch(e){status.textContent="Period was not closed: "+(e.message||"Authorization failed.");}
 }
+
+async function generateAnnualReturnsCertificate(){
+ const status=field("annualCertificateStatus"),host=field("annualCertificateOutput");
+ const year=Number(field("annualCertificateYear").value);
+ host.innerHTML="";
+ if(!Number.isInteger(year)||year<2000||year>new Date().getFullYear()+1){status.textContent="Enter a valid reporting year.";return;}
+ status.textContent="Checking accepted filings, payment reconciliations, board approval and completion evidence…";
+ try{
+  const {data,error}=await db.rpc("ft_get_annual_returns_completion_certificate",{p_reporting_year:year});
+  if(error)throw error;
+  const blockers=Array.isArray(data.blockers)?data.blockers:[];
+  const eligible=data.eligible===true;
+  const filingRows=Array.isArray(data.filings)?data.filings:[];
+  host.innerHTML='<div class="annual-evidence-section"><h3>Annual completion assessment · '+esc(data.reporting_year)+'</h3><p><strong>Assessment:</strong> <span class="pill">'+(eligible?'Eligible based on recorded evidence':'Not eligible — blockers remain')+'</span></p><div class="grid"><div class="metric">Filing records<strong>'+Number(data.filing_count||0)+'</strong></div><div class="metric">Accepted<strong>'+Number(data.accepted_count||0)+'</strong></div><div class="metric">Completion closed<strong>'+Number(data.completion_closed_count||0)+'</strong></div><div class="metric">Unreconciled fee filings<strong>'+Number(data.unreconciled_fee_filing_count||0)+'</strong></div><div class="metric">Approved annual reviews<strong>'+Number(data.approved_annual_review_count||0)+'</strong></div><div class="metric">Board approval evidence<strong>'+Number(data.board_approval_evidence_count||0)+'</strong></div></div><h3>Outstanding conditions</h3>'+(blockers.length?'<ul>'+blockers.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>':'<p>No outstanding conditions were identified by this assessment.</p>')+'<h3>Filing evidence</h3>'+(filingRows.length?'<div class="table-wrap"><table><thead><tr><th>Filing</th><th>Authority</th><th>Status</th><th>Reference</th><th>Submitted</th><th>Payment reconciled</th><th>Completion closed</th></tr></thead><tbody>'+filingRows.map(x=>'<tr><td>'+esc(x.filing_type)+'</td><td>'+esc(x.authority_name)+'</td><td>'+esc(x.status)+'</td><td>'+esc(x.filing_reference)+'</td><td>'+esc(date(x.submitted_on))+'</td><td>'+ (x.payment_reconciled?'Yes':'No / not evidenced')+'</td><td>'+esc(date(x.completion_closed_at))+'</td></tr>').join('')+'</tbody></table></div>':'<p>No filing records exist for this reporting year.</p>')+'<p class="muted">Generated '+esc(date(data.generated_at))+'. Internal evidence assessment only. Regulatory submission performed by this function: No. It does not constitute independent audit assurance or a legal certificate.</p><button type="button" id="copyAnnualCertificate">Copy assessment JSON</button><details><summary>View source assessment data</summary><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+esc(JSON.stringify(data,null,2))+'</pre></details></div>';
+ field("copyAnnualCertificate").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(JSON.stringify(data,null,2));status.textContent="Assessment data copied.";}catch(e){status.textContent="Copy unavailable; select and copy the displayed source data.";}});
+ status.textContent=eligible?"Assessment generated: recorded evidence meets the database completion gate. This is not legal or audit certification.":"Assessment generated: one or more conditions remain outstanding. No completion certificate is available.";
+ }catch(e){status.textContent="Assessment could not be generated: "+(e.message||"Access denied.");}
+}
 async function loadPostClosePackOptions(){
  const status=field("postClosePackStatus"),host=field("postClosePackPeriods");
  status.textContent="Loading closed accounting periods…";host.innerHTML="";field("postClosePackOutput").innerHTML="";
@@ -694,6 +723,10 @@ filingSelect.addEventListener("change",selectFiling);
 field("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
 field("refreshYearEndCloseGate").addEventListener("click",loadYearEndCloseGate);
 field("refreshPostClosePacks").addEventListener("click",loadPostClosePackOptions);
+field("generateAnnualCertificate").addEventListener("click",generateAnnualReturnsCertificate);
+field("printAnnualCertificate").addEventListener("click",()=>{document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
+field("annualCertificateYear").value=new Date().getFullYear();
+
 field("postClosePackPeriods").addEventListener("click",event=>{const button=event.target.closest("[data-report-pack-period]");if(button)generatePostClosePack(button.dataset.reportPackPeriod);});
 field("yearEndCloseGateResults").addEventListener("click",event=>{const button=event.target.closest("[data-close-period]");if(button)authorizeYearEndPeriodClose(button.dataset.closePeriod,button.dataset.periodName);});
 field("refreshYearEndAdjustments").addEventListener("click",loadYearEndAdjustments);
