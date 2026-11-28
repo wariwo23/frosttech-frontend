@@ -99,6 +99,10 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div class="field"><label for="statutoryCreateNotes">Preparation notes</label><textarea id="statutoryCreateNotes" rows="2" maxlength="3000"></textarea></div>
 <button type="submit">Create Statutory Filing Record</button>
 </form>
+<h4>Statutory Filing Monitoring Dashboard</h4>
+<p class="muted">Live status derived from the statutory filing register, compliance obligations, payment reconciliation and active evidence records. Deadlines are shown as recorded; confirm legal applicability and due dates with the relevant authority or qualified adviser.</p>
+<div id="statutoryMonitoringMetrics" class="metrics-grid"></div>
+<div id="statutoryMonitoringRegister" class="table-wrap"></div>
 <div id="statutoryFilingMetrics" class="metrics-grid"></div>
 <div id="statutoryFilingStatus" class="muted" aria-live="polite"></div>
 <h4>Automated statutory and tax deadline reminders</h4><div id="statutoryReminderAudit" class="table-wrap"></div>
@@ -1236,14 +1240,26 @@ async function saveStatutoryPaymentReconciliation(){
 async function loadStatutoryFilingRegister(){
  if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
  $("statutoryFilingWorkspace").classList.remove("hidden");
- const [filings,events,reminders,calendarItems]=await Promise.all([
+ const [filings,events,reminders,calendarItems,monitoring]=await Promise.all([
   db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,compliance_calendar_item_id,completion_closed_at,created_at").order("due_date",{ascending:true}).limit(500),
   db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500),
   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").in("source_type",["corporate_filing","tax_filing"]).order("created_at",{ascending:false}).limit(300),
-  db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").in("status",["scheduled","in_progress","deferred"]).order("due_date",{ascending:true}).limit(500)
+  db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,due_date,status").in("status",["scheduled","in_progress","deferred"]).order("due_date",{ascending:true}).limit(500),
+  db.from("ft_statutory_filing_monitoring_v").select("*").order("due_date",{ascending:true}).limit(500)
  ]);
- if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;
+ if(filings.error)throw filings.error;if(events.error)throw events.error;if(reminders.error)throw reminders.error;if(calendarItems.error)throw calendarItems.error;if(monitoring.error)throw monitoring.error;
  const rows=filings.data||[];
+ const monitorRows=monitoring.data||[];
+ const monitorCounts=[["Overdue",monitorRows.filter(x=>x.monitoring_status==="overdue").length],["Due within 30 days",monitorRows.filter(x=>x.monitoring_status==="due_within_30_days").length],["Awaiting acknowledgement",monitorRows.filter(x=>x.monitoring_status==="awaiting_acknowledgement").length],["Accepted / awaiting closure",monitorRows.filter(x=>x.monitoring_status==="accepted_awaiting_closure").length],["Completed",monitorRows.filter(x=>x.monitoring_status==="completed").length],["Missing acknowledgement evidence",monitorRows.filter(x=>!x.has_active_acknowledgement||!x.has_acknowledgement_reference).length],["Missing payment receipt",monitorRows.filter(x=>!x.has_active_payment_receipt).length]];
+ $("statutoryMonitoringMetrics").replaceChildren();monitorCounts.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(span,strong);$("statutoryMonitoringMetrics").appendChild(box)});
+ table($("statutoryMonitoringRegister"),["Due date","Filing / authority","Monitoring status","Payment reconciliation","Official references","Evidence status","Completion"],monitorRows,(tr,x)=>{
+  cell(tr,date(x.due_date));cell(tr,x.filing_type.replaceAll("_"," ")+" · "+x.authority_name);
+  const statusCell=document.createElement("td");const statusText=x.monitoring_status.replaceAll("_"," ");statusCell.textContent=statusText;statusCell.className=x.monitoring_status==="overdue"?"status error":x.monitoring_status==="completed"?"status success":"status";tr.appendChild(statusCell);
+  cell(tr,x.payment_reconciliation_status.replaceAll("_"," ")+" · "+(x.accounting_journal_id?"journal linked":"no journal link"));
+  cell(tr,"Filing: "+(x.has_filing_reference?"recorded":"missing")+" · Ack: "+(x.has_acknowledgement_reference?"recorded":"missing"));
+  cell(tr,"Acknowledgement: "+(x.has_active_acknowledgement?"active":"missing/inactive")+" · Receipt: "+(x.has_active_payment_receipt?"active":"missing/inactive"));
+  cell(tr,x.completion_closed_at?date(x.completion_closed_at):"Not closed");
+ });
  const todayIso=new Date().toISOString().slice(0,10);
  const openRows=rows.filter(r=>!["accepted","not_applicable","cancelled"].includes(r.status));
  const overdueRows=openRows.filter(r=>r.due_date&&r.due_date<todayIso);
