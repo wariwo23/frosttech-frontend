@@ -139,6 +139,28 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="documentRetentionStatus" class="muted" aria-live="polite"></div>
 </section>
 </section>
+
+<section id="statutoryPaymentAuthorisationCard" class="card hidden">
+<h2>Statutory Payment Requests and Authorisation</h2>
+<p class="muted">Finance prepares a payment request against an existing statutory filing and its recorded fee. Super Administrator independently approves or rejects it. Finance records an actual bank submission or confirmed payment separately. This workspace never initiates a transfer.</p>
+<div id="statPayMetrics" class="metrics"></div>
+<div id="statPayPreparePanel" class="item">
+<strong>Prepare statutory payment request (Finance Administrator)</strong>
+<div class="form-grid">
+<div class="field"><label for="statPayFiling">Statutory filing</label><select id="statPayFiling"><option value="">Select filing</option></select></div>
+<div class="field"><label for="statPayAmount">Amount (₦)</label><input id="statPayAmount" type="number" min="0.01" step="0.01"></div>
+<div class="field"><label for="statPayPayee">Payee / authority name</label><input id="statPayPayee" maxlength="180"></div>
+<div class="field"><label for="statPayBank">Bank name (optional)</label><input id="statPayBank" maxlength="120"></div>
+<div class="field"><label for="statPayAccount">Masked account details (optional)</label><input id="statPayAccount" maxlength="40" placeholder="Only masked digits, never full account credentials"></div>
+<div class="field"><label for="statPayDue">Payment due date</label><input id="statPayDue" type="date"></div>
+<div class="field"><label for="statPayDocument">Supporting Document Vault UUID (optional)</label><input id="statPayDocument" maxlength="36"></div>
+</div>
+<button id="statPaySubmit" type="button">Submit for Super Admin Authorisation</button>
+</div>
+<div id="statPayRequests" class="table-wrap"></div>
+<div id="statPayStatus" class="muted" aria-live="polite"></div>
+</section>
+
 <section id="reportingCard" class="card hidden">
 <h2>Management Reporting Periods and Official Reports</h2>
 <p class="muted">Create reporting periods, close completed periods, export departmental performance as CSV, and approve an immutable report snapshot. Only the Super Administrator can manage periods and approve reports.</p>
@@ -1081,6 +1103,63 @@ async function loadRecipientReports(){
   annualBox.appendChild(item)
  });
 }
+
+async function loadStatutoryPaymentAuthorisation(){
+ const status=$("statPayStatus");
+ try{
+  const [choices,requests]=await Promise.all([
+   db.rpc("ft_list_statutory_filing_payment_choices"),
+   db.rpc("ft_list_statutory_payment_requests")
+  ]);
+  if(choices.error)throw choices.error;if(requests.error)throw requests.error;
+  const choiceRows=Array.isArray(choices.data)?choices.data:[];
+  const requestRows=Array.isArray(requests.data)?requests.data:[];
+  const sel=$("statPayFiling");sel.replaceChildren();const blank=document.createElement("option");blank.value="";blank.textContent="Select filing";sel.appendChild(blank);
+  choiceRows.forEach(r=>{const o=document.createElement("option");o.value=r.id;o.dataset.amount=r.fee_amount??"";o.dataset.due=r.due_date??"";o.dataset.payee=r.authority_name??"";o.textContent=r.filing_type.replaceAll("_"," ")+" · "+r.authority_name+" · "+(r.fee_amount==null?"fee not set":"₦"+Number(r.fee_amount).toLocaleString());sel.appendChild(o)});
+  sel.onchange=()=>{const o=sel.selectedOptions[0];$("statPayAmount").value=o?.dataset.amount||"";$("statPayDue").value=o?.dataset.due||"";$("statPayPayee").value=o?.dataset.payee||""};
+  const pending=requestRows.filter(r=>r.request_status==="submitted"||r.request_status==="under_review").length;
+  const approved=requestRows.filter(r=>["approved","scheduled"].includes(r.request_status)).length;
+  const paid=requestRows.filter(r=>r.request_status==="paid").length;
+  $("statPayMetrics").replaceChildren();
+  [["Available filings",choiceRows.length],["Awaiting approval",pending],["Authorised / awaiting execution",approved],["Fully paid",paid]].forEach(([label,value])=>{const d=document.createElement("div");d.className="metric";const s=document.createElement("span");s.textContent=label;const b=document.createElement("strong");b.textContent=value;d.append(s,b);$("statPayMetrics").appendChild(d)});
+  table($("statPayRequests"),["Request / filing","Payee","Amount","Status","Approval","Execution history","Actions"],requestRows,(tr,r)=>{
+   cell(tr,r.payment_request_ref+" · "+r.filing_type.replaceAll("_"," ")+" · "+r.authority_name);
+   cell(tr,r.payee_name+" · "+(r.payee_bank_name||"—")+" · "+(r.payee_account_masked||"—"));
+   cell(tr,"₦"+Number(r.amount).toLocaleString()+" "+r.currency_code);
+   cell(tr,r.request_status);
+   cell(tr,(r.approval_decision||"pending")+" · "+(r.approval_note||"No decision note"));
+   cell(tr,(r.executions||[]).map(e=>e.execution_status+" · ₦"+Number(e.executed_amount).toLocaleString()+" · "+(e.bank_reference||"no bank reference")+" · "+(e.evidence_document_id||"no evidence")).join(" | ")||"No execution recorded");
+   const td=cell(tr,"");const wrap=document.createElement("div");wrap.className="actions";
+   if(currentRole==="super_admin"&&["submitted","under_review"].includes(r.request_status)){
+    [["Approve","approved"],["Reject","rejected"]].forEach(([label,decision])=>{const b=document.createElement("button");b.type="button";b.textContent=label;if(decision==="rejected")b.className="secondary";b.addEventListener("click",async()=>{const note=window.prompt("Enter the Super Administrator decision note:");if(!note||!note.trim())return;try{const out=await db.rpc("ft_decide_statutory_payment_request",{p_request_id:r.id,p_decision:decision,p_note:note.trim()});if(out.error)throw out.error;status.textContent="Payment request "+decision+" and audit-recorded.";await loadStatutoryPaymentAuthorisation()}catch(e){status.textContent="Decision failed: "+e.message}});wrap.appendChild(b)});
+   }
+   if(currentRole==="finance_admin"&&["approved","scheduled"].includes(r.request_status)){
+    const b=document.createElement("button");b.type="button";b.textContent="Record execution";b.addEventListener("click",async()=>{
+     const amount=window.prompt("Actual amount executed (₦):",String(r.amount));if(!amount)return;
+     const dateValue=window.prompt("Actual execution date (YYYY-MM-DD):",new Date().toISOString().slice(0,10));if(!dateValue)return;
+     const channel=window.prompt("Payment channel (e.g. bank transfer):");if(!channel)return;
+     const ref=window.prompt("Bank/payment reference (required for confirmed payment):");if(ref===null)return;
+     const doc=window.prompt("Payment evidence Document Vault UUID (required for confirmed payment):");if(doc===null)return;
+     const mode=window.confirm("Has the bank payment actually been confirmed? OK = confirmed; Cancel = submitted to bank only.")?"confirmed":"submitted_to_bank";
+     try{const out=await db.rpc("ft_record_statutory_payment_execution",{p_request_id:r.id,p_executed_amount:Number(amount),p_execution_date:dateValue,p_payment_channel:channel,p_bank_reference:ref||null,p_execution_status:mode,p_evidence_document_id:doc||null});if(out.error)throw out.error;status.textContent="Execution record saved. No transfer was initiated by FrostTech.";await loadStatutoryPaymentAuthorisation()}catch(e){status.textContent="Execution record failed: "+e.message}
+    });wrap.appendChild(b);
+   }
+   td.appendChild(wrap);
+  });
+  $("statPayPreparePanel").classList.toggle("hidden",currentRole!=="finance_admin");
+  status.textContent="Loaded "+requestRows.length+" statutory payment requests. Existing treasury/payment records are not altered.";
+ }catch(e){status.textContent="Statutory payment workspace unavailable: "+e.message}
+}
+async function submitStatutoryPaymentRequest(){
+ const filing=$("statPayFiling").value,amount=Number($("statPayAmount").value),payee=$("statPayPayee").value.trim();
+ if(!filing||!Number.isFinite(amount)||amount<=0||!payee){$("statPayStatus").textContent="Select a filing, enter its recorded fee and specify the payee.";return}
+ const {data,error}=await db.rpc("ft_prepare_statutory_payment_request",{p_filing_id:filing,p_amount:amount,p_payee_name:payee,p_payee_bank_name:$("statPayBank").value.trim()||null,p_payee_account_masked:$("statPayAccount").value.trim()||null,p_due_date:$("statPayDue").value||null,p_supporting_document_id:$("statPayDocument").value.trim()||null});
+ if(error){$("statPayStatus").textContent="Request was not submitted: "+error.message;return}
+ $("statPayStatus").textContent="Submitted for independent Super Administrator authorisation. Reference: "+data;
+ $("statPayBank").value="";$("statPayAccount").value="";$("statPayDocument").value="";
+ await loadStatutoryPaymentAuthorisation();
+}
+
 async function loadStatutoryPaymentReconciliation(){
  if(currentRole!=="super_admin")return;
  const [filings,expenses,banks,recons,events]=await Promise.all([
@@ -1408,11 +1487,11 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("complianceCalendarCard").classList.remove("hidden");$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden");await loadComplianceCalendar();await loadStatutoryFilingRegister();await loadComplianceSubmissions();await loadDocumentRetentionWorkspace() }
+  if(role==="finance_admin"||role==="super_admin"){$("statutoryPaymentAuthorisationCard").classList.remove("hidden");await loadStatutoryPaymentAuthorisation();}if(role==="super_admin"){$("complianceCalendarCard").classList.remove("hidden");$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden");await loadComplianceCalendar();await loadStatutoryFilingRegister();await loadComplianceSubmissions();await loadDocumentRetentionWorkspace() }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("saveStatutoryReconciliation").addEventListener("click",saveStatutoryPaymentReconciliation);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
+$("statPaySubmit").addEventListener("click",submitStatutoryPaymentRequest);$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("saveStatutoryReconciliation").addEventListener("click",saveStatutoryPaymentReconciliation);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
