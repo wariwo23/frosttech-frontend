@@ -83,7 +83,8 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </form>
 <div id="approvedReports" class="table-wrap"></div>\n<hr>
 <h3>Official Report Archive and Distribution</h3>
-<p class="muted">Approved report snapshots are archived automatically and cannot be edited. Distribution entries record internal filing or an email handoff; email delivery is not enabled by this register.</p>
+<p class="muted">Approved report snapshots are archived automatically and cannot be edited. Email delivery uses the configured Brevo service and records each attempt in the delivery audit.</p>
+<button id="checkReportEmailConfig" type="button" class="secondary">Check Email Configuration</button> <span id="reportEmailConfigStatus" class="muted" aria-live="polite"></span>
 <div id="reportArchive" class="table-wrap"></div>
 <form id="reportDistributionForm">
 <div class="form-grid">
@@ -95,7 +96,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <button type="submit">Record Report Distribution</button>
 </form>
 <div id="distributionLog" class="table-wrap"></div>\n<div id="reportDeliveryAudit" class="table-wrap"></div>
-<p class="muted">Email delivery is not enabled until a transactional provider credential and approved sender are configured. This register shows delivery attempts only.</p>
+<p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
 </section>
 <section id="definitionsCard" class="card hidden">
@@ -272,6 +273,13 @@ async function printReportSnapshot(id,reference){
  if(error){setStatus(error.message,"error");return}
  const w=window.open("","_blank");if(!w){setStatus("Allow pop-ups to print this report.","error");return}
  const pre=w.document.createElement("pre");pre.textContent=JSON.stringify(data,null,2);w.document.body.appendChild(pre);w.document.title=reference;w.print();
+}
+async function checkReportEmailConfiguration(){
+ const status=$("reportEmailConfigStatus");status.textContent="Checking secure configuration…";
+ const {data,error}=await db.functions.invoke("send-management-report-email",{method:"GET"});
+ if(error){status.textContent="Configuration check unavailable: "+error.message;return}
+ if(!data?.ok){status.textContent=data?.error||"Configuration check failed.";return}
+ status.textContent=data.configured?"Brevo API key and sender address are present. No email was sent.":"Configuration incomplete: "+(!data.brevo_api_key_present?"Brevo API key missing. ":"")+(!data.sender_address_present?"Sender address missing. ":"")+"No email was sent.";
 }
 async function recordReportDistribution(e){
  e.preventDefault();
@@ -472,7 +480,7 @@ async function start(){
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
+$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
