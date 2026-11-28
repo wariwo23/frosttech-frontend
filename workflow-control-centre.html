@@ -130,7 +130,7 @@ async function loadTasks(){
 }
 async function loadApprovals(){
  const {data,error}=await db.from("ft_workflow_approval_requests").select("id,approval_reference,approval_type,status,minimum_approvals,requested_at,decision_due_at,decision_summary,instance_id,stage_id").eq("status","pending").order("requested_at",{ascending:true}).limit(100);
- if(error)throw error;
+ if(error){empty($("approvals"),"Approval records are not available to this administrator under the current workflow.read permission.");return}
  table($("approvals"),["Approval","Type","Required approvals","Requested","Decision due","Summary","Decision"],data,(tr,r)=>{
   cell(tr,r.approval_reference);cell(tr,r.approval_type);cell(tr,r.minimum_approvals);cell(tr,date(r.requested_at));cell(tr,date(r.decision_due_at));cell(tr,r.decision_summary);
   const td=cell(tr,"");const wrap=document.createElement("div");wrap.className="actions";
@@ -139,9 +139,9 @@ async function loadApprovals(){
  });
 }
 async function loadActiveWorkflows(){
- const {data,error}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,applies_to_entity").eq("status","active").order("workflow_name");
+ const {data,error}=await db.from("ft_workflow_definitions").select("id,workflow_code,workflow_name,applies_to_entity,effective_from,effective_to").eq("status","active").order("workflow_name");
  if(error)throw error;
- activeWorkflows=data||[];
+ const now=Date.now();activeWorkflows=(data||[]).filter(w=>(!w.effective_from||new Date(w.effective_from).getTime()<=now)&&(!w.effective_to||new Date(w.effective_to).getTime()>=now));
  const select=$("launchWorkflow");select.replaceChildren();
  if(!activeWorkflows.length){const opt=document.createElement("option");opt.value="";opt.textContent="No active workflows available";select.appendChild(opt);$("launchButton").disabled=true;$("launchStatus").textContent="No active workflows are currently available. Draft templates cannot be launched.";return}
  activeWorkflows.forEach(w=>{const opt=document.createElement("option");opt.value=w.workflow_code;opt.textContent=w.workflow_name+" ("+w.workflow_code+")";select.appendChild(opt)});
