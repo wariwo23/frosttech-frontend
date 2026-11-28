@@ -189,7 +189,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div><label for="governanceActionDue">Due date</label><input id="governanceActionDue" type="date"></div>
 <div><label for="governanceActionAlert">Related security alert (optional)</label><select id="governanceActionAlert"><option value="">No linked alert</option></select></div>
 </div>
-<div class="actions"><button type="button" id="createGovernanceAction">Create governance action</button><button type="button" class="secondary" id="refreshGovernanceActions">Refresh action register</button><button type="button" class="secondary" id="printGovernanceActions">Print action register</button><button type="button" class="secondary" id="generateGovernanceNotices">Generate escalation notices</button></div>
+<div class="actions"><button type="button" id="createGovernanceAction">Create governance action</button><button type="button" class="secondary" id="refreshGovernanceActions">Refresh action register</button><button type="button" class="secondary" id="printGovernanceActions">Print action register</button><button type="button" class="secondary" id="generateGovernanceNotices">Generate escalation notices</button><button type="button" class="secondary" id="deliverGovernanceNotices">Deliver pending notices via Brevo</button></div>
 <div id="governanceActionStatus" class="status" role="status">No action register loaded yet.</div>
 <div id="governanceActionSummary" class="grid"></div>
 <div id="governanceActionRows"></div>
@@ -717,6 +717,18 @@ async function generateGovernanceNotices(){
  catch(e){status.textContent="Notice generation failed: "+(e.message||"Super Administrator authorization required.");}
  finally{button.disabled=false;}
 }
+async function deliverGovernanceNotices(){
+ const status=field("governanceActionStatus"),button=field("deliverGovernanceNotices");
+ button.disabled=true;status.textContent="Submitting pending governance notices to Brevo…";
+ try{
+  const {data,error}=await db.functions.invoke("deliver-governance-escalations-brevo",{body:{}});
+  if(error)throw error;
+  if(data?.error)throw new Error(data.error);
+  status.textContent="Brevo delivery complete. Processed: "+(data?.processed??0)+" · Sent: "+(data?.sent??0)+" · Failed: "+(data?.failed??0)+" · Skipped: "+(data?.skipped??0)+".";
+  await loadGovernanceActionRegister();
+ }catch(e){status.textContent="Brevo delivery unavailable: "+(e.message||"Check Brevo Edge Function secrets and Super Administrator access.");}
+ finally{button.disabled=false;}
+}
 async function acknowledgeGovernanceNotice(button){
  const id=button.dataset.notice,note=val("govNoticeAck_"+id);if(!note){field("governanceActionStatus").textContent="Enter the acknowledgement or follow-up action.";return;}button.disabled=true;
  try{const {error}=await db.rpc("ft_acknowledge_governance_escalation_notice",{p_notice_id:id,p_note:note});if(error)throw error;await loadGovernanceActionRegister();}
@@ -1029,6 +1041,7 @@ field("createGovernanceAction").addEventListener("click",createGovernanceAction)
 field("refreshGovernanceActions").addEventListener("click",loadGovernanceActionRegister);
 field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("governance-action-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-action-printing"),{once:true});window.print();});
 field("generateGovernanceNotices").addEventListener("click",generateGovernanceNotices);
+field("deliverGovernanceNotices").addEventListener("click",deliverGovernanceNotices);
 field("governanceActionRows").addEventListener("click",e=>{const n=e.target.closest(".acknowledge-governance-notice");if(n)acknowledgeGovernanceNotice(n);});
 field("governanceActionRows").addEventListener("click",e=>{const evidence=e.target.closest(".attach-governance-evidence");if(evidence){attachGovernanceActionEvidence(evidence);return;}const review=e.target.closest(".request-governance-review");if(review){requestGovernanceActionReview(review);return;}const verify=e.target.closest(".verify-governance-action");if(verify){verifyGovernanceAction(verify);return;}const close=e.target.closest(".close-governance-action");if(close){closeGovernanceAction(close);return;}const b=e.target.closest(".save-governance-action");if(b)saveGovernanceActionStatus(b);});
 field("certificateSecurityAlertRows").addEventListener("click",e=>{const b=e.target.closest(".create-action-from-alert");if(!b)return;field("governanceActionAlert").value=b.dataset.alert;field("governanceActionDescription").focus();field("governanceActionStatus").textContent="Alert linked. Enter the follow-up action and create it.";});
