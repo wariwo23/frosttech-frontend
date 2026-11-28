@@ -83,6 +83,27 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="complianceCalendarStatus" class="muted" aria-live="polite"></div>
 <div class="actions"><button type="button" class="secondary" id="refreshComplianceCalendar">Refresh Calendar</button><button type="button" class="secondary" id="exportComplianceCalendar">Export Calendar CSV</button></div>
 <div id="complianceCalendarRegister" class="table-wrap"></div>
+<section id="statutoryFilingWorkspace" class="subpanel">
+<h3>Statutory Filing and Regulatory Evidence Register</h3>
+<p class="muted">Record statutory filing obligations, responsible administrators, official submission references, payment references and acknowledgement evidence. Applicability and due dates must be confirmed with the relevant authority or qualified adviser.</p>
+<form id="statutoryFilingCreateForm">
+<div class="form-grid">
+<div class="field"><label for="statutoryFilingType">Filing type</label><select id="statutoryFilingType" required><option value="annual_return">Annual return</option><option value="annual_accounts">Annual accounts</option><option value="director_change">Director change</option><option value="secretary_change">Secretary change</option><option value="share_allotment">Share allotment</option><option value="share_transfer">Share transfer</option><option value="beneficial_ownership">Beneficial ownership</option><option value="registered_office_change">Registered office change</option><option value="charges">Charges</option><option value="tax_filing">Tax filing</option><option value="other">Other</option></select></div>
+<div class="field"><label for="statutoryAuthority">Authority</label><input id="statutoryAuthority" required minlength="3" value="Corporate Affairs Commission"></div>
+<div class="field"><label for="statutoryDueDate">Due date</label><input id="statutoryDueDate" type="date" required></div>
+<div class="field"><label for="statutoryPeriodStart">Reporting period start</label><input id="statutoryPeriodStart" type="date"></div>
+<div class="field"><label for="statutoryPeriodEnd">Reporting period end</label><input id="statutoryPeriodEnd" type="date"></div>
+<div class="field"><label for="statutoryObligationId">Linked compliance obligation UUID (optional)</label><input id="statutoryObligationId" placeholder="Existing obligation record UUID"></div>
+<div class="field"><label for="statutoryResponsible">Responsible administrator UUID (optional)</label><input id="statutoryResponsible" placeholder="Registered user UUID"></div>
+</div>
+<div class="field"><label for="statutoryCreateNotes">Preparation notes</label><textarea id="statutoryCreateNotes" rows="2" maxlength="3000"></textarea></div>
+<button type="submit">Create Statutory Filing Record</button>
+</form>
+<div id="statutoryFilingStatus" class="muted" aria-live="polite"></div>
+<div class="actions"><button type="button" class="secondary" id="refreshStatutoryFilings">Refresh Statutory Register</button><button type="button" class="secondary" id="exportStatutoryFilings">Export Statutory Register CSV</button></div>
+<div id="statutoryFilingRegister" class="table-wrap"></div>
+<h4>Filing Evidence and Audit Trail</h4><div id="statutoryFilingAudit" class="table-wrap"></div>
+</section>
 <h3>Automated Reminder and Overdue Escalation History</h3><p class="muted">Advance reminders are scheduled 30, 14, 7 and 1 day before the deadline, followed by due-day and 1-, 7- and 30-day overdue alerts. Notifications are in-app; no email or SMS is sent by this process.</p><div id="complianceReminderHistory" class="table-wrap"></div>
 <h3>Completion Evidence Submission</h3><p class="muted">Assigned administrators submit a completion summary and evidence reference for Super Administrator review. Do not mark an obligation complete until the evidence is approved.</p>
 <form id="complianceCompletionForm"><div class="form-grid">
@@ -1043,6 +1064,60 @@ async function loadRecipientReports(){
   annualBox.appendChild(item)
  });
 }
+async function loadStatutoryFilingRegister(){
+ if(currentRole!=="super_admin"){$("statutoryFilingWorkspace").classList.add("hidden");return}
+ $("statutoryFilingWorkspace").classList.remove("hidden");
+ const [filings,events]=await Promise.all([
+  db.from("ft_corporate_statutory_filings").select("id,filing_type,authority_name,reporting_period_start,reporting_period_end,due_date,filed_date,status,filing_reference,acknowledgement_reference,fee_amount,payment_reference,acknowledgement_document_id,supporting_document_id,payment_receipt_document_id,notes,prepared_by,submitted_by,obligation_id,responsible_user_id,submission_channel,created_at").order("due_date",{ascending:true}).limit(500),
+  db.from("ft_corporate_statutory_filing_events").select("id,filing_id,event_type,actor_user_id,event_note,event_snapshot,created_at").order("created_at",{ascending:false}).limit(500)
+ ]);
+ if(filings.error)throw filings.error;if(events.error)throw events.error;
+ const rows=filings.data||[];
+ table($("statutoryFilingRegister"),["Due / filed","Filing / authority","Owner / obligation","Status","Official references","Evidence / update"],rows,(tr,r)=>{
+  cell(tr,date(r.due_date)+" · Filed: "+date(r.filed_date));
+  cell(tr,r.filing_type.replaceAll("_"," ")+" · "+r.authority_name);
+  cell(tr,(r.responsible_user_id||"Unassigned")+" · "+(r.obligation_id||"No linked obligation"));
+  const statusCell=document.createElement("td"),status=document.createElement("select");
+  ["not_started","preparing","ready_for_submission","submitted","accepted","rejected","overdue","not_applicable"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v.replaceAll("_"," ");status.appendChild(o)});status.value=r.status;statusCell.appendChild(status);
+  const filed=document.createElement("input");filed.type="date";filed.value=r.filed_date||"";
+  const filingRef=document.createElement("input");filingRef.placeholder="Official filing reference";filingRef.value=r.filing_reference||"";
+  const ackRef=document.createElement("input");ackRef.placeholder="Acknowledgement reference";ackRef.value=r.acknowledgement_reference||"";
+  const paymentRef=document.createElement("input");paymentRef.placeholder="Payment reference";paymentRef.value=r.payment_reference||"";
+  const channel=document.createElement("input");channel.placeholder="Submission channel";channel.value=r.submission_channel||"";
+  statusCell.append(filed,filingRef,ackRef,paymentRef,channel);tr.appendChild(statusCell);
+  cell(tr,"Filing: "+(r.filing_reference||"—")+" · Ack: "+(r.acknowledgement_reference||"—")+" · Payment: "+(r.payment_reference||"—"));
+  const evidence=document.createElement("td");
+  [["Acknowledgement document UUID",r.acknowledgement_document_id],["Supporting document UUID",r.supporting_document_id],["Payment receipt document UUID",r.payment_receipt_document_id]].forEach(([label,value])=>{const inp=document.createElement("input");inp.placeholder=label;inp.value=value||"";inp.dataset.evidence=label;evidence.appendChild(inp)});
+  const save=document.createElement("button");save.type="button";save.textContent="Save filing record";
+  save.addEventListener("click",async()=>{
+   save.disabled=true;
+   const inputs=[...evidence.querySelectorAll("input")];
+   const [ack,support,payment]=inputs.map(x=>x.value.trim()||null);
+   const {error}=await db.rpc("ft_update_corporate_statutory_filing",{p_filing_id:r.id,p_status:status.value,p_filed_date:filed.value||null,p_filing_reference:filingRef.value.trim()||null,p_acknowledgement_reference:ackRef.value.trim()||null,p_payment_reference:paymentRef.value.trim()||null,p_submission_channel:channel.value.trim()||null,p_acknowledgement_document_id:ack,p_supporting_document_id:support,p_payment_receipt_document_id:payment,p_notes:r.notes||null});
+   if(error){setStatus("Statutory filing update failed: "+error.message,"error");save.disabled=false;return}
+   setStatus("Statutory filing and evidence references saved.","success");await loadStatutoryFilingRegister();
+  });
+  evidence.appendChild(save);tr.appendChild(evidence);
+ });
+ const auditRows=events.data||[];
+ table($("statutoryFilingAudit"),["Recorded","Filing","Event","Actor","Details"],auditRows,(tr,e)=>{cell(tr,date(e.created_at));cell(tr,e.event_snapshot?.filing_type||e.filing_id);cell(tr,e.event_type.replaceAll("_"," "));cell(tr,e.actor_user_id||"System");cell(tr,e.event_note||"—")});
+ window.__ftStatutoryFilingExport=rows;
+}
+async function createStatutoryFiling(event){
+ event.preventDefault();
+ const start=$("statutoryPeriodStart").value||null,end=$("statutoryPeriodEnd").value||null;
+ if(start&&end&&end<start){setStatus("Reporting period end cannot precede start.","error");return}
+ const {data,error}=await db.rpc("ft_create_corporate_statutory_filing",{p_filing_type:$("statutoryFilingType").value,p_authority_name:$("statutoryAuthority").value.trim(),p_due_date:$("statutoryDueDate").value,p_reporting_period_start:start,p_reporting_period_end:end,p_obligation_id:$("statutoryObligationId").value.trim()||null,p_responsible_user_id:$("statutoryResponsible").value.trim()||null,p_notes:$("statutoryCreateNotes").value.trim()||null});
+ if(error){setStatus("Could not create statutory filing: "+error.message,"error");return}
+ $("statutoryFilingCreateForm").reset();$("statutoryAuthority").value="Corporate Affairs Commission";
+ setStatus("Statutory filing record created: "+data,"success");await loadStatutoryFilingRegister();
+}
+function exportStatutoryFilings(){
+ const rows=window.__ftStatutoryFilingExport||[];if(!rows.length){setStatus("No statutory filing records to export.","error");return}
+ const keys=["filing_type","authority_name","due_date","filed_date","status","filing_reference","acknowledgement_reference","payment_reference","responsible_user_id","obligation_id","acknowledgement_document_id","supporting_document_id","payment_receipt_document_id"];
+ const csv=[keys.join(","),...rows.map(r=>keys.map(k=>'"'+String(r[k]??"").replaceAll('"','""')+'"').join(","))].join("\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download="frosttech-statutory-filings.csv";a.click();URL.revokeObjectURL(url);
+}
 async function loadComplianceCalendar(){
  const [items,source]=await Promise.all([
   db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,category,authority_or_source,due_date,recurrence,owner_user_id,status,reminder_days_before,description,completion_reference").order("due_date",{ascending:true}).limit(500),
@@ -1244,7 +1319,7 @@ async function createComplianceCalendarItem(e){
  const payload={title,category:$("calendarCategory").value,due_date:due,owner_user_id:owner||null,authority_or_source:$("calendarAuthority").value.trim()||null,recurrence:$("calendarRecurrence").value,description:$("calendarDescription").value.trim()||null,reminder_days_before:days};
  const {error}=await db.from("ft_compliance_calendar_items").insert(payload);
  if(error){$("complianceCalendarStatus").textContent="Calendar item not saved: "+error.message;return}
- $("complianceCalendarForm").reset();$("calendarReminderDays").value="30,14,7,1";$("complianceCalendarStatus").textContent="Calendar obligation recorded. Reminder lead days are stored as scheduling instructions; automated delivery is not yet enabled.";await loadComplianceCalendar();
+ $("complianceCalendarForm").reset();$("calendarReminderDays").value="30,14,7,1";$("complianceCalendarStatus").textContent="Calendar obligation recorded. Reminder lead days are stored as scheduling instructions; automated delivery is not yet enabled.";await loadComplianceCalendar();await loadStatutoryFilingRegister();
 }
 function exportComplianceCalendar(){
  const rows=window.__ftComplianceCalendarExport||[];if(!rows.length){$("complianceCalendarStatus").textContent="No calendar records to export.";return}
@@ -1280,7 +1355,7 @@ async function start(){
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
+$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("statutoryFilingCreateForm").addEventListener("submit",createStatutoryFiling);$("refreshStatutoryFilings").addEventListener("click",loadStatutoryFilingRegister);$("exportStatutoryFilings").addEventListener("click",exportStatutoryFilings);$("complianceCompletionForm").addEventListener("submit",submitComplianceCompletion);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
