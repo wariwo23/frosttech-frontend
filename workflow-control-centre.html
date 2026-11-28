@@ -251,10 +251,22 @@ async function loadReportDeliveryAudit(){
  });
 }
 async function loadReportProviderEvents(){
- const {data,error}=await db.from("ft_management_report_provider_events").select("provider_message_id,recipient_email,event_type,event_at,event_reason,received_at").order("received_at",{ascending:false}).limit(100);
- if(error)throw error;
- table($("reportProviderEvents"),["Recipient","Event","Provider Event Time","Recorded","Reason"],data||[],(tr,r)=>{
-  cell(tr,r.recipient_email);cell(tr,r.event_type);cell(tr,r.event_at?date(r.event_at):"—");cell(tr,date(r.received_at));cell(tr,r.event_reason||"—");
+ const [eventsResult,attemptsResult,archivesResult]=await Promise.all([
+  db.from("ft_management_report_provider_events").select("delivery_attempt_id,provider_message_id,recipient_email,event_type,event_at,event_reason,received_at").order("received_at",{ascending:false}).limit(250),
+  db.from("ft_management_report_delivery_attempts").select("id,archive_id,recipient_email,delivery_status,provider_delivery_status,attempted_at,delivered_at").order("attempted_at",{ascending:false}).limit(250),
+  db.from("ft_management_report_archive").select("id,archive_reference")
+ ]);
+ if(eventsResult.error)throw eventsResult.error;
+ if(attemptsResult.error)throw attemptsResult.error;
+ if(archivesResult.error)throw archivesResult.error;
+ const attempts=new Map((attemptsResult.data||[]).map(a=>[a.id,a]));
+ const archives=new Map((archivesResult.data||[]).map(a=>[a.id,a.archive_reference]));
+ const rows=(eventsResult.data||[]).map(e=>{
+  const attempt=e.delivery_attempt_id?attempts.get(e.delivery_attempt_id):null;
+  return {...e,archive_reference:attempt?archives.get(attempt.archive_id)||"Archive unavailable":"Unmatched delivery attempt",submission_status:attempt?.delivery_status||"Unmatched",current_status:attempt?.provider_delivery_status||"—"};
+ });
+ table($("reportProviderEvents"),["Report Archive","Recipient","Event","Submission","Current Provider Status","Provider Event Time","Recorded","Message ID / Reason"],rows,(tr,r)=>{
+  cell(tr,r.archive_reference);cell(tr,r.recipient_email);cell(tr,r.event_type);cell(tr,r.submission_status);cell(tr,r.current_status);cell(tr,r.event_at?date(r.event_at):"—");cell(tr,date(r.received_at));cell(tr,[r.provider_message_id,r.event_reason].filter(Boolean).join(" · ")||"—");
  });
 }
 async function registerBrevoReportWebhook(){
