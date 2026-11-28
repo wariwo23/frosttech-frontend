@@ -1285,7 +1285,7 @@ async function loadStatutoryFilingRegister(){
   const closeButton=document.createElement("button");closeButton.type="button";closeButton.textContent=r.completion_closed_at?"Closed":"Verify and close filing";closeButton.disabled=!!r.completion_closed_at;
   closeButton.addEventListener("click",async()=>{
    if(status.value!=="accepted"){setStatus("Only an accepted filing can be closed.","error");return}
-   if(!confirm("Close this statutory filing after checking payment, accounting and acknowledgement evidence?"))return;
+   
    closeButton.disabled=true;
    const {data,error}=await db.rpc("ft_close_statutory_filing_completion",{p_filing_id:r.id,p_calendar_item_id:calendarSelect.value||null});
    if(error){setStatus("Filing closure blocked: "+error.message,"error");closeButton.disabled=false;return}
