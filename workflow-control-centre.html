@@ -220,6 +220,44 @@ async function exportPerformancePeriod(p){
  a.href=url;a.download="FrostTech_"+p.period_name.replace(/[^a-z0-9_-]+/gi,"_")+"_Departmental_Performance.csv";a.click();URL.revokeObjectURL(url);
  $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
 }
+async function loadReportArchive(){
+ const [archives,logs]=await Promise.all([
+  db.from("ft_management_report_archive").select("id,approval_id,archive_reference,archived_at,retention_status").order("archived_at",{ascending:false}),
+  db.from("ft_management_report_distribution_log").select("id,archive_id,recipient_user_id,distribution_channel,distribution_status,recorded_at,distribution_note").order("recorded_at",{ascending:false})
+ ]);
+ if(archives.error)throw archives.error;if(logs.error)throw logs.error;
+ const sel=$("distributionArchive");sel.replaceChildren();const blank=document.createElement("option");blank.value="";blank.textContent="Select an archived report";sel.appendChild(blank);
+ (archives.data||[]).forEach(a=>{const o=document.createElement("option");o.value=a.id;o.textContent=a.archive_reference;sel.appendChild(o)});
+ table($("reportArchive"),["Archive reference","Archived","Retention","Actions"],archives.data||[],(tr,a)=>{
+  cell(tr,a.archive_reference);cell(tr,date(a.archived_at));cell(tr,a.retention_status);
+  const td=document.createElement("td"),wrap=document.createElement("div");wrap.className="actions";
+  const view=document.createElement("button");view.type="button";view.textContent="Download JSON";view.addEventListener("click",()=>downloadReportSnapshot(a.id,a.archive_reference));
+  const print=document.createElement("button");print.type="button";print.className="secondary";print.textContent="Print / Save PDF";print.addEventListener("click",()=>printReportSnapshot(a.id,a.archive_reference));
+  wrap.append(view,print);td.appendChild(wrap);tr.appendChild(td);
+ });
+ table($("distributionLog"),["Archive","Recipient UUID","Channel","Status","Recorded","Note"],logs.data||[],(tr,l)=>{
+  const a=(archives.data||[]).find(x=>x.id===l.archive_id);cell(tr,a?.archive_reference||l.archive_id);cell(tr,l.recipient_user_id);cell(tr,l.distribution_channel);cell(tr,l.distribution_status);cell(tr,date(l.recorded_at));cell(tr,l.distribution_note||"—");
+ });
+}
+async function downloadReportSnapshot(id,reference){
+ const {data,error}=await db.from("ft_management_report_archive").select("archive_reference,archive_snapshot,archived_at").eq("id",id).single();
+ if(error){setStatus(error.message,"error");return}
+ const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download=reference+".json";a.click();URL.revokeObjectURL(url);
+}
+async function printReportSnapshot(id,reference){
+ const {data,error}=await db.from("ft_management_report_archive").select("archive_reference,archive_snapshot,archived_at").eq("id",id).single();
+ if(error){setStatus(error.message,"error");return}
+ const w=window.open("","_blank");if(!w){setStatus("Allow pop-ups to print this report.","error");return}
+ const pre=w.document.createElement("pre");pre.textContent=JSON.stringify(data,null,2);w.document.body.appendChild(pre);w.document.title=reference;w.print();
+}
+async function recordReportDistribution(e){
+ e.preventDefault();const archive=$("distributionArchive").value,recipient=$("distributionRecipient").value.trim(),channel=$("distributionChannel").value,note=$("distributionNote").value.trim();
+ if(!archive||!recipient){setStatus("Select an archive and enter a recipient account UUID.","error");return}
+ const {data,error}=await db.rpc("ft_record_management_report_distribution",{p_archive_id:archive,p_recipient_user_id:recipient,p_channel:channel,p_note:note||null});
+ if(error){setStatus(error.message,"error");return}
+ setStatus("Distribution record created: "+data+". No email was sent.","success");$("reportDistributionForm").reset();await loadReportArchive();
+}
 async function loadMonthlyPerformance(){
  const {data,error}=await db.from("ft_workflow_department_monthly_performance").select("*").order("reporting_month",{ascending:false}).order("department_code").limit(240);
  if(error)throw error;
@@ -375,7 +413,7 @@ async function queueOverdueReminders(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -401,7 +439,7 @@ async function start(){
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
+$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
