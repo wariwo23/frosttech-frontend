@@ -61,6 +61,13 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div class="table-wrap"><table><thead><tr><th>Reference / deadline</th><th>Due</th><th>Status</th><th>Owner</th></tr></thead><tbody id="calendarRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div>
 <h3>Reminder and change history</h3><div id="calendarHistory" class="muted">Select an obligation to view its history.</div>
 </section>
+<section class="card" id="yearEndReadinessCard">
+<h2>Year-End Reconciliation & Readiness Centre</h2>
+<p class="muted">Read-only control summary for accounting close preparation. It identifies outstanding items without posting journals, changing reconciliations, approving financial statements or closing an accounting period.</p>
+<div class="actions"><button id="refreshYearEndReadiness" type="button">Refresh year-end readiness</button></div>
+<div id="yearEndReadinessStatus" class="status" role="status">Loading accounting readiness…</div>
+<div id="yearEndReadinessResults"></div>
+</section>
 <section class="card" id="annualPackCard">
 <h2>Annual Corporate Compliance Pack</h2>
 <p class="muted">Prepare a year-specific frozen evidence pack covering statutory filings, board meetings, resolutions and governance archive entries. Preparation is not approval, legal certification or regulatory submission.</p>
@@ -442,6 +449,30 @@ async function approveAnnualReview(){
  }catch(e){field("annualPackStatus").textContent="Approval not completed: "+(e.message||"The database rejected the request.");}
  finally{btn.disabled=false;btn.textContent="Approve annual pack";}
 }
+async function loadYearEndReadiness(){
+ const status=field("yearEndReadinessStatus"),host=field("yearEndReadinessResults");
+ status.textContent="Retrieving protected accounting readiness summary…";host.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_year_end_readiness");if(error)throw error;
+  const periods=Array.isArray(data)?data:[];
+  if(!periods.length){host.innerHTML='<p class="muted">No accounting periods are configured.</p>';status.textContent="No accounting periods found.";return;}
+  host.innerHTML=periods.map(p=>{
+   const checks=[
+    ["Unposted journals",p.unposted_journals],
+    ["Unbalanced posted journals",p.unbalanced_posted_journals],
+    ["Expenses missing posted journal",p.expense_missing_journal],
+    ["Expenses without bank match",p.expenses_missing_bank_match],
+    ["Shareholder loans without posted journal",p.shareholder_loan_unposted],
+    ["Bank reconciliations with differences",p.bank_reconciliation_differences],
+    ["Open close checklist items",p.open_close_checklist_items],
+    ["Tax records missing filing/evidence",p.tax_items_missing_evidence]
+   ];
+   const outstanding=checks.reduce((n,x)=>n+Number(x[1]||0),0);
+   return '<section class="annual-evidence-section"><h3>'+esc(p.period_name)+' · '+esc(p.start_date)+' to '+esc(p.end_date)+'</h3><div class="grid"><div class="metric">Period status<strong>'+esc(p.period_status)+'</strong></div><div class="metric">Journal entries<strong>'+Number(p.journal_count||0)+'</strong></div><div class="metric">Posted debits<strong>₦'+Number(p.posted_debits||0).toLocaleString("en-NG")+'</strong></div><div class="metric">Posted credits<strong>₦'+Number(p.posted_credits||0).toLocaleString("en-NG")+'</strong></div><div class="metric">Outstanding indicators<strong>'+outstanding+'</strong></div></div><div class="table-wrap"><table><thead><tr><th>Readiness check</th><th>Outstanding</th><th>Position</th></tr></thead><tbody>'+checks.map(x=>'<tr><td>'+esc(x[0])+'</td><td>'+Number(x[1]||0)+'</td><td><span class="pill">'+(Number(x[1]||0)===0?'No exceptions identified':'Requires review')+'</span></td></tr>').join('')+'</tbody></table></div><p><strong>Year-end record:</strong> '+esc(p.year_end_status||'Not prepared')+' · <strong>Financial statements:</strong> '+(p.financial_statements_document_id?'Document linked':'Not linked')+' · <strong>Tax computation:</strong> '+(p.tax_computation_document_id?'Document linked':'Not linked')+'</p></section>';
+  }).join("");
+  status.textContent="Loaded "+periods.length+" accounting period(s). This is a diagnostic summary; zero indicators do not by themselves certify readiness.";
+ }catch(e){status.textContent="Year-end readiness could not be loaded: "+(e.message||"Access denied.");}
+}
 async function load(){
  reportStatus.textContent="Loading governance and statutory records…";
  const {data,error}=await db.rpc("ft_get_corporate_returns_preparation");
@@ -477,7 +508,7 @@ async function init(){
   authCard.hidden=true;reportCard.hidden=false;await load();
  }catch(e){status.textContent="Access or report loading failed: "+(e.message||"Please sign in again through the Super Administrator portal.");}
 }
-filingSelect.addEventListener("change",selectFiling);
+filingSelect.addEventListener("change",selectFiling);\nfield("refreshYearEndReadiness").addEventListener("click",loadYearEndReadiness);
 field("annualReviewYear").value=new Date().getFullYear();
 field("calendarSelect").addEventListener("change",async()=>{const logs=await db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").order("created_at",{ascending:false}).limit(200);selectCalendarItem(logs.data||[]);});
 field("saveCalendarItem").addEventListener("click",saveCalendarItem);
