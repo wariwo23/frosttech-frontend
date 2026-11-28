@@ -1351,7 +1351,7 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("complianceCalendarCard").classList.remove("hidden");$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
+  if(role==="super_admin"){$("complianceCalendarCard").classList.remove("hidden");$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden");await loadComplianceCalendar();await loadStatutoryFilingRegister();await loadComplianceSubmissions();await loadDocumentRetentionWorkspace() }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
