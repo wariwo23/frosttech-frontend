@@ -1382,7 +1382,6 @@ async function loadStatutoryFilingRegister(){
   const id=$("statutoryAnnualReviewSelect").value,decl=$("statutoryAnnualReviewDeclaration").value.trim();
   if(!id){$("statutoryAnnualReviewStatus").textContent="Select a draft annual review.";return}
   if(!decl){$("statutoryAnnualReviewStatus").textContent="Enter the management declaration before approval.";return}
-  if(!confirm("Approve this annual statutory review? The approval will be permanently recorded."))return;
   $("approveStatutoryAnnualReview").disabled=true;
   try{const {data,error}=await db.rpc("ft_approve_statutory_annual_review",{p_review_id:id,p_management_declaration:decl});if(error)throw error;$("statutoryAnnualReviewStatus").textContent="Annual review approved and recorded."; $("statutoryAnnualReviewDeclaration").value="";await loadStatutoryFilingRegister()}
   catch(error){$("statutoryAnnualReviewStatus").textContent="Approval not recorded: "+error.message}
