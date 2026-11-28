@@ -106,6 +106,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <label for="annualManagementDeclaration">Management declaration</label>
 <textarea id="annualManagementDeclaration" rows="4" maxlength="5000" placeholder="Record the management declaration and any qualifications or outstanding matters…" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea>
 <div class="actions"><button id="approveAnnualReview" type="button">Approve annual pack</button></div>
+<div class="annual-evidence-section"><h3>Board approval evidence register</h3><p class="muted">Register an already-approved board resolution and its approved minutes against this approved annual review. This does not create or approve a board resolution.</p><label for="annualBoardResolution">Approved board resolution</label><select id="annualBoardResolution" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Load approved resolutions…</option></select><div class="actions"><button id="recordAnnualBoardApproval" type="button">Record verified board approval</button></div><div id="annualBoardApprovalStatus" class="status" role="status"></div></div>
 </div>
 </section>
 <div class="note" style="margin:14px 0">This report does not determine whether a return is legally required, certify compliance, approve a return or submit anything to a regulator. Filing readiness indicators are drawn from existing records; missing evidence must be resolved from source records.</div>
@@ -419,6 +420,34 @@ async function saveCalendarItem(){
  finally{btn.disabled=false;btn.textContent="Save deadline record";}
 }
 function annualRows(){return rows.filter(r=>r.record_type==="annual_compliance_review");}
+async function loadAnnualBoardApprovalOptions(){
+ const select=field("annualBoardResolution"),status=field("annualBoardApprovalStatus"),reviewId=field("annualReviewSelect").value;
+ select.innerHTML='<option value="">Loading approved resolutions…</option>';status.textContent="";
+ if(!reviewId){select.innerHTML='<option value="">Select an annual pack first</option>';return;}
+ try{
+  const [resolutions,registered]=await Promise.all([
+   db.from("ft_board_resolutions").select("id,resolution_ref,resolution_title,meeting_id,resolution_status,decided_at,decided_by").eq("resolution_status","approved").order("decided_at",{ascending:false}).limit(200),
+   db.from("ft_annual_returns_board_approval_register").select("annual_review_id,board_resolution_id,recorded_at").eq("annual_review_id",reviewId).maybeSingle()
+  ]);
+  if(resolutions.error)throw resolutions.error;if(registered.error)throw registered.error;
+  const rows=resolutions.data||[];
+  select.innerHTML='<option value="">Select approved board resolution…</option>'+rows.map(r=>'<option value="'+esc(r.id)+'">'+esc(r.resolution_ref+' · '+r.resolution_title+' · '+r.decided_at)+'</option>').join("");
+  if(registered.data){select.value=registered.data.board_resolution_id;select.disabled=true;field("recordAnnualBoardApproval").disabled=true;status.textContent="Board approval already registered at "+registered.data.recorded_at+". The register is immutable.";}
+  else{select.disabled=false;field("recordAnnualBoardApproval").disabled=false;if(!rows.length)status.textContent="No approved board resolutions are currently available.";}
+ }catch(e){select.innerHTML='<option value="">Approved resolutions unavailable</option>';status.textContent="Could not load board approval options: "+(e.message||"Access denied.");}
+}
+async function recordAnnualBoardApproval(){
+ const reviewId=field("annualReviewSelect").value,resolutionId=field("annualBoardResolution").value,status=field("annualBoardApprovalStatus"),btn=field("recordAnnualBoardApproval");
+ if(!reviewId||!resolutionId){status.textContent="Select an annual review and an approved board resolution.";return;}
+ btn.disabled=true;status.textContent="Verifying annual review, board decision and approved minutes…";
+ try{
+  const {data,error}=await db.rpc("ft_record_annual_returns_board_approval",{p_annual_review_id:reviewId,p_board_resolution_id:resolutionId});
+  if(error)throw error;
+  status.textContent="Verified board approval registered. Register reference: "+data.register_id+". No regulatory submission occurred.";
+  await loadAnnualBoardApprovalOptions();
+ }catch(e){status.textContent="Board approval not registered: "+(e.message||"Database validation failed.");}
+ finally{btn.disabled=false;}
+}
 function populateAnnualReviews(selectedId){
  const items=annualRows();
  field("annualReviewSelect").innerHTML='<option value="">Select annual pack…</option>'+items.map(r=>'<option value="'+esc(r.record_id)+'">'+esc(r.record_reference+' · '+r.record_status)+'</option>').join("");
@@ -619,9 +648,11 @@ field("calendarSelect").addEventListener("change",async()=>{const logs=await db.
 field("saveCalendarItem").addEventListener("click",saveCalendarItem);
 field("newCalendarItem").addEventListener("click",resetCalendarForm);
 
-field("annualReviewSelect").addEventListener("change",renderAnnualReview);
+field("annualReviewSelect").addEventListener("change",()=>{renderAnnualReview();loadAnnualBoardApprovalOptions();});
+field("recordAnnualBoardApproval").addEventListener("click",recordAnnualBoardApproval);
 field("createAnnualReview").addEventListener("click",createAnnualReview);
 field("approveAnnualReview").addEventListener("click",approveAnnualReview);
+field("createAnnualReview").addEventListener("click",()=>setTimeout(loadAnnualBoardApprovalOptions,0));
 field("printAnnualPack").addEventListener("click",()=>{if(!field("annualReviewSelect").value){field("annualPackStatus").textContent="Select an annual pack before printing.";return;}document.body.classList.add("annual-print-mode");window.addEventListener("afterprint",()=>document.body.classList.remove("annual-print-mode"),{once:true});window.print();});
 filingForm.addEventListener("submit",saveFiling);
 field("saveComplianceLinks").addEventListener("click",saveComplianceLinks);
