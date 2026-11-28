@@ -1057,10 +1057,37 @@ async function loadComplianceCalendar(){
   tr.appendChild(td);
  });
  async function loadComplianceSubmissions(){
- const {data:rows,error}=await db.from("ft_compliance_completion_submissions").select("id,submission_ref,source_type,source_reference,submitted_by,submitted_at,completion_summary,evidence_reference,status,reviewed_by,reviewed_at,review_note").order("submitted_at",{ascending:false}).limit(300);
+ const {data:rows,error}=await db.from("ft_compliance_completion_submissions").select("id,submission_ref,source_type,source_reference,submitted_by,submitted_at,completion_summary,evidence_reference,evidence_document_id,status,reviewed_by,reviewed_at,review_note").order("submitted_at",{ascending:false}).limit(300);
  if(error)throw error;
- table($("complianceSubmissionRegister"),["Submitted","Reference / source","Submitter","Summary / evidence","Status","Review"],rows||[],(tr,r)=>{
+ const documentIds=[...new Set((rows||[]).map(r=>r.evidence_document_id).filter(Boolean))];
+ let documentMap={},versionMap={};
+ if(currentRole==="super_admin"&&documentIds.length){
+  const [documents,versions]=await Promise.all([
+   db.from("ft_document_records").select("id,document_ref,title,document_category,confidentiality,record_status").in("id",documentIds),
+   db.from("ft_document_versions").select("id,document_id,version_number,bucket_id,object_path,original_filename,mime_type,file_size_bytes,checksum_sha256,version_notes,uploaded_by,uploaded_at,is_current").in("document_id",documentIds).order("version_number",{ascending:false})
+  ]);
+  if(documents.error)throw documents.error;if(versions.error)throw versions.error;
+  (documents.data||[]).forEach(d=>documentMap[d.id]=d);
+  (versions.data||[]).forEach(v=>(versionMap[v.document_id]??=[]).push(v));
+ }
+ table($("complianceSubmissionRegister"),["Submitted","Reference / source","Submitter","Summary / evidence","Status","Evidence document / versions","Review"],rows||[],(tr,r)=>{
   cell(tr,date(r.submitted_at));cell(tr,r.submission_ref+" · "+r.source_type.replaceAll("_"," ")+" · "+r.source_reference);cell(tr,r.submitted_by);cell(tr,r.completion_summary+" | Evidence: "+r.evidence_reference);cell(tr,r.status);
+  const evidenceCell=document.createElement("td");
+  if(currentRole==="super_admin"&&r.evidence_document_id){
+   const doc=documentMap[r.evidence_document_id],versionsForDoc=versionMap[r.evidence_document_id]||[];
+   if(doc){const meta=document.createElement("div");meta.textContent=doc.document_ref+" · "+doc.title+" · "+doc.confidentiality; evidenceCell.appendChild(meta)}
+   versionsForDoc.forEach(v=>{
+    const line=document.createElement("div");line.className="actions";
+    const label=document.createElement("span");label.textContent="v"+v.version_number+" · "+v.original_filename+" · "+(v.file_size_bytes?Math.ceil(Number(v.file_size_bytes)/1024)+" KB":"size unavailable")+(v.is_current?" · Current":"");
+    const preview=document.createElement("button");preview.type="button";preview.textContent="View";
+    preview.addEventListener("click",async()=>{const win=window.open("about:blank","_blank");try{const {data,error}=await db.storage.from(v.bucket_id).createSignedUrl(v.object_path,300,{download:false});if(error)throw error;if(win)win.location.href=data.signedUrl;else setStatus("Allow pop-ups to view the private document.","error")}catch(err){if(win)win.close();setStatus("Could not open evidence document: "+err.message,"error")}});
+    const download=document.createElement("button");download.type="button";download.textContent="Download";
+    download.addEventListener("click",async()=>{download.disabled=true;try{const {data,error}=await db.storage.from(v.bucket_id).download(v.object_path);if(error)throw error;const url=URL.createObjectURL(data);const a=document.createElement("a");a.href=url;a.download=v.original_filename||"compliance-evidence";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),60000)}catch(err){setStatus("Evidence download failed: "+err.message,"error")}finally{download.disabled=false}});
+    line.append(label,preview,download);evidenceCell.appendChild(line);
+   });
+   const history=document.createElement("small");history.textContent=versionsForDoc.length+" stored version(s)";evidenceCell.appendChild(history);
+  }else{evidenceCell.textContent=r.evidence_document_id?"Evidence document access is restricted to Super Administrator review.":"No linked evidence document."}
+  tr.appendChild(evidenceCell);
   const td=document.createElement("td");
   if(currentRole==="super_admin"&&r.status==="pending_review"){
    const note=document.createElement("input");note.placeholder="Review note (required for rejection / resubmission)";
