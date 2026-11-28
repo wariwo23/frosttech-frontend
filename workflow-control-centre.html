@@ -479,8 +479,11 @@ async function queueOverdueReminders(){
 async function loadRecipientReports(){
  const box=$("recipientReports");box.replaceChildren();
  const {data,error}=await db.functions.invoke("management-report-recipient",{method:"GET"});
- if(error)throw error;
- if(!data?.ok)throw new Error(data?.error||"Recipient report records unavailable.");
+ if(error||!data?.ok){
+  const message=error?.message||data?.error||"Recipient report records unavailable.";
+  empty(box,"Recipient report list is temporarily unavailable: "+message+". Other workflow records remain available.");
+  return;
+ }
  const reports=data.reports||[];
  if(!reports.length){empty(box,"No approved reports have been emailed to this account.");return}
  reports.forEach(r=>{
