@@ -65,7 +65,18 @@ async function load(){
  if(error)throw error;
  rows=data||[];
  const types=[...new Set(rows.map(r=>r.record_type))];
- metrics.innerHTML=types.length?types.map(t=>'<div class="metric">'+esc(t.replaceAll("_"," "))+'<strong>'+rows.filter(r=>r.record_type===t).length+'</strong></div>').join(""):'<div class="metric">Records returned<strong>0</strong></div>';
+ const readiness=rows.filter(r=>r.record_type==="filing_readiness");
+ const count=(fn)=>readiness.filter(fn).length;
+ const cards=types.map(t=>'<div class="metric">'+esc(t.replaceAll("_"," "))+'<strong>'+rows.filter(r=>r.record_type===t).length+'</strong></div>');
+ if(readiness.length){
+  cards.push('<div class="metric">Overdue filings<strong>'+count(r=>r.record_status==="overdue")+'</strong></div>');
+  cards.push('<div class="metric">Due within 30 days<strong>'+count(r=>r.record_status==="due_within_30_days")+'</strong></div>');
+  cards.push('<div class="metric">Awaiting acknowledgement<strong>'+count(r=>r.record_status==="awaiting_acknowledgement")+'</strong></div>');
+  cards.push('<div class="metric">Missing filing reference<strong>'+count(r=>r.details?.has_filing_reference!==true)+'</strong></div>');
+  cards.push('<div class="metric">Missing active acknowledgement<strong>'+count(r=>r.details?.has_active_acknowledgement!==true)+'</strong></div>');
+  cards.push('<div class="metric">Payment not reconciled<strong>'+count(r=>!["reconciled","matched","complete"].includes(String(r.details?.payment_reconciliation_status||"").toLowerCase()))+'</strong></div>');
+ }else cards.push('<div class="metric">Filing readiness records<strong>0</strong></div>');
+ metrics.innerHTML=cards.join("");
  if(!rows.length){host.innerHTML="<p>No corporate governance or statutory records are currently visible to this authorised account.</p>";}
  else host.innerHTML='<table><thead><tr><th>Record type</th><th>Reference</th><th>Title</th><th>Status</th><th>Relevant date</th><th>Recorded</th><th>Details</th></tr></thead><tbody>'+rows.map(r=>'<tr><td>'+esc(r.record_type)+'</td><td>'+esc(r.record_reference)+'</td><td>'+esc(r.record_title)+'</td><td><span class="pill">'+esc(r.record_status)+'</span></td><td>'+esc(date(r.event_at))+'</td><td>'+esc(date(r.recorded_at))+'</td><td><details><summary>View</summary><pre style="white-space:pre-wrap;max-width:420px">'+esc(JSON.stringify(r.details||{},null,2))+'</pre></details></td></tr>').join("")+'</tbody></table>';
  reportStatus.textContent="Loaded "+rows.length+" source records across "+types.length+" record categories. Read-only view.";
