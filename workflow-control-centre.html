@@ -63,6 +63,27 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="performanceHistory" class="table-wrap"></div>
 <p id="performanceGenerated" class="muted"></p>
 </section>
+<section id="complianceCalendarCard" class="card hidden">
+<h2>Management Compliance Calendar</h2>
+<p class="muted">Consolidated due-date register across corporate statutory filings, tax filings, compliance obligations, remediation actions and manually scheduled management deadlines. Existing source records are displayed read-only; only calendar items created here can be edited here. Dates and applicability must be confirmed by the responsible administrator before relying on them as statutory deadlines.</p>
+<div id="complianceCalendarMetrics" class="metrics"></div>
+<form id="complianceCalendarForm">
+<div class="form-grid">
+<div class="field"><label for="calendarTitle">Obligation / deadline</label><input id="calendarTitle" maxlength="180" required placeholder="e.g. Annual return preparation"></div>
+<div class="field"><label for="calendarCategory">Category</label><select id="calendarCategory" required><option value="corporate_statutory">Corporate statutory</option><option value="tax">Tax</option><option value="regulatory">Regulatory</option><option value="governance">Governance</option><option value="operational_compliance">Operational compliance</option><option value="management">Management</option></select></div>
+<div class="field"><label for="calendarDueDate">Due date</label><input id="calendarDueDate" type="date" required></div>
+<div class="field"><label for="calendarOwner">Responsible administrator UUID (optional)</label><input id="calendarOwner" placeholder="Registered user UUID"></div>
+<div class="field"><label for="calendarAuthority">Authority / source</label><input id="calendarAuthority" maxlength="180" placeholder="CAC, tax authority, internal policy…"></div>
+<div class="field"><label for="calendarRecurrence">Recurrence</label><select id="calendarRecurrence"><option value="once">One-time</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="half_yearly">Half-yearly</option><option value="annually">Annually</option><option value="event_driven">Event-driven</option></select></div>
+</div>
+<div class="field"><label for="calendarDescription">Description / preparation notes</label><textarea id="calendarDescription" maxlength="3000" rows="2"></textarea></div>
+<div class="field"><label for="calendarReminderDays">Reminder lead days (comma-separated, max 12)</label><input id="calendarReminderDays" value="30,14,7,1" placeholder="30,14,7,1"></div>
+<button type="submit">Add Calendar Obligation</button>
+</form>
+<div id="complianceCalendarStatus" class="muted" aria-live="polite"></div>
+<div class="actions"><button type="button" class="secondary" id="refreshComplianceCalendar">Refresh Calendar</button><button type="button" class="secondary" id="exportComplianceCalendar">Export Calendar CSV</button></div>
+<div id="complianceCalendarRegister" class="table-wrap"></div>
+</section>
 <section id="reportingCard" class="card hidden">
 <h2>Management Reporting Periods and Official Reports</h2>
 <p class="muted">Create reporting periods, close completed periods, export departmental performance as CSV, and approve an immutable report snapshot. Only the Super Administrator can manage periods and approve reports.</p>
@@ -1005,10 +1026,48 @@ async function loadRecipientReports(){
   annualBox.appendChild(item)
  });
 }
+async function loadComplianceCalendar(){
+ const [items,source]=await Promise.all([
+  db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,category,authority_or_source,due_date,recurrence,owner_user_id,status,reminder_days_before,description,completion_reference").order("due_date",{ascending:true}).limit(500),
+  db.from("ft_compliance_calendar_view").select("source_type,source_id,source_reference,title,category,authority_or_source,due_date,status,owner_user_id,recurrence,details,completion_reference").order("due_date",{ascending:true}).limit(1000)
+ ]);
+ if(items.error)throw items.error;if(source.error)throw source.error;
+ const all=source.data||[];
+ const today=new Date();today.setHours(0,0,0,0);const iso=today.toISOString().slice(0,10);
+ const open=all.filter(x=>!["completed","filed","accepted","cancelled","not_applicable"].includes(String(x.status||"").toLowerCase()));
+ const overdue=open.filter(x=>x.due_date<iso).length;
+ const due30=open.filter(x=>x.due_date>=iso&&x.due_date<=new Date(today.getTime()+30*86400000).toISOString().slice(0,10)).length;
+ const metrics=[["Calendar records",all.length],["Outstanding",open.length],["Overdue",overdue],["Due within 30 days",due30],["Completed / filed",all.length-open.length]];
+ $("complianceCalendarMetrics").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const s=document.createElement("span");s.textContent=label;const strong=document.createElement("strong");strong.textContent=value;box.append(s,strong);$("complianceCalendarMetrics").appendChild(box)});
+ const rows=all.map(x=>({...x,source_label:x.source_type==="calendar_item"?"Managed calendar":x.source_type.replaceAll("_"," ")}));
+ table($("complianceCalendarRegister"),["Due date","Obligation","Category / source","Owner","Status","Reference / Action"],rows,(tr,r)=>{
+  cell(tr,date(r.due_date));cell(tr,r.title);cell(tr,(r.category||"—")+" · "+(r.authority_or_source||r.source_label||"—"));cell(tr,r.owner_user_id||"Unassigned");cell(tr,r.status);
+  const td=document.createElement("td");const ref=document.createElement("span");ref.textContent=r.source_reference||"—";td.appendChild(ref);
+  if(r.source_type==="calendar_item"){const wrap=document.createElement("div");wrap.className="actions";const status=document.createElement("select");["scheduled","in_progress","completed","deferred","cancelled"].forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v.replaceAll("_"," ");status.appendChild(o)});status.value=r.status;const save=document.createElement("button");save.type="button";save.textContent="Update";save.addEventListener("click",async()=>{save.disabled=true;const patch={status:status.value,updated_at:new Date().toISOString(),completed_at:status.value==="completed"?new Date().toISOString():null};const {error}=await db.from("ft_compliance_calendar_items").update(patch).eq("id",r.source_id);if(error){setStatus("Calendar update failed: "+error.message,"error");save.disabled=false;return}setStatus("Calendar item updated.","success");await loadComplianceCalendar()});wrap.append(status,save);td.appendChild(wrap)}
+  tr.appendChild(td);
+ });
+ window.__ftComplianceCalendarExport=rows;
+}
+async function createComplianceCalendarItem(e){
+ e.preventDefault();const title=$("calendarTitle").value.trim(),due=$("calendarDueDate").value,raw=$("calendarReminderDays").value.trim();
+ const days=raw?raw.split(",").map(x=>Number(x.trim())):[];
+ if(!title||!due||days.length>12||days.some(x=>!Number.isInteger(x)||x<0||x>365)){ $("complianceCalendarStatus").textContent="Enter a title, due date and valid reminder lead days (0–365; maximum 12).";return}
+ const owner=$("calendarOwner").value.trim();
+ const payload={title,category:$("calendarCategory").value,due_date:due,owner_user_id:owner||null,authority_or_source:$("calendarAuthority").value.trim()||null,recurrence:$("calendarRecurrence").value,description:$("calendarDescription").value.trim()||null,reminder_days_before:days};
+ const {error}=await db.from("ft_compliance_calendar_items").insert(payload);
+ if(error){$("complianceCalendarStatus").textContent="Calendar item not saved: "+error.message;return}
+ $("complianceCalendarForm").reset();$("calendarReminderDays").value="30,14,7,1";$("complianceCalendarStatus").textContent="Calendar obligation recorded. Reminder lead days are stored as scheduling instructions; automated delivery is not yet enabled.";await loadComplianceCalendar();
+}
+function exportComplianceCalendar(){
+ const rows=window.__ftComplianceCalendarExport||[];if(!rows.length){$("complianceCalendarStatus").textContent="No calendar records to export.";return}
+ const keys=["source_reference","source_type","due_date","title","category","authority_or_source","owner_user_id","status","recurrence","completion_reference"];
+ const csv=[keys.join(","),...rows.map(r=>keys.map(k=>'"'+String(r[k]??"").replaceAll('"','""')+'"').join(","))].join("\r\n");
+ const a=document.createElement("a"),url=URL.createObjectURL(new Blob([csv],{type:"text/csv;charset=utf-8"}));a.href=url;a.download="frosttech-management-compliance-calendar.csv";a.click();URL.revokeObjectURL(url);
+}
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel(),loadExceptionCaseHistory()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations(),loadExceptionCommandPanel(),loadExceptionCaseHistory(),loadComplianceCalendar()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -1029,11 +1088,11 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
+  if(role==="super_admin"){$("complianceCalendarCard").classList.remove("hidden");$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
-$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
+$("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);$("complianceCalendarForm").addEventListener("submit",createComplianceCalendarItem);$("refreshComplianceCalendar").addEventListener("click",loadComplianceCalendar);$("exportComplianceCalendar").addEventListener("click",exportComplianceCalendar);
 $("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("reportDistributionForm").addEventListener("submit",recordReportDistribution);$("checkReportEmailConfig").addEventListener("click",checkReportEmailConfiguration);$("registerBrevoWebhook").addEventListener("click",registerBrevoReportWebhook);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("exceptionModalCancel").addEventListener("click",closeExceptionModal);
 $("exceptionModalSave").addEventListener("click",submitExceptionModal);
