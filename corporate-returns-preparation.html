@@ -19,6 +19,12 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 @media print{body.annual-print-mode main>section:not(#annualPackCard){display:none!important}body.annual-print-mode #annualPackCard .actions,body.annual-print-mode #annualApprovalPanel,body.annual-print-mode #annualPackCard>p.muted{display:none!important}body.annual-print-mode #annualPackCard{display:block!important;border:0!important;padding:0!important;margin:0!important}.annual-evidence-section{break-inside:avoid;margin-top:18px}body.annual-print-mode #annualPackSnapshot table{min-width:0;font-size:10px}body.annual-print-mode #annualPackSnapshot th,body.annual-print-mode #annualPackSnapshot td{padding:5px}body.annual-print-mode #annualPackSnapshot details pre{max-height:none!important;overflow:visible!important}}@media print{body{background:#fff}header{background:#fff!important;color:#000;border-bottom:2px solid #333;padding:12px}header p{color:#333}main{max-width:none;padding:10px}.actions,#authCard{display:none!important}.card{box-shadow:none;break-inside:avoid}table{min-width:0;font-size:10px}th,td{padding:5px}.table-wrap{overflow:visible}}
 
 @media print{
+ body.governance-delivery-printing *{visibility:hidden}
+ body.governance-delivery-printing #governanceDeliveryAudit,body.governance-delivery-printing #governanceDeliveryAudit *{visibility:visible}
+ body.governance-delivery-printing #governanceDeliveryAudit{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}
+ body.governance-delivery-printing #governanceDeliveryAudit .actions{display:none}
+ body.governance-delivery-printing #governanceDeliveryAudit table{min-width:0;font-size:10px}
+ body.governance-delivery-printing #governanceDeliveryAudit th,body.governance-delivery-printing #governanceDeliveryAudit td{padding:5px}
  body.governance-action-printing *{visibility:hidden}
  body.governance-action-printing #governanceActionTracking,body.governance-action-printing #governanceActionTracking *{visibility:visible}
  body.governance-action-printing #governanceActionTracking{position:absolute;left:0;top:0;width:100%;border:0;box-shadow:none}
@@ -193,6 +199,15 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <div id="governanceActionStatus" class="status" role="status">No action register loaded yet.</div>
 <div id="governanceActionSummary" class="grid"></div>
 <div id="governanceActionRows"></div>
+</section>
+<section class="card" id="governanceDeliveryAudit">
+<h2>Governance Notification Delivery Audit</h2>
+<p class="muted">Super Administrator-only history of Brevo send attempts and provider events. “Accepted by provider” means Brevo accepted the message for processing; a separate delivered event is required before treating it as delivered. This register is read-only.</p>
+<div class="actions"><button type="button" id="refreshGovernanceDeliveryAudit">Refresh delivery audit</button><button type="button" class="secondary" id="printGovernanceDeliveryAudit">Print delivery audit</button></div>
+<div id="governanceDeliveryAuditStatus" class="status" role="status">Refresh to load the protected delivery audit.</div>
+<div id="governanceDeliveryAuditSummary" class="grid"></div>
+<div id="governanceDeliveryAuditRows"></div>
+<div id="governanceDeliveryUnmatchedRows"></div>
 </section>
 <section class="card" id="filingActionCard">
 <h2>Super Administrator filing action centre</h2>
@@ -734,6 +749,22 @@ async function acknowledgeGovernanceNotice(button){
  try{const {error}=await db.rpc("ft_acknowledge_governance_escalation_notice",{p_notice_id:id,p_note:note});if(error)throw error;await loadGovernanceActionRegister();}
  catch(e){field("governanceActionStatus").textContent="Notice acknowledgement failed: "+(e.message||"Authorization error.");button.disabled=false;}
 }
+async function loadGovernanceDeliveryAudit(){
+ const status=field("governanceDeliveryAuditStatus"),summary=field("governanceDeliveryAuditSummary"),host=field("governanceDeliveryAuditRows"),unmatched=field("governanceDeliveryUnmatchedRows");
+ status.textContent="Loading protected Brevo delivery history…";summary.innerHTML="";host.innerHTML="";unmatched.innerHTML="";
+ try{
+  const {data,error}=await db.rpc("ft_get_governance_delivery_audit");if(error)throw error;
+  const s=data?.summary||{},attempts=Array.isArray(data?.attempts)?data.attempts:[],orphans=Array.isArray(data?.unmatched_receipts)?data.unmatched_receipts:[];
+  const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
+  summary.innerHTML=metric("Send attempts",s.attempts)+metric("Accepted by Brevo",s.accepted_by_provider)+metric("Failed attempts",s.failed)+metric("Provider events",s.provider_events)+metric("Delivered events",s.delivered_events)+metric("Bounces / blocked",s.bounce_events)+metric("Spam complaints",s.complaint_events)+metric("Unmatched events",s.unmatched_events);
+  host.innerHTML=attempts.length?'<h3>Recent delivery attempts (latest 200)</h3><div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Notice</th><th>Recipient</th><th>Attempt</th><th>Send status</th><th>Provider message ID</th><th>Provider events</th><th>Error</th></tr></thead><tbody>'+attempts.map(a=>{
+   const receipts=Array.isArray(a.receipts)?a.receipts:[];
+   return '<tr><td>'+esc(date(a.attempted_at))+'<br><span class="muted">Completed: '+esc(date(a.completed_at))+'</span></td><td>'+esc(a.notice_title||a.notice_type||a.notice_id)+'</td><td>'+esc(a.recipient_email||"—")+'</td><td>'+esc(a.attempt_number)+'</td><td><span class="pill">'+esc(a.status)+'</span></td><td><code>'+esc(a.provider_message_id||"Not returned")+'</code></td><td>'+(receipts.length?receipts.map(r=>'<div><strong>'+esc(r.provider_event)+'</strong><br>'+esc(date(r.provider_event_at||r.received_at))+'</div>').join(""):'No provider receipt recorded')+'</td><td>'+esc(a.error_detail||"—")+'</td></tr>';
+  }).join("")+'</tbody></table></div>':'<p>No delivery attempts are recorded yet.</p>';
+  unmatched.innerHTML='<h3>Unmatched provider events ('+orphans.length+')</h3>'+(orphans.length?'<div class="table-wrap"><table><thead><tr><th>Received</th><th>Provider message ID</th><th>Event</th><th>Recipient</th><th>Provider event time</th></tr></thead><tbody>'+orphans.map(r=>'<tr><td>'+esc(date(r.received_at))+'</td><td><code>'+esc(r.provider_message_id)+'</code></td><td>'+esc(r.provider_event)+'</td><td>'+esc(r.recipient_email||"—")+'</td><td>'+esc(date(r.provider_event_at))+'</td></tr>').join("")+'</tbody></table></div>':'<p>No unmatched provider events.</p>');
+  status.textContent="Delivery audit refreshed at "+new Date().toLocaleString()+". "+attempts.length+" attempt(s) and "+orphans.length+" unmatched event(s) shown.";
+ }catch(e){status.textContent="Delivery audit unavailable: "+(e.message||"Super Administrator authorization required.");}
+}
 async function createGovernanceAction(){
  const status=field("governanceActionStatus"),description=val("governanceActionDescription"),responsible=val("governanceActionResponsible"),due=val("governanceActionDue"),alertId=val("governanceActionAlert");
  if(!description){status.textContent="Enter an action description first.";return;}
@@ -1039,6 +1070,8 @@ field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMo
 field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
 field("createGovernanceAction").addEventListener("click",createGovernanceAction);
 field("refreshGovernanceActions").addEventListener("click",loadGovernanceActionRegister);
+field("refreshGovernanceDeliveryAudit").addEventListener("click",loadGovernanceDeliveryAudit);
+field("printGovernanceDeliveryAudit").addEventListener("click",()=>{document.body.classList.add("governance-delivery-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-delivery-printing"),{once:true});window.print();});
 field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("governance-action-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-action-printing"),{once:true});window.print();});
 field("generateGovernanceNotices").addEventListener("click",generateGovernanceNotices);
 field("deliverGovernanceNotices").addEventListener("click",deliverGovernanceNotices);
