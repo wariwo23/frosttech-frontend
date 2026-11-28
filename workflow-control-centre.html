@@ -63,6 +63,26 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="performanceHistory" class="table-wrap"></div>
 <p id="performanceGenerated" class="muted"></p>
 </section>
+<section id="reportingCard" class="card hidden">
+<h2>Management Reporting Periods and Official Reports</h2>
+<p class="muted">Create reporting periods, close completed periods, export departmental performance as CSV, and approve an immutable report snapshot. Only the Super Administrator can manage periods and approve reports.</p>
+<form id="periodForm">
+<div class="form-grid">
+<div class="field"><label for="periodName">Reporting period name</label><input id="periodName" maxlength="120" required placeholder="e.g. November 2026"></div>
+<div class="field"><label for="periodStart">Period start</label><input id="periodStart" type="date" required></div>
+<div class="field"><label for="periodEnd">Period end</label><input id="periodEnd" type="date" required></div>
+</div>
+<button type="submit">Create Reporting Period</button>
+</form>
+<div id="periodStatus" class="muted"></div>
+<div id="reportingPeriods" class="table-wrap"></div>
+<form id="reportApprovalForm">
+<div class="field"><label for="approvalPeriod">Closed period to approve</label><select id="approvalPeriod" required><option value="">Select a closed period</option></select></div>
+<div class="field"><label for="approvalNote">Approval note</label><textarea id="approvalNote" required maxlength="2000" rows="3" placeholder="Record the management approval decision"></textarea></div>
+<button type="submit">Approve Official Report Snapshot</button>
+</form>
+<div id="approvedReports" class="table-wrap"></div>
+</section>
 <section id="definitionsCard" class="card hidden">
 <h2>Workflow Templates</h2>
 <p class="muted">Super Administrator view. Templates remain Draft until separately approved and activated. This page does not activate or edit templates.</p>
@@ -153,6 +173,55 @@ async function loadExecutiveDashboard(){
  $("executiveMetrics").replaceChildren();metrics.forEach(([label,value])=>{const box=document.createElement("div");box.className="metric";const span=document.createElement("span");span.textContent=label;const strong=document.createElement("strong");strong.textContent=value??0;box.append(span,strong);$("executiveMetrics").appendChild(box)});
  table($("departmentMetrics"),["Department","Open tasks","Overdue","Overdue / unacknowledged","Awaiting acknowledgement"],departments.data||[],(tr,r)=>{cell(tr,r.department_code);cell(tr,r.open_tasks);cell(tr,r.overdue_tasks);cell(tr,r.overdue_unacknowledged_tasks);cell(tr,r.awaiting_acknowledgement)});
  $("executiveGenerated").textContent="Dashboard generated: "+date(s.generated_at)+". Values update when records are refreshed.";
+}
+async function loadReportingPeriods(){
+ const [periods,approvals]=await Promise.all([
+  db.from("ft_management_reporting_periods").select("*").order("period_start",{ascending:false}),
+  db.from("ft_management_report_approvals").select("id,reporting_period_id,report_code,report_title,approved_at,approval_note").order("approved_at",{ascending:false})
+ ]);
+ if(periods.error)throw periods.error;if(approvals.error)throw approvals.error;
+ const closed=(periods.data||[]).filter(p=>p.status==="closed");
+ $("approvalPeriod").replaceChildren();const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent="Select a closed period";$("approvalPeriod").appendChild(placeholder);
+ closed.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=p.period_name+" ("+p.period_start+" to "+p.period_end+")";$("approvalPeriod").appendChild(o)});
+ table($("reportingPeriods"),["Period","Start","End","Status","Actions"],periods.data||[],(tr,p)=>{
+  cell(tr,p.period_name);cell(tr,p.period_start);cell(tr,p.period_end);cell(tr,p.status);
+  const td=document.createElement("td"),wrap=document.createElement("div");wrap.className="actions";
+  const exportBtn=document.createElement("button");exportBtn.type="button";exportBtn.textContent="Export CSV";exportBtn.addEventListener("click",()=>exportPerformancePeriod(p));
+  wrap.appendChild(exportBtn);
+  if(p.status==="open"){const closeBtn=document.createElement("button");closeBtn.type="button";closeBtn.className="secondary";closeBtn.textContent="Close Period";closeBtn.addEventListener("click",()=>closeReportingPeriod(p));wrap.appendChild(closeBtn)}
+  td.appendChild(wrap);tr.appendChild(td);
+ });
+ table($("approvedReports"),["Report","Approved at","Approval note"],approvals.data||[],(tr,a)=>{cell(tr,a.report_title);cell(tr,date(a.approved_at));cell(tr,a.approval_note)});
+}
+async function createReportingPeriod(e){
+ e.preventDefault();const name=$("periodName").value.trim(),start=$("periodStart").value,end=$("periodEnd").value;
+ if(!name||!start||!end||end<start){$("periodStatus").textContent="Enter a valid name and date range.";return}
+ const {error}=await db.from("ft_management_reporting_periods").insert({period_name:name,period_start:start,period_end:end});
+ if(error){$("periodStatus").textContent=error.message;return}
+ $("periodForm").reset();$("periodStatus").textContent="Reporting period created.";await loadReportingPeriods();
+}
+async function closeReportingPeriod(p){
+ if(!window.confirm("Close reporting period "+p.period_name+"? This will make the period eligible for official report approval."))return;
+ const {error}=await db.from("ft_management_reporting_periods").update({status:"closed",closed_by:currentUserId,closed_at:new Date().toISOString()}).eq("id",p.id).eq("status","open");
+ if(error){$("periodStatus").textContent=error.message;return}
+ $("periodStatus").textContent="Reporting period closed.";await loadReportingPeriods();
+}
+async function approveManagementReport(e){
+ e.preventDefault();const periodId=$("approvalPeriod").value,note=$("approvalNote").value.trim();
+ if(!periodId||!note){$("periodStatus").textContent="Select a closed period and provide an approval note.";return}
+ const {data,error}=await db.rpc("ft_approve_departmental_performance_report",{p_reporting_period_id:periodId,p_approval_note:note});
+ if(error){$("periodStatus").textContent=error.message;return}
+ $("periodStatus").textContent="Official report snapshot approved. Reference: "+data;$("reportApprovalForm").reset();await loadReportingPeriods();
+}
+async function exportPerformancePeriod(p){
+ const {data,error}=await db.from("ft_workflow_department_monthly_performance").select("*").gte("reporting_month",p.period_start).lte("reporting_month",p.period_end).order("reporting_month").order("department_code");
+ if(error){$("periodStatus").textContent=error.message;return}
+ const cols=["reporting_month","department_code","tasks_created","tasks_completed","tasks_acknowledged","average_acknowledgement_minutes","average_completion_minutes","escalations_raised","escalations_responded","average_escalation_response_minutes"];
+ const quote=v=>'"'+String(v??"").replace(/"/g,'""')+'"';
+ const csv=[cols.join(","),...(data||[]).map(r=>cols.map(k=>quote(r[k])).join(","))].join("\r\n");
+ const blob=new Blob([csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+ a.href=url;a.download="FrostTech_"+p.period_name.replace(/[^a-z0-9_-]+/gi,"_")+"_Departmental_Performance.csv";a.click();URL.revokeObjectURL(url);
+ $("periodStatus").textContent="CSV export prepared with "+(data||[]).length+" actual department-month records.";
 }
 async function loadMonthlyPerformance(){
  const {data,error}=await db.from("ft_workflow_department_monthly_performance").select("*").order("reporting_month",{ascending:false}).order("department_code").limit(240);
@@ -306,7 +375,7 @@ async function queueOverdueReminders(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
@@ -327,12 +396,12 @@ async function start(){
   $("approvalsCard").classList.remove("hidden");
   $("launchCard").classList.remove("hidden");
   $("notificationsCard").classList.remove("hidden");
-  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
+  if(role==="super_admin"){$("summaryCard").classList.remove("hidden");$("executiveCard").classList.remove("hidden");$("performanceCard").classList.remove("hidden");$("reportingCard").classList.remove("hidden");$("definitionsCard").classList.remove("hidden");$("escalationsCard").classList.remove("hidden") }
   await refresh();
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
+$("launchForm").addEventListener("submit",launchWorkflow);$("periodForm").addEventListener("submit",createReportingPeriod);$("reportApprovalForm").addEventListener("submit",approveManagementReport);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
