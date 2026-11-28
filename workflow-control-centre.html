@@ -99,6 +99,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 <div id="distributionLog" class="table-wrap"></div>\n<h3>Delivery Audit Summary</h3><div id="reportDeliveryMetrics" class="metrics"></div><div id="reportDeliveryAudit" class="table-wrap"></div>
 <h3>Brevo Provider Events</h3><p class="muted">Brevo acceptance is not delivery. The Delivered timestamp is populated only when Brevo sends a delivered event. Opens, clicks, bounces and other provider events are recorded separately from FrostTech recipient acknowledgements.</p><div id="reportProviderEvents" class="table-wrap"></div>
 <h3>Super Administrator Exception Notifications</h3><p class="muted">New report-delivery exceptions generate an in-app alert for the Super Administrator. Acknowledgement is recorded once and does not close or resolve the underlying exception.</p><div id="reportExceptionNotifications" class="table-wrap"></div>
+<h3>Escalation History</h3><p class="muted">Unacknowledged exceptions are escalated automatically after 24, 48 and 72 hours. Escalation notices are separate from the original alert. Acknowledging an escalation does not close the underlying exception.</p><div id="reportExceptionEscalations" class="table-wrap"></div>
 <h3>Delivery Exception Register</h3><p class="muted">Exceptions are opened automatically when report email submissions fail or Brevo reports bounced, blocked, invalid-recipient, spam or unmatched events. Super Administrator can investigate, add follow-up notes and resolve each exception with a mandatory resolution note. Archived reports are never edited or deleted.</p><div id="reportDeliveryExceptions" class="table-wrap"></div>
 <p class="muted">Only the Super Administrator can check email configuration or distribute approved reports. Configuration checks never send email; delivery attempts are retained in the audit register.</p>
 
@@ -367,6 +368,29 @@ async function loadReportExceptionNotifications(){
     if(error){setStatus("Notification acknowledgement failed: "+error.message,"error");b.disabled=false;return}
     setStatus("Exception notification acknowledged. The exception remains open until separately resolved.","success");
     await loadReportExceptionNotifications();
+   });
+   td.appendChild(document.createElement("br"));td.appendChild(b);
+  }
+ });
+}
+async function loadReportExceptionEscalations(){
+ const {data,error}=await db.from("ft_management_report_exception_escalations")
+  .select("id,exception_id,escalation_level,recipient_user_id,escalation_reason,created_at,acknowledged_at")
+  .order("created_at",{ascending:false}).limit(250);
+ if(error)throw error;
+ table($("reportExceptionEscalations"),["Level","Reason","Escalated","Acknowledgement"],data||[],(tr,r)=>{
+  cell(tr,"Level "+r.escalation_level);cell(tr,r.escalation_reason);cell(tr,date(r.created_at));
+  const td=cell(tr,r.acknowledged_at?"Acknowledged "+date(r.acknowledged_at):"Awaiting acknowledgement");
+  if(!r.acknowledged_at){
+   const b=document.createElement("button");b.type="button";b.textContent="Acknowledge escalation";
+   b.addEventListener("click",async()=>{
+    b.disabled=true;
+    const {error}=await db.from("ft_management_report_exception_escalations")
+      .update({acknowledged_at:new Date().toISOString(),acknowledged_by:currentUserId})
+      .eq("id",r.id).is("acknowledged_at",null);
+    if(error){setStatus("Escalation acknowledgement failed: "+error.message,"error");b.disabled=false;return}
+    setStatus("Escalation acknowledged. The original exception remains open until separately resolved.","success");
+    await loadReportExceptionEscalations();
    });
    td.appendChild(document.createElement("br"));td.appendChild(b);
   }
@@ -646,7 +670,7 @@ async function loadRecipientReports(){
 async function refresh(){
  $("refresh").disabled=true;setStatus("Loading authorised workflow records…");
  try{
-  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications()])}
+  if(currentRole==="super_admin"){await Promise.all([loadSummary(),loadDefinitions(),loadExecutiveDashboard(),loadMonthlyPerformance(),loadReportingPeriods(),loadReportArchive(),loadReportDeliveryAudit(),loadReportProviderEvents(),loadReportExceptionNotifications(),loadReportExceptionEscalations()])}
   await Promise.all([loadTasks(),loadApprovals(),loadNotifications(),loadActiveWorkflows(),loadRecipientReports(),...(currentRole==="super_admin"?[loadEscalationChoices(),loadEscalations()]:[])]);
   setStatus("Workflow records refreshed. Available records are limited by your database permissions.","success");
  }catch(e){console.error(e);setStatus("Some workflow records could not be loaded: "+(e.message||"Database access error."),"error")}
