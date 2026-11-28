@@ -37,6 +37,30 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <p class="muted">Read-only Super Administrator preparation report covering board meetings, resolutions, statutory filings, annual reviews, governance archive and filing-readiness evidence including acknowledgements, payment reconciliation and escalations. Source registers remain authoritative. Applicability, filing accuracy and statutory submission must be confirmed by management and the relevant professional adviser.</p>
 <div id="statusReport" class="status" role="status">Loading records…</div>
 <div class="grid" id="metrics"></div>
+<section class="card" id="complianceCalendarCard">
+<h2>Statutory Obligations & Deadline Register</h2>
+<p class="muted">Manage internal and statutory deadlines. The existing daily scheduler issues reminders at configured intervals and escalates overdue items. A reminder never constitutes filing or completion.</p>
+<div class="grid">
+<div class="field"><label for="calendarSelect">Existing obligation</label><select id="calendarSelect" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="">Create a new deadline…</option></select></div>
+<div class="field"><label for="calendarTitle">Obligation / deadline title</label><input id="calendarTitle" maxlength="180" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarCategory">Category</label><select id="calendarCategory" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="corporate_statutory">Corporate statutory</option><option value="tax">Tax</option><option value="regulatory">Regulatory</option><option value="governance">Governance</option><option value="operational_compliance">Operational compliance</option><option value="management">Management</option></select></div>
+<div class="field"><label for="calendarAuthority">Authority / source</label><input id="calendarAuthority" maxlength="180" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarDueDate">Due date</label><input id="calendarDueDate" type="date" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarOwner">Responsible administrator user ID</label><input id="calendarOwner" placeholder="Optional UUID; unassigned items escalate to Super Admin" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarRecurrence">Recurrence</label><select id="calendarRecurrence" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="once">Once</option><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="half_yearly">Half-yearly</option><option value="annually">Annually</option><option value="event_driven">Event-driven</option></select></div>
+<div class="field"><label for="calendarStatus">Status</label><select id="calendarStatus" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"><option value="scheduled">Scheduled</option><option value="in_progress">In progress</option><option value="deferred">Deferred</option><option value="cancelled">Cancelled</option><option value="completed">Completed (evidence required)</option></select></div>
+</div>
+<div class="field"><label for="calendarDescription">Description / action required</label><textarea id="calendarDescription" rows="2" maxlength="3000" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></textarea></div>
+<div class="grid">
+<div class="field"><label for="calendarReminders">Reminder days before due date (comma separated)</label><input id="calendarReminders" value="30,14,7,1" placeholder="30,14,7,1" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarCompletionRef">Completion / filing reference</label><input id="calendarCompletionRef" maxlength="180" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+<div class="field"><label for="calendarEvidence">Active Document Vault evidence UUID</label><input id="calendarEvidence" placeholder="Required to mark completed" style="width:100%;padding:11px;border:1px solid var(--line);border-radius:8px"></div>
+</div>
+<div class="actions"><button id="saveCalendarItem" type="button">Save deadline record</button><button id="newCalendarItem" class="secondary" type="button">New record</button></div>
+<div id="calendarStatusMessage" class="status" role="status">Loading deadline register…</div>
+<div class="table-wrap"><table><thead><tr><th>Reference / deadline</th><th>Due</th><th>Status</th><th>Owner</th></tr></thead><tbody id="calendarRows"><tr><td colspan="4">Loading…</td></tr></tbody></table></div>
+<h3>Reminder and change history</h3><div id="calendarHistory" class="muted">Select an obligation to view its history.</div>
+</section>
 <section class="card" id="annualPackCard">
 <h2>Annual Corporate Compliance Pack</h2>
 <p class="muted">Prepare a year-specific frozen evidence pack covering statutory filings, board meetings, resolutions and governance archive entries. Preparation is not approval, legal certification or regulatory submission.</p>
@@ -265,6 +289,59 @@ async function saveFiling(event){
  }catch(e){actionStatus.textContent="Update not completed: "+(e.message||"The database rejected the request.");}
  finally{save.disabled=false;save.textContent="Save filing record";}
 }
+let calendarItems=[];
+function resetCalendarForm(){
+ field("calendarSelect").value="";["calendarTitle","calendarAuthority","calendarDueDate","calendarOwner","calendarDescription","calendarCompletionRef","calendarEvidence"].forEach(id=>setVal(id,""));
+ setVal("calendarCategory","corporate_statutory");setVal("calendarRecurrence","once");setVal("calendarStatus","scheduled");setVal("calendarReminders","30,14,7,1");
+ field("calendarHistory").textContent="New obligation: no prior history.";
+}
+async function loadCalendar(){
+ const msg=field("calendarStatusMessage");msg.textContent="Loading compliance deadlines…";
+ try{
+  const [items,reminders]=await Promise.all([
+   db.from("ft_compliance_calendar_items").select("id,calendar_ref,title,category,authority_or_source,description,due_date,recurrence,owner_user_id,status,reminder_days_before,completion_reference,evidence_document_id,completed_at,created_at,updated_at").order("due_date",{ascending:true}).limit(500),
+   db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").order("created_at",{ascending:false}).limit(200)
+  ]);
+  if(items.error)throw items.error;if(reminders.error)throw reminders.error;
+  calendarItems=items.data||[];
+  field("calendarSelect").innerHTML='<option value="">Create a new deadline…</option>'+calendarItems.map(x=>'<option value="'+esc(x.id)+'">'+esc(x.calendar_ref+" · "+x.title+" · "+x.due_date+" · "+x.status)+'</option>').join("");
+  field("calendarRows").innerHTML=calendarItems.length?calendarItems.map(x=>'<tr data-calendar-id="'+esc(x.id)+'"><td><strong>'+esc(x.calendar_ref)+'</strong><br>'+esc(x.title)+'</td><td>'+esc(x.due_date)+'</td><td>'+esc(x.status)+'</td><td>'+esc(x.owner_user_id||"Super Admin")+'</td></tr>').join(""):'<tr><td colspan="4">No deadline records. No legal due dates have been assumed.</td></tr>';
+  field("calendarStatusMessage").textContent=calendarItems.length+" obligation(s) loaded. Existing daily reminder scheduler is active; reminders are not filing confirmations.";
+  field("calendarRows").querySelectorAll("tr[data-calendar-id]").forEach(tr=>tr.addEventListener("click",()=>{field("calendarSelect").value=tr.dataset.calendarId;selectCalendarItem(reminders.data||[]);}));
+  if(field("calendarSelect").value)selectCalendarItem(reminders.data||[]);
+ }catch(e){msg.textContent="Deadline register could not be loaded: "+(e.message||"Access denied.");}
+}
+function selectCalendarItem(reminders=[]){
+ const item=calendarItems.find(x=>x.id===field("calendarSelect").value);
+ if(!item){resetCalendarForm();return;}
+ setVal("calendarTitle",item.title);setVal("calendarCategory",item.category);setVal("calendarAuthority",item.authority_or_source);
+ setVal("calendarDueDate",item.due_date);setVal("calendarOwner",item.owner_user_id);setVal("calendarRecurrence",item.recurrence||"once");
+ setVal("calendarStatus",item.status);setVal("calendarDescription",item.description);setVal("calendarReminders",(item.reminder_days_before||[]).join(","));
+ setVal("calendarCompletionRef",item.completion_reference);setVal("calendarEvidence",item.evidence_document_id);
+ const logs=reminders.filter(x=>x.source_id===item.id);
+ field("calendarHistory").textContent="Created "+date(item.created_at)+" · Last updated "+date(item.updated_at)+". Reminder events: "+(logs.length?logs.map(x=>x.reminder_stage+" to "+x.recipient_user_id+" at "+date(x.created_at)).join(" | "):"none recorded yet")+".";
+}
+async function saveCalendarItem(){
+ const id=field("calendarSelect").value;
+ const title=val("calendarTitle"),due=val("calendarDueDate"),statusValue=val("calendarStatus");
+ if(title.length<3||!due){field("calendarStatusMessage").textContent="A title of at least three characters and a due date are required.";return;}
+ let days;try{days=val("calendarReminders").split(",").map(x=>Number(x.trim()));if(days.some(x=>!Number.isInteger(x)||x<0||x>365)||days.length>12||new Set(days).size!==days.length)throw Error();}catch(e){field("calendarStatusMessage").textContent="Reminder days must be up to 12 unique whole numbers from 0 to 365.";return;}
+ const evidence=val("calendarEvidence"),reference=val("calendarCompletionRef");
+ if(statusValue==="completed"&&(!reference||reference.length<3||!evidence)){field("calendarStatusMessage").textContent="Completion requires a filing/completion reference and active Document Vault evidence UUID.";return;}
+ const payload={title,category:val("calendarCategory"),authority_or_source:val("calendarAuthority")||null,description:val("calendarDescription")||null,due_date:due,recurrence:val("calendarRecurrence"),owner_user_id:val("calendarOwner")||null,status:statusValue,reminder_days_before:days,completion_reference:reference||null,evidence_document_id:evidence||null,completed_at:statusValue==="completed"?new Date().toISOString():null,updated_at:new Date().toISOString()};
+ const btn=field("saveCalendarItem");btn.disabled=true;btn.textContent="Saving…";
+ try{
+  let result;
+  if(id)result=await db.from("ft_compliance_calendar_items").update(payload).eq("id",id).select("id").single();
+  else result=await db.from("ft_compliance_calendar_items").insert({...payload,created_by:(await db.auth.getUser()).data.user.id}).select("id").single();
+  if(result.error)throw result.error;
+  field("calendarStatusMessage").textContent="Deadline record saved. Calendar changes are audited. Reminder scheduler will process the configured dates.";
+  await loadCalendar();field("calendarSelect").value=result.data.id;
+  const logs=await db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").eq("source_id",result.data.id).order("created_at",{ascending:false}).limit(100);
+  selectCalendarItem(logs.data||[]);
+ }catch(e){field("calendarStatusMessage").textContent="Deadline not saved: "+(e.message||"The database rejected the change.");}
+ finally{btn.disabled=false;btn.textContent="Save deadline record";}
+}
 function annualRows(){return rows.filter(r=>r.record_type==="annual_compliance_review");}
 function populateAnnualReviews(selectedId){
  const items=annualRows();
@@ -323,6 +400,7 @@ async function load(){
  if(error)throw error;
  rows=data||[];
  populateFilingActions();
+ await loadCalendar();
  populateAnnualReviews();
  const types=[...new Set(rows.map(r=>r.record_type))];
  const readiness=rows.filter(r=>r.record_type==="filing_readiness");
@@ -353,6 +431,10 @@ async function init(){
 }
 filingSelect.addEventListener("change",selectFiling);
 field("annualReviewYear").value=new Date().getFullYear();
+field("calendarSelect").addEventListener("change",async()=>{const logs=await db.from("ft_compliance_calendar_reminder_log").select("id,source_type,source_id,source_reference,reminder_stage,recipient_user_id,due_date,notification_id,created_at").eq("source_type","calendar_item").order("created_at",{ascending:false}).limit(200);selectCalendarItem(logs.data||[]);});
+field("saveCalendarItem").addEventListener("click",saveCalendarItem);
+field("newCalendarItem").addEventListener("click",resetCalendarForm);
+
 field("annualReviewSelect").addEventListener("change",renderAnnualReview);
 field("createAnnualReview").addEventListener("click",createAnnualReview);
 field("approveAnnualReview").addEventListener("click",approveAnnualReview);
