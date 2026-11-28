@@ -458,13 +458,17 @@ async function approveAnnualReview(){
 }
 async function loadYearEndAdjustments(){
  const status=field("yearEndAdjustmentsStatus"),host=field("yearEndAdjustmentsResults");
- status.textContent="Loading adjustment records through the protected Super Administrator function…";host.innerHTML="";
+ status.textContent="Loading adjustment validation results…";host.innerHTML="";
  try{
   const {data,error}=await db.rpc("ft_get_year_end_adjustment_register");if(error)throw error;
   const items=Array.isArray(data)?data:[];
   if(!items.length){host.innerHTML='<p class="muted">No year-end adjustment records are currently registered.</p>';status.textContent="Loaded successfully. No adjustment records found.";return;}
-  host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Period</th><th>Journal</th><th>Date</th><th>Type</th><th>Description</th><th>Status</th><th>Evidence</th><th>Prepared / approved</th></tr></thead><tbody>'+items.map(a=>'<tr><td>'+esc(a.period_name)+'</td><td>'+esc(a.journal_reference||a.journal_id)+'</td><td>'+esc(date(a.journal_date))+'</td><td>'+esc(a.adjustment_type)+'</td><td>'+esc(a.description)+'</td><td><span class="pill">'+esc(a.adjustment_status)+'</span></td><td>'+esc(a.supporting_document_id||"Not linked")+'</td><td>'+esc(a.prepared_by||"Not recorded")+' / '+esc(a.approved_by||"Not approved")+'</td></tr>').join("")+'</tbody></table></div>';
-  status.textContent="Loaded "+items.length+" adjustment record(s). This is read-only oversight.";
+  host.innerHTML='<div class="table-wrap"><table><thead><tr><th>Period</th><th>Journal</th><th>Date</th><th>Type / description</th><th>Journal validation</th><th>Evidence</th><th>Approval status</th></tr></thead><tbody>'+items.map(a=>{
+   const checks=[a.is_balanced?'Balanced journal':'Journal not balanced',Number(a.line_count||0)>=2?'At least two lines':'Insufficient journal lines',a.supporting_document_id?'Evidence linked':'Evidence missing',a.period_status==='open'?'Period open':'Period not open'];
+   const ready=!!a.is_balanced&&Number(a.line_count||0)>=2&&!!a.supporting_document_id&&a.period_status==='open';
+   return '<tr><td>'+esc(a.period_name)+'<br><span class="muted">'+esc(a.period_status)+'</span></td><td>'+esc(a.journal_reference||a.journal_id)+'<br><span class="muted">'+esc(a.journal_status)+'</span></td><td>'+esc(date(a.journal_date))+'</td><td>'+esc(a.adjustment_type)+'<br>'+esc(a.description)+'</td><td>'+checks.map(x=>'<div>'+esc(x)+'</div>').join('')+'<strong>Debits ₦'+Number(a.total_debits||0).toLocaleString('en-NG')+' / Credits ₦'+Number(a.total_credits||0).toLocaleString('en-NG')+'</strong></td><td>'+esc(a.supporting_document_id||"Not linked")+'</td><td><span class="pill">'+esc(a.adjustment_status)+'</span><br><strong>'+(ready?'Ready for controlled review':'Not ready — resolve exceptions')+'</strong><br><span class="muted">Prepared: '+esc(a.prepared_by||"Not recorded")+' · Approved: '+esc(a.approved_by||"Not approved")+'</span></td></tr>';
+  }).join("")+'</tbody></table></div>';
+  status.textContent="Loaded "+items.length+" adjustment record(s). Validation is advisory; no approval or posting was performed.";
  }catch(e){status.textContent="Adjustment register unavailable: "+(e.message||"Access denied.");}
 }
 async function loadYearEndReadiness(){
