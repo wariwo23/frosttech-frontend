@@ -79,7 +79,7 @@ th,td{padding:10px;border-bottom:1px solid #e5ebf1;text-align:left;vertical-alig
 </section>
 <section id="escalationsCard" class="card hidden">
 <h2>Super Administrator — Formal Escalations</h2>
-<p class="muted">Only the Super Administrator can create or resolve formal escalations. Named recipients can submit one response without changing escalation ownership or status.</p><div id="escalationMetrics" class="metrics"></div>
+<p class="muted">Only the Super Administrator can create or resolve formal escalations. Named recipients can submit one response without changing escalation ownership or status.</p><div id="escalationMetrics" class="metrics"></div><div class="toolbar"><button id="queueEscalationAlerts" type="button">Queue Overdue Escalation Alerts</button></div><p class="muted">This Super Administrator action queues deduplicated in-app alerts for overdue, unanswered escalations. It does not resolve or reassign them.</p>
 <form id="escalationForm">
 <div class="form-grid">
 <div class="field"><label for="escalationInstance">Workflow instance</label><select id="escalationInstance" required><option value="">Select workflow instance</option></select></div>
@@ -205,6 +205,9 @@ async function launchWorkflow(event){
  }catch(e){$("launchStatus").textContent="Workflow not started: "+(e.message||"Permission or database error.");}
  finally{$("launchButton").disabled=activeWorkflows.length===0}
 }
+async function queueEscalationAlerts(){
+ const b=$("queueEscalationAlerts");b.disabled=true;try{const {data,error}=await db.rpc("ft_queue_overdue_escalation_alerts",{p_limit:50});if(error)throw error;setStatus("Overdue escalation alerts queued: "+(data?.notifications_queued??0)+".","success");await loadNotifications()}catch(e){setStatus("Could not queue overdue escalation alerts: "+(e.message||"Permission denied."),"error")}finally{b.disabled=false}
+}
 async function loadEscalations(){
  const [records,summary]=await Promise.all([
   db.from("ft_workflow_escalations").select("id,instance_id,task_id,escalation_level,reason,escalated_to_user_id,escalated_to_department,status,escalated_at,response_due_at,response_at,response_note,resolution_notes").order("escalated_at",{ascending:false}).limit(100),
@@ -281,7 +284,7 @@ async function start(){
  }catch(e){setStatus(e.message||"Administrator access could not be verified.","error")}
 }
 $("refresh").addEventListener("click",refresh);$("queueReminders").addEventListener("click",queueOverdueReminders);
-$("launchForm").addEventListener("submit",launchWorkflow);$("escalationForm").addEventListener("submit",createEscalation);
+$("launchForm").addEventListener("submit",launchWorkflow);$("escalationForm").addEventListener("submit",createEscalation);$("queueEscalationAlerts").addEventListener("click",queueEscalationAlerts);
 $("modalCancel").addEventListener("click",closeAction);
 $("modalConfirm").addEventListener("click",submitAction);
 $("actionModal").addEventListener("click",e=>{if(e.target.id==="actionModal")closeAction()});
