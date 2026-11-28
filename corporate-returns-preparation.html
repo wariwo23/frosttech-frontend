@@ -203,7 +203,7 @@ main{max-width:1180px;margin:auto;padding:20px 16px 50px}.card{background:#fff;b
 <section class="card" id="governanceDeliveryAudit">
 <h2>Governance Notification Delivery Audit</h2>
 <p class="muted">Super Administrator-only history of Brevo send attempts and provider events. “Accepted by provider” means Brevo accepted the message for processing; a separate delivered event is required before treating it as delivered. This register is read-only.</p>
-<div class="actions"><button type="button" id="refreshGovernanceDeliveryAudit">Refresh delivery audit</button><button type="button" class="secondary" id="printGovernanceDeliveryAudit">Print delivery audit</button></div>
+<div class="actions"><button type="button" id="registerGovernanceBrevoWebhook">Connect / refresh Brevo webhook</button><button type="button" id="refreshGovernanceDeliveryAudit">Refresh delivery audit</button><button type="button" class="secondary" id="printGovernanceDeliveryAudit">Print delivery audit</button></div><p id="governanceBrevoWebhookStatus" class="status" role="status">Webhook registration is controlled by the Super Administrator.</p>
 <div id="governanceDeliveryAuditStatus" class="status" role="status">Refresh to load the protected delivery audit.</div>
 <div id="governanceDeliveryAuditSummary" class="grid"></div>
 <div id="governanceDeliveryAuditRows"></div>
@@ -756,7 +756,7 @@ async function loadGovernanceDeliveryAudit(){
   const {data,error}=await db.rpc("ft_get_governance_delivery_audit");if(error)throw error;
   const s=data?.summary||{},attempts=Array.isArray(data?.attempts)?data.attempts:[],orphans=Array.isArray(data?.unmatched_receipts)?data.unmatched_receipts:[];
   const metric=(label,value)=>'<div class="metric"><span>'+esc(label)+'</span><strong>'+esc(value??0)+'</strong></div>';
-  summary.innerHTML=metric("Send attempts",s.attempts)+metric("Accepted by Brevo",s.accepted_by_provider)+metric("Failed attempts",s.failed)+metric("Provider events",s.provider_events)+metric("Delivered events",s.delivered_events)+metric("Bounces / blocked",s.bounce_events)+metric("Spam complaints",s.complaint_events)+metric("Unmatched events",s.unmatched_events);
+  summary.innerHTML=metric("Send attempts",s.attempts)+metric("Accepted by Brevo",s.accepted_by_provider)+metric("Failed attempts",s.failed)+metric("Provider events",s.provider_events)+metric("Delivered events",s.delivered_events)+metric("Bounces / blocked",s.bounce_events)+metric("Spam complaints",s.complaint_events)+metric("Opened",s.opened_events)+metric("Clicked",s.clicked_events)+metric("Deferred",s.deferred_events)+metric("Unmatched events",s.unmatched_events);
   host.innerHTML=attempts.length?'<h3>Recent delivery attempts (latest 200)</h3><div class="table-wrap"><table><thead><tr><th>Attempted</th><th>Notice</th><th>Recipient</th><th>Attempt</th><th>Send status</th><th>Provider message ID</th><th>Provider events</th><th>Error</th></tr></thead><tbody>'+attempts.map(a=>{
    const receipts=Array.isArray(a.receipts)?a.receipts:[];
    return '<tr><td>'+esc(date(a.attempted_at))+'<br><span class="muted">Completed: '+esc(date(a.completed_at))+'</span></td><td>'+esc(a.notice_title||a.notice_type||a.notice_id)+'</td><td>'+esc(a.recipient_email||"—")+'</td><td>'+esc(a.attempt_number)+'</td><td><span class="pill">'+esc(a.status)+'</span></td><td><code>'+esc(a.provider_message_id||"Not returned")+'</code></td><td>'+(receipts.length?receipts.map(r=>'<div><strong>'+esc(r.provider_event)+'</strong><br>'+esc(date(r.provider_event_at||r.received_at))+'</div>').join(""):'No provider receipt recorded')+'</td><td>'+esc(a.error_detail||"—")+'</td></tr>';
@@ -1070,6 +1070,17 @@ field("refreshCertificateMonitoring").addEventListener("click",loadCertificateMo
 field("refreshCertificateSecurityAlerts").addEventListener("click",loadCertificateSecurityAlerts);
 field("createGovernanceAction").addEventListener("click",createGovernanceAction);
 field("refreshGovernanceActions").addEventListener("click",loadGovernanceActionRegister);
+field("registerGovernanceBrevoWebhook").addEventListener("click",async()=>{
+ const button=field("registerGovernanceBrevoWebhook"),status=field("governanceBrevoWebhookStatus");
+ button.disabled=true;status.textContent="Checking and registering the existing FrostTech transactional Brevo webhook…";
+ try{
+  const {data,error}=await db.functions.invoke("register-brevo-report-webhook",{body:{}});
+  if(error)throw error;if(data?.error)throw new Error(data.error);
+  status.textContent="Brevo webhook "+(data?.action||"registration")+" successfully. Provider events enabled: "+(data?.events||[]).join(", ")+". No email was sent.";
+  await loadGovernanceDeliveryAudit();
+ }catch(e){status.textContent="Webhook registration not completed: "+(e.message||"Super Administrator authorization required.");}
+ finally{button.disabled=false;}
+});
 field("refreshGovernanceDeliveryAudit").addEventListener("click",loadGovernanceDeliveryAudit);
 field("printGovernanceDeliveryAudit").addEventListener("click",()=>{document.body.classList.add("governance-delivery-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-delivery-printing"),{once:true});window.print();});
 field("printGovernanceActions").addEventListener("click",()=>{document.body.classList.add("governance-action-printing");window.addEventListener("afterprint",()=>document.body.classList.remove("governance-action-printing"),{once:true});window.print();});
